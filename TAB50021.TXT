@@ -1,0 +1,43 @@
+OBJECT Table 50021 Commodity Code (PROPAC)
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/15/09;
+    Time=17:40:35;
+    Version List=Propac1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Commodity Code      ;Code20         }
+    { 2   ;   ;Commodity Name      ;Text30         }
+    { 3   ;   ;Account No.         ;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=VAR
+                                                                GLAccount@1000000000 : Record 15;
+                                                              BEGIN
+                                                                IF GLAccount.GET("Account No.") THEN
+                                                                "Account Name":=GLAccount.Name;
+                                                              END;
+                                                               }
+    { 4   ;   ;Account Name        ;Text30         }
+    { 5   ;   ;Type                ;Option        ;OptionCaptionML=ENU=" ,Third Party,Related Party,Others";
+                                                   OptionString=[ ,Third Party,Related Party,Others] }
+    { 6   ;   ;Group               ;Code10        ;TableRelation="VAT Business Posting Group".Code }
+  }
+  KEYS
+  {
+    {    ;Commodity Code,Type,Group               ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,37 @@
+OBJECT Table 50037 PYMAC_DATA
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/09/09;
+    Time=13:17:36;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNO                 ;Integer        }
+    { 2   ;   ;Bud_Res             ;Code10         }
+    { 3   ;   ;OrgCode             ;Code10         }
+    { 4   ;   ;YearMonthDay        ;Code10         }
+    { 5   ;   ;AccCode             ;Code10         }
+    { 6   ;   ;DetailCode          ;Code10         }
+    { 7   ;   ;Amount              ;Decimal        }
+  }
+  KEYS
+  {
+    {    ;SNO                                     ;Clustered=Yes }
+    {    ;AccCode,OrgCode                          }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

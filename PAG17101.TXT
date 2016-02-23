@@ -1,0 +1,56 @@
+OBJECT Page 17101 Amount Distribution
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/05/03;
+    Time=12:00:00;
+    Version List=NAVA13.70;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Amount Distribution;
+               ENA=Amount Distribution];
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 10  ;1   ;Group      }
+
+    { 1   ;2   ;Field     ;
+                CaptionML=[ENU=From Date;
+                           ENA=From Date];
+                SourceExpr=FromDate }
+
+    { 3   ;2   ;Field     ;
+                CaptionML=[ENU=To Date;
+                           ENA=To Date];
+                SourceExpr=ToDate }
+
+    { 8   ;2   ;Field     ;
+                OptionCaptionML=[ENU=Net Change,Balance;
+                                 ENA=Net Change,Balance];
+                SourceExpr=WhatToCalculate }
+
+  }
+  CODE
+  {
+    VAR
+      FromDate@1450000 : Date;
+      ToDate@1450001 : Date;
+      WhatToCalculate@1450002 : 'Net Change,Balance';
+
+    PROCEDURE ReturnDates@1450000(VAR StartDate@1450000 : Date;VAR EndDate@1450001 : Date;VAR CalcWhat@1450002 : 'Net Change,Balance');
+    BEGIN
+      StartDate := FromDate;
+      EndDate := ToDate;
+      CalcWhat := WhatToCalculate;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

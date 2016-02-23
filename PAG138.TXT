@@ -1,0 +1,415 @@
+OBJECT Page 138 Posted Purchase Invoice
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10,NAVAPAC7.10,YIMMNVRAF,YIMMNVPG,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Posted Purchase Invoice;
+               ENA=Posted Purchase Invoice];
+    InsertAllowed=No;
+    SourceTable=Table122;
+    PageType=Document;
+    RefreshOnActivate=Yes;
+    OnOpenPage=BEGIN
+                 SetSecurityFilterOnRespCenter;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 53      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Invoice;
+                                 ENA=&Invoice];
+                      Image=Invoice }
+      { 45      ;2   ;Action    ;
+                      Name=Statistics;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      RunObject=Page 400;
+                      RunPageLink=No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 55      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 66;
+                      RunPageLink=Document Type=CONST(Posted Invoice),
+                                  No.=FIELD(No.),
+                                  Document Line No.=CONST(0);
+                      Image=ViewComments }
+      { 89      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 106     ;2   ;Action    ;
+                      CaptionML=[ENU=Approvals;
+                                 ENA=Approvals];
+                      Image=Approvals;
+                      OnAction=VAR
+                                 PostedApprovalEntries@1001 : Page 659;
+                               BEGIN
+                                 PostedApprovalEntries.Setfilters(DATABASE::"Purch. Inv. Header","No.");
+                                 PostedApprovalEntries.RUN;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000000;1 ;Action    ;
+                      Name=Voucher Posted;
+                      CaptionML=ENU=Voucher Posted;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 // UPG13.begin
+                                 //YIMMNVRAFST
+
+                                 GLENTRY.RESET;
+                                 GLENTRY.SETRANGE(GLENTRY."Document No.","No.");
+                                 REPORT.RUNMODAL(50000,TRUE,FALSE,GLENTRY);
+
+
+
+
+
+                                 //YIMMNVRAFEN
+                                 // UPG13.end
+                               END;
+                                }
+      { 56      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CurrPage.SETSELECTIONFILTER(PurchInvHeader);
+                                 PurchInvHeader.PrintRecords(TRUE);
+                               END;
+                                }
+      { 57      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 100 ;2   ;Field     ;
+                SourceExpr="Buy-from Contact No.";
+                Editable=FALSE }
+
+    { 59  ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor Name";
+                Editable=FALSE }
+
+    { 61  ;2   ;Field     ;
+                SourceExpr="Buy-from Address";
+                Editable=FALSE }
+
+    { 63  ;2   ;Field     ;
+                SourceExpr="Buy-from Address 2";
+                Editable=FALSE }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Buy-from Post Code";
+                Editable=FALSE }
+
+    { 65  ;2   ;Field     ;
+                SourceExpr="Buy-from City";
+                Editable=FALSE }
+
+    { 1500000;2;Field     ;
+                SourceExpr="Buy-from County";
+                Editable=FALSE }
+
+    { 1500002;2;Field     ;
+                CaptionML=[ENU=Buy-from County/Country Code;
+                           ENA=Buy-from State/Country Code];
+                SourceExpr="Buy-from Country/Region Code";
+                Editable=FALSE }
+
+    { 67  ;2   ;Field     ;
+                SourceExpr="Buy-from Contact";
+                Editable=FALSE }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="No. Printed";
+                Editable=FALSE }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 71  ;2   ;Field     ;
+                SourceExpr="Document Date";
+                Editable=FALSE }
+
+    { 110 ;2   ;Field     ;
+                SourceExpr="Quote No.";
+                Editable=FALSE }
+
+    { 81  ;2   ;Field     ;
+                SourceExpr="Order No.";
+                Editable=FALSE }
+
+    { 83  ;2   ;Field     ;
+                SourceExpr="Pre-Assigned No.";
+                Editable=FALSE }
+
+    { 104 ;2   ;Field     ;
+                SourceExpr="Vendor Order No.";
+                Editable=FALSE }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Vendor Invoice No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Order Address Code";
+                Editable=FALSE }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Purchaser Code";
+                Editable=FALSE }
+
+    { 92  ;2   ;Field     ;
+                SourceExpr="Responsibility Center";
+                Editable=FALSE }
+
+    { 52  ;1   ;Part      ;
+                Name=PurchInvLines;
+                SubPageLink=Document No.=FIELD(No.);
+                PagePartID=Page139 }
+
+    { 1000000001;1;Field  ;
+                SourceExpr="Vendor Posting Group" }
+
+    { 1905885101;1;Group  ;
+                CaptionML=[ENU=Invoicing;
+                           ENA=Invoicing] }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Pay-to Vendor No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 102 ;2   ;Field     ;
+                SourceExpr="Pay-to Contact No.";
+                Editable=FALSE }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Pay-to Name";
+                Editable=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Pay-to Address";
+                Editable=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Pay-to Address 2";
+                Editable=FALSE }
+
+    { 78  ;2   ;Field     ;
+                SourceExpr="Pay-to Post Code";
+                Editable=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Pay-to City";
+                Editable=FALSE }
+
+    { 1500004;2;Field     ;
+                SourceExpr="Pay-to County";
+                Editable=FALSE }
+
+    { 1500006;2;Field     ;
+                CaptionML=[ENU=Pay-to County/Country Code;
+                           ENA=Pay-to State/Country Code];
+                SourceExpr="Pay-to Country/Region Code";
+                Editable=FALSE }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Pay-to Contact";
+                Editable=FALSE }
+
+    { 72  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Editable=FALSE }
+
+    { 74  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Editable=FALSE }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Payment Terms Code";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Due Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Payment Discount %";
+                Editable=FALSE }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Pmt. Discount Date";
+                Editable=FALSE }
+
+    { 84  ;2   ;Field     ;
+                SourceExpr="Payment Method Code";
+                Editable=FALSE }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Payment Reference" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Creditor No." }
+
+    { 1906801201;1;Group  ;
+                CaptionML=[ENU=Shipping;
+                           ENA=Shipping] }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Ship-to Name";
+                Editable=FALSE }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Ship-to Address";
+                Editable=FALSE }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Ship-to Address 2";
+                Editable=FALSE }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Ship-to Post Code";
+                Editable=FALSE }
+
+    { 44  ;2   ;Field     ;
+                SourceExpr="Ship-to City";
+                Editable=FALSE }
+
+    { 1500008;2;Field     ;
+                SourceExpr="Ship-to County";
+                Editable=FALSE }
+
+    { 1500010;2;Field     ;
+                CaptionML=[ENU=Ship-to County/Country Code;
+                           ENA=Ship-to State/Country Code];
+                SourceExpr="Ship-to Country/Region Code";
+                Editable=FALSE }
+
+    { 46  ;2   ;Field     ;
+                SourceExpr="Ship-to Contact";
+                Editable=FALSE }
+
+    { 76  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Shipment Method Code";
+                Editable=FALSE }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Expected Receipt Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 1907468901;1;Group  ;
+                CaptionML=[ENU=Foreign Trade;
+                           ENA=Foreign Trade] }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                Importance=Promoted;
+                OnAssistEdit=BEGIN
+                               ChangeExchangeRate.SetParameter("Currency Code","Currency Factor","Posting Date");
+                               ChangeExchangeRate.EDITABLE(FALSE);
+                               IF ChangeExchangeRate.RUNMODAL = ACTION::OK THEN BEGIN
+                                 "Currency Factor" := ChangeExchangeRate.GetParameter;
+                                 MODIFY;
+                               END;
+                               CLEAR(ChangeExchangeRate);
+                             END;
+                              }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      PurchInvHeader@1000 : Record 122;
+      ChangeExchangeRate@1001 : Page 511;
+      GLENTRY@1000000000 : Record 17;
+      GLReg@1000000001 : Record 45;
+
+    BEGIN
+    {
+      //YIMMNVRAF
+      1) BUTTON ADDED FOR VOUCHER REPORT AFTER POSTING.
+
+      //YIMMNVPG
+       1) FILED SHOW FOR VENDOR POSTING GROUP.
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

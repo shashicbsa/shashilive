@@ -1,0 +1,36 @@
+OBJECT Table 60023 EliSetupWJ
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/27/10;
+    Time=14:40:58;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;PrimeryKey          ;Code10         }
+    { 2   ;   ;Capital Stock       ;Code30         }
+    { 3   ;   ;RE Beginning        ;Code30         }
+    { 4   ;   ;Minority Interset in P/L;Code30     }
+    { 5   ;   ;Investment WJ       ;Code30         }
+    { 6   ;   ;Minoity in B/S      ;Code30         }
+    { 7   ;   ;Miscl income WJ     ;Code30         }
+  }
+  KEYS
+  {
+    {    ;PrimeryKey                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,62 @@
+OBJECT Page 63088 E-FAKTUR No. Series Form
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/06/15;
+    Time=11:55:53;
+    Modified=Yes;
+    Version List=E-FAKTUR1.0;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table308;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                SourceExpr=Code }
+
+    { 1102159004;2;Field  ;
+                SourceExpr=Description }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="Default Nos." }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="Manual Nos." }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Date Order" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr=GroupCode }
+
+    { 1102159009;2;Field  ;
+                SourceExpr="Type Of Transaction" }
+
+    { 1102159010;2;Field  ;
+                SourceExpr="Manual Invoice no. series" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+
+
+      //E-FAKTUR1.0
+      New form created to show only to super user so as to modiy the manual invoice no. series
+    }
+    END.
+  }
+}
+

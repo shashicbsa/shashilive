@@ -1,0 +1,210 @@
+OBJECT Page 63051 Cust Acc Payable Ret List-ALL
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/10/15;
+    Time=14:29:14;
+    Modified=Yes;
+    Version List=SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Sales List;
+               ENA=Sales List];
+    SourceTable=Table36;
+    SourceTableView=WHERE(Document Type=FILTER(Invoice),
+                          Reason Code=FILTER(SALRT),
+                          ActualCreditMemo=FILTER(Yes));
+    DataCaptionFields=Document Type;
+    PageType=List;
+    CardPageID=Customer Purchase Return All;
+    OnOpenPage=BEGIN
+                 {
+                 EVALUATE(User_ID,USERID);
+                 SETRANGE(UID,User_ID);
+                 }
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 19      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Line;
+                                 ENA=&Line];
+                      Image=Line }
+      { 20      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Card;
+                                 ENA=Card];
+                      Promoted=Yes;
+                      Image=EditLines;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 PageID@1000 : Integer;
+                               BEGIN
+                                 CASE "Document Type" OF
+                                   "Document Type"::Quote:
+                                     PageID := PAGE::"Sales Quote";
+                                   "Document Type"::Order:
+                                     PageID := PAGE::"Sales Order";
+                                   "Document Type"::Invoice:
+                                     PageID := PAGE::"Sales Invoice";
+                                   "Document Type"::"Return Order":
+                                     PageID := PAGE::"Sales Return Order";
+                                   "Document Type"::"Credit Memo":
+                                     PageID := PAGE::"Sales Credit Memo";
+                                   "Document Type"::"Blanket Order":
+                                     PageID := PAGE::"Blanket Sales Order";
+                                 END;
+
+                                 PageID := GetPageId(PageID);
+
+                                 IF PageID <> 0 THEN
+                                   PAGE.RUN(PageID,Rec);
+                               END;
+                                }
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1904702706;1 ;Action    ;
+                      CaptionML=[ENU=Sales Reservation Avail.;
+                                 ENA=Sales Reservation Avail.];
+                      RunObject=Report 209;
+                      Promoted=No;
+                      Visible=FALSE;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 1102159001;1 ;ActionGroup;
+                      CaptionML=ENU=GPORT }
+      { 1102159002;2 ;Action    ;
+                      CaptionML=ENU=Gport Tanda Terima Return Posting;
+                      RunObject=Report 60029;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                Width=25;
+                SourceExpr="No." }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Posting Date";
+                Visible=FALSE }
+
+    { 1102159004;2;Field  ;
+                Width=20;
+                SourceExpr="Sell-to Customer No." }
+
+    { 1102159005;2;Field  ;
+                Width=50;
+                SourceExpr="Sell-to Customer Name" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Slip Amount" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="Slip Amount (LCY)" }
+
+    { 1102159008;2;Field  ;
+                Width=20;
+                SourceExpr=UID }
+
+    { 1102159009;2;Field  ;
+                SourceExpr=Status }
+
+    { 1102159010;2;Field  ;
+                SourceExpr="New or Cancel" }
+
+    { 1102159011;2;Field  ;
+                SourceExpr=Interfaced }
+
+    { 1102159013;2;Field  ;
+                SourceExpr="G-Port Ref No." }
+
+    { 1102159012;2;Field  ;
+                SourceExpr="Type Of Transaction";
+                Visible=true }
+
+    { 1102159014;2;Field  ;
+                Width=35;
+                SourceExpr="External Document No." }
+
+    { 1102159016;2;Field  ;
+                SourceExpr="Document Date";
+                Visible=true }
+
+    { 1102159015;2;Field  ;
+                SourceExpr="Due Date";
+                Visible=true }
+
+    { 1102159017;2;Field  ;
+                Width=20;
+                SourceExpr="Ship-to Code";
+                Visible=true }
+
+    { 1102159018;2;Field  ;
+                Width=20;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=true }
+
+    { 1000000012;2;Field  ;
+                Width=20;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=true }
+
+    { 1000000010;2;Field  ;
+                Width=10;
+                SourceExpr="WHT Business Posting Group";
+                Visible=true }
+
+    { 1102159020;2;Field  ;
+                SourceExpr="Customer Posting Group" }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      User_ID@1102159001 : Code[50];
+
+    LOCAL PROCEDURE GetPageId@29(PageId@1000 : Integer) : Integer;
+    VAR
+      MiniPagesMapping@1001 : Record 1305;
+    BEGIN
+      IF MiniPagesMapping.READPERMISSION THEN
+        IF MiniPagesMapping.GET(PageId) THEN
+          EXIT(MiniPagesMapping.SubstitutePageID);
+
+      EXIT(PageId);
+    END;
+
+    BEGIN
+    {
+      // CAUYIMM
+      New List Page Created for YIMM
+      OnOpenPage commented because this page is for SuperUser
+    }
+    END.
+  }
+}
+

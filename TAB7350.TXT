@@ -1,0 +1,47 @@
+OBJECT Table 7350 Lot Numbers by Bin Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/13;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.35701;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Lot Numbers by Bin Buffer;
+               ENA=Lot Numbers by Bin Buffer];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Item No.            ;Code20        ;CaptionML=[ENU=Item No.;
+                                                              ENA=Item No.] }
+    { 2   ;   ;Variant Code        ;Code10        ;CaptionML=[ENU=Variant Code;
+                                                              ENA=Variant Code] }
+    { 3   ;   ;Location Code       ;Code10        ;CaptionML=[ENU=Location Code;
+                                                              ENA=Location Code] }
+    { 4   ;   ;Zone Code           ;Code10        ;CaptionML=[ENU=Zone Code;
+                                                              ENA=Zone Code] }
+    { 5   ;   ;Bin Code            ;Code20        ;CaptionML=[ENU=Bin Code;
+                                                              ENA=Bin Code] }
+    { 6   ;   ;Lot No.             ;Code20        ;CaptionML=[ENU=Lot No.;
+                                                              ENA=Lot No.] }
+    { 7   ;   ;Qty. (Base)         ;Decimal       ;CaptionML=[ENU=Qty. (Base);
+                                                              ENA=Qty. (Base)];
+                                                   DecimalPlaces=0:5 }
+  }
+  KEYS
+  {
+    {    ;Item No.,Variant Code,Location Code,Zone Code,Bin Code,Lot No.;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,39 @@
+OBJECT Page 63158 Batch List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/19/15;
+    Time=18:41:24;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    SaveValues=No;
+    MultipleNewLines=No;
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=No;
+    SourceTable=Table60057;
+    DelayedInsert=No;
+    PageType=List;
+    ShowFilter=No;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

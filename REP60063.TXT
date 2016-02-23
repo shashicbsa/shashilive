@@ -1,0 +1,125 @@
+OBJECT Report 60063 JnlGenSlipNo
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/25/14;
+    Time=16:58:21;
+    Modified=Yes;
+    Version List=YIMMDEVP1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPostReport=BEGIN
+                   MESSAGE('Done');
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table81;
+               DataItemTableView=SORTING(Journal Template Name,Journal Batch Name,Posting Date,Document No.)
+                                 ORDER(Ascending);
+               OnPostDataItem=BEGIN
+
+                                //YIMMASLST
+                                Master.GET;
+                                Genline2.RESET;
+                                CLEAR(Genline2);
+                                Genline2.SETCURRENTKEY(Genline2."Journal Template Name",Genline2."Journal Batch Name",Genline2."Posting Date",
+                                                      Genline2."Document No.");
+                                Genline2.SETRANGE(Genline2."Journal Template Name","Journal Template Name");
+                                Genline2.SETRANGE(Genline2."Journal Batch Name","Journal Batch Name");
+                                //CurrForm.SETSELECTIONFILTER(Genline2);//YIMMA
+                                IF Genline2.FINDSET THEN REPEAT
+                                  Genline2.TESTFIELD(Genline2."Slip No.",'');
+                                UNTIL Genline2.NEXT = 0;
+
+                                SlipNo := Nos.GetNextNo(Master."Slip Nos.","Posting Date",TRUE);
+                                CLEAR(Nos);
+
+                                i := 1;
+                                Bool := 0;
+
+                                Genline21.SETRANGE(Genline21."Journal Template Name","Journal Template Name");
+                                Genline21.SETRANGE(Genline21."Journal Batch Name","Journal Batch Name");
+                                //CurrForm.SETSELECTIONFILTER(Genline21);//YIMMA
+                                IF Genline21.FINDSET THEN REPEAT
+                                  Bool += Genline21."Balance (LCY)";
+                                UNTIL Genline21.NEXT = 0;
+
+                                IF Bool = 0 THEN BEGIN
+                                  IF Genline21.FINDSET THEN REPEAT
+                                    IF i = 1 THEN BEGIN
+                                      GenLineRec.GET(Genline21."Journal Template Name",Genline21."Journal Batch Name",Genline21."Line No.");
+                                      GenLineRec."Slip No." := SlipNo;
+                                      GenLineRec.Level := 0;
+                                      GenLineRec.MODIFY;
+                                      i := i + 1;
+                                    END ELSE BEGIN
+                                      GenLineRec.GET(Genline21."Journal Template Name",Genline21."Journal Batch Name",Genline21."Line No.");
+                                      GenLineRec."Slip No." := SlipNo;
+                                      GenLineRec.Level := 1;
+                                      GenLineRec.MODIFY;
+                                    END;
+                                  UNTIL Genline21.NEXT = 0;
+                                END ELSE
+                                ERROR(Text004);
+                                //YIMMASLEN
+                              END;
+
+               ReqFilterFields=Journal Template Name,Journal Batch Name,Due Date,Type Of Transaction,Document No. }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      i@1102159021 : Integer;
+      Genline21@1102159020 : Record 81;
+      GenLineRec@1102159019 : Record 81;
+      Master@1102159018 : Record 50008;
+      Genline2@1102159017 : Record 81;
+      Nos@1102159016 : Codeunit 396;
+      SlipNo@1102159015 : Code[20];
+      CreateVendorPmtSuggestion@1102159014 : Report 50057;
+      TempGJnlLine22@1102159013 : Record 81;
+      GJnlLine22@1102159012 : Record 232;
+      "LineNo."@1102159011 : Integer;
+      GJnlLine11@1102159010 : Record 81;
+      Type@1102159009 : 'General,Sales,Purchases,Cash Receipts,Payments,Assets,Intercompany,Jobs,Post Dated';
+      ForGenBatch@1102159008 : Record 232;
+      SameSlipNo@1102159007 : Code[20];
+      Count@1102159006 : Integer;
+      GlSetup@1102159004 : Record 98;
+      Noseries@1102159003 : Record 309;
+      Bool@1102159002 : Decimal;
+      Text000@1102159023 : TextConst 'ENU=General Journal lines have been successfully inserted from Standard General Journal %1.';
+      Text001@1102159022 : TextConst 'ENU=Standard General Journal %1 has been successfully created.';
+      Text002@1102159005 : TextConst 'ENU=Generate Slip No. First';
+      Text004@1102159001 : TextConst 'ENU=Selected Lines are not Balance';
+
+    BEGIN
+    {
+      //YIMMDEVIP1.0
+      Process report created for generating Slip No for multiple lines.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

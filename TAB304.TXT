@@ -1,0 +1,272 @@
+OBJECT Table 304 Issued Fin. Charge Memo Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=No.,Name;
+    OnDelete=BEGIN
+               TESTFIELD("No. Printed");
+               LOCKTABLE;
+               FinChrgMemoIssue.DeleteIssuedFinChrgLines(Rec);
+
+               FinChrgCommentLine.SETRANGE(Type,FinChrgCommentLine.Type::"Issued Finance Charge Memo");
+               FinChrgCommentLine.SETRANGE("No.","No.");
+               FinChrgCommentLine.DELETEALL;
+
+               PostCodeCheck.DeleteAllAddressID(DATABASE::"Issued Fin. Charge Memo Header",Rec.GETPOSITION);
+             END;
+
+    OnRename=BEGIN
+               PostCodeCheck.MoveAllAddressID(
+                 DATABASE::"Issued Fin. Charge Memo Header",Rec.GETPOSITION,
+                 DATABASE::"Issued Fin. Charge Memo Header",xRec.GETPOSITION);
+             END;
+
+    CaptionML=[ENU=Issued Fin. Charge Memo Header;
+               ENA=Issued Fin. Charge Memo Header];
+    LookupPageID=Page452;
+    DrillDownPageID=Page452;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;CaptionML=[ENU=No.;
+                                                              ENA=No.];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Customer No.        ;Code20        ;TableRelation=Customer;
+                                                   CaptionML=[ENU=Customer No.;
+                                                              ENA=Customer No.] }
+    { 3   ;   ;Name                ;Text50        ;CaptionML=[ENU=Name;
+                                                              ENA=Name] }
+    { 4   ;   ;Name 2              ;Text50        ;CaptionML=[ENU=Name 2;
+                                                              ENA=Name 2] }
+    { 5   ;   ;Address             ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Finance Charge Memo Header",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Address;
+                                                              ENA=Address] }
+    { 6   ;   ;Address 2           ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Finance Charge Memo Header",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Address 2;
+                                                              ENA=Address 2] }
+    { 7   ;   ;Post Code           ;Code20        ;TableRelation="Post Code";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Post Code;
+                                                              ENA=Post Code] }
+    { 8   ;   ;City                ;Text30        ;TableRelation="Post Code".City;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=City;
+                                                              ENA=City] }
+    { 9   ;   ;County              ;Text30        ;CaptionML=[ENU=County;
+                                                              ENA=State] }
+    { 10  ;   ;Country/Region Code ;Code10        ;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=Country/Region Code;
+                                                              ENA=Country/Region Code] }
+    { 11  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=[ENU=Language Code;
+                                                              ENA=Language Code] }
+    { 12  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code] }
+    { 13  ;   ;Contact             ;Text50        ;CaptionML=[ENU=Contact;
+                                                              ENA=Contact] }
+    { 14  ;   ;Your Reference      ;Text35        ;CaptionML=[ENU=Your Reference;
+                                                              ENA=Your Reference] }
+    { 15  ;   ;Shortcut Dimension 1 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Shortcut Dimension 1 Code;
+                                                              ENA=Shortcut Dimension 1 Code];
+                                                   CaptionClass='1,2,1' }
+    { 16  ;   ;Shortcut Dimension 2 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Shortcut Dimension 2 Code;
+                                                              ENA=Shortcut Dimension 2 Code];
+                                                   CaptionClass='1,2,2' }
+    { 17  ;   ;Customer Posting Group;Code10      ;TableRelation="Customer Posting Group";
+                                                   CaptionML=[ENU=Customer Posting Group;
+                                                              ENA=Customer Posting Group] }
+    { 18  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              ENA=Gen. Bus. Posting Group] }
+    { 19  ;   ;VAT Registration No.;Text20        ;CaptionML=[ENU=VAT Registration No.;
+                                                              ENA=Exemption Certificate No.] }
+    { 20  ;   ;Reason Code         ;Code10        ;TableRelation="Reason Code";
+                                                   CaptionML=[ENU=Reason Code;
+                                                              ENA=Reason Code] }
+    { 21  ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 22  ;   ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              ENA=Document Date] }
+    { 23  ;   ;Due Date            ;Date          ;CaptionML=[ENU=Due Date;
+                                                              ENA=Due Date] }
+    { 25  ;   ;Fin. Charge Terms Code;Code10      ;TableRelation="Finance Charge Terms";
+                                                   CaptionML=[ENU=Fin. Charge Terms Code;
+                                                              ENA=Fin. Charge Terms Code] }
+    { 26  ;   ;Interest Posted     ;Boolean       ;CaptionML=[ENU=Interest Posted;
+                                                              ENA=Interest Posted] }
+    { 27  ;   ;Additional Fee Posted;Boolean      ;CaptionML=[ENU=Additional Fee Posted;
+                                                              ENA=Additional Fee Posted] }
+    { 29  ;   ;Posting Description ;Text50        ;CaptionML=[ENU=Posting Description;
+                                                              ENA=Posting Description] }
+    { 30  ;   ;Comment             ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("Fin. Charge Comment Line" WHERE (Type=CONST(Issued Finance Charge Memo),
+                                                                                                       No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Comment;
+                                                              ENA=Comment];
+                                                   Editable=No }
+    { 31  ;   ;Remaining Amount    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Issued Fin. Charge Memo Line"."Remaining Amount" WHERE (Finance Charge Memo No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Remaining Amount;
+                                                              ENA=Remaining Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 32  ;   ;Interest Amount     ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Issued Fin. Charge Memo Line".Amount WHERE (Finance Charge Memo No.=FIELD(No.),
+                                                                                                                Type=CONST(Customer Ledger Entry)));
+                                                   CaptionML=[ENU=Interest Amount;
+                                                              ENA=Interest Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 33  ;   ;Additional Fee      ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Issued Fin. Charge Memo Line".Amount WHERE (Finance Charge Memo No.=FIELD(No.),
+                                                                                                                Type=CONST(G/L Account)));
+                                                   CaptionML=[ENU=Additional Fee;
+                                                              ENA=Additional Fee];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 34  ;   ;VAT Amount          ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Issued Fin. Charge Memo Line"."VAT Amount" WHERE (Finance Charge Memo No.=FIELD(No.)));
+                                                   CaptionML=[ENU=VAT Amount;
+                                                              ENA=GST Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 35  ;   ;No. Printed         ;Integer       ;CaptionML=[ENU=No. Printed;
+                                                              ENA=No. Printed] }
+    { 36  ;   ;User ID             ;Code50        ;TableRelation=User."User Name";
+                                                   OnLookup=VAR
+                                                              UserMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              UserMgt.LookupUserID("User ID");
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              ENA=User ID] }
+    { 37  ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=No. Series;
+                                                              ENA=No. Series];
+                                                   Editable=No }
+    { 38  ;   ;Pre-Assigned No. Series;Code10     ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Pre-Assigned No. Series;
+                                                              ENA=Pre-Assigned No. Series] }
+    { 39  ;   ;Pre-Assigned No.    ;Code20        ;CaptionML=[ENU=Pre-Assigned No.;
+                                                              ENA=Pre-Assigned No.] }
+    { 40  ;   ;Source Code         ;Code10        ;TableRelation="Source Code";
+                                                   CaptionML=[ENU=Source Code;
+                                                              ENA=Source Code] }
+    { 41  ;   ;Tax Area Code       ;Code20        ;TableRelation="Tax Area";
+                                                   CaptionML=[ENU=Tax Area Code;
+                                                              ENA=US Tax Area Code] }
+    { 42  ;   ;Tax Liable          ;Boolean       ;CaptionML=[ENU=Tax Liable;
+                                                              ENA=US Tax Liable] }
+    { 43  ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=[ENU=VAT Bus. Posting Group;
+                                                              ENA=GST Bus. Posting Group] }
+    { 480 ;   ;Dimension Set ID    ;Integer       ;TableRelation="Dimension Set Entry";
+                                                   OnLookup=BEGIN
+                                                              ShowDimensions;
+                                                            END;
+
+                                                   CaptionML=[ENU=Dimension Set ID;
+                                                              ENA=Dimension Set ID];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+    {    ;Customer No.,Posting Date                }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;No.,Customer No.,Name,Posting Date       }
+  }
+  CODE
+  {
+    VAR
+      IssuedFinChrgMemoHeader@1000 : Record 304;
+      FinChrgCommentLine@1001 : Record 306;
+      FinChrgMemoIssue@1002 : Codeunit 395;
+      DimMgt@1003 : Codeunit 408;
+      PostCodeCheck@1500000 : Codeunit 28000;
+
+    PROCEDURE PrintRecords@1(ShowRequestForm@1000 : Boolean);
+    VAR
+      ReportSelection@1001 : Record 77;
+    BEGIN
+      WITH IssuedFinChrgMemoHeader DO BEGIN
+        COPY(Rec);
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"Fin.Charge");
+        ReportSelection.SETFILTER("Report ID",'<>0');
+        ReportSelection.FIND('-');
+        REPEAT
+          REPORT.RUNMODAL(ReportSelection."Report ID",ShowRequestForm,FALSE,IssuedFinChrgMemoHeader);
+        UNTIL ReportSelection.NEXT = 0;
+      END;
+    END;
+
+    PROCEDURE Navigate@2();
+    VAR
+      NavigateForm@1000 : Page 344;
+    BEGIN
+      NavigateForm.SetDoc("Posting Date","No.");
+      NavigateForm.RUN;
+    END;
+
+    PROCEDURE FormatAddr@30(VAR AddrLines@1000 : ARRAY [8] OF Text[50];VAR BarCode@1500000 : Text[100]);
+    VAR
+      Cust@1001 : Record 18;
+      FormatAddrCodeunit@1002 : Codeunit 365;
+    BEGIN
+      Cust.Contact := Contact;
+      Cust.Name := Name;
+      Cust."Name 2" := "Name 2";
+      Cust.Address := Address;
+      Cust."Address 2" := "Address 2";
+      Cust."Post Code" := "Post Code";
+      Cust.City := City;
+      Cust.County := County;
+      Cust."Country/Region Code" := "Country/Region Code";
+      FormatAddrCodeunit.Customer(AddrLines,Cust);
+      BarCode := FormatAddrCodeunit.PrintBarCode(0);
+    END;
+
+    PROCEDURE IncrNoPrinted@3();
+    BEGIN
+      FinChrgMemoIssue.IncrNoPrinted(Rec);
+    END;
+
+    PROCEDURE ShowDimensions@4();
+    BEGIN
+      DimMgt.ShowDimensionSet("Dimension Set ID",STRSUBSTNO('%1 %2',TABLECAPTION,"No."));
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

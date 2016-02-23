@@ -1,0 +1,52 @@
+OBJECT Table 60066 IF Dimension Mapping Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/14/15;
+    Time=21:05:30;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10         }
+    { 2   ;   ;YNSPIRE SD          ;Boolean        }
+    { 3   ;   ;YNSPIRE SW          ;Boolean        }
+    { 4   ;   ;PROPAC              ;Boolean        }
+    { 5   ;   ;A1 SMART(HR)        ;Boolean        }
+    { 6   ;   ;A1 STEER            ;Boolean        }
+    { 7   ;   ;NIMS(TMS)           ;Boolean        }
+    { 8   ;   ;FA                  ;Boolean        }
+    { 9   ;   ;IMACS               ;Boolean        }
+    { 10  ;   ;EPROC II            ;Boolean        }
+    { 11  ;   ;Others              ;Boolean        }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      [Version] : UPG13R2DEV
+      [Date]  : 31/07/2015
+      [Description] : Newly created table with 10 field(1..10).
+                      Dimension values is about to change in the new navision.
+                      This page will be used to obsolate the Mapping table when all the interface  system are update so aa no mapping is needed.
+                      After all the Interface system updated this mapping will be obsolate using the setup(IF Dimension Mapping Setup(63152)).
+                      Unmarking the interafces will make the interface system not to use mapping table.
+
+      [Signature] : SV
+    }
+    END.
+  }
+}
+

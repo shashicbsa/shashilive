@@ -1,0 +1,109 @@
+OBJECT Page 50010 Conversion Entity List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/19/15;
+    Time=20:55:16;
+    Modified=Yes;
+    Version List=YIMMACON,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table50004;
+    PageType=List;
+    CardPageID=Conversion Master Customer;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1000000026;1 ;ActionGroup;
+                      CaptionML=ENU=Customer }
+      { 1000000027;2 ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      RunObject=Page 50009;
+                      RunPageLink=Imacs Code=FIELD(Imacs Code);
+                      Visible=FALSE;
+                      Image=EditLines }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Propac Code" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="Eproc Code" }
+
+    { 1102159002;2;Field  ;
+                SourceExpr=Pymac }
+
+    { 1102159003;2;Field  ;
+                SourceExpr=FA }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=GL }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="Gport Code" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr=NAV }
+
+    { 1000000028;2;Field  ;
+                SourceExpr=Name }
+
+    { 1000000013;2;Field  ;
+                SourceExpr=NPWP;
+                Visible=true }
+
+    { 1000000015;2;Field  ;
+                SourceExpr=Address }
+
+    { 1000000017;2;Field  ;
+                SourceExpr=Currency }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Bank Code" }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Bank Name" }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Imacs Code";
+                Visible=TRUE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Mms Code";
+                Visible=false }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Tms Code";
+                Visible=TRUE }
+
+    { 1102159005;2;Field  ;
+                SourceExpr=Comp;
+                Visible=false }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //YIMMACON
+        LIST FORM FOR CONVERSION MASTER CUSTOMER
+      //SMDEV1.0
+      Fields Added from Conversion Master Vendor
+    }
+    END.
+  }
+}
+

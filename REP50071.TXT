@@ -1,0 +1,295 @@
+OBJECT Report 50071 Selling Out IF MKT Activities
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/17/16;
+    Time=17:40:41;
+    Modified=Yes;
+    Version List=CR001,ZZ;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   LineNo := 10000;
+                   Master_Setup.GET;
+                   Master_Setup2.GET;
+                   PP_Setup.GET;
+                   Cust_Posting.GET;
+                 END;
+
+    OnPreReport=VAR
+                  CustBankAcc@1000000000 : Record 287;
+                  LDia_Indicator@1000000001 : Dialog;
+                  LInt_Count@1000000002 : Integer;
+                  LInt_TotalRecs@1000000003 : Integer;
+                BEGIN
+                  //trial
+                  LDia_Indicator.OPEN('Creating Invoices @1@@@@@@@@@@@@@@@');
+                  LInt_Count := 1;
+                  //trial
+                  Imcas_Interface.RESET;
+                  Imcas_Interface.SETCURRENTKEY(Imcas_Interface."No.",Imcas_Interface."Dealer Code");
+                  //svImcas_Interface.SETRANGE(Imcas_Interface."Sales Type",Imcas_Interface."Sales Type"::"Other YMKI");
+                  //trial
+                  LInt_TotalRecs := Imcas_Interface.COUNT;
+                  //trial
+
+                  IF Imcas_Interface.FINDFIRST THEN REPEAT
+                    //trial
+                    LInt_Count := LInt_Count + 1;
+                    LDia_Indicator.UPDATE(1,ROUND(10000 / (LInt_TotalRecs / LInt_Count),1));
+                    //trial
+                    Sales_Header.RESET;
+                    Sales_Header.INIT;
+                    Sales_Header."Document Type" := Sales_Header."Document Type"::"Credit Memo";
+                    Sales_Header."No." := Nos.GetNextNo(Master_Setup2."OY_MC_Slip No.",WORKDATE,TRUE);
+                    Sales_Header."Reason Code" := Master_Setup."Reason (Sale as Purchase)";
+                    Sales_Header.INSERT(TRUE);
+                    Conversion_Cust.RESET;
+                    Conversion_Cust.SETRANGE(Conversion_Cust."Imacs Code",Imcas_Interface."Dealer Code");
+                    IF Conversion_Cust.FINDSET THEN BEGIN
+                      Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                      Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Transaction Date");
+                      Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                      ShipAdd.RESET;
+                      ShipAdd.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                      ShipAdd.SETRANGE(PPN,TRUE);
+                      IF (Imcas_Interface.NpwpBankCode = 'MC') THEN
+                        ShipAdd.SETRANGE("PPN M/C",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SP') THEN
+                        ShipAdd.SETRANGE("PPN S/P",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SV') THEN
+                        ShipAdd.SETRANGE("PPN Service",TRUE);
+                      ShipAdd.SETRANGE(Blocked,FALSE);
+                      IF ShipAdd.FINDSET THEN
+                        Sales_Header.VALIDATE("Ship-to Code",ShipAdd.Code);
+
+                      ShipAdd.RESET;
+                      ShipAdd.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                      ShipAdd.SETRANGE(PPH,TRUE);
+                      IF (Imcas_Interface.NpwpBankCode = 'MC') THEN
+                        ShipAdd.SETRANGE("PPH M/C",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SP') THEN
+                        ShipAdd.SETRANGE("PPH S/P",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SV') THEN
+                        ShipAdd.SETRANGE("PPH Service",TRUE);
+                      ShipAdd.SETRANGE(Blocked,FALSE);
+                      IF ShipAdd.FINDSET THEN
+                        Sales_Header.VALIDATE("New NPWP No.",ShipAdd.Code);
+                    END;
+                    Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Master_Setup2.ID_SP_EntityPostGrp); //UPG13R2DEV //SV
+                    //Sales_Header."Type Of Transaction" := Master_Setup2.OY_MC_TypeOfTran; //UPG13R2DEV SV
+                    Sales_Header."Type Of Transaction" := Imcas_Interface."Sales Type";
+                    Sales_Header."Order Date" := Imcas_Interface."Transaction Date";
+                    Sales_Header.VALIDATE(Sales_Header."Shipment Date",Imcas_Interface."Transaction Date");
+                    Sales_Header.VALIDATE(Sales_Header."Due Date",Imcas_Interface."Due Date");
+                    Sales_Header.VALIDATE(Sales_Header."Currency Code",Imcas_Interface.Currency);
+                    Sales_Header."No. Series" := Master_Setup2."ID_SP_Slip No.";
+                    Sales_Header."Posting No. Series" := PP_Setup."Posted Invoice Nos.";
+                    Sales_Header."Shipping No. Series" := PP_Setup."Posted Receipt Nos.";
+                    Sales_Header."Tax Invoice Date" := Imcas_Interface."Tax Invoice Date";
+                    Sales_Header.Interfaced := TRUE;
+                    Sales_Header.Incentive := TRUE;
+                    Sales_Header."Incentive Month" := DATE2DMY(Imcas_Interface."Transaction Date",2);
+                    //  IF Month >= 12 THEN
+                    //  Month := 11;
+                    //Sales_Header."Incentive Month" := Month + 1;
+                    //Sales_Header.VALIDATE(Sales_Header."Due Date",CALCDATE('CM+25D',Imcas_Interface."Invoice Date"));
+                    Sales_Header."External Document No." := Imcas_Interface."Ext.Doc.No.";
+                    Sales_Header."B/L Date" := Imcas_Interface."B/L Date";
+                    Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 1 Code",Imcas_Interface."Shortcut Dimension 1 Code");
+                    Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 2 Code",Imcas_Interface."Shortcut Dimension 2 Code");
+
+
+                    Conversion_Cust.RESET;
+                    Conversion_Cust.SETRANGE(Conversion_Cust."Imacs Code",Imcas_Interface."Dealer Code");
+                    IF Conversion_Cust.FINDSET THEN BEGIN
+                      CustBankAcc.RESET;
+                      CustBankAcc.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                      IF (Imcas_Interface.NpwpBankCode = 'MC') THEN
+                        CustBankAcc.SETRANGE("M/C",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SP') THEN
+                        CustBankAcc.SETRANGE("S/P",TRUE)
+                      ELSE IF (Imcas_Interface.NpwpBankCode = 'SV') THEN
+                        CustBankAcc.SETRANGE(Service,TRUE);
+                      CustBankAcc.SETFILTER("Valid Upto",'%1|>%2',0D,TODAY);
+                      IF CustBankAcc.FINDSET THEN
+                        Sales_Header.VALIDATE("Bank Code",CustBankAcc.Code);
+                    END;
+
+
+                    Sales_Header.VALIDATE(UID,Master_Setup2.OY_MC_IF_UID); //UPG13R2DEV //SV
+                    IF Imcas_Interface."WHT Busi Posting Group" <> '' THEN
+                      Sales_Header.VALIDATE("WHT Business Posting Group",Imcas_Interface."WHT Busi Posting Group");
+
+                    Sales_Header.VALIDATE(MKT,TRUE);
+                    Sales_Header.MODIFY;
+
+                    //IF Sales_Header."Ship-to Code" <> '' THEN BEGIN   //PPNPPHDEV
+                    IF Sales_Header."New NPWP No." <> '' THEN BEGIN   //PPNPPHDEV
+                      Cust.GET(Sales_Header."Sell-to Customer No.");
+                      IF Imcas_Interface."WHT Busi Posting Group" <> '' THEN BEGIN
+                        IF Master_Setup."WHT Buss. for Selling Inc" = Imcas_Interface."WHT Busi Posting Group" THEN
+                          CheckSlab(Imcas_Interface,TRUE)
+                        ELSE
+                          CreateLine(Sales_Header,Imcas_Interface,Imcas_Interface.Amount,Master_Setup."WHT Prod. SO Npwp");
+                      END ELSE BEGIN
+                        IF Master_Setup."WHT Buss. for Selling Inc" = Cust."WHT Business Posting Group" THEN
+                          CheckSlab(Imcas_Interface,TRUE)
+                        ELSE
+                          CreateLine(Sales_Header,Imcas_Interface,Imcas_Interface.Amount,Master_Setup."WHT Prod. SO Npwp");
+                      END;
+                    END ELSE BEGIN
+                      IF Imcas_Interface."WHT Busi Posting Group" <> '' THEN BEGIN
+                        IF Master_Setup."WHT Buss. for Selling Inc" = Imcas_Interface."WHT Busi Posting Group" THEN
+                          CheckSlab(Imcas_Interface,FALSE)
+                        ELSE
+                          CreateLine(Sales_Header,Imcas_Interface,Imcas_Interface.Amount,Master_Setup."WHT Prod. SO");
+                      END ELSE BEGIN
+                        Cust.GET(Sales_Header."Sell-to Customer No.");
+                        IF Master_Setup."WHT Buss. for Selling Inc" = Cust."WHT Business Posting Group" THEN
+                          CheckSlab(Imcas_Interface,FALSE)
+                        ELSE
+                          CreateLine(Sales_Header,Imcas_Interface,Imcas_Interface.Amount,Master_Setup."WHT Prod. SO");
+                      END;
+                    END;
+                    Imcas_Interface.DELETE;
+                  UNTIL (Imcas_Interface.NEXT = 0);
+                  //trial
+                  LDia_Indicator.CLOSE;
+                  //trial
+                END;
+
+    OnPostReport=BEGIN
+                   MESSAGE('Process Completed Successfully');
+                 END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Sales_Header@1000000000 : Record 36;
+      Sales_Line@1000000001 : Record 37;
+      Conversion_Cust@1000000002 : Record 50004;
+      LineNo@1000000003 : Integer;
+      Imcas_Interface@1000000004 : Record 50009;
+      Nos@1000000006 : Codeunit 396;
+      Master_Setup@1000000007 : Record 50008;
+      PP_Setup@1000000008 : Record 312;
+      Month@1000000005 : Integer;
+      Cust_Posting@1000000009 : Record 50012;
+      Cust@1000000010 : Record 18;
+      ShipAdd@1102159001 : Record 222;
+      Master_Setup2@1000000011 : Record 60053;
+      Text001@1000000012 : TextConst 'ENU=Due Date should Not be Less than the Document  Date and Posting Date';
+      Text002@1000000013 : TextConst 'ENU=Due Date should Not be Less than the Order Date,Document  Date and Posting Date';
+
+    PROCEDURE CheckSlab@1000000005(Imacs_Rec@1000000000 : Record 50009;Flag@1000000008 : Boolean);
+    VAR
+      WHT_Slab@1000000003 : Record 50031;
+      Count_Slab@1000000002 : Integer;
+      NoofRecord@1000000001 : Integer;
+      i@1000000004 : Integer;
+      Amount_Slab@1000000005 : Decimal;
+      Count_Loop@1000000006 : Integer;
+      y@1000000007 : Integer;
+    BEGIN
+      Amount_Slab := Imacs_Rec.Amount;
+      WHT_Slab.RESET;
+      Count_Slab := WHT_Slab.COUNT;
+      Count_Loop := Count_Slab;
+      i := 1;
+      y := 1;
+      FOR i := 1 TO Count_Slab DO BEGIN
+        IF y = Count_Slab - (Count_Loop -1) THEN BEGIN
+          WHT_Slab.RESET;
+          WHT_Slab.SETRANGE(WHT_Slab."Entry No.",y);
+          IF WHT_Slab.FINDFIRST THEN BEGIN
+            IF y <> Count_Slab THEN BEGIN
+              IF Imacs_Rec.Amount > WHT_Slab."Actual Amount Taken" THEN BEGIN
+                IF Flag THEN
+                  CreateLine(Sales_Header,Imacs_Rec,WHT_Slab."Actual Amount Taken",WHT_Slab."WHT Prod. Posting Group Npwp")
+                ELSE
+                  CreateLine(Sales_Header,Imacs_Rec,WHT_Slab."Actual Amount Taken",WHT_Slab."WHT Prod. Posting Group IN");
+                Imacs_Rec.Amount := Imacs_Rec.Amount - WHT_Slab."Actual Amount Taken";
+                Count_Loop := Count_Loop -1;
+                y := y+1;
+              END ELSE BEGIN
+                IF Flag THEN BEGIN
+                  CreateLine(Sales_Header,Imacs_Rec,Imacs_Rec.Amount,WHT_Slab."WHT Prod. Posting Group Npwp");
+                  EXIT;
+                END ELSE BEGIN
+                  CreateLine(Sales_Header,Imacs_Rec,Imacs_Rec.Amount,WHT_Slab."WHT Prod. Posting Group IN");
+                  EXIT;
+                END;
+              END;
+            END ELSE BEGIN
+              IF Flag THEN
+                CreateLine(Sales_Header,Imacs_Rec,Imacs_Rec.Amount,WHT_Slab."WHT Prod. Posting Group Npwp")
+              ELSE
+                CreateLine(Sales_Header,Imacs_Rec,Imacs_Rec.Amount,WHT_Slab."WHT Prod. Posting Group IN");
+            END;
+          END;
+        END;
+      END;
+    END;
+
+    PROCEDURE CreateLine@1000000000(SalesHeader_Rec@1000000001 : Record 36;Imacs_RecNew@1000000002 : Record 50009;Final_Amount@1000000003 : Decimal;Prod_Group@1000000004 : Code[10]);
+    VAR
+      SalesLine_Rec@1000000000 : Record 37;
+    BEGIN
+      SalesLine_Rec.RESET;
+      SalesLine_Rec.INIT;
+      SalesLine_Rec."Document Type" :=SalesHeader_Rec."Document Type";
+      SalesLine_Rec."Document No." := SalesHeader_Rec."No.";
+      SalesLine_Rec."Line No." := LineNo;
+      SalesLine_Rec.INSERT(TRUE);
+      SalesLine_Rec.Type := SalesLine_Rec.Type::"G/L Account";
+      SalesLine_Rec.VALIDATE("No.",Imacs_RecNew."Account No.");
+      SalesLine_Rec.VALIDATE("Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+      SalesLine_Rec.VALIDATE(Quantity,1);
+      SalesLine_Rec.VALIDATE("Unit Price",Final_Amount);
+      SalesLine_Rec.VALIDATE("Shortcut Dimension 1 Code",Imacs_RecNew."Shortcut Dimension 1 Code");
+      SalesLine_Rec.VALIDATE("Shortcut Dimension 2 Code",Imacs_RecNew."Shortcut Dimension 2 Code");
+      SalesLine_Rec.ValidateShortcutDimCode(3,Imacs_RecNew."Shortcut Dimension 3 Code"); //UPG13R2DEV SV
+      SalesLine_Rec.Interfaced := TRUE;
+      SalesLine_Rec.Narration := Imacs_RecNew.Narration; //YIMMIAFP
+      SalesLine_Rec.AreaCode := Imacs_RecNew."WHT Area Code";//YIMMIAFP
+      //SalesLine_Rec.VALIDATE(SalesLine_Rec."WHT Product Posting Group",Prod_Group);//YIMMIAFP    //UPG13R2DEV //SV fixed for this I/F from master
+      SalesLine_Rec.VALIDATE("WHT Business Posting Group",Sales_Header."WHT Business Posting Group"); //UPG13R2DEV //SV
+      SalesLine_Rec.VALIDATE("WHT Product Posting Group",Imacs_RecNew."WHT Prod Posting Group"); //UPG13R2DEV //SV
+      SalesLine_Rec.VALIDATE("Tax Invoice No.",Imacs_RecNew."Tax Invoice No.");
+      SalesLine_Rec.MODIFY;
+      LineNo += 10000;
+    END;
+
+    BEGIN
+    {
+      [REF] : UPG13R2DEV
+      [SIGN]: SV
+      [DESC]: Report created for processing of MKT Activities interfaced invoices.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

@@ -1,0 +1,36 @@
+OBJECT Table 60059 Tax Mapping
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/08/15;
+    Time=15:46:26;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Interface Tax       ;Code10        ;TableRelation="VAT Product Posting Group".Code }
+    { 2   ;   ;Purch. Inv. Tax     ;Code10        ;TableRelation="VAT Product Posting Group".Code }
+  }
+  KEYS
+  {
+    {    ;Interface Tax,Purch. Inv. Tax           ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Table created to Map Vat Product Posting Group of Interface Data and Purchase Invoice Data.
+    }
+    END.
+  }
+}
+

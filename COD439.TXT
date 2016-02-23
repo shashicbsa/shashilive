@@ -1,0 +1,2934 @@
+OBJECT Codeunit 439 Approvals Management
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/07/15;
+    Time=12:31:01;
+    Modified=Yes;
+    Version List=NAVW17.10.00.36035,ARC,RVATI,RVATO,TBI1.0,Mel1.0,UPG09R2,UPG13,UPG13R2,CAUYIMM,SMDEV1.0,PPNPPHDEV,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 454=imd,
+                TableData 455=imd,
+                TableData 456=imd,
+                TableData 457=imd,
+                TableData 458=imd;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst 'ENU=%1 %2 requires further approval.\\Approval request entries have been created.;ENA=%1 %2 requires further approval.\\Approval request entries have been created.';
+      Text002@1001 : TextConst 'ENU=%1 %2 approval request cancelled.;ENA=%1 %2 approval request cancelled.';
+      Text003@1002 : TextConst 'ENU=%1 %2 has been automatically approved and released.;ENA=%1 %2 has been automatically approved and released.';
+      Text004@1003 : TextConst 'ENU=Approval Setup not found.;ENA=Approval Setup not found.';
+      Text005@1005 : TextConst 'ENU=User ID %1 does not exist in the User Setup table.;ENA=User ID %1 does not exist in the User Setup table.';
+      Text006@1006 : TextConst 'ENU=Approver ID %1 does not exist in the User Setup table.;ENA=Approver ID %1 does not exist in the User Setup table.';
+      Text007@1007 : TextConst 'ENU=%1 for %2  does not exist in the User Setup table.;ENA=%1 for %2  does not exist in the User Setup table.';
+      Text008@1008 : TextConst 'ENU=User ID %1 does not exist in the User Setup table for %2 %3.;ENA=User ID %1 does not exist in the User Setup table for %2 %3.';
+      Text013@1009 : TextConst '@@@="%1=document type, %2=document no., e.g. Order 321 must be approved...";ENU=%1 %2 must be approved and released before you can perform this action.;ENA=%1 %2 must be approved and released before you can perform this action.';
+      Text010@1011 : TextConst 'ENU=Approver not found.;ENA=Approver not found.';
+      Text014@1013 : TextConst 'ENU=The %1 approval entries have now been cancelled.;ENA=The %1 approval entries have now been cancelled.';
+      Text015@1014 : TextConst 'ENU=Document No - %1 does not have any Lines.;ENA=The %1 %2 does not have any Lines.';
+      Text022@1016 : TextConst 'ENU=There has to be a %1 on %2 %3.;ENA=There has to be a %1 on %2 %3.';
+      AddApproversTemp@1020 : TEMPORARY Record 465;
+      Text023@1019 : TextConst 'ENU="A template with a blank Approval Type or with Limit Type ""Credit Limit"", must have additional approvers. ";ENA="A template with a blank Approval Type or with Limit Type ""Credit Limit"", must have additional approvers. "';
+      Text024@1021 : TextConst 'ENU=%1 are only for purchase request orders.;ENA=%1 are only for purchase request orders.';
+      Text025@1022 : TextConst 'ENU=%1 is not a valid limit type for %2 %3.;ENA=%1 is not a valid limit type for %2 %3.';
+      Text026@1023 : TextConst 'ENU=%1 is only a valid limit type for %2.;ENA=%1 is only a valid limit type for %2.';
+      Text027@1024 : TextConst 'ENU=When Approval Type is blank, additional approvers must be added to the template.;ENA=When Approval Type is blank, additional approvers must be added to the template.';
+      Text028@1012 : TextConst 'ENU=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order;ENA=Quote,Order,Invoice,CR/Adj Note,Blanket Order,Return Order';
+      Text100@1048 : TextConst 'ENU=S-QUOTE;ENA=S-QUOTE';
+      Text101@1047 : TextConst 'ENU=Sales Quote Approval;ENA=Sales Quote Approval';
+      Text102@1046 : TextConst 'ENU=S-ORDER;ENA=S-ORDER';
+      Text103@1045 : TextConst 'ENU=Sales Order Approval;ENA=Sales Order Approval';
+      Text104@1044 : TextConst 'ENU=S-INVOICE;ENA=S-INVOICE';
+      Text105@1043 : TextConst 'ENU=Sales Invoice Approval;ENA=Sales Invoice Approval';
+      Text106@1042 : TextConst 'ENU=S-CREDIT MEMO;ENA=S-CR/ADJ NOTE';
+      Text107@1041 : TextConst 'ENU=Sales Credit Memo Approval;ENA=Sales CR/Adj Note Approval';
+      Text108@1040 : TextConst 'ENU=S-RETURN ORDER;ENA=S-RETURN ORDER';
+      Text109@1039 : TextConst 'ENU=Sales Return Order Approval;ENA=Sales Return Order Approval';
+      Text110@1038 : TextConst 'ENU=S-BLANKET ORDER;ENA=S-BLANKET ORDER';
+      Text111@1037 : TextConst 'ENU=Sales Blanket Order Approval;ENA=Sales Blanket Order Approval';
+      Text112@1036 : TextConst 'ENU=P-QUOTE;ENA=P-QUOTE';
+      Text113@1035 : TextConst 'ENU=Purchase Quote Approval;ENA=Purchase Quote Approval';
+      Text114@1034 : TextConst 'ENU=P-ORDER;ENA=P-ORDER';
+      Text115@1033 : TextConst 'ENU=Purchase Order Approval;ENA=Purchase Order Approval';
+      Text116@1032 : TextConst 'ENU=P-INVOICE;ENA=P-INVOICE';
+      Text117@1031 : TextConst 'ENU=Purchase Invoice Approval;ENA=Purchase Invoice Approval';
+      Text118@1030 : TextConst 'ENU=P-CREDIT MEMO;ENA=P-CR/ADJ NOTE';
+      Text119@1029 : TextConst 'ENU=Purchase Credit Memo Approval;ENA=Purchase CR/Adj Note Approval';
+      Text120@1028 : TextConst 'ENU=P-RETURN ORDER;ENA=P-RETURN ORDER';
+      Text121@1027 : TextConst 'ENU=Purchase Return Order Approval;ENA=Purchase Return Order Approval';
+      Text122@1026 : TextConst 'ENU=P-BLANKET ORDER;ENA=P-BLANKET ORDER';
+      Text123@1025 : TextConst 'ENU=Purchase Blanket Order Approval;ENA=Purchase Blanket Order Approval';
+      Text124@1051 : TextConst 'ENU=S-O-CREDITLIMIT;ENA=S-O-CREDITLIMIT';
+      Text125@1052 : TextConst 'ENU=Sales Order Credit Limit Apporval;ENA=Sales Order Credit Limit Apporval';
+      Text126@1053 : TextConst 'ENU=S-I-CREDITLIMIT;ENA=S-I-CREDITLIMIT';
+      Text127@1054 : TextConst 'ENU=Sales Invoice Credit Limit Apporval;ENA=Sales Invoice Credit Limit Apporval';
+      Text128@1055 : TextConst 'ENU=%1 %2 has been automatically approved. Status changed to Pending Prepayment.;ENA=%1 %2 has been automatically approved. Status changed to Pending Prepayment.';
+      Text129@1004 : TextConst 'ENU=No Approval Templates are enabled for document type %1.;ENA=No Approval Templates are enabled for document type %1.';
+      IsOpenStatusSet@1017 : Boolean;
+      Text130@1010 : TextConst 'ENU=The approval request cannot be canceled because the order has already been released. To  modify this order, you must reopen it.;ENA=The approval request cannot be cancelled because the order has already been released. To modify this order, you must reopen it.';
+      VAT_LCY@1000000000 : Decimal;
+      Base_LCY@1000000001 : Decimal;
+      MasterSetUp@1000000002 : Record 50008;
+      CheckValidation@1000000003 : Codeunit 50022;
+      QuoteList@1000000004 : Record 50024;
+      QuoteList11@1000000005 : Record 50024;
+      SalHdr@1000000006 : Record 36;
+      Obj@1000000007 : Record 2000000001;
+      Quotelist_Update@1102159001 : Record 50024;
+      DispMessage@1018 : Boolean;
+      UnpostedPrepaymentExistsMsg@1015 : TextConst 'ENU=%1 There are unposted prepayment amounts on the document of type %2 with the number %3.;ENA=%1 There are unposted prepayment amounts on the document of type %2 with the number %3.';
+      "---UPG13R2---"@1102159002 : TextConst;
+      Text501@1102159003 : TextConst 'ENU=Document %1 requires further approval.\\Approval request entries have been created.';
+
+    PROCEDURE SendSalesApprovalRequest@1(VAR SalesHeader@1000 : Record 36) : Boolean;
+    VAR
+      TemplateRec@1005 : Record 464;
+      ApprovalSetup@1001 : Record 452;
+      MessageType@1003 : ' ,AutomaticPrePayment,AutomaticRelease,RequiresApproval';
+      Sales_Line@1000000000 : Record 37;
+      Master_Setup@1000000001 : Record 50008;
+      VAT_Detail@1000000002 : Record 50015;
+      Text50000@1000000003 : TextConst 'ENU=Please Print The GL Slip First';
+      VatDetails@1000000005 : Record 50015;
+      SalesCrMemo@1000000004 : Record 114;
+      SalesH@1000000006 : Record 36;
+      Espt_Detail@1000000007 : Record 50016;
+    BEGIN
+
+      // UPG09R2.begin
+      //Mel-SalesAPP-RY
+
+      IF NOT (SalesHeader."Document Type"=SalesHeader."Document Type"::Quote) THEN
+       BEGIN
+       IF (SalesHeader."No. Printed"=0)  THEN  // CAUYIMM
+         ERROR(Text50000);  // CAUYIMM
+
+
+
+
+        CheckValidation.CheckSalesValidation(SalesHeader,TRUE);
+
+       END;
+
+      //Mel-SalesAPP-RY
+      // UPG09R2.end
+      TestSetup;
+      WITH SalesHeader DO BEGIN
+        IF Status <> Status::Open THEN
+          EXIT(FALSE);
+
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        IF NOT SalesLinesExist THEN
+          ERROR(Text015,"No.");
+
+        CalcInvDiscForHeader;
+
+        TemplateRec.SETCURRENTKEY("Table ID","Document Type",Enabled);
+        TemplateRec.SETRANGE("Table ID",DATABASE::"Sales Header");
+        TemplateRec.SETRANGE("Document Type","Document Type");
+        TemplateRec.SETRANGE(Enabled,TRUE);
+        IF TemplateRec.FIND('-') THEN BEGIN
+          REPEAT
+            IF NOT FindApproverSales(SalesHeader,ApprovalSetup,TemplateRec) THEN
+              ERROR(Text010);
+          UNTIL TemplateRec.NEXT = 0;
+          FinishApprovalEntrySales(SalesHeader,ApprovalSetup,MessageType);
+          CASE MessageType OF
+            MessageType::AutomaticPrePayment:
+              IF TestSalesPrepayment(SalesHeader) THEN
+                MESSAGE(
+                  UnpostedPrepaymentExistsMsg,
+                  STRSUBSTNO(Text128,"Document Type","No."),
+                  "Document Type",
+                  "No.")
+              ELSE
+                MESSAGE(Text128,"Document Type","No.");
+            MessageType::AutomaticRelease:
+              MESSAGE(Text003,"Document Type","No.");
+            MessageType::RequiresApproval:
+              //MESSAGE(Text001,"Document Type","No."); //SMDEV1.0
+              MESSAGE(Text501,"No."); //SMDEV1.0
+          END;
+          // UPG09R2.begin
+
+          //YIMMAVATIST
+          //UPG13R2DEV.begin
+                Master_Setup.GET;
+                IF (SalesHeader."Reason Code" = Master_Setup."Reason (Sale as Purchase)") THEN BEGIN
+
+                  Sales_Line.RESET;
+                  Sales_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+
+                  Sales_Line.SETRANGE(Sales_Line."Document Type",SalesHeader."Document Type");
+                  Sales_Line.SETRANGE(Sales_Line."Document No.",SalesHeader."No.");
+
+
+                  //Sales_Line.SETFILTER(Sales_Line."VAT %",'<>%1',0);
+
+                  //The Above Line is Commented Because It May Possible That First User Create the Line With
+                  //VAT and Then After User Remove VAT from the Line.So Check for all is needed.
+
+
+                  IF Sales_Line.FINDSET(FALSE,FALSE) THEN
+                   REPEAT
+                    IF (Sales_Line."VAT %"<>0) THEN
+                      BEGIN
+                          Sales_Line.TESTFIELD(Sales_Line."Tax Invoice No.");
+                          Sales_Line.TESTFIELD(Sales_Line."Tax Invoice Date");
+                      END;
+                   UNTIL Sales_Line.NEXT = 0;
+                  END;
+          //UPG13R2DEV.end
+
+          {
+          Master_Setup.GET;
+          IF (SalesHeader."Reason Code" = Master_Setup."Reason (Sale as Purchase)") THEN BEGIN
+
+            Sales_Line.RESET;
+            Sales_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+
+            Sales_Line.SETRANGE(Sales_Line."Document Type",SalesHeader."Document Type");
+            Sales_Line.SETRANGE(Sales_Line."Document No.",SalesHeader."No.");
+
+
+            //Sales_Line.SETFILTER(Sales_Line."VAT %",'<>%1',0);
+
+            //The Above Line is Commented Because It May Possible That First User Create the Line With
+            //VAT and Then After User Remove VAT from the Line.So Check for all is needed.
+
+
+            IF Sales_Line.FINDSET(FALSE,FALSE) THEN
+             REPEAT
+              IF (Sales_Line."VAT %"<>0) THEN
+                BEGIN
+                    Sales_Line.TESTFIELD(Sales_Line."Tax Invoice No.");
+                    Sales_Line.TESTFIELD(Sales_Line."Tax Invoice Date");
+               // END;  //SMDEV1.0
+              VAT_Detail.RESET;
+              VAT_Detail.SETRANGE(VAT_Detail."Document Type",Sales_Line."Document Type");
+              VAT_Detail.SETRANGE(VAT_Detail."Document No.",Sales_Line."Document No.");
+              VAT_Detail.SETRANGE(VAT_Detail."Line No.",Sales_Line."Line No.");
+
+             IF VAT_Detail.FIND('-') THEN
+                       ModifyVATEntryCr(VAT_Detail,Sales_Line,SalesHeader."Document Date")
+                  ELSE
+
+                       BEGIN
+                         Espt_Detail.RESET;
+                         Espt_Detail.SETRANGE(Espt_Detail."Document No.",Sales_Line."Document No.");
+                         Espt_Detail.SETRANGE(Espt_Detail."Document Type",Sales_Line."Document Type");
+                         Espt_Detail.SETRANGE(Espt_Detail."Line No.",Sales_Line."Line No.");
+
+                         //Espt_Detail.SETRANGE(Espt_Detail."Tax Invoice No.",Purchase_Line."Tax Invoice No.");
+
+                         //Espt_Detail.SETRANGE(Espt_Detail.Amount,Purchase_Line.Amount);
+
+                         IF NOT Espt_Detail.FINDFIRST THEN
+                                CreateVAtEntryCr(Sales_Line,SalesHeader."Type Of Transaction",SalesHeader."Posting Date",
+                                  SalesHeader."Currency Code",SalesHeader."Due Date");
+
+                       END;
+                END;  //SMDEV1.0
+             UNTIL Sales_Line.NEXT = 0;
+
+            IF (SalesHeader."Document Type"=SalesHeader."Document Type"::Invoice) AND
+                 (SalesHeader.ActualCreditMemo=FALSE) THEN
+             BEGIN
+              SalesCrMemo.RESET;
+                IF (SalesCrMemo.GET(SalesHeader."Applies-to Doc. No.")) THEN
+                  BEGIN
+                    VatDetails.RESET;
+                    VatDetails.SETRANGE(VatDetails."Document No.",SalesCrMemo."Pre-Assigned No.");
+                    VatDetails.SETRANGE(VatDetails."Document Type",VatDetails."Document Type"::"Credit Memo");
+
+                   IF VatDetails.FINDFIRST THEN
+                     REPEAT
+                        VatDetails.CorrectionEntry:=TRUE;
+                        VatDetails.MODIFY;
+                     UNTIL(VatDetails.NEXT=0)
+
+                  END;
+
+
+
+             END;
+
+
+
+           END;
+          //YIMMAVATIEN
+          // UPG09R2.end
+          }
+        END ELSE
+          ERROR(STRSUBSTNO(Text129,"Document Type"));
+        EXIT(TRUE);
+      END;
+    END;
+
+    PROCEDURE CancelSalesApprovalRequest@2(VAR SalesHeader@1000 : Record 36;ShowMessage@1003 : Boolean;ManualCancel@1004 : Boolean) : Boolean;
+    VAR
+      ApprovalEntry@1002 : Record 454;
+      ApprovalSetup@1006 : Record 452;
+      AppManagement@1001 : Codeunit 440;
+      SendMail@1007 : Boolean;
+      MailCreated@1005 : Boolean;
+    BEGIN
+      TestSetup;
+      IF SalesHeader.Status <> SalesHeader.Status::Released THEN BEGIN
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        WITH SalesHeader DO BEGIN
+          ApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.","Sequence No.");
+          ApprovalEntry.SETRANGE("Table ID",DATABASE::"Sales Header");
+          ApprovalEntry.SETRANGE("Document Type","Document Type");
+          ApprovalEntry.SETRANGE("Document No.","No.");
+          ApprovalEntry.SETFILTER(Status,'<>%1&<>%2',ApprovalEntry.Status::Rejected,ApprovalEntry.Status::Canceled);
+          SendMail := FALSE;
+          IF ApprovalEntry.FIND('-') THEN BEGIN
+            REPEAT
+              IF (ApprovalEntry.Status = ApprovalEntry.Status::Open) OR
+                 (ApprovalEntry.Status = ApprovalEntry.Status::Approved)
+              THEN
+                SendMail := TRUE;
+              ApprovalEntry.Status := ApprovalEntry.Status::Canceled;
+              ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+              ApprovalEntry."Last Modified By ID" := USERID;
+              ApprovalEntry.MODIFY;
+              IF ApprovalSetup.Cancellations AND ShowMessage AND SendMail THEN BEGIN
+                AppManagement.SendSalesCancellationsMail(SalesHeader,ApprovalEntry);
+                MailCreated := TRUE;
+                SendMail := FALSE;
+              END;
+            UNTIL ApprovalEntry.NEXT = 0;
+            IF MailCreated THEN BEGIN
+              AppManagement.SendMail;
+              MailCreated := FALSE;
+            END;
+          END;
+
+          IF ManualCancel OR (NOT ManualCancel AND NOT (Status = Status::Released)) THEN
+            Status := Status::Open;
+          MODIFY(TRUE);
+        END;
+        IF ShowMessage THEN
+          MESSAGE(Text002,SalesHeader."Document Type",SalesHeader."No.");
+      END
+      ELSE
+        MESSAGE(Text130);
+    END;
+
+    PROCEDURE SendPurchaseApprovalRequest@3(VAR PurchaseHeader@1000 : Record 38) : Boolean;
+    VAR
+      TemplateRec@1004 : Record 464;
+      ApprovalSetup@1001 : Record 452;
+      MessageType@1002 : ' ,AutomaticPrePayment,AutomaticRelease,RequiresApproval';
+      Purchase_Line@1000000000 : Record 39;
+      Master_Setup1@1000000001 : Record 50008;
+      VAT_Detail@1000000002 : Record 50015;
+      Text50000@1000000003 : TextConst 'ENU=Please Print The GL Slip First';
+      PurChaseInvHeader@1000000005 : Record 122;
+      VATDetails@1000000004 : Record 50015;
+      PurchH@1000000006 : Record 38;
+      Espt_Detail@1000000007 : Record 50016;
+    BEGIN
+      // UPG09R2.begin
+      //Mel-PurchaseAPP-RY
+
+      IF NOT (PurchaseHeader."Document Type"=PurchaseHeader."Document Type"::Quote)
+       AND NOT ((PurchaseHeader."Document Type"=PurchaseHeader."Document Type"::Order)) THEN
+
+       BEGIN
+        IF (PurchaseHeader."No. Printed"=0) THEN // CAUYIMM
+         ERROR(Text50000); // CAUYIMM
+
+        CheckValidation.CheckPurchaseValidation(PurchaseHeader,TRUE);
+
+       END;
+
+      //Mel-PurchaseAPP-RY
+      // UPG09R2.end
+      TestSetup;
+      WITH PurchaseHeader DO BEGIN
+        IF Status <> Status::Open THEN
+          EXIT(FALSE);
+
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        IF NOT PurchLinesExist THEN
+          ERROR(Text015,"No.");
+
+        CalcInvDiscForHeader;
+
+        TemplateRec.SETCURRENTKEY("Table ID","Document Type",Enabled);
+        TemplateRec.SETRANGE("Table ID",DATABASE::"Purchase Header");
+        TemplateRec.SETRANGE("Document Type","Document Type");
+        TemplateRec.SETRANGE(Enabled,TRUE);
+        IF TemplateRec.FIND('-') THEN BEGIN
+          REPEAT
+            IF TemplateRec."Limit Type" = TemplateRec."Limit Type"::"Credit Limits" THEN BEGIN
+              ERROR(STRSUBSTNO(Text025,FORMAT(TemplateRec."Limit Type"),FORMAT("Document Type"),
+                  "No."));
+            END ELSE BEGIN
+              IF NOT FindApproverPurchase(PurchaseHeader,ApprovalSetup,TemplateRec) THEN
+                ERROR(Text010);
+            END;
+          UNTIL TemplateRec.NEXT = 0;
+          FinishApprovalEntryPurchase(PurchaseHeader,ApprovalSetup,MessageType);
+          CASE MessageType OF
+            MessageType::AutomaticPrePayment:
+              IF TestPurchasePrepayment(PurchaseHeader) THEN
+                MESSAGE(
+                  UnpostedPrepaymentExistsMsg,
+                  STRSUBSTNO(Text128,"Document Type","No."),
+                  "Document Type",
+                  "No.")
+              ELSE
+                MESSAGE(Text128,"Document Type","No.");
+            MessageType::AutomaticRelease:
+              MESSAGE(Text003,"Document Type","No.");
+            MessageType::RequiresApproval:
+              //MESSAGE(Text001,"Document Type","No."); //SMDEV1.0
+              MESSAGE(Text501,"No."); //SMDEV1.0
+          END;
+
+          // UPG09R2.begin
+          //YIMMAVATIST
+
+          Master_Setup1.GET;
+
+          IF NOT (PurchaseHeader."Reason Code" = Master_Setup1."Reason (Purchase as Sale)") THEN
+           BEGIN
+              Purchase_Line.RESET;
+              Purchase_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+              Purchase_Line.SETRANGE(Purchase_Line."Document Type",PurchaseHeader."Document Type");
+              Purchase_Line.SETRANGE(Purchase_Line."Document No.",PurchaseHeader."No.");
+
+
+
+              // Purchase_Line.SETFILTER(Purchase_Line."VAT %",'<>%1',0);
+
+              //Purchase_Line.SETFILTER(Purchase_Line."VAT %",'<>%1',0);
+              //The Above Line is Commented Because It May Possible That First User Create the Line With
+              //VAT and Then After User Remove VAT from the Line.So Check for all is needed.
+
+
+              IF Purchase_Line.FINDSET(FALSE,FALSE) THEN REPEAT
+
+               IF (Purchase_Line."VAT %"<>0) THEN
+                 BEGIN
+                  Purchase_Line.TESTFIELD(Purchase_Line."Tax Invoice No.");
+                  Purchase_Line.TESTFIELD(Purchase_Line."Tax Invoice Date");
+
+
+                  VAT_Detail.RESET;
+                  VAT_Detail.SETRANGE(VAT_Detail."Document Type",Purchase_Line."Document Type");
+                  VAT_Detail.SETRANGE(VAT_Detail."Document No.",Purchase_Line."Document No.");
+                  VAT_Detail.SETRANGE(VAT_Detail."Line No.",Purchase_Line."Line No.");
+
+                   IF VAT_Detail.FIND('-') THEN
+                          ModifyVATEntry(VAT_Detail,Purchase_Line,PurchaseHeader."Document Date")
+                     ELSE
+                       BEGIN
+                         Espt_Detail.RESET;
+                         Espt_Detail.SETRANGE(Espt_Detail."Document No.",Purchase_Line."Document No.");
+                         Espt_Detail.SETRANGE(Espt_Detail."Document Type",Purchase_Line."Document Type");
+                         Espt_Detail.SETRANGE(Espt_Detail."Line No.",Purchase_Line."Line No.");
+
+                         //Espt_Detail.SETRANGE(Espt_Detail."Tax Invoice No.",Purchase_Line."Tax Invoice No.");
+
+                         //Espt_Detail.SETRANGE(Espt_Detail.Amount,Purchase_Line.Amount);
+
+                         IF NOT Espt_Detail.FINDFIRST THEN
+                            CreateVAtEntry(Purchase_Line,PurchaseHeader."Type Of Transaction",PurchaseHeader."Document Date",
+                                    PurchaseHeader."Currency Code",PurchaseHeader."Due Date");
+                       END;
+                 END;
+              UNTIL (Purchase_Line.NEXT = 0);
+
+
+              IF (PurchaseHeader."Document Type"=PurchaseHeader."Document Type"::"Credit Memo") AND
+                   (PurchaseHeader.ActualCreditMemo=FALSE) THEN
+                BEGIN
+                  PurChaseInvHeader.RESET;
+                  IF PurChaseInvHeader.GET(PurchaseHeader."Applies-to Doc. No.") THEN
+                    BEGIN
+                      VATDetails.RESET;
+                      VATDetails.SETRANGE(VATDetails."Document Type",VATDetails."Document Type"::Invoice);
+                      VATDetails.SETRANGE(VATDetails."Document No.",PurChaseInvHeader."Pre-Assigned No.");
+                      IF VATDetails.FINDFIRST THEN
+                         REPEAT
+                           VATDetails.CorrectionEntry:=TRUE;
+                            VATDetails.MODIFY;
+                         UNTIL(VATDetails.NEXT=0)
+
+                    END;
+
+                END;
+
+           END;
+
+          //YIMMAVATIEN
+          // UPG09R2.end
+        END ELSE
+          ERROR(STRSUBSTNO(Text129,"Document Type"));
+        EXIT(TRUE);
+      END;
+    END;
+
+    PROCEDURE CancelPurchaseApprovalRequest@4(VAR PurchaseHeader@1000 : Record 38;ShowMessage@1003 : Boolean;ManualCancel@1005 : Boolean) : Boolean;
+    VAR
+      ApprovalEntry@1002 : Record 454;
+      ApprovalSetup@1007 : Record 452;
+      AppManagement@1001 : Codeunit 440;
+      SendMail@1004 : Boolean;
+      MailCreated@1006 : Boolean;
+    BEGIN
+      TestSetup;
+      IF PurchaseHeader.Status <> PurchaseHeader.Status::Released THEN BEGIN
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        WITH PurchaseHeader DO BEGIN
+          ApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.","Sequence No.");
+          ApprovalEntry.SETRANGE("Table ID",DATABASE::"Purchase Header");
+          ApprovalEntry.SETRANGE("Document Type","Document Type");
+          ApprovalEntry.SETRANGE("Document No.","No.");
+          ApprovalEntry.SETFILTER(Status,'<>%1&<>%2',ApprovalEntry.Status::Rejected,ApprovalEntry.Status::Canceled);
+          SendMail := FALSE;
+          IF ApprovalEntry.FIND('-') THEN BEGIN
+            REPEAT
+              IF (ApprovalEntry.Status = ApprovalEntry.Status::Open) OR
+                 (ApprovalEntry.Status = ApprovalEntry.Status::Approved)
+              THEN
+                SendMail := TRUE;
+              ApprovalEntry.Status := ApprovalEntry.Status::Canceled;
+              ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+              ApprovalEntry."Last Modified By ID" := USERID;
+              ApprovalEntry.MODIFY;
+              IF ApprovalSetup.Cancellations AND ShowMessage AND SendMail THEN BEGIN
+                AppManagement.SendPurchaseCancellationsMail(PurchaseHeader,ApprovalEntry);
+                MailCreated := TRUE;
+                SendMail := FALSE;
+              END;
+            UNTIL ApprovalEntry.NEXT = 0;
+            IF MailCreated THEN BEGIN
+              AppManagement.SendMail;
+              MailCreated := FALSE;
+            END;
+          END;
+
+          IF ManualCancel OR (NOT ManualCancel AND NOT (Status = Status::Released)) THEN
+            Status := Status::Open;
+          MODIFY(TRUE);
+        END;
+        IF ShowMessage THEN
+          MESSAGE(Text002,PurchaseHeader."Document Type",PurchaseHeader."No.");
+      END
+      ELSE
+        MESSAGE(Text130)
+    END;
+
+    PROCEDURE CheckApprSalesDocument@24(VAR SalesHeader@1001 : Record 36) : Boolean;
+    VAR
+      ApprovalTemplate@1000 : Record 464;
+    BEGIN
+      ApprovalTemplate.SETCURRENTKEY("Table ID","Document Type",Enabled);
+      ApprovalTemplate.SETRANGE("Table ID",DATABASE::"Sales Header");
+      ApprovalTemplate.SETRANGE("Document Type",SalesHeader."Document Type");
+      ApprovalTemplate.SETRANGE(Enabled,TRUE);
+      EXIT(NOT ApprovalTemplate.ISEMPTY);
+    END;
+
+    PROCEDURE CheckApprPurchaseDocument@29(VAR PurchaseHeader@1000 : Record 38) : Boolean;
+    VAR
+      ApprovalTemplate@1001 : Record 464;
+    BEGIN
+      ApprovalTemplate.SETCURRENTKEY("Table ID","Document Type",Enabled);
+      ApprovalTemplate.SETRANGE("Table ID",DATABASE::"Purchase Header");
+      ApprovalTemplate.SETRANGE("Document Type",PurchaseHeader."Document Type");
+      ApprovalTemplate.SETRANGE(Enabled,TRUE);
+      EXIT(NOT ApprovalTemplate.ISEMPTY);
+    END;
+
+    PROCEDURE SalesLines@23(SalesHeader@1000 : Record 36) : Boolean;
+    VAR
+      SalesLines@1001 : Record 37;
+    BEGIN
+      SalesLines.SETCURRENTKEY("Document Type","Document No.");
+      SalesLines.SETRANGE("Document Type",SalesHeader."Document Type");
+      SalesLines.SETRANGE("Document No.",SalesHeader."No.");
+      IF SalesLines.FINDSET THEN
+        REPEAT
+          IF (SalesLines.Quantity <> 0) AND (SalesLines."Line Amount" <> 0) THEN
+            EXIT(TRUE);
+        UNTIL SalesLines.NEXT = 0;
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE FindApproverSales@13(SalesHeader@1002 : Record 36;ApprovalSetup@1003 : Record 452;ApprovalTemplates@1000 : Record 464) : Boolean;
+    VAR
+      Cust@1014 : Record 18;
+      UserSetup@1004 : Record 91;
+      ApproverId@1006 : Code[50];
+      ApprovalAmount@1011 : Decimal;
+      ApprovalAmountLCY@1012 : Decimal;
+      AboveCreditLimitAmountLCY@1015 : Decimal;
+      InsertEntries@1016 : Boolean;
+      SufficientApprover@1001 : Boolean;
+    BEGIN
+      AddApproversTemp.RESET;
+      AddApproversTemp.DELETEALL;
+
+      CalcSalesDocAmount(SalesHeader,ApprovalAmount,ApprovalAmountLCY);
+
+      CASE ApprovalTemplates."Approval Type" OF
+        ApprovalTemplates."Approval Type"::"Sales Pers./Purchaser":
+          BEGIN
+            IF SalesHeader."Salesperson Code" = '' THEN
+              ERROR(STRSUBSTNO(Text022,SalesHeader.FIELDCAPTION("Salesperson Code"),
+                  FORMAT(SalesHeader."Document Type"),SalesHeader."No."));
+
+            CASE ApprovalTemplates."Limit Type" OF
+              ApprovalTemplates."Limit Type"::"Approval Limits":
+                BEGIN
+                  AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                  UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                  UserSetup.SETRANGE("Salespers./Purch. Code",SalesHeader."Salesperson Code");
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                      UserSetup."Salespers./Purch. Code");
+
+                  MakeSalesHeaderApprovalEntry(
+                    SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                    UserSetup."User ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                  ApproverId := UserSetup."Approver ID";
+
+                  IF NOT UserSetup."Unlimited Sales Approval" AND
+                     ((ApprovalAmountLCY > UserSetup."Sales Amount Approval Limit") OR
+                      (UserSetup."Sales Amount Approval Limit" = 0))
+                  THEN BEGIN
+                    UserSetup.RESET;
+                    UserSetup.SETCURRENTKEY("User ID");
+                    UserSetup.SETRANGE("User ID",ApproverId);
+                    REPEAT
+                      IF NOT UserSetup.FINDFIRST THEN
+                        ERROR(Text006,ApproverId);
+                      ApproverId := UserSetup."User ID";
+                      MakeSalesHeaderApprovalEntry(
+                        SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                      UserSetup.SETRANGE("User ID",UserSetup."Approver ID");
+
+                      SufficientApprover := UserSetup."Unlimited Sales Approval" OR
+                        ((ApprovalAmountLCY <= UserSetup."Sales Amount Approval Limit") AND
+                         (UserSetup."Sales Amount Approval Limit" <> 0)) OR
+                        (UserSetup."User ID" = UserSetup."Approver ID")
+                    UNTIL SufficientApprover;
+                  END;
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakeSalesHeaderApprovalEntry(
+                        SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              ApprovalTemplates."Limit Type"::"Credit Limits":
+                BEGIN
+                  AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                  Cust.GET(SalesHeader."Bill-to Customer No.");
+                  ApprovalTemplates.CALCFIELDS("Additional Approvers");
+                  IF NOT ApprovalTemplates."Additional Approvers" THEN
+                    ERROR(Text023);
+
+                  InsertAddApprovers(ApprovalTemplates);
+                  IF (AboveCreditLimitAmountLCY > 0) OR (Cust."Credit Limit (LCY)" = 0) THEN BEGIN
+                    ApproverId := USERID;
+                    MakeSalesHeaderApprovalEntry(
+                      SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                      ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                  END ELSE BEGIN
+                    UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                    UserSetup.SETRANGE("Salespers./Purch. Code",SalesHeader."Salesperson Code");
+                    IF NOT UserSetup.FINDFIRST THEN
+                      ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                        UserSetup."Salespers./Purch. Code");
+
+                    MakeSalesHeaderApprovalEntry(
+                      SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                      UserSetup."User ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+
+                    AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                    IF AddApproversTemp.FINDSET THEN
+                      REPEAT
+                        MakeSalesHeaderApprovalEntry(
+                          SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                          AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                      UNTIL AddApproversTemp.NEXT = 0;
+                  END;
+                END;
+              ApprovalTemplates."Limit Type"::"Request Limits":
+                ERROR(STRSUBSTNO(Text024,FORMAT(ApprovalTemplates."Limit Type")));
+              ApprovalTemplates."Limit Type"::"No Limits":
+                BEGIN
+                  AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                  UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                  UserSetup.SETRANGE("Salespers./Purch. Code",SalesHeader."Salesperson Code");
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                      UserSetup."Salespers./Purch. Code");
+
+                  ApproverId := UserSetup."User ID";
+                  MakeSalesHeaderApprovalEntry(
+                    SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      ApproverId := AddApproversTemp."Approver ID";
+                      MakeSalesHeaderApprovalEntry(
+                        SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+            END;
+          END;
+        ApprovalTemplates."Approval Type"::Approver:
+          CASE ApprovalTemplates."Limit Type" OF
+            ApprovalTemplates."Limit Type"::"Approval Limits":
+              BEGIN
+                AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                UserSetup.SETRANGE("User ID",USERID);
+                IF NOT UserSetup.FINDFIRST THEN
+                  ERROR(Text005,USERID);
+                ApproverId := UserSetup."User ID";
+                MakeSalesHeaderApprovalEntry(
+                  SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                  ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                IF NOT UserSetup."Unlimited Sales Approval" AND
+                   ((ApprovalAmountLCY > UserSetup."Sales Amount Approval Limit") OR
+                    (UserSetup."Sales Amount Approval Limit" = 0))
+                THEN
+                  REPEAT
+                    UserSetup.SETRANGE("User ID",UserSetup."Approver ID");
+                    IF NOT UserSetup.FINDFIRST THEN
+                      ERROR(Text005,UserSetup."Approver ID");
+                    ApproverId := UserSetup."User ID";
+                    MakeSalesHeaderApprovalEntry(
+                      SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                      ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                    SufficientApprover := UserSetup."Unlimited Sales Approval" OR
+                      ((ApprovalAmountLCY <= UserSetup."Sales Amount Approval Limit") AND
+                       (UserSetup."Sales Amount Approval Limit" <> 0)) OR
+                      (UserSetup."User ID" = UserSetup."Approver ID");
+                  UNTIL SufficientApprover;
+
+                CheckAddApprovers(ApprovalTemplates);
+                AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                IF AddApproversTemp.FINDSET THEN
+                  REPEAT
+                    MakeSalesHeaderApprovalEntry(
+                      SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                      AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                  UNTIL AddApproversTemp.NEXT = 0;
+              END;
+            ApprovalTemplates."Limit Type"::"Credit Limits":
+              BEGIN
+                AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                Cust.GET(SalesHeader."Bill-to Customer No.");
+
+                ApprovalTemplates.CALCFIELDS("Additional Approvers");
+                IF NOT ApprovalTemplates."Additional Approvers" THEN
+                  ERROR(Text023);
+
+                InsertAddApprovers(ApprovalTemplates);
+                IF (AboveCreditLimitAmountLCY > 0) OR (Cust."Credit Limit (LCY)" = 0) THEN BEGIN
+                  ApproverId := USERID;
+                  MakeSalesHeaderApprovalEntry(
+                    SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                END ELSE BEGIN
+                  UserSetup.SETRANGE("User ID",USERID);
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text005,USERID);
+                  ApproverId := UserSetup."User ID";
+                  MakeSalesHeaderApprovalEntry(
+                    SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakeSalesHeaderApprovalEntry(
+                        SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,SalesHeader."Salesperson Code",
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              END;
+            ApprovalTemplates."Limit Type"::"Request Limits":
+              ERROR(STRSUBSTNO(Text024,FORMAT(ApprovalTemplates."Limit Type")));
+            ApprovalTemplates."Limit Type"::"No Limits":
+              BEGIN
+                AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+                UserSetup.SETRANGE("User ID",USERID);
+                IF NOT UserSetup.FINDFIRST THEN
+                  ERROR(Text005,USERID);
+                ApproverId := UserSetup."Approver ID";
+                IF ApproverId = '' THEN
+                  ApproverId := UserSetup."User ID";
+                MakeSalesHeaderApprovalEntry(
+                  SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                  ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+              END;
+          END;
+        ApprovalTemplates."Approval Type"::" ":
+          BEGIN
+            AboveCreditLimitAmountLCY := CheckCreditLimit(SalesHeader);
+            InsertEntries := FALSE;
+            Cust.GET(SalesHeader."Bill-to Customer No.");
+            IF IsCreditLimits(ApprovalTemplates) THEN
+              IF (AboveCreditLimitAmountLCY > 0) OR (Cust."Credit Limit (LCY)" = 0) THEN BEGIN
+                ApproverId := USERID;
+                MakeSalesHeaderApprovalEntry(
+                  SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                  ApproverId,ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+              END ELSE
+                InsertEntries := TRUE;
+
+            IF NOT IsCreditLimits(ApprovalTemplates) OR InsertEntries THEN BEGIN
+              CheckAddApprovers(ApprovalTemplates);
+              AddApproversTemp.SETCURRENTKEY("Sequence No.");
+              IF AddApproversTemp.FINDSET THEN
+                REPEAT
+                  MakeSalesHeaderApprovalEntry(
+                    SalesHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                    AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY,AboveCreditLimitAmountLCY);
+                UNTIL AddApproversTemp.NEXT = 0
+              ELSE
+                ERROR(Text027);
+            END;
+          END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE PurchaseLines@22(PurchaseHeader@1000 : Record 38) : Boolean;
+    VAR
+      PurchaseLines@1001 : Record 39;
+    BEGIN
+      WITH PurchaseLines DO BEGIN
+        SETCURRENTKEY("Document Type","Document No.");
+        SETRANGE("Document Type",PurchaseHeader."Document Type");
+        SETRANGE("Document No.",PurchaseHeader."No.");
+        IF FINDSET THEN
+          REPEAT
+            IF (Quantity <> 0) AND ("Line Amount" <> 0) THEN
+              EXIT(TRUE);
+          UNTIL NEXT = 0;
+      END;
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE FindApproverPurchase@12(PurchaseHeader@1001 : Record 38;ApprovalSetup@1000 : Record 452;ApprovalTemplates@1006 : Record 464) : Boolean;
+    VAR
+      UserSetup@1002 : Record 91;
+      ApproverId@1003 : Code[50];
+      ApprovalAmount@1013 : Decimal;
+      ApprovalAmountLCY@1012 : Decimal;
+      SufficientApprover@1004 : Boolean;
+    BEGIN
+      AddApproversTemp.RESET;
+      AddApproversTemp.DELETEALL;
+
+      CalcPurchaseDocAmount(PurchaseHeader,ApprovalAmount,ApprovalAmountLCY);
+
+      CASE ApprovalTemplates."Approval Type" OF
+        ApprovalTemplates."Approval Type"::"Sales Pers./Purchaser":
+          IF PurchaseHeader."Purchaser Code" <> '' THEN
+            CASE ApprovalTemplates."Limit Type" OF
+              ApprovalTemplates."Limit Type"::"Approval Limits":
+                BEGIN
+                  UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                  UserSetup.SETRANGE("Salespers./Purch. Code",PurchaseHeader."Purchaser Code");
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                      UserSetup."Salespers./Purch. Code");
+
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,PurchaseHeader."Purchaser Code",
+                    UserSetup."User ID",ApprovalAmount,ApprovalAmountLCY);
+                  ApproverId := UserSetup."Approver ID";
+                  IF NOT UserSetup."Unlimited Purchase Approval" AND
+                     ((ApprovalAmountLCY > UserSetup."Purchase Amount Approval Limit") OR
+                      (UserSetup."Purchase Amount Approval Limit" = 0))
+                  THEN BEGIN
+                    UserSetup.RESET;
+                    UserSetup.SETCURRENTKEY("User ID");
+                    UserSetup.SETRANGE("User ID",ApproverId);
+                    REPEAT
+                      IF NOT UserSetup.FINDFIRST THEN
+                        ERROR(Text006,ApproverId);
+                      ApproverId := UserSetup."User ID";
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                      UserSetup.SETRANGE("User ID",UserSetup."Approver ID");
+                      SufficientApprover := UserSetup."Unlimited Purchase Approval" OR
+                        ((ApprovalAmountLCY <= UserSetup."Purchase Amount Approval Limit") AND
+                         (UserSetup."Purchase Amount Approval Limit" <> 0)) OR
+                        (UserSetup."User ID" = UserSetup."Approver ID")
+                    UNTIL SufficientApprover;
+                  END;
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              ApprovalTemplates."Limit Type"::"Request Limits":
+                BEGIN
+                  IF PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Quote THEN
+                    ERROR(GetQuoteErrorText(ApprovalTemplates,PurchaseHeader));
+
+                  UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                  UserSetup.SETRANGE("Salespers./Purch. Code",PurchaseHeader."Purchaser Code");
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                      UserSetup."Salespers./Purch. Code");
+                  UserSetup.RESET;
+                  UserSetup.SETRANGE("User ID",USERID);
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text005,USERID);
+                  ApproverId := UserSetup."User ID";
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY);
+
+                  IF NOT UserSetup."Unlimited Request Approval" AND
+                     ((ApprovalAmountLCY > UserSetup."Request Amount Approval Limit") OR
+                      (UserSetup."Request Amount Approval Limit" = 0))
+                  THEN
+                    REPEAT
+                      UserSetup.SETRANGE("User ID",UserSetup."Approver ID");
+                      IF NOT UserSetup.FINDFIRST THEN
+                        ERROR(Text005,USERID);
+                      ApproverId := UserSetup."User ID";
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                      SufficientApprover := UserSetup."Unlimited Request Approval" OR
+                        ((ApprovalAmountLCY <= UserSetup."Request Amount Approval Limit") AND
+                         (UserSetup."Request Amount Approval Limit" <> 0)) OR
+                        (UserSetup."User ID" = UserSetup."Approver ID");
+                    UNTIL SufficientApprover;
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              ApprovalTemplates."Limit Type"::"No Limits":
+                BEGIN
+                  UserSetup.SETCURRENTKEY("Salespers./Purch. Code");
+                  UserSetup.SETRANGE("Salespers./Purch. Code",PurchaseHeader."Purchaser Code");
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text008,UserSetup."User ID",UserSetup.FIELDCAPTION("Salespers./Purch. Code"),
+                      UserSetup."Salespers./Purch. Code");
+                  ApproverId := UserSetup."User ID";
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,PurchaseHeader."Purchaser Code",
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY);
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+            END;
+        ApprovalTemplates."Approval Type"::Approver:
+          BEGIN
+            UserSetup.SETRANGE("User ID",USERID);
+            IF NOT UserSetup.FINDFIRST THEN
+              ERROR(Text005,USERID);
+
+            CASE ApprovalTemplates."Limit Type" OF
+              ApprovalTemplates."Limit Type"::"Approval Limits":
+                BEGIN
+                  ApproverId := UserSetup."User ID";
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                  IF NOT UserSetup."Unlimited Purchase Approval" AND
+                     ((ApprovalAmountLCY > UserSetup."Purchase Amount Approval Limit") OR
+                      (UserSetup."Purchase Amount Approval Limit" = 0))
+                  THEN
+                    REPEAT
+                      ApproverId := UserSetup."Approver ID";
+                      UserSetup.SETRANGE("User ID",ApproverId);
+                      IF NOT UserSetup.FINDFIRST THEN
+                        ERROR(Text005,ApproverId);
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                      SufficientApprover := UserSetup."Unlimited Purchase Approval" OR
+                        ((ApprovalAmountLCY <= UserSetup."Purchase Amount Approval Limit") AND
+                         (UserSetup."Purchase Amount Approval Limit" <> 0)) OR
+                        (UserSetup."User ID" = UserSetup."Approver ID");
+                    UNTIL SufficientApprover;
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              ApprovalTemplates."Limit Type"::"Request Limits":
+                BEGIN
+                  IF PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Quote THEN
+                    ERROR(GetQuoteErrorText(ApprovalTemplates,PurchaseHeader));
+
+                  UserSetup.SETRANGE("User ID",USERID);
+                  IF NOT UserSetup.FINDFIRST THEN
+                    ERROR(Text005,USERID);
+                  ApproverId := UserSetup."User ID";
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                  IF NOT UserSetup."Unlimited Request Approval" AND
+                     ((ApprovalAmountLCY > UserSetup."Request Amount Approval Limit") OR
+                      (UserSetup."Request Amount Approval Limit" = 0))
+                  THEN
+                    REPEAT
+                      ApproverId := UserSetup."Approver ID";
+                      UserSetup.SETRANGE("User ID",ApproverId);
+                      IF NOT UserSetup.FINDFIRST THEN
+                        ERROR(Text005,ApproverId);
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        ApproverId,ApprovalAmount,ApprovalAmountLCY);
+                      SufficientApprover := UserSetup."Unlimited Request Approval" OR
+                        ((ApprovalAmountLCY <= UserSetup."Request Amount Approval Limit") AND
+                         (UserSetup."Request Amount Approval Limit" <> 0)) OR
+                        (UserSetup."User ID" = UserSetup."Approver ID");
+                    UNTIL SufficientApprover;
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+              ApprovalTemplates."Limit Type"::"No Limits":
+                BEGIN
+                  ApproverId := UserSetup."Approver ID";
+                  IF ApproverId = '' THEN
+                    ApproverId := UserSetup."User ID";
+                  MakePurchHeaderApprovalEntry(
+                    PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,PurchaseHeader."Purchaser Code",
+                    ApproverId,ApprovalAmount,ApprovalAmountLCY);
+
+                  CheckAddApprovers(ApprovalTemplates);
+                  AddApproversTemp.SETCURRENTKEY("Sequence No.");
+                  IF AddApproversTemp.FINDSET THEN
+                    REPEAT
+                      MakePurchHeaderApprovalEntry(
+                        PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                        AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+                    UNTIL AddApproversTemp.NEXT = 0;
+                END;
+            END;
+          END;
+        ApprovalTemplates."Approval Type"::" ":
+          BEGIN
+            CheckAddApprovers(ApprovalTemplates);
+            AddApproversTemp.SETCURRENTKEY("Sequence No.");
+            IF AddApproversTemp.FINDSET THEN
+              REPEAT
+                MakePurchHeaderApprovalEntry(
+                  PurchaseHeader,ApprovalSetup,UserSetup,ApprovalTemplates,'',
+                  AddApproversTemp."Approver ID",ApprovalAmount,ApprovalAmountLCY);
+              UNTIL AddApproversTemp.NEXT = 0
+            ELSE
+              ERROR(Text027);
+          END;
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE MakeSalesHeaderApprovalEntry@44(SalesHeader@1000 : Record 36;ApprovalSetup@1011 : Record 452;UserSetup@1009 : Record 91;ApprovalTemplates@1006 : Record 464;SalespersonPurchaser@1010 : Code[10];ApproverId@1008 : Code[50];ApprovalAmount@1005 : Decimal;ApprovalAmountLCY@1004 : Decimal;ExceedAmountLCY@1001 : Decimal);
+    BEGIN
+      MakeApprovalEntry(
+        DATABASE::"Sales Header",SalesHeader."Document Type",SalesHeader."No.",
+        SalespersonPurchaser,ApprovalSetup,ApproverId,UserSetup,ApprovalAmount,ApprovalAmountLCY,
+        SalesHeader."Currency Code",ApprovalTemplates,ExceedAmountLCY);
+    END;
+
+    LOCAL PROCEDURE MakePurchHeaderApprovalEntry@41(PurchHeader@1000 : Record 38;ApprovalSetup@1011 : Record 452;UserSetup@1009 : Record 91;ApprovalTemplates@1006 : Record 464;SalespersonPurchaser@1010 : Code[10];ApproverId@1008 : Code[50];ApprovalAmount@1005 : Decimal;ApprovalAmountLCY@1004 : Decimal);
+    BEGIN
+      MakeApprovalEntry(
+        DATABASE::"Purchase Header",PurchHeader."Document Type",PurchHeader."No.",
+        SalespersonPurchaser,ApprovalSetup,ApproverId,UserSetup,ApprovalAmount,ApprovalAmountLCY,
+        PurchHeader."Currency Code",ApprovalTemplates,0);
+    END;
+
+    PROCEDURE MakeApprovalEntry@10(TableID@1011 : Integer;DocType@1000 : Integer;DocNo@1004 : Code[20];SalespersonPurchaser@1010 : Code[10];ApprovalSetup@1006 : Record 452;ApproverId@1003 : Code[50];UserSetup@1007 : Record 91;ApprovalAmount@1008 : Decimal;ApprovalAmountLCY@1009 : Decimal;CurrencyCode@1012 : Code[10];ApprovalTemplates@1013 : Record 464;ExeedAmountLCY@1014 : Decimal);
+    VAR
+      ApprovalEntry@1002 : Record 454;
+      NewSequenceNo@1005 : Integer;
+      SalesHeader@1000000000 : Record 36;
+      PurchaseHeader@1000000001 : Record 38;
+    BEGIN
+      WITH ApprovalEntry DO BEGIN
+        SETRANGE("Table ID",TableID);
+        SETRANGE("Document Type",DocType);
+        SETRANGE("Document No.",DocNo);
+        IF FINDLAST THEN
+          NewSequenceNo := "Sequence No." + 1
+        ELSE
+          NewSequenceNo := 1;
+        "Table ID" := TableID;
+        "Document Type" := DocType;
+        "Document No." := DocNo;
+        "Salespers./Purch. Code" := SalespersonPurchaser;
+        "Sequence No." := NewSequenceNo;
+        "Approval Code" := ApprovalTemplates."Approval Code";
+        "Sender ID" := USERID;
+        // UPG09R2.begin
+        //YIMMRSLAMT-St
+
+        IF (TableID=DATABASE::"Sales Header") THEN
+         BEGIN
+         SalesHeader.RESET;
+         SalesHeader.SETRANGE(SalesHeader."Document Type",DocType);
+         SalesHeader.SETRANGE(SalesHeader."No.",DocNo);
+
+            IF SalesHeader.FINDSET THEN
+                BEGIN
+                         Amount := SalesHeader."Slip Amount";
+                         "Amount (LCY)" :=SalesHeader."Slip Amount (LCY)";
+                         "Type Of Transaction" := SalesHeader."Type Of Transaction";
+                         "Posting Date":=SalesHeader."Posting Date";
+                         "Invoice Date":=SalesHeader."Document Date"
+
+
+                END;
+         END;
+
+
+        IF (TableID=DATABASE::"Purchase Header") THEN
+         BEGIN
+         PurchaseHeader.RESET;
+         PurchaseHeader.SETRANGE(PurchaseHeader."Document Type",DocType);
+         PurchaseHeader.SETRANGE(PurchaseHeader."No.",DocNo);
+
+            IF PurchaseHeader.FINDSET THEN
+                BEGIN
+                         Amount := PurchaseHeader."Slip Amount";
+                         "Amount (LCY)" :=PurchaseHeader."Slip Amount (LCY)";
+                         "Type Of Transaction" := PurchaseHeader."Type Of Transaction";
+                         "Posting Date":=PurchaseHeader."Posting Date";
+                         "Invoice Date":=PurchaseHeader."Document Date"
+
+
+                END;
+         END;
+
+
+        //YIMMRSLAMT-End
+
+        //Amount := ApprovalAmount;
+        //"Amount (LCY)" := ApprovalAmountLCY;
+        // UPG09R2.end
+
+        "Currency Code" := CurrencyCode;
+        "Approver ID" := ApproverId;
+        IF ApproverId = USERID THEN
+          Status := Status::Approved
+        ELSE
+          Status := Status::Created;
+        "Date-Time Sent for Approval" := CREATEDATETIME(TODAY,TIME);
+        "Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+        "Last Modified By ID" := USERID;
+        "Due Date" := CALCDATE(ApprovalSetup."Due Date Formula",TODAY);
+        "Approval Type" := ApprovalTemplates."Approval Type";
+        "Limit Type" := ApprovalTemplates."Limit Type";
+        "Available Credit Limit (LCY)" := ExeedAmountLCY;
+        INSERT;
+      END;
+    END;
+
+    PROCEDURE ApproveApprovalRequest@5(ApprovalEntry@1000 : Record 454) : Boolean;
+    VAR
+      SalesHeader@1003 : Record 36;
+      PurchaseHeader@1004 : Record 38;
+      ApprovalSetup@1006 : Record 452;
+      NextApprovalEntry@1005 : Record 454;
+      ReleaseSalesDoc@1001 : Codeunit 414;
+      ReleasePurchaseDoc@1002 : Codeunit 415;
+      ApprovalMgtNotification@1007 : Codeunit 440;
+      MasterSetup@1000000000 : Record 50008;
+      PurchHeader@1000000001 : Record 38;
+    BEGIN
+      MasterSetup.GET; // UPG09R2
+
+      IF ApprovalEntry."Table ID" <> 0 THEN BEGIN
+      // UPG09R2.begin
+         IF ((MasterSetup."Company Name MELCO"=COMPANYNAME)  AND
+             (ApprovalEntry."Document Type"=ApprovalEntry."Document Type"::Quote)) THEN
+           BEGIN
+              QuoteList.RESET;
+              QuoteList.SETRANGE("Document Type",ApprovalEntry."Document Type");
+              QuoteList.SETRANGE("Quote No.",ApprovalEntry."Document No.");
+              IF NOT QuoteList.FINDFIRST THEN
+                BEGIN
+                   QuoteList11.RESET;
+                   QuoteList11.INIT;
+                   QuoteList11.VALIDATE(QuoteList11."Document Type",ApprovalEntry."Document Type");
+                   QuoteList11.VALIDATE(QuoteList11."Quote No.",ApprovalEntry."Document No.");
+
+                   IF (ApprovalEntry."Table ID"=36) THEN
+                    BEGIN
+                      SalesHeader.RESET;
+                       IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                        BEGIN
+                          QuoteList11.VALIDATE(QuoteList11."Source No.",SalesHeader."Sell-to Customer No.");
+                          QuoteList11.VALIDATE(QuoteList11."Source Name",SalesHeader."Sell-to Customer Name");
+                          QuoteList11.VALIDATE(QuoteList11."Your Reference",SalesHeader."Your Reference");
+                          QuoteList11.VALIDATE(QuoteList11."Source Type",QuoteList11."Source Type"::Customer);
+                        END;
+                     END
+                    ELSE IF (ApprovalEntry."Table ID"=38) THEN
+                     BEGIN
+                       PurchHeader.RESET;
+                         IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                          BEGIN
+                            QuoteList11.VALIDATE(QuoteList11."Source No.",PurchHeader."Buy-from Vendor No.");
+                            QuoteList11.VALIDATE(QuoteList11."Source Name",PurchHeader."Buy-from Vendor Name");
+                            QuoteList11.VALIDATE(QuoteList11."Your Reference",PurchHeader."Your Reference");
+                            QuoteList11.VALIDATE(QuoteList11."Source Type",QuoteList11."Source Type"::Vendor);
+                           END;
+                     END;
+
+
+                   QuoteList11.VALIDATE(QuoteList11.Status,QuoteList11.Status::Released);
+                   QuoteList11.VALIDATE(QuoteList11."Invoice Posted",FALSE);
+                   QuoteList11.INSERT(TRUE);
+
+
+                END
+              ELSE
+      ///////***********///checking if source type is same and source no. is different.**********************************
+               BEGIN
+                 IF (ApprovalEntry."Table ID"=36) THEN
+                  BEGIN
+                   SalesHeader.RESET;
+                    IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                     BEGIN
+                      QuoteList11.RESET;
+                      QuoteList11.SETRANGE("Document Type",ApprovalEntry."Document Type");
+                      QuoteList11.SETRANGE("Quote No.",ApprovalEntry."Document No.");
+                       IF QuoteList11.FINDFIRST THEN
+                        BEGIN
+                        IF ((QuoteList11."Source Type"=QuoteList11."Source Type"::Customer) AND
+                          (QuoteList11."Source No."<>SalesHeader."Sell-to Customer No.")) THEN
+
+                          BEGIN
+                           Quotelist_Update.RESET;
+                           Quotelist_Update.INIT;
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Document Type",ApprovalEntry."Document Type");
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Quote No.",ApprovalEntry."Document No.");
+
+                           IF (ApprovalEntry."Table ID"=36) THEN
+                            BEGIN
+                             SalesHeader.RESET;
+                              IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",SalesHeader."Sell-to Customer No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",SalesHeader."Sell-to Customer Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",SalesHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Customer);
+                               END;
+                            END
+                           ELSE IF (ApprovalEntry."Table ID"=38) THEN
+                            BEGIN
+                             PurchHeader.RESET;
+                              IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",PurchHeader."Buy-from Vendor No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",PurchHeader."Buy-from Vendor Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",PurchHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Vendor);
+                               END;
+                            END;
+                          Quotelist_Update.VALIDATE(Quotelist_Update.Status,Quotelist_Update.Status::Released);
+                          Quotelist_Update.VALIDATE(Quotelist_Update."Invoice Posted",FALSE);
+                          Quotelist_Update.VALIDATE(Quotelist_Update.CostProcess,QuoteList11.CostProcess);
+                          Quotelist_Update.VALIDATE(Quotelist_Update.CostVendor,QuoteList11.CostVendor);
+                          Quotelist_Update.INSERT(TRUE);
+                          COMMIT;
+
+                          QuoteList11.DELETE(TRUE);   //new by ntn on 24-10-11
+                          COMMIT;                     //new by ntn on 24-10-11
+
+
+                         END
+                       ELSE
+      ////***********///checking if source type  and source no. is different.*********************************************
+                         IF ((QuoteList11."Source Type"<>QuoteList11."Source Type"::Customer) AND
+                          (QuoteList11."Source No."<>SalesHeader."Sell-to Customer No.")) THEN
+
+                          BEGIN
+                           Quotelist_Update.RESET;
+                           Quotelist_Update.INIT;
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Document Type",ApprovalEntry."Document Type");
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Quote No.",ApprovalEntry."Document No.");
+
+                            IF (ApprovalEntry."Table ID"=36) THEN
+                             BEGIN
+                              SalesHeader.RESET;
+                               IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                                BEGIN
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",SalesHeader."Sell-to Customer No.");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",SalesHeader."Sell-to Customer Name");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",SalesHeader."Your Reference");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Customer);
+                                END;
+                             END
+                            ELSE IF (ApprovalEntry."Table ID"=38) THEN
+                             BEGIN
+                              PurchHeader.RESET;
+                              IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",PurchHeader."Buy-from Vendor No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",PurchHeader."Buy-from Vendor Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",PurchHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Vendor);
+                               END;
+                             END;
+
+                           Quotelist_Update.VALIDATE(Quotelist_Update.Status,QuoteList11.Status);
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Invoice Posted",QuoteList11."Invoice Posted");
+                           Quotelist_Update.VALIDATE(Quotelist_Update.CostProcess,QuoteList11.CostProcess);
+                           Quotelist_Update.VALIDATE(Quotelist_Update.CostVendor,QuoteList11.CostVendor);
+                           Quotelist_Update.INSERT(TRUE);
+                           COMMIT;
+
+                           QuoteList11.DELETE(TRUE);       //new by ntn on 24-10-11
+                           COMMIT;                         //new by ntn on 24-10-11
+
+                          END;
+                           //QuoteList11.DELETE(TRUE);     //old commented by ntn 24-10-11
+                           //COMMIT;                       //old commented by ntn 24-10-11
+
+                     END
+                 END;
+               END
+                    ELSE
+                 IF (ApprovalEntry."Table ID"=38) THEN
+                  BEGIN
+                   PurchHeader.RESET;
+                    IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                     BEGIN
+                      QuoteList11.RESET;
+                      QuoteList11.SETRANGE("Document Type",ApprovalEntry."Document Type");
+                      QuoteList11.SETRANGE("Quote No.",ApprovalEntry."Document No.");
+                       IF QuoteList11.FINDFIRST THEN
+                        BEGIN
+                        IF ((QuoteList11."Source Type"=QuoteList11."Source Type"::Vendor) AND
+                          (QuoteList11."Source No."<>PurchHeader."Buy-from Vendor No.")) THEN
+      ///////***********///checking if source type is same and source no. is different.****************
+                         BEGIN
+                          Quotelist_Update.RESET;
+                          Quotelist_Update.INIT;
+                          Quotelist_Update.VALIDATE(Quotelist_Update."Document Type",ApprovalEntry."Document Type");
+                          Quotelist_Update.VALIDATE(Quotelist_Update."Quote No.",ApprovalEntry."Document No.");
+
+                           IF (ApprovalEntry."Table ID"=36) THEN
+                            BEGIN
+                             SalesHeader.RESET;
+                              IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",SalesHeader."Sell-to Customer No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",SalesHeader."Sell-to Customer Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",SalesHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Customer);
+                               END;
+                            END
+                           ELSE IF (ApprovalEntry."Table ID"=38) THEN
+                            BEGIN
+                             PurchHeader.RESET;
+                              IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",PurchHeader."Buy-from Vendor No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",PurchHeader."Buy-from Vendor Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",PurchHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Vendor);
+                               END;
+                            END;
+                          Quotelist_Update.VALIDATE(Quotelist_Update.Status,QuoteList11.Status);
+                          Quotelist_Update.VALIDATE(Quotelist_Update."Invoice Posted",QuoteList11."Invoice Posted");
+                          Quotelist_Update.VALIDATE(Quotelist_Update.CostProcess,QuoteList11.CostProcess);
+                          Quotelist_Update.VALIDATE(Quotelist_Update.CostVendor,QuoteList11.CostVendor);
+                          Quotelist_Update.INSERT(TRUE);
+                          COMMIT;
+
+                           QuoteList11.DELETE(TRUE);  //new by ntn on 24-10-11
+                           COMMIT;                    //new by ntn on 24-10-11
+
+
+                         END
+                       ELSE
+                         IF ((QuoteList11."Source Type"<>QuoteList11."Source Type"::Vendor) AND
+                          (QuoteList11."Source No."<>PurchaseHeader."Buy-from Vendor No.")) THEN
+      ////***********///checking if source type  and source no. is different.**************************
+                          BEGIN
+                           Quotelist_Update.RESET;
+                           Quotelist_Update.INIT;
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Document Type",ApprovalEntry."Document Type");
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Quote No.",ApprovalEntry."Document No.");
+
+                            IF (ApprovalEntry."Table ID"=36) THEN
+                             BEGIN
+                              SalesHeader.RESET;
+                               IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                                BEGIN
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",SalesHeader."Sell-to Customer No.");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",SalesHeader."Sell-to Customer Name");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",SalesHeader."Your Reference");
+                                 Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Customer);
+                                END;
+                             END
+                            ELSE IF (ApprovalEntry."Table ID"=38) THEN
+                             BEGIN
+                              PurchHeader.RESET;
+                              IF PurchHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                               BEGIN
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source No.",PurchHeader."Buy-from Vendor No.");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Name",PurchHeader."Buy-from Vendor Name");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Your Reference",PurchHeader."Your Reference");
+                                Quotelist_Update.VALIDATE(Quotelist_Update."Source Type",Quotelist_Update."Source Type"::Vendor);
+                               END;
+                             END;
+
+                           Quotelist_Update.VALIDATE(Quotelist_Update.Status,QuoteList11.Status);
+                           Quotelist_Update.VALIDATE(Quotelist_Update."Invoice Posted",QuoteList11."Invoice Posted");
+                           Quotelist_Update.VALIDATE(Quotelist_Update.CostProcess,QuoteList11.CostProcess);
+                           Quotelist_Update.VALIDATE(Quotelist_Update.CostVendor,QuoteList11.CostVendor);
+                           Quotelist_Update.INSERT(TRUE);
+                           COMMIT;
+
+                           QuoteList11.DELETE(TRUE); //new  by ntn 24-10-11
+                           COMMIT;                   //new  by ntn 24-10-11
+
+                          END;
+
+                         //QuoteList11.DELETE(TRUE);    //old commented by ntn 24-10-11
+                         //COMMIT;                      //old commented by ntn 24-10-11
+                     END;
+
+
+               END;
+              END;
+             END;
+           END;
+
+      // UPG09R2.end
+        ApprovalEntry.Status := ApprovalEntry.Status::Approved;
+        ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+        ApprovalEntry."Last Modified By ID" := USERID;
+        ApprovalEntry.MODIFY;
+        NextApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.");
+        NextApprovalEntry.SETRANGE("Table ID",ApprovalEntry."Table ID");
+        NextApprovalEntry.SETRANGE("Document Type",ApprovalEntry."Document Type");
+        NextApprovalEntry.SETRANGE("Document No.",ApprovalEntry."Document No.");
+        NextApprovalEntry.SETFILTER(Status,'%1|%2',NextApprovalEntry.Status::Created,NextApprovalEntry.Status::Open);
+        IF NextApprovalEntry.FINDFIRST THEN BEGIN
+          IF NextApprovalEntry.Status = NextApprovalEntry.Status::Open THEN
+            EXIT(FALSE);
+
+          NextApprovalEntry.Status := NextApprovalEntry.Status::Open;
+          NextApprovalEntry."Date-Time Sent for Approval" := CREATEDATETIME(TODAY,TIME);
+          NextApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+          NextApprovalEntry."Last Modified By ID" := USERID;
+          NextApprovalEntry.MODIFY;
+          IF ApprovalSetup.GET THEN
+            IF ApprovalSetup.Approvals THEN BEGIN
+              IF ApprovalEntry."Table ID" = DATABASE::"Sales Header" THEN BEGIN
+                IF SalesHeader.GET(NextApprovalEntry."Document Type",NextApprovalEntry."Document No.") THEN
+                  ApprovalMgtNotification.SendSalesApprovalsMail(SalesHeader,NextApprovalEntry);
+              END ELSE
+                IF PurchaseHeader.GET(NextApprovalEntry."Document Type",NextApprovalEntry."Document No.") THEN
+                  ApprovalMgtNotification.SendPurchaseApprovalsMail(PurchaseHeader,NextApprovalEntry);
+            END;
+          EXIT(FALSE);
+        END;
+        IF ApprovalEntry."Table ID" = DATABASE::"Sales Header" THEN BEGIN
+          IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+            ReleaseSalesDoc.RUN(SalesHeader);
+        END ELSE
+          IF PurchaseHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+            ReleasePurchaseDoc.RUN(PurchaseHeader);
+        EXIT(TRUE);
+      END;
+    END;
+
+    PROCEDURE RejectApprovalRequest@8(ApprovalEntry@1000 : Record 454);
+    VAR
+      ApprovalSetup@1008 : Record 452;
+      SalesHeader@1006 : Record 36;
+      PurchaseHeader@1005 : Record 38;
+      ReleaseSalesDoc@1004 : Codeunit 414;
+      ReleasePurchaseDoc@1001 : Codeunit 415;
+      AppManagement@1009 : Codeunit 440;
+      SendMail@1002 : Boolean;
+      Vat_Detail@1000000000 : Record 50015;
+      Text10@1000000001 : TextConst 'ENU=You can not reject because Tanda Terima %1 has send to VAT approval, Update VAT entries first';
+      Master_Setup@1000000002 : Record 50008;
+    BEGIN
+      IF ApprovalEntry."Table ID" <> 0 THEN BEGIN
+        ApprovalSetup.GET;
+        ApprovalEntry.Status := ApprovalEntry.Status::Rejected;
+        ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+        ApprovalEntry."Last Modified By ID" := USERID;
+        ApprovalEntry.MODIFY;
+        IF ApprovalSetup.Rejections THEN
+          SendRejectionMail(ApprovalEntry,AppManagement);
+        ApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.","Sequence No.");
+        ApprovalEntry.SETRANGE("Table ID",ApprovalEntry."Table ID");
+        ApprovalEntry.SETRANGE("Document Type",ApprovalEntry."Document Type");
+        ApprovalEntry.SETRANGE("Document No.",ApprovalEntry."Document No.");
+        ApprovalEntry.SETFILTER(Status,'<>%1&<>%2',ApprovalEntry.Status::Canceled,ApprovalEntry.Status::Rejected);
+        IF ApprovalEntry.FIND('-') THEN
+          REPEAT
+            SendMail := FALSE;
+            IF (ApprovalEntry.Status = ApprovalEntry.Status::Open) OR
+               (ApprovalEntry.Status = ApprovalEntry.Status::Approved)
+            THEN
+              SendMail := TRUE;
+
+            ApprovalEntry.Status := ApprovalEntry.Status::Rejected;
+            ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+            ApprovalEntry."Last Modified By ID" := USERID;
+            ApprovalEntry.MODIFY;
+            IF ApprovalSetup.Rejections AND SendMail THEN
+              SendRejectionMail(ApprovalEntry,AppManagement);
+          UNTIL ApprovalEntry.NEXT = 0;
+        IF ApprovalSetup.Rejections THEN
+          AppManagement.SendMail;
+        IF ApprovalEntry."Table ID" = DATABASE::"Sales Header" THEN BEGIN
+          SalesHeader.SETCURRENTKEY("Document Type","No.");
+          SalesHeader.SETRANGE("Document Type",ApprovalEntry."Document Type");
+          SalesHeader.SETRANGE("No.",ApprovalEntry."Document No.");
+          // UPG09R2.begin
+          //YIMMAVATIST +YIMMAVATIST1.1
+           {
+          Master_Setup.GET;
+          IF (SalesHeader."Document Type" = SalesHeader."Document Type"::"Credit Memo") AND
+             (SalesHeader."Reason Code" = Master_Setup."Reason (Sale as Purchase)")  THEN BEGIN
+            Vat_Detail.RESET;
+            Vat_Detail.SETCURRENTKEY(Vat_Detail."Document Type",Vat_Detail."Line No.",Vat_Detail."Document No.");
+            Vat_Detail.SETRANGE(Vat_Detail."Document Type",ApprovalEntry."Document Type");
+            Vat_Detail.SETRANGE(Vat_Detail."Document No.",ApprovalEntry."Document No.");
+            IF Vat_Detail.FINDFIRST THEN
+              ERROR(Text10,ApprovalEntry."Document No.");
+          END;
+            }
+          //YIMMAVATIEN +YIMMAVATIST1.1
+          // UPG09R2.end
+          IF SalesHeader.FINDFIRST THEN
+            ReleaseSalesDoc.Reopen(SalesHeader);
+        END ELSE BEGIN
+        // UPG09R2.begin
+          //YIMMAVATIST+YIMMAVATIST1.1
+          {
+            Vat_Detail.RESET;
+            Vat_Detail.SETCURRENTKEY(Vat_Detail."Document Type",Vat_Detail."Line No.",Vat_Detail."Document No.");
+            Vat_Detail.SETRANGE(Vat_Detail."Document Type",ApprovalEntry."Document Type");
+            Vat_Detail.SETRANGE(Vat_Detail."Document No.",ApprovalEntry."Document No.");
+            IF Vat_Detail.FINDFIRST THEN
+              ERROR(Text10,ApprovalEntry."Document No.");
+           }
+          //YIMMAVATIEN+YIMMAVATIST1.1
+        // UPG09R2.end
+
+          PurchaseHeader.SETCURRENTKEY("Document Type","No.");
+          PurchaseHeader.SETRANGE("Document Type",ApprovalEntry."Document Type");
+          PurchaseHeader.SETRANGE("No.",ApprovalEntry."Document No.");
+          IF PurchaseHeader.FINDFIRST THEN
+            ReleasePurchaseDoc.Reopen(PurchaseHeader);
+        END;
+      END;
+    END;
+
+    PROCEDURE DelegateApprovalRequest@20(ApprovalEntry@1000 : Record 454);
+    VAR
+      UserSetup@1001 : Record 91;
+      ApprovalSetup@1002 : Record 452;
+      SalesHeader@1005 : Record 36;
+      PurchaseHeader@1004 : Record 38;
+      AppManagement@1003 : Codeunit 440;
+    BEGIN
+      UserSetup.SETRANGE("User ID",ApprovalEntry."Approver ID");
+      IF NOT UserSetup.FINDFIRST THEN
+        ERROR(Text005,ApprovalEntry."Approver ID");
+      IF NOT ApprovalSetup.GET THEN
+        ERROR(Text004);
+
+      IF UserSetup.Substitute <> '' THEN BEGIN
+        UserSetup.SETRANGE("User ID",UserSetup.Substitute);
+        IF UserSetup.FINDFIRST THEN BEGIN
+          ApprovalEntry."Last Modified By ID" := USERID;
+          ApprovalEntry."Last Date-Time Modified" := CREATEDATETIME(TODAY,TIME);
+          ApprovalEntry."Approver ID" := UserSetup."User ID";
+          ApprovalEntry.MODIFY;
+
+          CASE ApprovalEntry."Table ID" OF
+            DATABASE::"Sales Header":
+              BEGIN
+                IF ApprovalSetup.Delegations THEN
+                  IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                    AppManagement.SendSalesDelegationsMail(SalesHeader,ApprovalEntry);
+              END;
+            DATABASE::"Purchase Header":
+              BEGIN
+                IF ApprovalSetup.Delegations THEN
+                  IF PurchaseHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+                    AppManagement.SendPurchaseDelegationsMail(PurchaseHeader,ApprovalEntry);
+              END;
+          END;
+        END;
+      END ELSE
+        ERROR(Text007,UserSetup.FIELDCAPTION(Substitute),UserSetup."User ID");
+    END;
+
+    PROCEDURE PrePostApprovalCheck@6(VAR SalesHeader@1000 : Record 36;VAR PurchaseHeader@1001 : Record 38) : Boolean;
+    BEGIN
+      IF SalesHeader."No." <> '' THEN
+        EXIT(PrePostApprovalCheckSales(SalesHeader));
+      EXIT(PrePostApprovalCheckPurch(PurchaseHeader));
+    END;
+
+    PROCEDURE PrePostApprovalCheckSales@38(VAR SalesHeader@1000 : Record 36) : Boolean;
+    BEGIN
+      IF NOT CheckApprSalesDocument(SalesHeader) THEN
+        EXIT(TRUE);
+      IF NOT (SalesHeader.Status IN [SalesHeader.Status::Released,SalesHeader.Status::"Pending Prepayment"]) THEN BEGIN // UPG09R2
+              IF (NOT(SalesHeader.Interfaced = TRUE) ) THEN // UPG09R2
+        ERROR(Text013,SalesHeader."Document Type",SalesHeader."No.");
+      END
+      ELSE  //SMDEV1.0
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE PrePostApprovalCheckPurch@39(VAR PurchaseHeader@1001 : Record 38) : Boolean;
+    BEGIN
+      IF NOT CheckApprPurchaseDocument(PurchaseHeader) THEN
+        EXIT(TRUE);
+      IF NOT (PurchaseHeader.Status IN [PurchaseHeader.Status::Released,PurchaseHeader.Status::"Pending Prepayment"]) THEN BEGIN // UPG09R2
+               IF (NOT(PurchaseHeader.Interfaced = TRUE) ) THEN // UPG09R2
+        ERROR(Text013,PurchaseHeader."Document Type",PurchaseHeader."No.");
+      END
+      ELSE  //SMDEV1.0
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE MoveApprvalEntryToPosted@14(VAR ApprovalEntry@1001 : Record 454;ToTableId@1002 : Integer;ToNo@1003 : Code[20]);
+    VAR
+      PostedApprvlEntry@1000 : Record 456;
+      ApprovalCommentLine@1004 : Record 455;
+      PostedApprovalCommentLine@1005 : Record 457;
+    BEGIN
+      WITH ApprovalEntry DO BEGIN
+        IF FIND('-') THEN
+          REPEAT
+            PostedApprvlEntry.INIT;
+            PostedApprvlEntry.TRANSFERFIELDS(ApprovalEntry);
+            PostedApprvlEntry."Table ID" := ToTableId;
+            PostedApprvlEntry."Document No." := ToNo;
+            PostedApprvlEntry.INSERT;
+          UNTIL NEXT = 0;
+        ApprovalCommentLine.SETRANGE("Table ID","Table ID");
+        ApprovalCommentLine.SETRANGE("Document Type","Document Type");
+        ApprovalCommentLine.SETRANGE("Document No.","Document No.");
+        IF ApprovalCommentLine.FIND('-') THEN
+          REPEAT
+            PostedApprovalCommentLine.INIT;
+            PostedApprovalCommentLine.TRANSFERFIELDS(ApprovalCommentLine);
+            PostedApprovalCommentLine."Entry No." := 0;
+            PostedApprovalCommentLine."Table ID" := ToTableId;
+            PostedApprovalCommentLine."Document No." := ToNo;
+            PostedApprovalCommentLine.INSERT(TRUE);
+          UNTIL ApprovalCommentLine.NEXT = 0;
+      END;
+    END;
+
+    PROCEDURE DeleteApprovalEntry@9(TableId@1000 : Integer;DocumentType@1001 : Option;DocumentNo@1002 : Code[20]);
+    VAR
+      ApprovalEntry@1003 : Record 454;
+    BEGIN
+      ApprovalEntry.SETRANGE("Table ID",TableId);
+      ApprovalEntry.SETRANGE("Document Type",DocumentType);
+      ApprovalEntry.SETRANGE("Document No.",DocumentNo);
+      DeleteApprovalCommentLine(TableId,DocumentType,DocumentNo);
+      IF ApprovalEntry.FINDFIRST THEN
+        ApprovalEntry.DELETEALL;
+    END;
+
+    PROCEDURE DeleteApprovalCommentLine@15(TableId@1002 : Integer;DocumentType@1001 : 'Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order';DocumentNo@1000 : Code[20]);
+    VAR
+      ApprovalCommentLine@1003 : Record 455;
+    BEGIN
+      ApprovalCommentLine.SETRANGE("Table ID",TableId);
+      ApprovalCommentLine.SETRANGE("Document Type",DocumentType);
+      ApprovalCommentLine.SETRANGE("Document No.",DocumentNo);
+      IF ApprovalCommentLine.FINDFIRST THEN
+        ApprovalCommentLine.DELETEALL;
+    END;
+
+    PROCEDURE DeletePostedApprovalEntry@17(TableId@1000 : Integer;DocumentNo@1002 : Code[20]);
+    VAR
+      PostedApprovalEntry@1003 : Record 456;
+    BEGIN
+      PostedApprovalEntry.SETRANGE("Table ID",TableId);
+      PostedApprovalEntry.SETRANGE("Document No.",DocumentNo);
+      DeletePostedApprvlCommentLine(TableId,DocumentNo);
+      IF PostedApprovalEntry.FINDFIRST THEN
+        PostedApprovalEntry.DELETEALL;
+    END;
+
+    PROCEDURE DeletePostedApprvlCommentLine@18(TableId@1002 : Integer;DocumentNo@1000 : Code[20]);
+    VAR
+      PostedApprovalCommentLine@1003 : Record 457;
+    BEGIN
+      PostedApprovalCommentLine.SETRANGE("Entry No.",TableId);
+      PostedApprovalCommentLine.SETRANGE("Document No.",DocumentNo);
+      IF PostedApprovalCommentLine.FINDFIRST THEN
+        PostedApprovalCommentLine.DELETEALL;
+    END;
+
+    PROCEDURE DisableSalesApproval@16(DocType@1000 : 'Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order');
+    VAR
+      SalesHeader@1001 : Record 36;
+    BEGIN
+      SalesHeader.RESET;
+      WITH SalesHeader DO BEGIN
+        IF FIND('-') THEN
+          REPEAT
+            CancelSalesApprovalRequest(SalesHeader,FALSE,FALSE);
+          UNTIL NEXT = 0;
+      END;
+      MESSAGE(Text014,SELECTSTR(1 + DocType,Text028));
+    END;
+
+    PROCEDURE DisablePurchaseApproval@11(DocType@1000 : 'Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order');
+    VAR
+      PurchaseHeader@1001 : Record 38;
+    BEGIN
+      PurchaseHeader.RESET;
+      WITH PurchaseHeader DO BEGIN
+        SETRANGE("Document Type",DocType);
+        REPEAT
+          CancelPurchaseApprovalRequest(PurchaseHeader,FALSE,FALSE);
+        UNTIL NEXT = 0;
+      END;
+      MESSAGE(Text014,SELECTSTR(1 + DocType,Text028));
+    END;
+
+    PROCEDURE CalcSalesDocAmount@21(SalesHeader@1000 : Record 36;VAR ApprovalAmount@1001 : Decimal;VAR ApprovalAmountLCY@1002 : Decimal);
+    VAR
+      TempSalesLine@1009 : TEMPORARY Record 37;
+      TotalSalesLine@1008 : Record 37;
+      TotalSalesLineLCY@1007 : Record 37;
+      SalesPost@1006 : Codeunit 80;
+      TempAmount@1005 : ARRAY [5] OF Decimal;
+      VAtText@1004 : Text[30];
+    BEGIN
+      SalesPost.GetSalesLines(SalesHeader,TempSalesLine,0);
+      CLEAR(SalesPost);
+      SalesPost.SumSalesLinesTemp(
+        SalesHeader,TempSalesLine,0,TotalSalesLine,TotalSalesLineLCY,
+        TempAmount[1],VAtText,TempAmount[2],TempAmount[3],TempAmount[4]);
+      ApprovalAmount := TotalSalesLine.Amount;
+      ApprovalAmountLCY := TotalSalesLineLCY.Amount;
+    END;
+
+    PROCEDURE CalcPurchaseDocAmount@19(PurchaseHeader@1002 : Record 38;VAR ApprovalAmount@1001 : Decimal;VAR ApprovalAmountLCY@1000 : Decimal);
+    VAR
+      TempPurchaseLine@1009 : TEMPORARY Record 39;
+      TotalPurchaseLine@1008 : Record 39;
+      TotalPurchaseLineLCY@1007 : Record 39;
+      PurchasePost@1006 : Codeunit 90;
+      TempAmount@1005 : Decimal;
+      VAtText@1004 : Text[30];
+    BEGIN
+      PurchasePost.GetPurchLines(PurchaseHeader,TempPurchaseLine,0);
+      CLEAR(PurchasePost);
+      PurchasePost.SumPurchLinesTemp(
+        PurchaseHeader,TempPurchaseLine,0,TotalPurchaseLine,TotalPurchaseLineLCY,
+        TempAmount,VAtText);
+      ApprovalAmount := TotalPurchaseLine.Amount;
+      ApprovalAmountLCY := TotalPurchaseLineLCY.Amount;
+    END;
+
+    PROCEDURE InsertAddApprovers@7(AppTemplate@1000 : Record 464);
+    VAR
+      AddApprovers@1001 : Record 465;
+    BEGIN
+      CLEAR(AddApproversTemp);
+      AddApprovers.SETCURRENTKEY("Sequence No.");
+      AddApprovers.SETRANGE("Approval Code",AppTemplate."Approval Code");
+      AddApprovers.SETRANGE("Approval Type",AppTemplate."Approval Type");
+      AddApprovers.SETRANGE("Document Type",AppTemplate."Document Type");
+      AddApprovers.SETRANGE("Limit Type",AppTemplate."Limit Type");
+      IF AddApprovers.FIND('-') THEN
+        REPEAT
+          AddApproversTemp := AddApprovers;
+          AddApproversTemp.INSERT;
+        UNTIL AddApprovers.NEXT = 0;
+    END;
+
+    PROCEDURE CheckCreditLimit@25(SalesHeader@1000 : Record 36) : Decimal;
+    VAR
+      Customer@1001 : Record 18;
+    BEGIN
+      IF NOT Customer.GET(SalesHeader."Bill-to Customer No.") THEN
+        EXIT(0);
+      EXIT(Customer.CalcAvailableCredit);
+    END;
+
+    PROCEDURE CheckAddApprovers@33(AppTemplate@1000 : Record 464);
+    BEGIN
+      AppTemplate.CALCFIELDS("Additional Approvers");
+      IF AppTemplate."Additional Approvers" THEN
+        InsertAddApprovers(AppTemplate);
+    END;
+
+    PROCEDURE SetupDefualtApprovals@26();
+    VAR
+      ApprovalCode@1000 : Record 453;
+      ApprovalTemplate@1001 : Record 464;
+      Object@1002 : Record 2000000001;
+    BEGIN
+      IF NOT ApprovalCode.FIND('-') THEN BEGIN
+        Object.SETRANGE(Type,Object.Type::Table);
+        Object.SETRANGE(ID,DATABASE::"Sales Header");
+        IF Object.FINDFIRST THEN;
+        InsertDefaultApprovalCode(ApprovalCode,Text100,Text101,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text102,Text103,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text104,Text105,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text106,Text107,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text108,Text109,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text110,Text111,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text124,Text125,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text126,Text127,Object.ID,Object.Name);
+
+        Object.SETRANGE(ID,DATABASE::"Purchase Header");
+        IF Object.FINDFIRST THEN;
+        InsertDefaultApprovalCode(ApprovalCode,Text112,Text113,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text114,Text115,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text116,Text117,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text118,Text119,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text120,Text121,Object.ID,Object.Name);
+        InsertDefaultApprovalCode(ApprovalCode,Text122,Text123,Object.ID,Object.Name);
+      END;
+
+      IF NOT ApprovalTemplate.FINDFIRST AND ApprovalCode.FIND('-') THEN
+        REPEAT
+          InsertDefaultApprovalTemplate(ApprovalTemplate,ApprovalCode);
+        UNTIL ApprovalCode.NEXT = 0;
+    END;
+
+    PROCEDURE InsertDefaultApprovalCode@27(VAR ApprovalCodeRec@1000 : Record 453;ApprovalCode@1001 : Code[20];ApprovalName@1002 : Text[100];TableId@1003 : Integer;Tablename@1005 : Text[50]);
+    BEGIN
+      ApprovalCodeRec.INIT;
+      ApprovalCodeRec.Code := ApprovalCode;
+      ApprovalCodeRec.Description := ApprovalName;
+      ApprovalCodeRec."Linked To Table Name" := Tablename;
+      ApprovalCodeRec."Linked To Table No." := TableId;
+      ApprovalCodeRec.INSERT;
+    END;
+
+    PROCEDURE InsertDefaultApprovalTemplate@28(VAR ApprovalTemplate@1000 : Record 464;ApprovalCode@1001 : Record 453);
+    BEGIN
+      CASE TRUE OF
+        ApprovalCode.Code = Text100:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Quote;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text102:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Order;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"Approval Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text104:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Invoice;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text106:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Credit Memo";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text108:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Return Order";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text110:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::" ";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Blanket Order";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text112:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::Approver;
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Quote;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"Request Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text114:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Order;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"Approval Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text116:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Invoice;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text118:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Credit Memo";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text120:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::"Sales Pers./Purchaser";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Return Order";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text122:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::" ";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::"Blanket Order";
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"No Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text124:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::" ";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Order;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"Credit Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+        ApprovalCode.Code = Text126:
+          BEGIN
+            ApprovalTemplate.INIT;
+            ApprovalTemplate."Approval Code" := ApprovalCode.Code;
+            ApprovalTemplate."Approval Type" := ApprovalTemplate."Approval Type"::" ";
+            ApprovalTemplate."Document Type" := ApprovalTemplate."Document Type"::Invoice;
+            ApprovalTemplate."Limit Type" := ApprovalTemplate."Limit Type"::"Credit Limits";
+            ApprovalTemplate."Table ID" := ApprovalCode."Linked To Table No.";
+            ApprovalTemplate.INSERT;
+          END;
+      END;
+    END;
+
+    PROCEDURE TestSalesPrepayment@31(SalesHeader@1000 : Record 36) : Boolean;
+    VAR
+      SalesLines@1001 : Record 37;
+    BEGIN
+      SalesLines.SETRANGE("Document Type",SalesHeader."Document Type");
+      SalesLines.SETRANGE("Document No.",SalesHeader."No.");
+      SalesLines.SETFILTER("Prepmt. Line Amount",'<>%1',0);
+      IF SalesLines.FIND('-') THEN
+        REPEAT
+          IF SalesLines."Prepmt. Amt. Inv." <> SalesLines."Prepmt. Line Amount" THEN
+            EXIT(TRUE);
+        UNTIL SalesLines.NEXT = 0;
+    END;
+
+    PROCEDURE TestPurchasePrepayment@30(PurchaseHeader@1000 : Record 38) : Boolean;
+    VAR
+      PurchaseLines@1001 : Record 39;
+    BEGIN
+      PurchaseLines.SETRANGE("Document Type",PurchaseHeader."Document Type");
+      PurchaseLines.SETRANGE("Document No.",PurchaseHeader."No.");
+      PurchaseLines.SETFILTER("Prepmt. Line Amount",'<>%1',0);
+      IF PurchaseLines.FIND('-') THEN
+        REPEAT
+          IF PurchaseLines."Prepmt. Amt. Inv." <> PurchaseLines."Prepmt. Line Amount" THEN
+            EXIT(TRUE);
+        UNTIL PurchaseLines.NEXT = 0;
+    END;
+
+    PROCEDURE TestSetup@32();
+    VAR
+      ApprovalSetup@1000 : Record 452;
+    BEGIN
+      IF NOT ApprovalSetup.GET THEN
+        ERROR(Text004);
+    END;
+
+    PROCEDURE TestSalesPayment@34(SalesHeader@1000 : Record 36) : Boolean;
+    VAR
+      SalesSetup@1002 : Record 311;
+      CustLedgerEntry@1004 : Record 21;
+      SalesInvHeader@1005 : Record 112;
+      EntryFound@1006 : Boolean;
+    BEGIN
+      EntryFound := FALSE;
+      SalesSetup.GET;
+      IF SalesSetup."Check Prepmt. when Posting" THEN BEGIN
+        SalesInvHeader.SETCURRENTKEY("Prepayment Order No.","Prepayment Invoice");
+        SalesInvHeader.SETRANGE("Prepayment Order No.",SalesHeader."No.");
+        SalesInvHeader.SETRANGE("Prepayment Invoice",TRUE);
+        IF SalesInvHeader.FIND('-') THEN
+          REPEAT
+            CustLedgerEntry.SETCURRENTKEY("Document No.");
+            CustLedgerEntry.SETRANGE("Document Type",CustLedgerEntry."Document Type"::Invoice);
+            CustLedgerEntry.SETRANGE("Document No.",SalesInvHeader."No.");
+            CustLedgerEntry.SETFILTER("Remaining Amt. (LCY)",'<>%1',0);
+            IF CustLedgerEntry.FINDFIRST THEN
+              EntryFound := TRUE;
+          UNTIL (SalesInvHeader.NEXT = 0) OR EntryFound;
+      END;
+      IF EntryFound THEN
+        EXIT(TRUE);
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE TestPurchasePayment@35(PurchaseHeader@1004 : Record 38) : Boolean;
+    VAR
+      PurchaseSetup@1003 : Record 312;
+      VendLedgerEntry@1002 : Record 25;
+      PurchaseInvHeader@1001 : Record 122;
+      EntryFound@1000 : Boolean;
+    BEGIN
+      EntryFound := FALSE;
+      PurchaseSetup.GET;
+      IF PurchaseSetup."Check Prepmt. when Posting" THEN BEGIN
+        PurchaseInvHeader.SETCURRENTKEY("Prepayment Order No.","Prepayment Invoice");
+        PurchaseInvHeader.SETRANGE("Prepayment Order No.",PurchaseHeader."No.");
+        PurchaseInvHeader.SETRANGE("Prepayment Invoice",TRUE);
+        IF PurchaseInvHeader.FIND('-') THEN
+          REPEAT
+            VendLedgerEntry.SETCURRENTKEY("Document No.");
+            VendLedgerEntry.SETRANGE("Document Type",VendLedgerEntry."Document Type"::Invoice);
+            VendLedgerEntry.SETRANGE("Document No.",PurchaseInvHeader."No.");
+            VendLedgerEntry.SETFILTER("Remaining Amt. (LCY)",'<>%1',0);
+            IF VendLedgerEntry.FINDFIRST THEN
+              EntryFound := TRUE;
+          UNTIL (PurchaseInvHeader.NEXT = 0) OR EntryFound;
+      END;
+      IF EntryFound THEN
+        EXIT(TRUE);
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE SendRejectionMail@36(ApprovalEntry@1000 : Record 454;AppManagement@1003 : Codeunit 440);
+    VAR
+      SalesHeader@1001 : Record 36;
+      PurchaseHeader@1002 : Record 38;
+    BEGIN
+      CASE ApprovalEntry."Table ID" OF
+        DATABASE::"Sales Header":
+          BEGIN
+            IF SalesHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+              AppManagement.SendSalesRejectionsMail(SalesHeader,ApprovalEntry);
+          END;
+        DATABASE::"Purchase Header":
+          BEGIN
+            IF PurchaseHeader.GET(ApprovalEntry."Document Type",ApprovalEntry."Document No.") THEN
+              AppManagement.SendPurchaseRejectionsMail(PurchaseHeader,ApprovalEntry);
+          END;
+      END;
+    END;
+
+    PROCEDURE FinishApprovalEntrySales@40(VAR SalesHeader@1000 : Record 36;ApprovalSetup@1001 : Record 452;VAR MessageID@1002 : ' ,AutomaticPrePayment,AutomaticRelease,RequiresApproval');
+    VAR
+      DocReleased@1010 : Boolean;
+      ApprovalEntry@1011 : Record 454;
+      ApprovalsMgtNotification@1012 : Codeunit 440;
+    BEGIN
+      DocReleased := FALSE;
+      WITH ApprovalEntry DO BEGIN
+        INIT;
+        SETRANGE("Table ID",DATABASE::"Sales Header");
+        SETRANGE("Document Type",SalesHeader."Document Type");
+        SETRANGE("Document No.",SalesHeader."No.");
+        SETRANGE(Status,Status::Created);
+        IF FINDSET(TRUE,FALSE) THEN
+          REPEAT
+            IF "Sender ID" = "Approver ID" THEN BEGIN
+              Status := Status::Approved;
+              MODIFY;
+            END ELSE
+              IF NOT IsOpenStatusSet THEN BEGIN
+                Status := Status::Open;
+                MODIFY;
+                IsOpenStatusSet := TRUE;
+                IF ApprovalSetup.Approvals THEN
+                  ApprovalsMgtNotification.SendSalesApprovalsMail(SalesHeader,ApprovalEntry);
+              END;
+          UNTIL NEXT = 0;
+
+        IF NOT IsOpenStatusSet THEN BEGIN
+          SETRANGE(Status);
+          FINDLAST;
+          DocReleased := ApproveApprovalRequest(ApprovalEntry);
+          IF DocReleased THEN
+            SalesHeader.FIND;
+        END;
+
+        IF DocReleased THEN BEGIN
+          IF TestSalesPrepayment(SalesHeader) AND
+             (SalesHeader."Document Type" = SalesHeader."Document Type"::Order)
+          THEN
+            MessageID := MessageID::AutomaticPrePayment
+          ELSE
+            MessageID := MessageID::AutomaticRelease;
+        END ELSE BEGIN
+          SalesHeader.Status := SalesHeader.Status::"Pending Approval";
+          SalesHeader.MODIFY(TRUE);
+          MessageID := MessageID::RequiresApproval;
+        END;
+      END;
+    END;
+
+    PROCEDURE FinishApprovalEntryPurchase@37(VAR PurchHeader@1000 : Record 38;ApprovalSetup@1001 : Record 452;VAR MessageID@1002 : ' ,AutomaticPrePayment,AutomaticRelease,RequiresApproval');
+    VAR
+      DocReleased@1010 : Boolean;
+      ApprovalEntry@1011 : Record 454;
+      ApprovalsMgtNotification@1012 : Codeunit 440;
+    BEGIN
+      DocReleased := FALSE;
+      WITH ApprovalEntry DO BEGIN
+        INIT;
+        SETRANGE("Table ID",DATABASE::"Purchase Header");
+        SETRANGE("Document Type",PurchHeader."Document Type");
+        SETRANGE("Document No.",PurchHeader."No.");
+        SETRANGE(Status,Status::Created);
+        IF FINDSET(TRUE,FALSE) THEN
+          REPEAT
+            IF "Sender ID" = "Approver ID" THEN BEGIN
+              Status := Status::Approved;
+              MODIFY;
+            END ELSE
+              IF NOT IsOpenStatusSet THEN BEGIN
+                Status := Status::Open;
+                MODIFY;
+                IsOpenStatusSet := TRUE;
+                IF ApprovalSetup.Approvals THEN
+                  ApprovalsMgtNotification.SendPurchaseApprovalsMail(PurchHeader,ApprovalEntry);
+              END;
+          UNTIL NEXT = 0;
+
+        IF NOT IsOpenStatusSet THEN BEGIN
+          SETRANGE(Status);
+          FINDLAST;
+          DocReleased := ApproveApprovalRequest(ApprovalEntry);
+          IF DocReleased THEN
+            PurchHeader.FIND;
+        END;
+
+        IF DocReleased THEN BEGIN
+          IF TestPurchasePrepayment(PurchHeader) AND
+             (PurchHeader."Document Type" = PurchHeader."Document Type"::Order)
+          THEN
+            MessageID := MessageID::AutomaticPrePayment
+          ELSE
+            MessageID := MessageID::AutomaticRelease;
+        END ELSE BEGIN
+          PurchHeader.Status := PurchHeader.Status::"Pending Approval";
+          PurchHeader.MODIFY(TRUE);
+          MessageID := MessageID::RequiresApproval;
+        END;
+      END;
+    END;
+
+    PROCEDURE "//YMSLI"@1000000000();
+    BEGIN
+       // UPG09R2
+    END;
+
+    PROCEDURE CreateVAtEntry@1000000021(Purch_Line@1000000000 : Record 39;Type@1000000002 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_Date@1000000003 : Date;Curr@1000000004 : Code[10];Due_Date@1000000005 : Date);
+    VAR
+      Vat_Table@1000000001 : Record 50015;
+      PHeader@1000000006 : Record 38;
+      OrderAdd@1000000008 : Record 224;
+    BEGIN
+      // UPG09R2.begin
+      MasterSetUp.GET;
+      IF PHeader.GET(Purch_Line."Document Type",Purch_Line."Document No.") THEN;
+
+      Vat_Table.RESET;
+      Vat_Table.LOCKTABLE;
+      Vat_Table.INIT;
+      Vat_Table."Document Type" := Purch_Line."Document Type";
+      Vat_Table."Line No." := Purch_Line."Line No.";
+      Vat_Table."Document No." := Purch_Line."Document No.";
+      Vat_Table.INSERT;
+      Vat_Table."Entry Type" := Vat_Table."Entry Type"::Purchase;
+      Vat_Table."Transaction Type" := Type;
+      Vat_Table."Posting Date" := Trans_Date;
+      Vat_Table."Source Type" := Vat_Table."Source Type"::Vendor;
+      Vat_Table.VALIDATE(Vat_Table."Source No.",Purch_Line."Buy-from Vendor No.");
+      Vat_Table.NPWP := Purch_Line."New NPWP";//YIMMCH
+      //Purch_Line."Order Address Code";
+      Vat_Table."Currency Code" := Curr;
+      Vat_Table."Due Date" := Due_Date;
+      Vat_Table."Global Dimension 1 Code" := Purch_Line."Shortcut Dimension 1 Code";
+      Vat_Table."Global Dimension 2 Code" := Purch_Line."Shortcut Dimension 2 Code";
+      Vat_Table."Kwitansi No." := Purch_Line."Kwitansi No.";
+      Vat_Table."Commercial Invoice No." := Purch_Line."Commercial Invoice No.";
+      Vat_Table."Commercial Invoice Date" := Purch_Line."Commercial Invoice Date";
+      Vat_Table."Tax Invoice No." := Purch_Line."Tax Invoice No.";
+      Vat_Table."Tax Invoice Date" := Purch_Line."Tax Invoice Date";
+
+
+      IF (Purch_Line."Document Type"=Purch_Line."Document Type"::Invoice) THEN
+      BEGIN
+      Vat_Table.Amount := Purch_Line."Tax Amount (Vat)";
+      Vat_Table.Base := Purch_Line."Line Amount";
+      END;
+
+      IF (Purch_Line."Document Type"=Purch_Line."Document Type"::"Credit Memo") THEN
+      BEGIN
+      Vat_Table.Amount := -(Purch_Line."Tax Amount (Vat)");
+      Vat_Table.Base := -(Purch_Line."Line Amount");
+      END;
+
+
+
+      Vat_Table."VAT Calculation Type" := Purch_Line."VAT Calculation Type";
+
+      IF (Vat_Table."Currency Code" <> '')  THEN
+       BEGIN
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Domestic_Bus_Posting_Group) THEN
+         CALC_VAT_LCY(Purch_Line."Tax Invoice Date", Purch_Line."Tax Amount (Vat)",PHeader."Currency Code");
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Foreign_Bus_Posting_Group) THEN
+         CALC_VAT_LCY(Trans_Date, Purch_Line."Tax Amount (Vat)",PHeader."Currency Code");
+
+
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Foreign_Bus_Posting_Group) THEN
+         CALC_BASE_LCY(Vat_Table."Posting Date",  Purch_Line."Line Amount",PHeader."Currency Code");
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Domestic_Bus_Posting_Group) THEN
+         CALC_BASE_LCY(Purch_Line."Tax Invoice Date",  Purch_Line."Line Amount",PHeader."Currency Code");
+
+
+
+
+         IF (Purch_Line."Document Type"=Purch_Line."Document Type"::Invoice) THEN
+         BEGIN
+         Vat_Table."Amount LCY":=VAT_LCY;
+         Vat_Table."Base LCY" := Base_LCY;
+         END;
+
+         IF (Purch_Line."Document Type"=Purch_Line."Document Type"::"Credit Memo") THEN
+         BEGIN
+         Vat_Table."Amount LCY":=-(VAT_LCY);
+         Vat_Table."Base LCY" := -(Base_LCY);
+         END;
+
+       END
+
+      ELSE
+        BEGIN
+           IF (Purch_Line."Document Type"=Purch_Line."Document Type"::Invoice) THEN
+             BEGIN
+             Vat_Table."Amount LCY":= Purch_Line."Tax Amount (Vat)";
+             Vat_Table."Base LCY" := Purch_Line."Line Amount";
+             END;
+
+           IF (Purch_Line."Document Type"=Purch_Line."Document Type"::"Credit Memo") THEN
+             BEGIN
+             Vat_Table."Amount LCY":= -(Purch_Line."Tax Amount (Vat)");
+             Vat_Table."Base LCY" := -(Purch_Line."Line Amount");
+             END;
+        END;
+
+
+      Vat_Table."Original Tax Inv. No." := Purch_Line."Original Tax Inv. No.";//YIMM
+      Vat_Table."VAT Bus. Posting Group" := Purch_Line."VAT Bus. Posting Group";
+      Vat_Table."VAT Prod. Posting Group" := Purch_Line."VAT Prod. Posting Group";
+      Vat_Table."VAT %" := Purch_Line."VAT %";
+      Vat_Table."Vat Type" := 1;
+
+      //YIMMCHST
+      Vat_Table."User ID" := PHeader.UID;
+
+      //UPG13C.begin
+      //IF UserName.GET(PHeader.UID) THEN;
+      //Vat_Table."User Name" := UserName.Name;
+      //UPG13C.end
+      OrderAdd.RESET;
+      IF OrderAdd.GET(Purch_Line."Buy-from Vendor No.",Purch_Line."New NPWP") THEN BEGIN
+        Vat_Table."NPWP Name" := OrderAdd."Name 2";
+        Vat_Table."NPWP Address" := OrderAdd.Address;
+        Vat_Table."NPWP Address 2" := OrderAdd."Address 2";
+        Vat_Table."NPWP City" := OrderAdd.City;
+      END ELSE BEGIN
+        Vat_Table."NPWP Name" := PHeader."Buy-from Vendor Name" ;
+        Vat_Table."NPWP Address" := PHeader."Buy-from Address";
+        Vat_Table."NPWP Address 2" := PHeader."Buy-from Address 2";
+        Vat_Table."NPWP City" := PHeader."Buy-from City";
+      END;
+
+      //YIMMCHEN
+
+      IF (PHeader."Document Type"=PHeader."Document Type"::"Credit Memo") AND
+            (PHeader.ActualCreditMemo=FALSE) THEN
+          Vat_Table.CorrectionEntry:=TRUE;
+
+      Vat_Table.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CreateVAtEntryCr@1000000001(Purch_Line@1000000000 : Record 37;Type@1000000002 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_Date@1000000003 : Date;Curr@1000000004 : Code[10];Due_Date@1000000005 : Date);
+    VAR
+      Vat_Table@1000000001 : Record 50015;
+      Sales_Header@1000000006 : Record 36;
+      ShipTo@1000000008 : Record 222;
+    BEGIN
+      // UPG09R2.begin
+      MasterSetUp.GET;
+
+      Sales_Header.SETRANGE(Sales_Header."No.",Purch_Line."Document No.");
+      Sales_Header.SETRANGE(Sales_Header."Document Type",Purch_Line."Document Type");
+      IF Sales_Header.FINDSET THEN;
+
+      Vat_Table.RESET;
+      Vat_Table.LOCKTABLE;
+      Vat_Table.INIT;
+      Vat_Table."Document Type" := Purch_Line."Document Type";
+      Vat_Table."Line No." := Purch_Line."Line No.";
+      Vat_Table."Document No." := Purch_Line."Document No.";
+      Vat_Table.INSERT;
+      Vat_Table."Entry Type" := Vat_Table."Entry Type"::Sale;
+      Vat_Table."Transaction Type" := Type;
+      //Vat_Table."Posting Date" := Sales_Header."document Date";  //UPG13R2DEV
+      Vat_Table."Posting Date" := Sales_Header."Posting Date";     //UPG13R2DEV
+      Vat_Table."Source Type" := Vat_Table."Source Type"::Customer;
+      Vat_Table.VALIDATE(Vat_Table."Source No.",Purch_Line."Sell-to Customer No.");
+
+      //PPNPPHDEV.begin
+      //Vat_Table.NPWP := Purch_Line."New NPWP.";//YIMMCH
+      Vat_Table.NPWP := Purch_Line."Ship-to Code";
+      Vat_Table."PPH NPWP No." := Purch_Line."New NPWP.";
+      //PPNPPHDEV.end
+
+      //Purch_Line."Ship-to Code";
+
+      Vat_Table."Currency Code" := Curr;
+      Vat_Table."Due Date" := Due_Date;
+      Vat_Table."Global Dimension 1 Code" := Purch_Line."Shortcut Dimension 1 Code";
+      Vat_Table."Global Dimension 2 Code" := Purch_Line."Shortcut Dimension 2 Code";
+      Vat_Table."Kwitansi No." := Purch_Line."Kwitansi No.";
+      Vat_Table."Commercial Invoice No." := Purch_Line."Commercial Invoice No.";
+      Vat_Table."Commercial Invoice Date" := Purch_Line."Commercial Invoice Date";
+      Vat_Table."Tax Invoice No." := Purch_Line."Tax Invoice No.";
+      Vat_Table."Tax Invoice Date" := Purch_Line."Tax Invoice Date";
+
+      Vat_Table.Base := Purch_Line."Line Amount";
+      Vat_Table.Amount := Purch_Line."Tax Amount (VAT)";    //Purch_Line."Amount Including VAT" - Purch_Line."Line Amount";
+      Vat_Table.Approved :=TRUE;//nd
+
+      Vat_Table."VAT Calculation Type" := Purch_Line."VAT Calculation Type";
+
+      //Vat_Table."Base LCY" :=
+
+      Vat_Table."Original Tax Inv. No." := Purch_Line."Original Tax Inv. No.";//YIMM
+
+      IF (Vat_Table."Currency Code" <> '')  THEN
+       BEGIN
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Domestic_Bus_Posting_Group) THEN
+         CALC_VAT_LCY(Purch_Line."Tax Invoice Date",Purch_Line."Tax Amount (VAT)",Sales_Header."Currency Code");
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Foreign_Bus_Posting_Group) THEN
+         CALC_VAT_LCY(Sales_Header."Document Date",Purch_Line."Tax Amount (VAT)",Sales_Header."Currency Code");
+
+
+         Vat_Table."Amount LCY":=VAT_LCY;
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Domestic_Bus_Posting_Group) THEN
+         CALC_BASE_LCY(Purch_Line."Tax Invoice Date", Purch_Line."Line Amount",Sales_Header."Currency Code");
+
+
+         IF (Purch_Line."Gen. Bus. Posting Group"=MasterSetUp.Foreign_Bus_Posting_Group) THEN
+         CALC_BASE_LCY(Sales_Header."Document Date", Purch_Line."Line Amount",Sales_Header."Currency Code");
+
+
+         Vat_Table."Base LCY" := Base_LCY;
+       END
+      ELSE
+        BEGIN
+         Vat_Table."Amount LCY":= Purch_Line."Tax Amount (VAT)";
+         Vat_Table."Base LCY" := Purch_Line."Line Amount";
+        END;
+
+
+      Vat_Table."VAT Bus. Posting Group" := Purch_Line."VAT Bus. Posting Group";
+      Vat_Table."VAT Prod. Posting Group" := Purch_Line."VAT Prod. Posting Group";
+      Vat_Table."VAT %" := Purch_Line."VAT %";
+      Vat_Table."Vat Type" := 1;
+
+      //YIMMCHST
+
+      Vat_Table."User ID" := Sales_Header.UID;
+      //UPG13C.begin
+      //IF UserName.GET(Sales_Header.UID) THEN;
+      //Vat_Table."User Name" := UserName.Name;
+      //UPG13C.end
+      ShipTo.RESET;
+      //IF ShipTo.GET(Purch_Line."Sell-to Customer No.",Purch_Line."New NPWP.") THEN BEGIN  //PPNPPHDEV
+      IF ShipTo.GET(Purch_Line."Sell-to Customer No.",Purch_Line."Ship-to Code") THEN BEGIN    //PPNPPHDEV
+        Vat_Table."NPWP Name" := ShipTo."Name 2";
+        Vat_Table."NPWP Address" := ShipTo.Address;
+        Vat_Table."NPWP Address 2" := ShipTo."Address 2";
+        Vat_Table."NPWP City" := ShipTo.City;
+      END ELSE BEGIN
+        Vat_Table."NPWP Name" := Sales_Header."Sell-to Customer Name" ;
+        Vat_Table."NPWP Address" := Sales_Header."Sell-to Address";
+        Vat_Table."NPWP Address 2" := Sales_Header."Sell-to Address 2";
+        Vat_Table."NPWP City" := Sales_Header."Sell-to City";
+      END;
+
+      //YIMMCHEN
+
+      IF (Sales_Header."Document Type"=Sales_Header."Document Type"::Invoice) AND
+          (Sales_Header.ActualCreditMemo=FALSE) THEN
+        BEGIN
+        Vat_Table.CorrectionEntry:=TRUE;
+        END;
+
+      Vat_Table.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CALC_VAT_LCY@1000000002("Tax Inv Date"@1000000000 : Date;"VAT Amount"@1000000001 : Decimal;curr@1000000002 : Code[10]);
+    VAR
+      CurrxNGrATE@1000000003 : Record 330;
+    BEGIN
+      // UPG09R2.begin
+      VAT_LCY:=0;
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Starting Date","Tax Inv Date");
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Currency Code",curr);
+      IF CurrxNGrATE.FINDFIRST THEN
+        VAT_LCY:= "VAT Amount" * CurrxNGrATE."Rel Tax Rate Amount";
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CALC_BASE_LCY@1000000003("POSTING DATE"@1000000000 : Date;"BASE AMOUNT"@1000000001 : Decimal;Curr@1000000003 : Code[10]);
+    VAR
+      CurrExchngRate@1000000002 : Record 330;
+    BEGIN
+      // UPG09R2.begin
+      Base_LCY:=0;
+      CurrExchngRate.SETRANGE(CurrExchngRate."Starting Date","POSTING DATE");
+      CurrExchngRate.SETRANGE(CurrExchngRate."Currency Code",Curr);
+      IF CurrExchngRate.FINDFIRST THEN
+        Base_LCY:= "BASE AMOUNT" * CurrExchngRate."Relational Exch. Rate Amount";
+      // UPG09R2.end
+    END;
+
+    PROCEDURE ModifyVATEntry@1000000006(VAT_Det@1000000000 : Record 50015;Pur_Line@1000000001 : Record 39;Posting_Date@1000000003 : Date);
+    VAR
+      VAT_DETAILS_MOD@1000000002 : Record 50015;
+      PHeader@1000000004 : Record 38;
+      OrderAdd23@1000000005 : Record 224;
+      Vat_Det_Del@1000000006 : Record 50015;
+    BEGIN
+      // UPG09R2.begin
+      BEGIN
+        MasterSetUp.GET;
+        VAT_DETAILS_MOD.RESET;
+        Vat_Det_Del.RESET;
+        PHeader.GET(Pur_Line."Document Type",Pur_Line."Document No.");
+
+
+            Vat_Det_Del.SETRANGE(Vat_Det_Del."Document Type",Pur_Line."Document Type");
+            Vat_Det_Del.SETRANGE(Vat_Det_Del."Document No.",Pur_Line."Document No.");
+
+            //Rajesh
+            Vat_Det_Del.SETRANGE(Vat_Det_Del."Line No.",Pur_Line."Line No.");
+
+            //Rajesh
+      {
+             IF Vat_Det_Del.FINDSET  THEN
+              REPEAT
+                IF NOT (Vat_Det_Del."Approve Final") THEN
+                  Vat_Det_Del.DELETE;
+               UNTIL (Vat_Det_Del.NEXT=0);
+
+      }
+
+             IF Vat_Det_Del.FINDFIRST  THEN
+          //    IF NOT (Vat_Det_Del."Approve Final") THEN
+                 BEGIN
+                   Vat_Det_Del.DELETE;
+                   CreateVAtEntry(Pur_Line,PHeader."Type Of Transaction",Posting_Date,PHeader."Currency Code",PHeader."Due Date");
+      //NITIN
+                  END;
+
+
+
+      {
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Document Type",Pur_Line."Document Type");
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Document No.",Pur_Line."Document No.");
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Line No.",Pur_Line."Line No.");
+
+
+
+        IF VAT_DETAILS_MOD.FIND('-') THEN
+         BEGIN
+
+          IF NOT (VAT_DETAILS_MOD."Approve Final") THEN
+             BEGIN
+               //VAT_DETAILS_MOD.DELETE;
+                //COMMIT;
+                  CreateVAtEntry(Pur_Line,PHeader."Type Of Transaction",Posting_Date,PHeader."Currency Code",PHeader."Due Date");//NITIN
+             END;
+         END
+        ELSE
+          CreateVAtEntry(Pur_Line,PHeader."Type Of Transaction",Posting_Date,PHeader."Currency Code",PHeader."Due Date");//NITIN
+      }
+      END;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE ModifyVATEntryCr@1000000004(VAT_Det@1000000002 : Record 50015;Sales_Line@1000000001 : Record 37;Posting_Date@1000000000 : Date);
+    VAR
+      VAT_DETAILS_MOD@1000000003 : Record 50015;
+      Sheader@1000000004 : Record 36;
+    BEGIN
+        // UPG09R2.begin
+        MasterSetUp.GET;
+        VAT_DETAILS_MOD.RESET;
+        Sheader.GET(Sales_Line."Document Type",Sales_Line."Document No.");
+
+        //VAT_DETAILS_MOD.COPYFILTERS(VAT_Det);
+
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Document Type",Sales_Line."Document Type");
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Document No.",Sales_Line."Document No.");
+            VAT_DETAILS_MOD.SETRANGE(VAT_DETAILS_MOD."Line No.",Sales_Line."Line No.");
+
+
+
+        IF VAT_DETAILS_MOD.FINDSET(FALSE,FALSE) THEN
+          REPEAT
+            VAT_DETAILS_MOD.DELETE;
+          UNTIL(VAT_DETAILS_MOD.NEXT=0);
+
+
+      CreateVAtEntryCr(Sales_Line,Sheader."Type Of Transaction",Sheader."Posting Date",
+                                  Sheader."Currency Code",Sheader."Due Date");
+        // UPG09R2.end
+    END;
+
+    PROCEDURE CreateVAtEntryVATOUT@1000000005(Purch_Line@1000000004 : Record 39;Type@1000000003 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_Date@1000000002 : Date;Curr@1000000001 : Code[10];Due_Date@1000000000 : Date);
+    VAR
+      Vat_Table@1000000005 : Record 50015;
+      PurchHeader@1000000006 : Record 38;
+      VAT_Base@1000000007 : Decimal;
+      VAT_Amount@1000000008 : Decimal;
+      VAT_Base_LCY@1000000009 : Decimal;
+      VAT_Amount_LCY@1000000010 : Decimal;
+      PurLine@1000000011 : Record 39;
+      TaxInvMgt@1000000012 : Codeunit 28070;
+      PHeader@1000000013 : Record 38;
+      OrderAdd@1000000015 : Record 224;
+    BEGIN
+      // UPG09R2.begin
+      MasterSetUp.GET;
+
+      Vat_Table.RESET;
+      Vat_Table.LOCKTABLE;
+      Vat_Table.INIT;
+      Vat_Table."Document Type" := Purch_Line."Document Type";
+      Vat_Table."Line No." := Purch_Line."Line No.";
+      Vat_Table."Document No." := Purch_Line."Document No.";
+      Vat_Table.INSERT;
+      Vat_Table."Entry Type" := Vat_Table."Entry Type"::Purchase;
+      Vat_Table."Transaction Type" := Type;
+      Vat_Table."Posting Date" := Trans_Date;
+      Vat_Table."Source Type" := Vat_Table."Source Type"::Vendor;
+      Vat_Table.VALIDATE(Vat_Table."Source No.",Purch_Line."Buy-from Vendor No.");
+      Vat_Table.NPWP :=  Purch_Line."New NPWP"; //YIMMCH
+      //Purch_Line."Order Address Code";
+      Vat_Table."Currency Code" := Curr;
+      Vat_Table."Due Date" := Due_Date;
+      Vat_Table."Global Dimension 1 Code" := Purch_Line."Shortcut Dimension 1 Code";
+      Vat_Table."Global Dimension 2 Code" := Purch_Line."Shortcut Dimension 2 Code";
+      Vat_Table."Kwitansi No." := Purch_Line."Kwitansi No.";
+      Vat_Table."Commercial Invoice No." := Purch_Line."Commercial Invoice No.";
+      Vat_Table."Commercial Invoice Date" := Purch_Line."Commercial Invoice Date";
+      Vat_Table."Tax Invoice No." := Purch_Line."Tax Invoice No.";
+      Vat_Table."Tax Invoice Date" := Purch_Line."Tax Invoice Date";
+
+      PurchHeader.RESET;
+      IF PurchHeader.GET(Purch_Line."Document Type",Purch_Line."Document No.") THEN;
+
+      PurLine.RESET;
+      PurLine.SETRANGE(PurLine."Document No.",Purch_Line."Document No.");
+      PurLine.SETFILTER(PurLine."VAT %",'<>%1',0);
+
+      VAT_Base:=0;
+      VAT_Amount:=0;
+      VAT_Base_LCY:=0;
+      VAT_Amount_LCY:=0;
+
+
+      IF PurLine.FINDSET THEN
+
+      REPEAT
+        VAT_Base :=VAT_Base+PurLine.Amount;
+        VAT_Amount:=VAT_Amount+(PurLine."Amount Including VAT"-PurLine.Amount);
+
+             IF (PurchHeader."Currency Code"<>'') THEN
+             BEGIN
+                IF (PurchHeader."Gen. Bus. Posting Group"=MasterSetUp.Domestic_Bus_Posting_Group) THEN
+                    BEGIN
+                       VAT_Base_LCY:= VAT_Base_LCY+ TaxInvMgt.CALC_BASE_LCY(PurchHeader."Posting Date",PurLine.Amount,
+                       PurchHeader."Currency Code");
+
+                       VAT_Amount_LCY:=VAT_Amount_LCY +TaxInvMgt.CALC_VAT_LCY(PurLine."Tax Invoice Date",
+                       (PurLine."Amount Including VAT"-PurLine.Amount),PurchHeader."Currency Code");
+                     END;
+
+               IF (PurchHeader."Gen. Bus. Posting Group"=MasterSetUp.Foreign_Bus_Posting_Group) THEN
+                    BEGIN
+                       VAT_Base_LCY:= VAT_Base_LCY+ TaxInvMgt.CALC_BASE_LCY(PurchHeader."Posting Date",PurLine.Amount,
+                       PurchHeader."Currency Code");
+
+                       VAT_Amount_LCY:=VAT_Amount_LCY +TaxInvMgt.CALC_VAT_LCY(PurchHeader."Posting Date",
+                       (PurLine."Amount Including VAT"-PurLine.Amount),PurchHeader."Currency Code");
+                    END;
+
+
+             END;
+
+
+      UNTIL(PurLine.NEXT=0);
+
+
+      IF (PurchHeader."Currency Code"='') THEN
+      BEGIN
+      VAT_Base_LCY:= VAT_Base;
+      VAT_Amount_LCY:=VAT_Amount;
+      END;
+
+
+
+      Vat_Table.Base := (VAT_Base);
+      Vat_Table.Amount := (VAT_Base_LCY);
+      Vat_Table."Base LCY":=(VAT_Base_LCY);
+      Vat_Table."Amount LCY":=(VAT_Amount_LCY);
+
+
+
+      Vat_Table."VAT Calculation Type" := Purch_Line."VAT Calculation Type";
+
+
+
+      Vat_Table."Original Tax Inv. No." := Purch_Line."Original Tax Inv. No.";//YIMM
+      Vat_Table."VAT Bus. Posting Group" := Purch_Line."VAT Bus. Posting Group";
+      Vat_Table."VAT Prod. Posting Group" := Purch_Line."VAT Prod. Posting Group";
+      Vat_Table."VAT %" := Purch_Line."VAT %";
+      Vat_Table."Vat Type" := 2;
+
+      //YIMMCHST
+      PHeader.GET(Purch_Line."Document Type",Purch_Line."Document No.");
+      Vat_Table."User ID" := PHeader.UID;
+      //UPG13.begin
+      //IF UserName.GET(PHeader.UID) THEN;
+      //Vat_Table."User Name" := UserName.Name;
+      //UPG13.end
+      OrderAdd.RESET;
+      IF OrderAdd.GET(Purch_Line."Buy-from Vendor No.",Purch_Line."New NPWP") THEN BEGIN
+        Vat_Table."NPWP Name" := OrderAdd."Name 2";
+        Vat_Table."NPWP Address" := OrderAdd.Address;
+        Vat_Table."NPWP Address 2" := OrderAdd."Address 2";
+        Vat_Table."NPWP City" := OrderAdd.City;
+      END ELSE BEGIN
+        Vat_Table."NPWP Name" := PHeader."Buy-from Vendor Name" ;
+        Vat_Table."NPWP Address" := PHeader."Buy-from Address";
+        Vat_Table."NPWP Address 2" := PHeader."Buy-from Address 2";
+        Vat_Table."NPWP City" := PHeader."Buy-from City";
+      END;
+
+      //YIMMCHEN
+
+      Vat_Table.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE "//Melco"@1000000008();
+    BEGIN
+      // UPG09R2
+    END;
+
+    PROCEDURE SendSalesApprovalRequest_Quote@1000000007(VAR SalesHeader@1000000000 : Record 36) : Boolean;
+    VAR
+      Cust@1000000003 : Record 18;
+      TemplateRec@1000000002 : Record 464;
+      ApprovalSetup@1000000001 : Record 452;
+      CheckValidation@1000000004 : Codeunit 50022;
+    BEGIN
+      // UPG09R2.begin
+      CheckValidation.CheckSalesValidationMelco(SalesHeader);
+
+      TestSetup;
+      WITH SalesHeader DO BEGIN
+        IF Status <> Status::Open THEN
+          EXIT(FALSE);
+
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        IF NOT SalesLinesExist THEN
+          ERROR(Text015,FORMAT("Document Type"),"No.");
+
+        TemplateRec.SETCURRENTKEY("Table ID","Document Type",Enabled);
+        TemplateRec.SETRANGE("Table ID",DATABASE::"Sales Header");
+        TemplateRec.SETRANGE("Document Type","Document Type");
+        TemplateRec.SETRANGE(Enabled,TRUE);
+        IF TemplateRec.FIND('-') THEN BEGIN
+          REPEAT
+            IF NOT FindApproverSales(SalesHeader,ApprovalSetup,TemplateRec) THEN
+              ERROR(Text010);
+          UNTIL TemplateRec.NEXT = 0;
+          IF DispMessage THEN
+            MESSAGE(Text001,"Document Type","No.");
+        END ELSE
+          ERROR(STRSUBSTNO(Text129,SalesHeader."Document Type"));
+      END;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE SendPurchApprovalRequest_Quote@1000000009(VAR PurchaseHeader@1000000002 : Record 38) : Boolean;
+    VAR
+      TemplateRec@1000000001 : Record 464;
+      ApprovalSetup@1000000000 : Record 452;
+    BEGIN
+      // UPG09R2.begin
+      CheckValidation.CheckPurValidationMelco(PurchaseHeader);
+
+      TestSetup;
+      WITH PurchaseHeader DO BEGIN
+        IF Status <> Status::Open THEN
+          EXIT(FALSE);
+
+        IF NOT ApprovalSetup.GET THEN
+          ERROR(Text004);
+
+        IF NOT PurchLinesExist THEN
+          ERROR(Text015,FORMAT("Document Type"),"No.");
+
+        TemplateRec.SETCURRENTKEY("Table ID","Document Type",Enabled);
+        TemplateRec.SETRANGE("Table ID",DATABASE::"Purchase Header");
+        TemplateRec.SETRANGE("Document Type","Document Type");
+        TemplateRec.SETRANGE(Enabled,TRUE);
+        IF TemplateRec.FIND('-') THEN BEGIN
+          REPEAT
+            IF TemplateRec."Limit Type" = TemplateRec."Limit Type"::"Credit Limits" THEN BEGIN
+              ERROR(STRSUBSTNO(Text025,FORMAT(TemplateRec."Limit Type"),FORMAT("Document Type"),
+                  "No."));
+            END ELSE BEGIN
+              IF NOT FindApproverPurchase(PurchaseHeader,ApprovalSetup,TemplateRec) THEN
+                ERROR(Text010);
+            END;
+          UNTIL TemplateRec.NEXT = 0;
+          IF DispMessage THEN
+            MESSAGE(Text001,FORMAT("Document Type"),"No.");
+        END ELSE
+          ERROR(STRSUBSTNO(Text129,PurchaseHeader."Document Type"));
+      END;
+      // UPG09R2.end
+    END;
+
+    LOCAL PROCEDURE GetQuoteErrorText@69(ApprovalTemplates@1000 : Record 464;PurchaseHeader@1001 : Record 38) ErrorText : Text;
+    BEGIN
+      ErrorText :=
+        STRSUBSTNO(
+          Text026,
+          FORMAT(ApprovalTemplates."Limit Type"),
+          FORMAT(PurchaseHeader."Document Type"::Quote));
+    END;
+
+    LOCAL PROCEDURE IsCreditLimits@49(ApprovalTemplates@1000 : Record 464) : Boolean;
+    BEGIN
+      EXIT(ApprovalTemplates."Limit Type" = ApprovalTemplates."Limit Type"::"Credit Limits")
+    END;
+
+    BEGIN
+    {
+      //YIMMAVATI
+      a) Code Write to Create VAT entries in VAT details Table when we send Purchase document for approval
+      b) one Function is write that will create VAT entries in VAT detail Table
+      //YIMMAVATIST1.1
+
+      A) Priviuos Code to Check Existing VAT Details entry is Closed Because the VAT Deatils entry may be Modified For the Amount if Not
+      apprved by the TAx Person
+
+
+      //YIMMARC
+      a) Code is write to diffentiate b/w simple cr. memo and (sales as purchase) cr. memo
+
+      //YIMM
+        Code added for the floating of original tacx invoice no..
+      //YIMMCH
+            1) New Field is flowing in place of Ship-TO Code and Order Address Code.
+               New Field is (NEW NPWP NO.)
+      //YIMMATAMOUNTLCY
+      CHange in vat_lcy function because setrange for currency is missing
+
+      //YIMMRSLAMT
+
+      Code written to flow the slip amount from Header to Approval entry table
+
+
+      //Mel1.0 Melco Specific Customization for Updating the All Quote List.
+
+
+      //Mel-SalesAPP-RY-
+
+      Canges the Check not to Quote
+
+      //Mel-PurchaseAPP-RY
+      Canges the Check not to Quote
+
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+
+      //UPG13
+      NAV2009 R2 to NAV13 Merged Code in objects identification.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+      // CAUYIMM
+      Func-SendSalesApprovalRequest and SendPurchaseApprovalRequest Local Text Constant- Text Constant name has been changed from Text001 to Text50000
+      because of conflict with Global TextConstant Text001
+
+      //SMDEV1.0
+      1.Changed in "Text015" Text Constant
+        In previous Text  -  The %1 %2 does not have any Lines. (In previous passed - "Document Type" and "No.")
+        Changed Text      -  Document No %1 does not have any Lines. (In changed we will only pass "No.")
+        Reason : If not changed it will give Document type as - Credit Memo in Purchase invoice of customer & Inovice in Purchase return.
+
+      2.Changed the global Text001 to Text501-New Text Constant so that only Document No is shown and Document Type is not shown.
+      3.Code corrected (Added "ELSE") to remove Approval Process for "Interfaced" Invoices.
+      4.Code modified to create only those entries in VatDetails for which Vat is applied in Sales Line. Made same concept as Purchase (5.0 version).
+
+      //PPNPPHDEV
+      Code modified to flow PPN & PPH NPWP No. as per new concept.
+      Ship-to Code=PPN NPWP  , New NPWP No=PPH NPWP
+
+      //UPG13R2DEV
+      Code modified to create VAT-IN detail entry at the time of invoice Posting.
+      Code modified to flow "Posting Date" of Invoice in VAT Details in case of VAT-IN.
+    }
+    END.
+  }
+}
+

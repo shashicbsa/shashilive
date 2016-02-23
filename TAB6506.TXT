@@ -1,0 +1,53 @@
+OBJECT Table 6506 Item Tracking Comment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Item Tracking Comment;
+               ENA=Item Tracking Comment];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Type                ;Option        ;CaptionML=[ENU=Type;
+                                                              ENA=Type];
+                                                   OptionCaptionML=[ENU=" ,Serial No.,Lot No.";
+                                                                    ENA=" ,Serial No.,Lot No."];
+                                                   OptionString=[ ,Serial No.,Lot No.] }
+    { 2   ;   ;Item No.            ;Code20        ;TableRelation=Item;
+                                                   CaptionML=[ENU=Item No.;
+                                                              ENA=Item No.];
+                                                   NotBlank=Yes }
+    { 3   ;   ;Variant Code        ;Code10        ;TableRelation="Item Variant".Code WHERE (Item No.=FIELD(Item No.));
+                                                   CaptionML=[ENU=Variant Code;
+                                                              ENA=Variant Code] }
+    { 4   ;   ;Serial/Lot No.      ;Code20        ;CaptionML=[ENU=Serial/Lot No.;
+                                                              ENA=Serial/Lot No.];
+                                                   NotBlank=Yes }
+    { 5   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+    { 11  ;   ;Date                ;Date          ;CaptionML=[ENU=Date;
+                                                              ENA=Date] }
+    { 13  ;   ;Comment             ;Text80        ;CaptionML=[ENU=Comment;
+                                                              ENA=Comment] }
+  }
+  KEYS
+  {
+    {    ;Type,Item No.,Variant Code,Serial/Lot No.,Line No.;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,136 @@
+OBJECT Page 121 G/L Budget Names
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/05/16;
+    Time=17:19:25;
+    Modified=Yes;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=G/L Budget Names;
+               ENA=G/L Budget Names];
+    SourceTable=Table95;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 19      ;1   ;Action    ;
+                      Name=EditBudget;
+                      ShortCutKey=Return;
+                      CaptionML=[ENU=Edit Budget;
+                                 ENA=Edit Budget];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=EditLines;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 Budget@1000 : Page 113;
+                               BEGIN
+                                 Budget.SetBudgetName(Name);
+                                 Budget.RUN;
+                               END;
+                                }
+      { 1102159001;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1102159002;1 ;Action    ;
+                      CaptionML=ENU=Dis Compr Budt & Act from GL2;
+                      RunObject=Report 50072;
+                      Image=Report }
+      { 1102159004;1 ;Action    ;
+                      CaptionML=ENU=GL Detail Entry For Budget;
+                      RunObject=Report 50074;
+                      Image=Report }
+      { 1102159003;1 ;Action    ;
+                      CaptionML=ENU=Compare Budget with Actual2;
+                      RunObject=Report 50056;
+                      Image=Report }
+      { 1102159011;1 ;Action    ;
+                      Name=Permission Report;
+                      RunObject=Report 81000;
+                      Visible=false }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr=Name }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Serial No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="Actual Data Start Date" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="Actual Data End Date" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Upload Data Start Date" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="Upload Data End Date" }
+
+    { 1102159009;2;Field  ;
+                SourceExpr="Original Budget Copy Start Dat" }
+
+    { 1102159010;2;Field  ;
+                SourceExpr="Original Budget Copy End Date" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Budget Dimension 1 Code" }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr="Budget Dimension 2 Code" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Budget Dimension 3 Code" }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Budget Dimension 4 Code" }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr=Blocked }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    PROCEDURE GetSelectionFilter@2() : Text;
+    VAR
+      GLBudgetName@1004 : Record 95;
+      SelectionFilterManagement@1001 : Codeunit 46;
+    BEGIN
+      CurrPage.SETSELECTIONFILTER(GLBudgetName);
+      EXIT(SelectionFilterManagement.GetSelectionFilterForGLBudgetName(GLBudgetName));
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

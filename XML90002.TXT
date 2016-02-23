@@ -1,0 +1,170 @@
+OBJECT XMLport 90002 Customer Opening AR
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/11/15;
+    Time=23:41:27;
+    Modified=Yes;
+    Version List=OPENINGUPG;
+  }
+  PROPERTIES
+  {
+    OnPreXMLport=BEGIN
+                   Counter := 0;
+                 END;
+
+    OnPostXMLport=BEGIN
+                    MESSAGE('Done');
+                    MESSAGE (FORMAT(Counter));
+                  END;
+
+    Format=Variable Text;
+  }
+  ELEMENTS
+  {
+    { [{921BF1EB-78CA-4CB8-86CD-C86933B29340}];  ;CustAR              ;Element ;Text     }
+
+    { [{4D57DF48-B616-4380-83BB-053AFADA7E7E}];1 ;Table               ;Element ;Table   ;
+                                                  SourceTable=Table81;
+                                                  SourceTableView=SORTING(Field1,Field51,Field2)
+                                                                  ORDER(Ascending);
+                                                  Import::OnBeforeInsertRecord=BEGIN
+                                                                                 "Gen. Journal Line".VALIDATE("Reason Code",'GENERAL');
+                                                                                 "Gen. Journal Line".VALIDATE("Source Code",'GENJNL');
+                                                                                 //"Gen. Journal Line".VALIDATE(Narration,'Opening Balance Sept 2015');
+                                                                                 "Gen. Journal Line".VALIDATE("Posting Date",083115D);
+                                                                                 //"Gen. Journal Line".VALIDATE("Document Type","Gen. Journal Line"."Document Type"::Invoice);  //PR
+
+                                                                                 //CustRec.GET("Gen. Journal Line"."Account No.");
+                                                                                 //CustAccPostingGRPRec.GET(CustRec."Customer Posting Group");
+                                                                                 //"Gen. Journal Line".VALIDATE("Bal. Account Type","Gen. Journal Line"."Bal. Account Type"::"G/L Account");
+                                                                                 //GenJnlLineRec.VALIDATE(GenJnlLineRec."Bal. Account No.",);
+                                                                                 //"Gen. Journal Line".VALIDATE(GenJnlLineRec."Bal. Account No.",BalAccNoVar); //VK
+                                                                               END;
+
+                                                  Import::OnAfterInsertRecord=BEGIN
+                                                                                Counter := Counter + 1;
+                                                                              END;
+                                                                               }
+
+    { [{B4D34BE4-78FB-458A-9719-2BFB91D828C9}];2 ;JnlTemplateNameVar  ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Journal Template Name }
+
+    { [{4349D8D3-1FF1-4F90-9D33-0EA7BD9AC706}];2 ;JnlBatchNameVar     ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Journal Batch Name }
+
+    { [{374EC251-14B1-4734-9FD6-83F3ADACF62A}];2 ;LineNoVar           ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Line No. }
+
+    { [{3F1D6750-8032-4B18-A140-6666F34AF31F}];2 ;DocumentNoVar       ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Document No. }
+
+    { [{E03C8AE3-23EB-451E-AD3E-A3A28BE33CA0}];2 ;AccTypeVar          ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Account Type }
+
+    { [{E6A645D2-B7D3-476A-8A4F-8C024E24B2F1}];2 ;AccNoVar            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Account No.;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               "Gen. Journal Line".VALIDATE("Bal. Account Type","Gen. Journal Line"."Bal. Account Type"::"G/L Account");
+                                                                             END;
+                                                                              }
+
+    { [{8CDC6954-A9E1-47AA-A5AE-EC4AD13C555E}];2 ;DebitAmtVar         ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  FieldValidate=No;
+                                                  SourceField=Gen. Journal Line::Debit Amount;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               IF "Gen. Journal Line"."Debit Amount" <>  0 THEN BEGIN
+                                                                                 "Gen. Journal Line".VALIDATE("Debit Amount");
+                                                                                 "Gen. Journal Line".VALIDATE("Document Type","Gen. Journal Line"."Document Type"::Invoice);  //PR
+                                                                               END;
+                                                                             END;
+                                                                              }
+
+    { [{C6097E04-859B-4CCB-906A-09CAAE94199C}];2 ;CreditAmtVar        ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  FieldValidate=No;
+                                                  SourceField=Gen. Journal Line::Credit Amount;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               IF "Gen. Journal Line"."Credit Amount" <>  0 THEN //BEGIN
+                                                                                 "Gen. Journal Line".VALIDATE("Credit Amount");
+                                                                               //  "Gen. Journal Line".VALIDATE("Document Type","Gen. Journal Line"."Document Type"::Payment);  //PR
+                                                                               //END;
+                                                                             END;
+                                                                              }
+
+    { [{756109CE-19CA-4133-8B61-3E773E44A7DA}];2 ;ShopCodeVar         ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Gen. Journal Line::Shortcut Dimension 1 Code;
+                                                  MinOccurs=Zero;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               "Gen. Journal Line".VALIDATE("Shortcut Dimension 1 Code");
+                                                                             END;
+                                                                              }
+
+    { [{2130982F-B758-458E-BCC2-4477E98BBB9A}];2 ;CustPostingGrpVar   ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Posting Group;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               CustAccPostingGRPRec.GET("Gen. Journal Line"."Posting Group");
+                                                                               "Gen. Journal Line".VALIDATE("Bal. Account Type","Gen. Journal Line"."Bal. Account Type"::"G/L Account");
+                                                                               "Gen. Journal Line".VALIDATE("Bal. Account No.",CustAccPostingGRPRec."Receivables Account");
+                                                                             END;
+                                                                              }
+
+    { [{2DEA1366-1496-4472-9062-A26DA51CBB21}];2 ;Currency            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Currency Code;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               IF "Gen. Journal Line"."Currency Code" <> '' THEN BEGIN
+                                                                                 Currency.GET("Gen. Journal Line"."Currency Code");
+                                                                                 "Gen. Journal Line".VALIDATE("Currency Code");
+                                                                               END ELSE
+                                                                                 "Gen. Journal Line".VALIDATE("Currency Code",'');
+                                                                             END;
+                                                                              }
+
+    { [{D41AE013-50A7-427C-817B-41CA5577DE07}];2 ;Narrration          ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Gen. Journal Line::Narration }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      CustRec@1102159002 : Record 18;
+      CustAccPostingGRPRec@1102159001 : Record 92;
+      Currency@1000000000 : Record 4;
+      Counter@1000000001 : Integer;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,314 @@
+OBJECT Codeunit 11603 EFT Management
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 25=rim;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      GLSetup@150008 : Record 98;
+      VendBankAcc@150005 : Record 288;
+      Vend@1500000 : Record 23;
+      CompanyInfo@1500002 : Record 79;
+      RBMgt@150006 : Codeunit 419;
+      FileVar@150011 : File;
+      FileSysObject@150017 : Automation "{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B} 1.0:{0D43FE01-F093-11CF-8940-00A0C9054228}:'Windows Script Host Object Model'.FileSystemObject";
+      NoOfLines@150016 : Integer;
+      TypeOfLine@150015 : Code[2];
+      FromFile@150013 : Text[250];
+      TempPath@150012 : Text[250];
+      TotalAmount@1500004 : Decimal;
+      AmountToPayLCY@150010 : Decimal;
+      TotalAmountLCY@150009 : Decimal;
+      FirstTime@1500008 : Boolean;
+      Text11000@1500020 : TextConst 'ENU=The value for the parameter is too long for the function. The value is %1.;ENA=The value for the parameter is too long for the function. The value is %1.';
+      Text11001@1500021 : TextConst 'ENU=The length for %1 is %2 long, %3 characters are maximum.;ENA=The length for %1 is %2 long, %3 characters are maximum.';
+      Text11002@1500025 : TextConst 'ENU="File EFT Payment created with:\Name=%1\Amount=%2.";ENA="File EFT Payment created with:\Name=%1\Amount=%2."';
+      Text11003@1500026 : TextConst 'ENU=The value for the parameter is too long for the function %1. The value is %2.;ENA=The value for the parameter is too long for the function %1. The value is %2.';
+
+    PROCEDURE CleanUpEFTRegister@1500001();
+    VAR
+      VendLedgEntry@1500000 : Record 25;
+      EFTRegister@1500001 : Record 11609;
+    BEGIN
+      EFTRegister.RESET;
+      VendLedgEntry.RESET;
+      VendLedgEntry.SETCURRENTKEY("EFT Register No.");
+      IF EFTRegister.FINDSET THEN
+        REPEAT
+          VendLedgEntry.SETRANGE("EFT Register No.",EFTRegister."No.");
+          IF NOT VendLedgEntry.FINDFIRST THEN
+            EFTRegister.DELETE;
+        UNTIL EFTRegister.NEXT = 0;
+    END;
+
+    PROCEDURE Date2Text@1500002(Date@1500000 : Date;Length@1500001 : Integer) : Text[6];
+    BEGIN
+      IF (Length < 1) OR (Length > 6) THEN
+        ERROR(Text11000,Length);
+      IF Date <> 0D THEN
+        EXIT(COPYSTR(FORMAT(Date,0,'<Day,2><Month,2><Year,2>'),1,Length));
+      EXIT(PADSTR('',Length));
+    END;
+
+    PROCEDURE ClearText@1500003(Text@1500000 : Text[250]) : Text[250];
+    BEGIN
+      EXIT(DELCHR(Text,'=',DELCHR(Text,'=','0123456789')));
+    END;
+
+    PROCEDURE NFL@1500004(Text@1500000 : Text[250];Length@1500001 : Integer) : Text[250];
+    BEGIN
+      Text := DELCHR(Text,'<>');
+      IF (Length < 1) OR (Length > 250) THEN
+        ERROR(Text11003,'NFL',Length);
+      IF STRLEN(Text) > Length THEN
+        Text := COPYSTR(Text,STRLEN(Text) - Length + 1);
+      EXIT(PADSTR('',Length - STRLEN(Text),'0') + Text);
+    END;
+
+    PROCEDURE TFL@1500005(Text@1500000 : Text[250];Length@1500001 : Integer) : Text[250];
+    BEGIN
+      Text := DELCHR(Text,'<>');
+      IF (Length < 1) OR (Length > 250) THEN
+        ERROR(Text11003,'TFL',Length);
+      Text := COPYSTR(Text,1,Length);
+      EXIT(PADSTR('',Length - STRLEN(Text),' ') + Text);
+    END;
+
+    PROCEDURE TFR@1500006(Text@1500000 : Text[250];Length@1500001 : Integer) : Text[250];
+    BEGIN
+      Text := DELCHR(Text,'<>');
+      IF (Length < 1) OR (Length > 250) THEN
+        ERROR(Text11003,'TFR',Length);
+      EXIT(UPPERCASE(PADSTR(Text,Length)));
+    END;
+
+    PROCEDURE BLK@1500007(Length@1500000 : Integer) : Text[250];
+    BEGIN
+      IF (Length < 1) OR (Length > 250) THEN
+        ERROR(Text11003,'BLK',Length);
+      EXIT(PADSTR('',Length));
+    END;
+
+    PROCEDURE Value1@1500008(Dec@1500000 : Decimal;Length@1500001 : Integer) : Text[250];
+    BEGIN
+      EXIT(NFL(ClearText(FORMAT(ROUND(Dec,1.0))),Length));
+    END;
+
+    PROCEDURE Value100@1500009(Dec@1500000 : Decimal;Length@1500001 : Integer) : Text[250];
+    BEGIN
+      IF Dec = 0 THEN
+        EXIT(NFL('000',Length));
+      EXIT(NFL(ClearText(FORMAT(ROUND(Dec) * 100)),Length));
+    END;
+
+    PROCEDURE GetSetup@1500010();
+    BEGIN
+      CompanyInfo.GET;
+      GLSetup.GET;
+    END;
+
+    PROCEDURE OpenFile@1500012(FileName@1500000 : Text[250]);
+    BEGIN
+      FileVar.TEXTMODE(TRUE);
+      FileVar.WRITEMODE(TRUE);
+      IF ISCLEAR(FileSysObject) THEN
+        CREATE(FileSysObject,TRUE,TRUE);
+      FromFile := RBMgt.ServerTempFileName('.txt');
+      FileVar.CREATE(FromFile);
+      CLEAR(TotalAmount);
+      CLEAR(NoOfLines);
+      CLEAR(TotalAmountLCY);
+    END;
+
+    PROCEDURE WriteFile@1500013(Length@1500000 : Integer;Text@1500001 : Text[250]);
+    BEGIN
+      IF STRLEN(Text) > Length THEN
+        ERROR(Text11001,Text,STRLEN(Text),Length);
+      FileVar.WRITE(PADSTR(Text,Length));
+    END;
+
+    PROCEDURE CloseFile@1500014(EFTRegister@1500000 : Record 11609;FileName@150000 : Text[250];FileDescription@150001 : Text[12];BankAccount@150002 : Record 270);
+    BEGIN
+      EFTRegister.LOCKTABLE;
+      EFTRegister.FIND;
+      EFTRegister."Total Amount (LCY)" := TotalAmountLCY;
+      EFTRegister."File Created" := TODAY;
+      EFTRegister.Time := TIME;
+      EFTRegister."File Description" := FileDescription;
+      EFTRegister."Bank Account Code" := BankAccount."No.";
+      EFTRegister.MODIFY;
+      FileVar.CLOSE;
+
+      TempPath := RBMgt.DownloadTempFile(FromFile);
+      FileSysObject.CopyFile(TempPath,FileName);
+      FileSysObject.DeleteFile(TempPath,TRUE);
+      CLEAR(FileSysObject);
+
+      MESSAGE(Text11002,FileName,TotalAmountLCY);
+    END;
+
+    PROCEDURE CreateFileFromEFTRegister@1500015(VAR EFTRegister@1500000 : Record 11609;FileName@150000 : Text[250];FileDescription@150001 : Text[12];VAR BankAcc@150002 : Record 270);
+    BEGIN
+      GetSetup;
+      FirstTime := TRUE;
+      IF EFTRegister."EFT Payment" THEN BEGIN
+        OpenFile(FileName);
+        CreateFileEFTPayment(EFTRegister,FileDescription,BankAcc);
+        CloseFile(EFTRegister,FileName,FileDescription,BankAcc);
+      END;
+    END;
+
+    PROCEDURE CreateFileEFTPayment@1500016(VAR EFTRegister@1500001 : Record 11609;FileDescription@150000 : Text[12];VAR BankAccount@150001 : Record 270);
+    VAR
+      VendLedgEntry@1500000 : Record 25;
+    BEGIN
+      WITH VendLedgEntry DO BEGIN
+        RESET;
+        SETCURRENTKEY("EFT Register No.");
+        SETRANGE("EFT Register No.",EFTRegister."No.");
+        IF NOT FIND('-') THEN
+          EXIT;
+        WriteFile(
+          121,'0' + BLK(17) + '01' + TFR(FormatBankAccount(BankAccount."EFT Bank Code"),10) +
+          TFR(BankAccount."EFT Security Name",26) + NFL(BankAccount."EFT Security No.",6) +
+          TFR(FileDescription,12) + Date2Text(TODAY,6) + BLK(40));
+        IF FirstTime THEN BEGIN
+          FirstTime := FALSE
+        END;
+        REPEAT
+          Vend.GET("Vendor No.");
+          VendBankAcc.GET(Vend."No.","EFT Bank Account No.");
+          IF "EFT Amount Transferred" > 0 THEN
+            TypeOfLine := '50'
+          ELSE
+            TypeOfLine := '53';
+          AmountToPayLCY := CalcAmountToPayLCY(VendLedgEntry);
+          TotalAmountLCY += AmountToPayLCY - WithHoldingTaxAmountLCY(VendLedgEntry);
+          NoOfLines += 1;
+          VendBankAcc.GET("Vendor No.","EFT Bank Account No.");
+          WriteFile(
+            121,'1' + TFR(FormatBranchNumber(VendBankAcc."EFT BSB No."),7) + TFL(VendBankAcc."Bank Account No.",9) +
+            BLK(1) + TypeOfLine + NFL(Value100(AmountToPayLCY - WithHoldingTaxAmountLCY(VendLedgEntry),10),10) + TFR(Vend.Name,32) +
+            TFR("Document No.",18) + TFR(FormatBranchNumber(BankAccount."EFT BSB No."),7) + TFL(
+              BankAccount."Bank Account No.",9) +
+            TFR(BankAccount."EFT Security Name",16) + NFL(Value100(WithHoldingTaxAmountLCY(VendLedgEntry),8),8));
+        UNTIL NEXT = 0;
+        IF BankAccount."EFT Balancing Record Required" THEN
+          WriteFile(
+            121,'1' + TFR(FormatBranchNumber(BankAccount."EFT BSB No."),7) + TFL(BankAccount."Bank Account No.",9) + BLK(1) +
+            '13' + NFL(Value100(TotalAmountLCY,10),10) +
+            TFR(BankAccount."EFT Security Name",32) + TFR('',18) +
+            TFR(FormatBranchNumber(BankAccount."EFT BSB No."),7) + TFL(BankAccount."Bank Account No.",9) +
+            TFR(BankAccount."EFT Security Name",16) + NFL(Value100(0,8),8));
+        IF BankAccount."EFT Balancing Record Required" THEN
+          WriteFile(
+            121,'7' + TFR('999-999',7) + BLK(12) + NFL(Value100(0,10),10) +
+            NFL(Value100(TotalAmountLCY,10),10) +
+            NFL(Value100(TotalAmountLCY,10),10) +
+            BLK(24) + NFL(Value1(NoOfLines,6),6) + BLK(40))
+        ELSE
+          WriteFile(
+            121,'7' + TFR('999-999',7) + BLK(12) + NFL(Value100(TotalAmountLCY,10),10) +
+            NFL(Value100(TotalAmountLCY,10),10) +
+            NFL(Value100(0,10),10) +
+            BLK(24) + NFL(Value1(NoOfLines,6),6) + BLK(40))
+      END;
+    END;
+
+    PROCEDURE CalcAmountToPay@1500017(VendLedgEntry@1500000 : Record 25) : Decimal;
+    BEGIN
+      WITH VendLedgEntry DO BEGIN
+        CALCFIELDS("Remaining Amount");
+        IF ("Document Type" = "Document Type"::Invoice) AND
+           ("Due Date" <= "Pmt. Discount Date")
+        THEN
+          EXIT("Remaining Amount" - "Remaining Pmt. Disc. Possible");
+        EXIT("Remaining Amount");
+      END;
+    END;
+
+    PROCEDURE CalcAmountToPayLCY@1500018(VendLedgEntry@1500000 : Record 25) : Decimal;
+    BEGIN
+      WITH VendLedgEntry DO BEGIN
+        IF "Adjusted Currency Factor" <> 1 THEN
+          EXIT(ROUND("EFT Amount Transferred" / "Adjusted Currency Factor",GLSetup."Inv. Rounding Precision (LCY)"));
+        EXIT(ROUND("EFT Amount Transferred",GLSetup."Inv. Rounding Precision (LCY)"))
+      END;
+    END;
+
+    PROCEDURE FormatBranchNumber@1500020(BranchNo@1500000 : Text[10]) : Text[7];
+    BEGIN
+      IF BranchNo = ' ' THEN
+        EXIT(BLK(7));
+      EXIT(FORMAT(COPYSTR(BranchNo,1,3) + '-' + COPYSTR(BranchNo,4,3)));
+    END;
+
+    PROCEDURE FormatBankAccount@1500021(BankAcc@1500000 : Code[10]) : Text[3];
+    BEGIN
+      IF BankAcc = ' ' THEN
+        EXIT(BLK(3));
+      EXIT(COPYSTR(BankAcc,1,3));
+    END;
+
+    PROCEDURE WithHoldingTaxAmountLCY@1500022(VendLedgEntry@1500000 : Record 25) : Decimal;
+    VAR
+      TempGenJnlLine@150000 : TEMPORARY Record 81;
+      WHTSetup@1500001 : Record 28043;
+      WHTManagement@1500002 : Codeunit 28040;
+      WHTAmount@1500003 : Decimal;
+    BEGIN
+      TempGenJnlLine.DELETEALL;
+      GLSetup.GET;
+      WITH VendLedgEntry DO BEGIN
+        TempGenJnlLine.INIT;
+        TempGenJnlLine."Line No." += 10000;
+        TempGenJnlLine.VALIDATE("Posting Date","Posting Date");
+        TempGenJnlLine.VALIDATE("Account Type",TempGenJnlLine."Account Type"::Vendor);
+        TempGenJnlLine.VALIDATE("Account No.","Vendor No.");
+        TempGenJnlLine.VALIDATE("Document Type","Document Type"::Payment);
+        TempGenJnlLine.VALIDATE("Currency Code","Currency Code");
+        TempGenJnlLine.VALIDATE(Amount,"EFT Amount Transferred");
+        TempGenJnlLine.VALIDATE("Applies-to Doc. Type","Document Type");
+        TempGenJnlLine.VALIDATE("Applies-to Doc. No.","Document No.");
+        TempGenJnlLine.INSERT;
+      END;
+      IF TempGenJnlLine."Account Type" = TempGenJnlLine."Account Type"::Vendor THEN
+        IF WHTSetup.GET(TempGenJnlLine."WHT Business Posting Group",TempGenJnlLine."WHT Product Posting Group") THEN
+          IF WHTSetup."Realized WHT Type" <> WHTSetup."Realized WHT Type"::Earliest THEN
+            WHTAmount := WHTAmount + WHTManagement.WHTAmountJournal(TempGenJnlLine,FALSE)
+          ELSE
+            WHTAmount := WHTAmount + ABS(WHTManagement.CalcVendExtraWHTForEarliest(TempGenJnlLine));
+
+      WHTAmount := ROUND(WHTAmount,GLSetup."Inv. Rounding Precision (LCY)");
+
+      IF VendLedgEntry."Adjusted Currency Factor" <> 1 THEN
+        EXIT(ROUND(WHTAmount / VendLedgEntry."Adjusted Currency Factor",GLSetup."Inv. Rounding Precision (LCY)"));
+      EXIT(ROUND(WHTAmount,GLSetup."Inv. Rounding Precision (LCY)"));
+    END;
+
+    PROCEDURE CalcAmountToPayGJLrec@1500019(GenJournalLine@1500000 : Record 81) : Decimal;
+    VAR
+      VendLedgerEntry@1500001 : Record 25;
+    BEGIN
+      GenJournalLine.TESTFIELD("EFT Ledger Entry No.");
+      VendLedgerEntry.GET(GenJournalLine."EFT Ledger Entry No.");
+      VendLedgerEntry."Due Date" := GenJournalLine."Due Date";
+      EXIT(-CalcAmountToPay(VendLedgerEntry));
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,76 @@
+OBJECT Table 255 VAT Statement Template
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    OnInsert=BEGIN
+               VALIDATE("Page ID");
+             END;
+
+    OnDelete=BEGIN
+               VATStmtLine.SETRANGE("Statement Template Name",Name);
+               VATStmtLine.DELETEALL;
+               VATStmtName.SETRANGE("Statement Template Name",Name);
+               VATStmtName.DELETEALL;
+             END;
+
+    CaptionML=[ENU=VAT Statement Template;
+               ENA=GST Statement Template];
+    LookupPageID=Page319;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Name                ;Code10        ;CaptionML=[ENU=Name;
+                                                              ENA=Name];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text80        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 6   ;   ;Page ID             ;Integer       ;TableRelation=Object.ID WHERE (Type=CONST(Page));
+                                                   OnValidate=BEGIN
+                                                                IF "Page ID" = 0 THEN
+                                                                  "Page ID" := PAGE::"VAT Statement";
+                                                                "VAT Statement Report ID" := REPORT::"VAT Statement";
+                                                              END;
+
+                                                   CaptionML=[ENU=Page ID;
+                                                              ENA=Page ID] }
+    { 7   ;   ;VAT Statement Report ID;Integer    ;TableRelation=Object.ID WHERE (Type=CONST(Report));
+                                                   CaptionML=[ENU=VAT Statement Report ID;
+                                                              ENA=GST Statement Report ID] }
+    { 16  ;   ;Page Caption        ;Text250       ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup(AllObjWithCaption."Object Caption" WHERE (Object Type=CONST(Page),
+                                                                                                                Object ID=FIELD(Page ID)));
+                                                   CaptionML=[ENU=Page Caption;
+                                                              ENA=Page Caption];
+                                                   Editable=No }
+    { 17  ;   ;VAT Statement Report Caption;Text250;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Lookup(AllObjWithCaption."Object Caption" WHERE (Object Type=CONST(Report),
+                                                                                                                Object ID=FIELD(VAT Statement Report ID)));
+                                                   CaptionML=[ENU=VAT Statement Report Caption;
+                                                              ENA=GST Statement Report Caption];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Name                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      VATStmtName@1000 : Record 257;
+      VATStmtLine@1001 : Record 256;
+
+    BEGIN
+    END.
+  }
+}
+

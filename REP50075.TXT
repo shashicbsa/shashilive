@@ -1,0 +1,442 @@
+OBJECT Report 50075 EPROC_CONSUMPTION
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/15;
+    Time=11:09:02;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+
+                  GLSETUP.GET;
+                  MasterSetup.GET;
+                  LastCC:='';
+                END;
+
+    OnPostReport=BEGIN
+
+                   MESSAGE('DONE');
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;Consumption1_Cr   ;
+               DataItemTable=Table50025;
+               DataItemTableView=SORTING(CC,WHCode)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               Cnt:=0;
+                               LastSC := '';
+                               LastWH := '';  //>>25062013/PC/EprocII
+                               LastStock := '';
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  GLAcc1@1102159001 : Record 15;
+                                BEGIN
+
+                                  Cnt:=Cnt+1;
+
+                                  //IF (Consumption1_Cr.CC<>LastCC) AND (Cnt>1) THEN    //>>25062013/PC/EprocII
+
+                                  //>>25062013/PC/EprocII
+
+                                  IF (Consumption1_Cr.CC<>LastCC)  OR (Consumption1_Cr.WHCode <> LastWH) THEN
+                                    IF (Cnt>1) THEN
+
+                                  //<<25062013/PC/EprocII
+
+                                      BEGIN
+                                         LineNo:=LineNo+10000;
+
+                                     //>>25062013/PC/EprocII
+                                        { EPROC_MAPPING.RESET;
+                                         EPROC_MAPPING.SETRANGE(EPROC_MAPPING.CC,LastCC);
+                                            IF (EPROC_MAPPING.FINDFIRST) THEN; }
+                                     //<<25062013/PC/EprocII
+
+                                                 GenJnlLine.RESET;
+                                                 GenJnlLine."Journal Template Name":=MasterSetup."Eproc Template Name";
+                                                 GenJnlLine."Journal Batch Name":=MasterSetup."Eproc Batch Name";
+                                                 GenJnlLine."Line No.":=LineNo;
+
+
+                                                 GenJnlLine."Document No.":='Cons'+FORMAT(CALCDATE('CM-1M',TODAY));
+                                                 GenJnlLine."Posting Date":=CALCDATE('CM-1M',TODAY);
+                                                 GenJnlLine."Account Type":=GenJnlLine."Account Type"::"G/L Account";
+                                                 //GenJnlLine."Account No.":=EPROC_MAPPING.Stock;  //>>25062013/PC/EprocII
+                                                 GenJnlLine."Account No." := LastStock;  //>>25062013/PC/EprocII
+                                                 GLAcc1.GET(GenJnlLine."Account No.");
+                                                 GenJnlLine.Description:=GLAcc1.Name;
+
+                                                 GenJnlLine.Amount:=-Amt;
+                                                 GenJnlLine."Credit Amount":=Amt;
+                                                 GenJnlLine."Debit Amount":=0;
+
+                                                 //GenJnlLine."Shortcut Dimension 1 Code":=EPROC_MAPPING.DimCode;    //>>25062013/PC/EprocII
+
+                                     //>>25062013/PC/EprocII
+
+                                                 EPROC_WH_MAPPING.RESET;
+                                                 EPROC_WH_MAPPING.SETRANGE(EPROC_WH_MAPPING.WHCODE,LastWH);
+                                                 IF EPROC_WH_MAPPING.FINDFIRST THEN
+                                                 BEGIN
+                                                    DimVal.RESET;
+                                                    DimVal.SETRANGE(DimVal."Dimension Code",GLSETUP."Global Dimension 1 Code");
+                                                    DimVal.SETRANGE(DimVal.Name,EPROC_WH_MAPPING.ShopCode);
+                                                    DimVal.SETRANGE(DimVal.Blocked, FALSE);
+
+                                                     IF DimVal.FINDFIRST THEN
+                                                         EVALUATE(DimCode,DimVal.Code)
+                                                     ELSE
+                                                         EVALUATE(DimCode,'2110020');
+                                                     GenJnlLine."Shortcut Dimension 1 Code" := FORMAT(DimCode);
+                                                 END;
+                                     //<<25062013/PC/EprocII
+
+                                                 GenJnlLine."Source Code":=text001;
+                                                 //GenJnlLine.Narration:=LastCC;          //02082013/VK/EprocII
+                                                 GenJnlLine.Narration:=LastCC+'-'+LastWH; //02082013/VK/EprocII
+
+                                                 GenJnlLine.Interfaced:=FALSE;
+                                                 GenJnlLine.INSERT(TRUE);
+
+                                                 GenJnlLine.Interfaced:=TRUE;
+
+                                                 GenJnlLine.MODIFY;
+
+                                      Amt:=0;
+
+
+                                      END;
+
+                                     Amt:=ROUND((Amt+Consumption1_Cr.Amount),0.01,'=');
+
+
+                                     LastCC:=Consumption1_Cr.CC;
+                                     LastWH:=Consumption1_Cr.WHCode;
+                                     LastSC:=COPYSTR(Consumption1_Cr.EPROC_NO,1,4);
+                                     LastStock := Consumption1_Cr.Stock;
+                                END;
+
+               OnPostDataItem=VAR
+                                GLAcc@1102159001 : Record 15;
+                              BEGIN
+
+                                   IF (Amt<>0) THEN
+
+                                   BEGIN
+                                       LineNo:=LineNo+10000;
+
+                                   //>>25062013/PC/EprocII
+
+                                      { EPROC_MAPPING.RESET;
+                                       EPROC_MAPPING.SETRANGE(EPROC_MAPPING.CC,LastCC);
+                                          IF (EPROC_MAPPING.FINDFIRST) THEN; }
+
+                                   //<<25062013/PC/EprocII
+
+                                               GenJnlLine.RESET;
+                                               GenJnlLine."Journal Template Name":=MasterSetup."Eproc Template Name";
+                                               GenJnlLine."Journal Batch Name":=MasterSetup."Eproc Batch Name";
+                                               GenJnlLine."Line No.":=LineNo;
+                                               GenJnlLine."Document No.":='Cons'+FORMAT(CALCDATE('CM-1M',TODAY));
+                                               GenJnlLine."Posting Date":=CALCDATE('CM-1M',TODAY);
+                                               GenJnlLine."Account Type":=GenJnlLine."Account Type"::"G/L Account";
+                                               //GenJnlLine."Account No.":=EPROC_MAPPING.Stock;  //>>25062013/PC/EprocII
+                                               GenJnlLine."Account No." := LastStock;  //>>25062013/PC/EprocII
+                                               GLAcc.GET(GenJnlLine."Account No.");
+                                               GenJnlLine.Description:=GLAcc.Name;
+
+                                               GenJnlLine.Amount:=-Amt;
+                                               GenJnlLine."Credit Amount":=Amt;
+                                               GenJnlLine."Debit Amount":=0;
+                                               //GenJnlLine."Shortcut Dimension 1 Code":=EPROC_MAPPING.DimCode;  //>>25062013/PC/EprocII
+
+                                   //>>25062013/PC/EprocII
+
+                                               EPROC_WH_MAPPING.RESET;
+                                               EPROC_WH_MAPPING.SETRANGE(EPROC_WH_MAPPING.WHCODE,LastWH);
+                                               IF EPROC_WH_MAPPING.FINDFIRST THEN
+                                               BEGIN
+                                                  DimVal.RESET;
+                                                  DimVal.SETRANGE(DimVal."Dimension Code",GLSETUP."Global Dimension 1 Code");
+                                                  DimVal.SETRANGE(DimVal.Name,EPROC_WH_MAPPING.ShopCode);
+                                                  DimVal.SETRANGE(DimVal.Blocked, FALSE);
+
+                                                   IF DimVal.FINDFIRST THEN
+                                                       EVALUATE(DimCode,DimVal.Code)
+                                                   ELSE
+                                                       EVALUATE(DimCode,'2110020');
+                                                   GenJnlLine."Shortcut Dimension 1 Code" := FORMAT(DimCode);
+                                               END;
+
+
+                                   //>>25062013/PC/EprocII
+
+                                               GenJnlLine."Source Code":=text001;
+                                               //GenJnlLine.Narration:=LastCC;          //02082013/VK/EprocII
+                                               GenJnlLine.Narration:=LastCC+'-'+LastWH; //02082013/VK/EprocII
+
+
+                                               GenJnlLine.Interfaced:=FALSE;
+                                               GenJnlLine.INSERT(TRUE);
+
+                                               GenJnlLine.Interfaced:=TRUE;
+
+                                               GenJnlLine.MODIFY;
+
+                                    Amt:=0;
+
+
+                                    END;
+                              END;
+                               }
+
+    { 1102159002;0;DataItem;Consumption1_Dr  ;
+               DataItemTable=Table50025;
+               DataItemTableView=SORTING(CC,AccNo,EPROC_NO,WHCode)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               Cnt := 0;
+                               Amt := 0;
+                               LastAC := '';
+                               LastCC := '';
+                               LastWH := ''; //22082013/VK/EprocII
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  GLAcc12@1102159001 : Record 15;
+                                BEGIN
+
+                                  Cnt:=Cnt+1;
+
+                                  CurrSc:=COPYSTR(Consumption1_Dr.EPROC_NO,1,4);
+
+                                  IF ((Consumption1_Dr.AccNo<>LastAC) OR (CurrSc<>LastSC) OR (Consumption1_Dr.WHCode<>LastWH)) THEN   //22082013/VK/EprocII
+                                     IF (Cnt>1) THEN
+                                  BEGIN
+                                         LineNo:=LineNo+10000;
+
+                                              GenJnlLine.RESET;
+                                              GenJnlLine."Journal Template Name":=MasterSetup."Eproc Template Name";
+                                              GenJnlLine."Journal Batch Name":=MasterSetup."Eproc Batch Name";
+                                              GenJnlLine."Line No.":=LineNo;
+                                              GenJnlLine."Document No.":='Cons'+FORMAT(CALCDATE('CM-1M',TODAY));
+                                              GenJnlLine."Posting Date":=CALCDATE('CM-1M',TODAY);
+                                              GenJnlLine."Account Type":=GenJnlLine."Account Type"::"G/L Account";
+
+                                                  //>>25062013/PC/EprocII
+
+                                                  {EPROC_WH_MAPPING.RESET;
+                                                  EPROC_WH_MAPPING.SETRANGE(EPROC_WH_MAPPING.WHCODE,LastWH);
+                                                    IF EPROC_WH_MAPPING.FINDFIRST THEN;}
+
+                                                  //>>25062013/PC/EprocII
+
+
+
+                                                 DimVal.RESET;
+                                                 DimVal.SETRANGE(DimVal."Dimension Code",GLSETUP."Global Dimension 1 Code");
+                                                 DimVal.SETRANGE(DimVal.Name,LastSC);
+                                                 DimVal.SETRANGE(DimVal.Blocked, FALSE);
+
+                                                  IF DimVal.FINDFIRST THEN
+                                                      EVALUATE(DimCode,DimVal.Code)
+                                                  ELSE
+                                                      EVALUATE(DimCode,'2110020');
+
+                                                 //>>25062013/PC/EprocII
+
+                                                 {EPROC_MAPPING.RESET;
+                                                 EPROC_MAPPING.SETRANGE(EPROC_MAPPING.ExpCode,LastAC);
+                                                 EPROC_MAPPING.SETRANGE(EPROC_MAPPING.CC,LastCC);
+
+                                                     IF (EPROC_MAPPING.FINDFIRST) THEN
+                                                       REPEAT
+                                                          IF (DimCode >= EPROC_MAPPING.R1) AND (DimCode <= EPROC_MAPPING.R2) THEN
+                                                             GenJnlLine."Account No.":=EPROC_MAPPING.Exp;
+                                                          UNTIL(EPROC_MAPPING.NEXT=0);}
+
+                                                 //>>25062013/PC/EprocII
+
+                                                 GenJnlLine."Account No.":= LastAC;  //>>25062013/PC/EprocII
+
+
+                                              GLAcc12.GET(GenJnlLine."Account No.");
+                                              GenJnlLine.Description:=GLAcc12.Name;
+
+                                              GenJnlLine.Amount:=Amt;
+                                              GenJnlLine."Debit Amount":=Amt;
+                                              GenJnlLine."Credit Amount":=0;
+
+                                              GenJnlLine."Shortcut Dimension 1 Code":=FORMAT(DimCode);
+                                              GenJnlLine."Source Code":=text001;
+                                              //GenJnlLine.Narration:=LastCC;           //02082013/VK/EprocII
+                                              GenJnlLine.Narration:=LastCC+'-'+LastWH;  //02082013/VK/EprocII
+
+                                              GenJnlLine.Interfaced:=FALSE;
+
+                                              GenJnlLine.INSERT(TRUE);
+
+                                              GenJnlLine.Interfaced:=TRUE;
+
+                                              GenJnlLine.MODIFY;
+
+
+
+                                   Amt:=0;
+                                  END;
+
+
+
+                                  Amt:=ROUND((Amt+Consumption1_Dr.Amount),0.01,'=');
+
+                                  LastAC:=Consumption1_Dr.AccNo;
+
+                                  LastWH:=Consumption1_Dr.WHCode;
+
+                                  LastSC:=COPYSTR(Consumption1_Dr.EPROC_NO,1,4);
+
+                                  LastCC:=Consumption1_Dr.CC;
+                                END;
+
+               OnPostDataItem=VAR
+                                GLAcc11@1102159001 : Record 15;
+                              BEGIN
+
+                                IF (Amt<>0) THEN
+                                BEGIN
+                                       LineNo:=LineNo+10000;
+
+                                            GenJnlLine.RESET;
+                                            GenJnlLine."Journal Template Name":=MasterSetup."Eproc Template Name";
+                                            GenJnlLine."Journal Batch Name":=MasterSetup."Eproc Batch Name";
+                                            GenJnlLine."Line No.":=LineNo;
+                                            GenJnlLine."Document No.":='Cons'+FORMAT(CALCDATE('CM-1M',TODAY));
+                                            GenJnlLine."Posting Date":=CALCDATE('CM-1M',TODAY);
+                                            GenJnlLine."Account Type":=GenJnlLine."Account Type"::"G/L Account";
+
+                                            //>>25062013/PC/EprocII
+
+                                                {EPROC_WH_MAPPING.RESET;
+                                                EPROC_WH_MAPPING.SETRANGE(EPROC_WH_MAPPING.WHCODE,LastWH);
+                                                  IF EPROC_WH_MAPPING.FINDFIRST THEN;}
+
+                                            //>>25062013/PC/EprocII
+
+
+
+                                               DimVal.RESET;
+                                               DimVal.SETRANGE(DimVal."Dimension Code",GLSETUP."Global Dimension 1 Code");
+                                               DimVal.SETRANGE(DimVal.Name,LastSC);
+                                               DimVal.SETRANGE(DimVal.Blocked, FALSE);
+
+                                                IF DimVal.FINDFIRST THEN
+                                                    EVALUATE(DimCode,DimVal.Code)
+                                                ELSE
+                                                    EVALUATE(DimCode,'2110020');
+
+
+                                               //>>25062013/PC/EprocII
+
+                                               {EPROC_MAPPING.RESET;
+                                               EPROC_MAPPING.SETRANGE(EPROC_MAPPING.ExpCode,LastAC);
+                                               EPROC_MAPPING.SETRANGE(EPROC_MAPPING.CC,LastCC);
+
+                                                   IF (EPROC_MAPPING.FINDFIRST) THEN
+                                                     REPEAT
+                                                        IF (DimCode >= EPROC_MAPPING.R1) AND (DimCode <= EPROC_MAPPING.R2) THEN
+                                                           GenJnlLine."Account No.":=EPROC_MAPPING.Exp;
+                                                        UNTIL(EPROC_MAPPING.NEXT=0); }
+
+                                               //>>25062013/PC/EprocII
+
+
+                                            GenJnlLine."Account No.":=LastAC;   //>>25062013/PC/EprocII
+
+
+                                            GLAcc11.GET(GenJnlLine."Account No.");
+                                            GenJnlLine.Description:=GLAcc11.Name;
+
+                                            GenJnlLine.Amount:=Amt;
+                                            GenJnlLine."Debit Amount":=Amt;
+                                            GenJnlLine."Credit Amount":=0;
+
+                                            GenJnlLine."Shortcut Dimension 1 Code":=FORMAT(DimCode);
+                                            GenJnlLine."Source Code":=text001;
+                                            //GenJnlLine.Narration:=EPROC_MAPPING.CC;     //>>25062013/PC/EprocII
+
+                                            //GenJnlLine.Narration:=LastCC;           //02082013/VK/EprocII
+                                            GenJnlLine.Narration:=LastCC+'-'+LastWH;  //02082013/VK/EprocII
+
+
+
+                                            GenJnlLine.Interfaced:=FALSE;
+
+                                            GenJnlLine.INSERT(TRUE);
+
+                                            GenJnlLine.Interfaced:=TRUE;
+
+                                            GenJnlLine.MODIFY;
+
+
+                                 Amt:=0;
+                                END;
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      GenJnlLine@1102159017 : Record 81;
+      MasterSetup@1102159016 : Record 50008;
+      LastCC@1102159015 : Code[20];
+      Amt@1102159014 : Decimal;
+      LineNo@1102159013 : Integer;
+      Cnt@1102159012 : Integer;
+      EPROC_MAPPING@1102159011 : Record 50034;
+      EPROC_WH_MAPPING@1102159010 : Record 60052;
+      LastWH@1102159009 : Code[10];
+      LastSC@1102159008 : Code[10];
+      DimVal@1102159007 : Record 349;
+      GLSETUP@1102159006 : Record 98;
+      DimCode@1102159005 : Integer;
+      CurrSc@1102159004 : Code[10];
+      CurrCC@1102159003 : Code[10];
+      LastAC@1102159002 : Code[10];
+      LastStock@1102159001 : Code[10];
+      text001@1102159019 : TextConst 'ENU=GENJNL';
+      text002@1102159018 : TextConst 'ENU=EPROC Consumption';
+
+    BEGIN
+    {
+      //UPG13R2DEV
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

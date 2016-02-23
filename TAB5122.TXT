@@ -1,0 +1,117 @@
+OBJECT Table 5122 Interaction Template Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Interaction Template Setup;
+               ENA=Interaction Template Setup];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10        ;CaptionML=[ENU=Primary Key;
+                                                              ENA=Primary Key] }
+    { 2   ;   ;Sales Invoices      ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Invoices;
+                                                              ENA=Sales Invoices] }
+    { 3   ;   ;Sales Cr. Memo      ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Cr. Memo;
+                                                              ENA=Sales CR/Adj Note] }
+    { 4   ;   ;Sales Ord. Cnfrmn.  ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Ord. Cnfrmn.;
+                                                              ENA=Sales Ord. Cnfrmn.] }
+    { 5   ;   ;Sales Quotes        ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Quotes;
+                                                              ENA=Sales Quotes] }
+    { 6   ;   ;Purch Invoices      ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch Invoices;
+                                                              ENA=Purch Invoices] }
+    { 7   ;   ;Purch Cr Memos      ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch Cr Memos;
+                                                              ENA=Purch CR/Adj Notes] }
+    { 8   ;   ;Purch. Orders       ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch. Orders;
+                                                              ENA=Purch. Orders] }
+    { 9   ;   ;Purch. Quotes       ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch. Quotes;
+                                                              ENA=Purch. Quotes] }
+    { 10  ;   ;E-Mails             ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=E-Mails;
+                                                              ENA=E-Mails] }
+    { 11  ;   ;Cover Sheets        ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Cover Sheets;
+                                                              ENA=Cover Sheets] }
+    { 12  ;   ;Outg. Calls         ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Outg. Calls;
+                                                              ENA=Outg. Calls] }
+    { 13  ;   ;Sales Blnkt. Ord    ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Blnkt. Ord;
+                                                              ENA=Sales Blnkt. Ord] }
+    { 14  ;   ;Serv Ord Post       ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Serv Ord Post;
+                                                              ENA=Serv Ord Post] }
+    { 15  ;   ;Sales Shpt. Note    ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Shpt. Note;
+                                                              ENA=Sales Shpt. Note] }
+    { 16  ;   ;Sales Statmnt       ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Statmnt;
+                                                              ENA=Sales Statmnt] }
+    { 17  ;   ;Sales Rmdr.         ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Rmdr.;
+                                                              ENA=Sales Rmdr.] }
+    { 18  ;   ;Serv Ord Create     ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Serv Ord Create;
+                                                              ENA=Serv Ord Create] }
+    { 19  ;   ;Purch Blnkt Ord     ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch Blnkt Ord;
+                                                              ENA=Purch Blnkt Ord] }
+    { 20  ;   ;Purch. Rcpt.        ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch. Rcpt.;
+                                                              ENA=Purch. Rcpt.] }
+    { 21  ;   ;Sales Return Order  ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Return Order;
+                                                              ENA=Sales Return Order] }
+    { 22  ;   ;Sales Return Receipt;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Return Receipt;
+                                                              ENA=Sales Return Receipt] }
+    { 23  ;   ;Sales Finance Charge Memo;Code10   ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Sales Finance Charge Memo;
+                                                              ENA=Sales Finance Charge Memo] }
+    { 24  ;   ;Purch. Return Shipment;Code10      ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch. Return Shipment;
+                                                              ENA=Purch. Return Shipment] }
+    { 25  ;   ;Purch. Return Ord. Cnfrmn.;Code10  ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Purch. Return Ord. Cnfrmn.;
+                                                              ENA=Purch. Return Ord. Cnfrmn.] }
+    { 27  ;   ;Service Contract    ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Service Contract;
+                                                              ENA=Service Contract] }
+    { 28  ;   ;Service Contract Quote;Code10      ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Service Contract Quote;
+                                                              ENA=Service Contract Quote] }
+    { 29  ;   ;Service Quote       ;Code10        ;TableRelation="Interaction Template" WHERE (Attachment No.=CONST(0));
+                                                   CaptionML=[ENU=Service Quote;
+                                                              ENA=Service Quote] }
+    { 30  ;   ;Meeting Invitation  ;Code10        ;TableRelation="Interaction Template";
+                                                   CaptionML=[ENU=Meeting Invitation;
+                                                              ENA=Meeting Invitation] }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

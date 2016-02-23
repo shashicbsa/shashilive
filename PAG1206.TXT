@@ -1,0 +1,93 @@
+OBJECT Page 1206 Credit Transfer Reg. Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Credit Transfer Reg. Entries;
+               ENA=Credit Transfer Reg. Entries];
+    SourceTable=Table1206;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Entry No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Account Type" }
+
+    { 21  ;2   ;Field     ;
+                SourceExpr="Account No." }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Applies-to Entry No." }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Transfer Date" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Transfer Amount" }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr="Transaction ID" }
+
+    { 14  ;2   ;Field     ;
+                CaptionML=[ENU=Creditor Name;
+                           ENA=Creditor Name];
+                SourceExpr=CreditorName }
+
+    { 15  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Document No.;
+                           ENA=Applies-to Entry Document No.];
+                SourceExpr=AppliesToEntryDocumentNo }
+
+    { 17  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Posting Date;
+                           ENA=Applies-to Entry Posting Date];
+                SourceExpr=AppliesToEntryPostingDate }
+
+    { 16  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Description;
+                           ENA=Applies-to Entry Description];
+                SourceExpr=AppliesToEntryDescription }
+
+    { 18  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Currency Code;
+                           ENA=Applies-to Entry Currency Code];
+                SourceExpr=AppliesToEntryCurrencyCode }
+
+    { 19  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Amount;
+                           ENA=Applies-to Entry Amount];
+                SourceExpr=AppliesToEntryAmount }
+
+    { 20  ;2   ;Field     ;
+                CaptionML=[ENU=Applies-to Entry Remaining Amount;
+                           ENA=Applies-to Entry Remaining Amount];
+                SourceExpr=AppliesToEntryRemainingAmount }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

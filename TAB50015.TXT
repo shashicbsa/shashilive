@@ -1,0 +1,178 @@
+OBJECT Table 50015 VAT DETAILS
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/01/15;
+    Time=10:24:13;
+    Modified=Yes;
+    Version List=YIMMAVATI,YIMMAVATO,CAUYIMM,YIMMDEVIP1.0,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    OnDelete=VAR
+               Purch_Line@1000000000 : Record 39;
+               Text0001@1000000001 : TextConst 'ENU="You Can Not Delete Because Tax Invoice %1 Is already Booked "';
+               Sales_Line@1000000002 : Record 37;
+             BEGIN
+               TESTFIELD(Approved);
+               IF "Vat Type" = 1 THEN BEGIN
+                 IF "Document Type" = "Document Type"::"Credit Memo" THEN BEGIN
+                   Sales_Line.RESET;
+                   Sales_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+                   Sales_Line.SETRANGE(Sales_Line."Document Type","Document Type");
+                   Sales_Line.SETRANGE(Sales_Line."Document No.","Document No.");
+                   Sales_Line.SETRANGE(Sales_Line."Line No.","Line No.");
+                   IF Sales_Line.FINDFIRST THEN
+                     ERROR(Text0001);
+                 END ELSE BEGIN
+                   Purch_Line.RESET;
+                   Purch_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+                   Purch_Line.SETRANGE(Purch_Line."Document Type","Document Type");
+                   Purch_Line.SETRANGE(Purch_Line."Document No.","Document No.");
+                   Purch_Line.SETRANGE(Purch_Line."Line No.","Line No.");
+                   IF NOT Purch_Line.FINDFIRST THEN
+                     ERROR(Text0001,Purch_Line."Tax Invoice No.");
+                 END;
+               END;
+             END;
+
+    CaptionML=ENU=VAT DETAILS;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry Type          ;Option        ;OptionString=Sale,Purchase }
+    { 2   ;   ;Transaction Type    ;Option        ;OptionCaptionML=ENU=" ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Prtn,Propac Ex.,Intrst_Deposit";
+                                                   OptionString=[ ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Prtn,Propac Ex.,Intrst_Deposit] }
+    { 3   ;   ;Document No.        ;Code20         }
+    { 4   ;   ;Document Type       ;Option        ;OptionCaptionML=ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 5   ;   ;Posting Date        ;Date           }
+    { 6   ;   ;B/L Date            ;Date           }
+    { 7   ;   ;Source Type         ;Option        ;OptionCaptionML=ENU=" ,Entity,Vendor,Bank Account,Fixed Asset";
+                                                   OptionString=[ ,Customer,Vendor,Bank Account,Fixed Asset] }
+    { 8   ;   ;Source No.          ;Code20        ;OnValidate=BEGIN
+                                                                CASE "Source Type" OF
+                                                                  "Source Type"::Vendor: BEGIN
+                                                                    IF Vend.GET("Source No.") THEN BEGIN
+                                                                      "Buy-from Vendor Name" := Vend.Name;
+                                                                      "Buy-from Vendor Name 2" := Vend."Name 2";
+                                                                      "Buy-from Address" := Vend.Address;
+                                                                      "Buy-from Address 2" := Vend."Address 2";
+                                                                      "Buy-from City" := Vend.City;
+                                                                    END;
+                                                                  END;
+                                                                  "Source Type"::Customer: BEGIN
+                                                                    IF Cust.GET("Source No.") THEN BEGIN
+                                                                      "Buy-from Vendor Name" := Cust.Name;
+                                                                      "Buy-from Vendor Name 2" := Cust."Name 2";
+                                                                      "Buy-from Address" := Cust.Address;
+                                                                      "Buy-from Address 2" := Cust."Address 2";
+                                                                      "Buy-from City" := Cust.City;
+                                                                    END;
+                                                                  END;
+                                                                END;
+                                                              END;
+                                                               }
+    { 9   ;   ;NPWP                ;Code20        ;Description=Field will be mapped With Ship-to Code and Order Adresses Field }
+    { 10  ;   ;Currency Code       ;Code10         }
+    { 11  ;   ;Due Date            ;Date           }
+    { 12  ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Global Dimension 1 Code;
+                                                   CaptionClass='1,1,1' }
+    { 13  ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Global Dimension 2 Code;
+                                                   CaptionClass='1,1,2' }
+    { 14  ;   ;Kwitansi No.        ;Code20         }
+    { 15  ;   ;Commercial Invoice No.;Code20       }
+    { 16  ;   ;Commercial Invoice Date;Date        }
+    { 17  ;   ;Tax Invoice No.     ;Code30         }
+    { 18  ;   ;Tax Invoice Date    ;Date           }
+    { 19  ;   ;Base                ;Decimal       ;CaptionML=ENU=Base;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 20  ;   ;Amount              ;Decimal       ;CaptionML=ENU=Amount;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 21  ;   ;VAT Calculation Type;Option        ;OptionString=Normal VAT,Reverse Charge VAT,Full VAT,Sales Tax }
+    { 22  ;   ;Reason Code         ;Code10         }
+    { 23  ;   ;Base LCY            ;Decimal        }
+    { 24  ;   ;Amount LCY          ;Decimal        }
+    { 25  ;   ;VAT Bus. Posting Group;Code10       }
+    { 26  ;   ;VAT Prod. Posting Group;Code10      }
+    { 27  ;   ;VAT %               ;Decimal        }
+    { 28  ;   ;Line No.            ;Integer        }
+    { 29  ;   ;Approved            ;Boolean        }
+    { 79  ;   ;Buy-from Vendor Name;Text50        ;CaptionML=ENU=Buy-from Vendor Name }
+    { 80  ;   ;Buy-from Vendor Name 2;Text50      ;CaptionML=ENU=Buy-from Vendor Name 2 }
+    { 81  ;   ;Buy-from Address    ;Text50        ;CaptionML=ENU=Buy-from Address }
+    { 82  ;   ;Buy-from Address 2  ;Text50        ;CaptionML=ENU=Buy-from Address 2 }
+    { 83  ;   ;Buy-from City       ;Text30        ;CaptionML=ENU=Buy-from City }
+    { 84  ;   ;Approve Final       ;Boolean       ;CaptionML=ENU=Approve }
+    { 85  ;   ;Vat Type            ;Option        ;OptionCaptionML=ENU=" ,In,Out";
+                                                   OptionString=[ ,In,Out] }
+    { 86  ;   ;Original Tax Inv. No.;Code30       ;Description=FIELD ADDED FOR CAPTURING THE ORIGINAL TAX INVOICE NO. }
+    { 87  ;   ;Updated             ;Boolean       ;Editable=No }
+    { 88  ;   ;Base_UPdate         ;Decimal       ;Editable=No }
+    { 89  ;   ;Amount_Update       ;Decimal       ;Editable=No }
+    { 90  ;   ;BaseLCY_Update      ;Decimal       ;Editable=No }
+    { 91  ;   ;AmountLCY_UPdate    ;Decimal       ;Editable=No }
+    { 92  ;   ;Update Approve      ;Boolean        }
+    { 93  ;   ;Update Approved     ;Boolean        }
+    { 102 ;   ;Hold                ;Boolean       ;Description=Field added for Identification of entries. }
+    { 103 ;   ;User ID             ;Code50        ;Description=CAUYIMM }
+    { 104 ;   ;User Name           ;Text30         }
+    { 105 ;   ;NPWP Name           ;Text50         }
+    { 106 ;   ;NPWP Address        ;Text50         }
+    { 107 ;   ;NPWP Address 2      ;Text50         }
+    { 108 ;   ;NPWP City           ;Text30         }
+    { 109 ;   ;CorrectionEntry     ;Boolean       ;Editable=No }
+    { 110 ;   ;Seq                 ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Max("Approval Entry"."Sequence No." WHERE (Document Type=FIELD(Document Type),
+                                                                                                          Document No.=FIELD(Document No.))) }
+    { 111 ;   ;Status              ;Option        ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup("Approval Entry".Status WHERE (Sequence No.=FIELD(Seq),
+                                                                                                     Document Type=FIELD(Document Type),
+                                                                                                     Document No.=FIELD(Document No.)));
+                                                   CaptionML=ENU=Current Status;
+                                                   OptionCaptionML=ENU=Created,Open,Canceled,Rejected,Approved;
+                                                   OptionString=Created,Open,Canceled,Rejected,Approved }
+    { 112 ;   ;Comment             ;Text250       ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup("Approval Comment Line".Comment WHERE (Document Type=FIELD(Document Type),
+                                                                                                             Document No.=FIELD(Document No.))) }
+    { 50015;  ;PPH NPWP No.        ;Code20        ;Description=PPNPPHDEV }
+  }
+  KEYS
+  {
+    {    ;Document Type,Line No.,Document No.     ;Clustered=Yes }
+    {    ;Approved,Vat Type                        }
+    {    ;Tax Invoice No.                          }
+    {    ;Transaction Type                         }
+    {    ;User ID,Document Type,Document No.,Line No. }
+    {    ;User ID,Document Type,Document No.,Tax Invoice No. }
+    {    ;Entry Type,Document Type,Transaction Type,Document No. }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Vend@1000000000 : Record 23;
+      Cust@1000000001 : Record 18;
+
+    BEGIN
+    {
+      //YIMMAVAT I/O
+      a) Table is designed to make the VAT process
+      b) Both type of VAT IN/OUT entries comes in this table
+      c) FOR VAT IN - Both Approved/Unapproved entries are present in this table
+      d) For VAT Out- Only Approved entries are present in this table
+
+      //CAUYIMM - Changed User ID Length from 10 to 50.
+      //YIMMDEVIP1.0
+      Changed Caption of Sorce type customer to entity
+    }
+    END.
+  }
+}
+

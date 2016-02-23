@@ -1,0 +1,91 @@
+OBJECT Report 50026 Eproc Consumption
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/19/14;
+    Time=11:55:19;
+    Modified=Yes;
+    Version List=Eproc1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  Master_Setup.GET;
+                  JnlGen.RESET;
+                  JnlGen.SETRANGE(JnlGen."Journal Template Name",Master_Setup."Eproc Template Name");
+                  JnlGen.SETRANGE(JnlGen."Journal Batch Name",Master_Setup."Eproc Batch Name");
+                  IF JnlGen.FINDLAST THEN
+                    LineNo := JnlGen."Line No.";
+
+                  Gen_Batch.RESET;
+                  IF Gen_Batch.GET(Master_Setup."Eproc Template Name",Master_Setup."Eproc Batch Name") THEN;
+
+                  "G/L_Interface".RESET;
+                  "G/L_Interface".SETCURRENTKEY("G/L_Interface".No,"G/L_Interface"."Line No.","G/L_Interface"."Template Name",
+                                                "G/L_Interface"."Batch Name");
+                  "G/L_Interface".SETRANGE("G/L_Interface"."Template Name",Master_Setup."Eproc Template Name");
+                  "G/L_Interface".SETRANGE("G/L_Interface"."Batch Name",Master_Setup."Eproc Batch Name");
+                  IF "G/L_Interface".FINDFIRST THEN REPEAT
+                    JnlGen.RESET;
+                    CLEAR(JnlGen);
+                    JnlGen.INIT;
+                    JnlGen."Posting No. Series":=Gen_Batch."Posting No. Series";
+                    JnlGen."Journal Template Name" := "G/L_Interface"."Template Name";
+                    JnlGen."Journal Batch Name" := "G/L_Interface"."Batch Name";
+                    JnlGen."Line No." := LineNo + 10000;
+                    JnlGen.INSERT(TRUE);
+                  //  JnlGen."Document No." := "G/L_Interface".No;
+                    JnlGen.VALIDATE(JnlGen."Document No.","G/L_Interface".No);
+                    JnlGen.VALIDATE(JnlGen."Posting Date","G/L_Interface"."Transaction Date");
+                    JnlGen.VALIDATE(JnlGen."Account Type","G/L_Interface"."Account Type");
+                    JnlGen.VALIDATE(JnlGen."Account No.","G/L_Interface"."Account No.");
+                    JnlGen.VALIDATE(JnlGen.Amount,"G/L_Interface".Amount);
+                    JnlGen."Source Code" := Master_Setup."Source Code";
+                    JnlGen."Reason Code" := Gen_Batch."Reason Code";
+                    JnlGen.VALIDATE(JnlGen."Shortcut Dimension 1 Code","G/L_Interface"."Shortcut Dimension 1");
+                    JnlGen.Narration := "G/L_Interface".Narration;
+                    JnlGen.Interfaced := TRUE;
+                    JnlGen.MODIFY;
+                    LineNo += 10000;
+                    "G/L_Interface".DELETE;
+                  UNTIL "G/L_Interface".NEXT = 0;
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      "G/L_Interface"@1000000000 : Record 50010;
+      Master_Setup@1000000001 : Record 50008;
+      JnlGen@1000000002 : Record 81;
+      LineNo@1000000003 : Integer;
+      Reason@1000000004 : Code[10];
+      Gen_Batch@1000000005 : Record 232;
+      Nos@1000000006 : Codeunit 396;
+      Doc_No@1000000007 : Code[20];
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

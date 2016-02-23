@@ -1,0 +1,123 @@
+OBJECT Page 1356 Mini Purchase Invoice List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Purchase Invoice List;
+               ENA=Purchase Invoice List];
+    SourceTable=Table38;
+    SourceTableView=WHERE(Document Type=CONST(Invoice));
+    PageType=List;
+    CardPageID=Mini Purchase Invoice;
+    PromotedActionCategoriesML=[ENU=New,Process,Report,Invoice,Posting;
+                                ENA=New,Process,Report,Invoice,Posting];
+    OnOpenPage=BEGIN
+                 SetSecurityFilterOnRespCenter;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1102601017;1 ;ActionGroup;
+                      CaptionML=[ENU=&Invoice;
+                                 ENA=&Invoice];
+                      Image=Invoice }
+      { 3       ;2   ;Action    ;
+                      Name=Vendor;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Vendor;
+                                 ENA=Vendor];
+                      ToolTipML=[ENU=View or edit detailed information about the vendor on the selected purchase document.;
+                                 ENA=View or edit detailed information about the vendor on the selected purchase document.];
+                      RunObject=Page 26;
+                      RunPageLink=No.=FIELD(Buy-from Vendor No.);
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Vendor;
+                      PromotedCategory=Category4 }
+      { 50      ;1   ;ActionGroup;
+                      CaptionML=[ENU=P&osting;
+                                 ENA=P&osting];
+                      Image=Post }
+      { 52      ;2   ;Action    ;
+                      Name=Post;
+                      ShortCutKey=F9;
+                      CaptionML=[ENU=P&ost;
+                                 ENA=P&ost];
+                      ToolTipML=[ENU=Finalize the selected purchase document. Posting updates the books with the document's amounts and quantities.;
+                                 ENA=Finalise the selected purchase document. Posting updates the books with the document's amounts and quantities.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=PostOrder;
+                      PromotedCategory=Category5;
+                      OnAction=BEGIN
+                                 Post(CODEUNIT::"Purch.-Post (Yes/No)");
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the number of the purchase header you are setting up: a quote, order, invoice, or credit memo.;
+                           ENA=Specifies the number of the purchase header you are setting up: a quote, order, invoice, or CR/Adj Note.];
+                SourceExpr="No." }
+
+    { 6   ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the name of the vendor who ships the items.;
+                           ENA=Specifies the name of the vendor who ships the items.];
+                SourceExpr="Buy-from Vendor Name" }
+
+    { 1102601007;2;Field  ;
+                ToolTipML=[ENU=Specifies when the invoice is due. The program calculates the date using the Payment Terms Code and Document Date fields.;
+                           ENA=Specifies when the invoice is due. The program calculates the date using the Payment Terms Code and Document Date fields.];
+                SourceExpr="Due Date";
+                Visible=FALSE }
+
+    { 5   ;2   ;Field     ;
+                ToolTipML=[ENU=Shows the sum of the amounts in the Amount field on the associated purchase lines.;
+                           ENA=Shows the sum of the amounts in the Amount field on the associated purchase lines.];
+                SourceExpr=Amount }
+
+  }
+  CODE
+  {
+    VAR
+      MiniLinesInstructionMgt@1000 : Codeunit 1320;
+      OpenPostedPurchaseInvQst@1001 : TextConst 'ENU=The invoice has been posted and moved to the Posted Purchase Invoice list.\\Do you want to open the posted invoice?;ENA=The invoice has been posted and moved to the Posted Purchase Invoice list.\\Do you want to open the posted invoice?';
+
+    LOCAL PROCEDURE Post@4(PostingCodeunitID@1000 : Integer);
+    BEGIN
+      MiniLinesInstructionMgt.PurchaseCheckAllLinesHaveQuantityAssigned(Rec);
+      SendToPosting(PostingCodeunitID);
+      ShowPostedConfirmationMessage;
+    END;
+
+    LOCAL PROCEDURE ShowPostedConfirmationMessage@7();
+    VAR
+      PurchInvHeader@1000 : Record 122;
+    BEGIN
+      PurchInvHeader.SETFILTER("Pre-Assigned No.","No.");
+      IF PurchInvHeader.FINDFIRST THEN
+        IF DIALOG.CONFIRM(OpenPostedPurchaseInvQst,FALSE) THEN
+          PAGE.RUN(PAGE::"Mini Posted Purchase Invoice",PurchInvHeader);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

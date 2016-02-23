@@ -1,0 +1,57 @@
+OBJECT Page 63151 Interface Dimesnion Mapping
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/31/15;
+    Time=10:16:52;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table60065;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Dimension Name" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Old NAV Code" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Old YIMM Code" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="New NAV Code" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="New YIMM Code" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      [Version] : UPG13R2DEV
+      [Date]  : 31/07/2015
+      [Description] : Newly created Page.
+                      Dimension values is about to change in the new navision.
+                      This mapping page will be used to mapp the dimesnion values until all Interface system is updated.
+                      After all the Interface system updated this mapping will be obsolate using the setup(IF Dimension Mapping Setup(63152)).
+
+      [Signature] : SV
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,116 @@
+OBJECT Codeunit 17100 Recurring Amount - Distribute
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    TableNo=81;
+    OnRun=BEGIN
+            TESTFIELD("Account Type","Account Type"::"G/L Account");
+            IF NOT
+               ("Recurring Method" IN ["Recurring Method"::"B  Balance",
+                                       "Recurring Method"::"RB Reversing Balance"])
+            THEN BEGIN
+              GenJnlLine1."Recurring Method" := "Recurring Method"::"B  Balance";
+              GenJnlLine2."Recurring Method" := "Recurring Method"::"RB Reversing Balance";
+              ERROR(
+                '%1 must be either %2 or %3.',
+                FIELDNAME("Recurring Method"),
+                GenJnlLine1."Recurring Method",
+                GenJnlLine2."Recurring Method");
+            END;
+
+            CLEAR(AmtDistrForm);
+            CLEAR(SumOnAllocAccounts);
+            IF AmtDistrForm.RUNMODAL = ACTION::OK THEN BEGIN
+              AmtDistrForm.ReturnDates(FromDate,ToDate,WhatToCalculate);
+
+              IF NOT CONFIRM(Text1450000 + Text1450001,FALSE) THEN
+                EXIT;
+
+              IF "Shortcut Dimension 1 Code" <> '' THEN
+                "G/L Account".SETRANGE("Global Dimension 1 Filter","Shortcut Dimension 1 Code");
+              IF "Shortcut Dimension 2 Code" <> '' THEN
+                "G/L Account".SETRANGE("Global Dimension 2 Filter","Shortcut Dimension 2 Code");
+              IF WhatToCalculate = WhatToCalculate::"Net Change" THEN
+                "G/L Account".SETRANGE("Date Filter",FromDate,ToDate);
+
+              "G/L Alloc. Line".RESET;
+              "G/L Alloc. Line".SETRANGE("Journal Template Name","Journal Template Name");
+              "G/L Alloc. Line".SETRANGE("Journal Batch Name","Journal Batch Name");
+              "G/L Alloc. Line".SETRANGE("Journal Line No.","Line No.");
+              IF "G/L Alloc. Line".FIND('-') THEN
+                REPEAT
+                  "G/L Account".GET("G/L Alloc. Line"."Account No.");
+                  IF WhatToCalculate = WhatToCalculate::"Net Change" THEN BEGIN
+                    "G/L Account".CALCFIELDS("Net Change");
+                    SumOnAllocAccounts := SumOnAllocAccounts + "G/L Account"."Net Change";
+                  END ELSE BEGIN
+                    "G/L Account".CALCFIELDS(Balance);
+                    SumOnAllocAccounts := SumOnAllocAccounts + "G/L Account".Balance;
+                  END;
+                UNTIL "G/L Alloc. Line".NEXT = 0;
+
+              "G/L Alloc. Line".FIND('-');
+              REPEAT
+                "G/L Account".GET("G/L Alloc. Line"."Account No.");
+                IF WhatToCalculate = WhatToCalculate::"Net Change" THEN BEGIN
+                  "G/L Account".CALCFIELDS("Net Change");
+                  IF SumOnAllocAccounts = 0 THEN
+                    "G/L Alloc. Line".VALIDATE("Allocation %",0)
+                  ELSE
+                    "G/L Alloc. Line".VALIDATE(
+                      "Allocation %",
+                      ROUND(
+                        "G/L Account"."Net Change" / SumOnAllocAccounts * 100,
+                        0.01,'='));
+                END ELSE BEGIN
+                  "G/L Account".CALCFIELDS(Balance);
+                  IF SumOnAllocAccounts = 0 THEN
+                    "G/L Alloc. Line".VALIDATE("Allocation %",0)
+                  ELSE
+                    "G/L Alloc. Line".VALIDATE(
+                      "Allocation %",
+                      ROUND(
+                        "G/L Account".Balance / SumOnAllocAccounts * 100,
+                        0.01,'='));
+                END;
+                "G/L Alloc. Line".MODIFY;
+                SumAllocationPercent += "G/L Alloc. Line"."Allocation %";
+              UNTIL "G/L Alloc. Line".NEXT = 0;
+              PercentageRoundDiff := 100 - SumAllocationPercent;
+              "G/L Alloc. Line".FINDLAST;
+              "G/L Alloc. Line"."Allocation %" := "G/L Alloc. Line"."Allocation %" + PercentageRoundDiff;
+              "G/L Alloc. Line".MODIFY;
+              MESSAGE(Text1450002);
+            END;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      "G/L Account"@1450000 : Record 15;
+      "G/L Alloc. Line"@1450001 : Record 221;
+      GenJnlLine1@1450002 : Record 81;
+      GenJnlLine2@1450003 : Record 81;
+      SumOnAllocAccounts@1450004 : Decimal;
+      AmtDistrForm@1450005 : Page 17101;
+      FromDate@1450006 : Date;
+      ToDate@1450007 : Date;
+      WhatToCalculate@1450008 : 'Net Change,Balance';
+      Text1450000@1450011 : TextConst 'ENU=You are about to overwrite the Allocation Percentages \;ENA=You are about to overwrite the Allocation Percentages \';
+      Text1450001@1450012 : TextConst 'ENU=on the Allocation Lines. Do you wish to continue?;ENA=on the Allocation Lines. Do you wish to continue?';
+      Text1450002@1450013 : TextConst 'ENU=The percentages were successfully calculated.;ENA=The percentages were successfully calculated.';
+      SumAllocationPercent@1000 : Decimal;
+      PercentageRoundDiff@1001 : Decimal;
+
+    BEGIN
+    END.
+  }
+}
+

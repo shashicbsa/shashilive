@@ -1,0 +1,287 @@
+OBJECT Report 50096 Rounding Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/07/15;
+    Time=10:02:36;
+    Modified=Yes;
+    Version List=YIMMNRoundingReport;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  Cnt:=0;
+
+                  IF (Datefil = 0D) THEN
+                   ERROR(Text001);
+
+                  IF (Datefil1 = 0D) THEN
+                   ERROR(Text001);
+
+                  IF (PDate = 0D) THEN
+                   ERROR(Text004);
+
+
+                  IF (AdjustmentAmt=0) THEN
+                    ERROR(Text002);
+
+                  IF ("BalA/c"='') THEN
+                    ERROR(Text003);
+                END;
+
+  }
+  DATASET
+  {
+    { 8503;    ;DataItem;                    ;
+               DataItemTable=Table21;
+               DataItemTableView=SORTING(Customer No.,Posting Date,Currency Code)
+                                 ORDER(Ascending)
+                                 WHERE(Open=FILTER(Yes),
+                                       Remaining Amount=FILTER(<>0));
+               OnPreDataItem=BEGIN
+                               "Cust. Ledger Entry".SETRANGE("Cust. Ledger Entry"."Date Filter",Datefil,Datefil1);
+                               IF Customer THEN BEGIN
+                                "Cust. Ledger Entry".SETRANGE("Cust. Ledger Entry"."Customer No.","CustNo._Min","CustNo._Max");
+                                "Cust. Ledger Entry".SETRANGE("Cust. Ledger Entry"."Entity Type","Cust. Ledger Entry"."Entity Type"::Dealer);
+                               END;
+
+                               IF Vendor THEN BEGIN
+                                "Cust. Ledger Entry".SETRANGE("Cust. Ledger Entry"."Customer No.",VendNo_Min,VendNo_Max);
+                                 "Cust. Ledger Entry".SETRANGE("Cust. Ledger Entry"."Entity Type","Cust. Ledger Entry"."Entity Type"::NonDealer);
+                               END;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  "Cust. Ledger Entry".CALCFIELDS("Cust. Ledger Entry"."Remaining Amt. (LCY)");
+                                  RemAmt_Lcy_Cust:= (ABS("Cust. Ledger Entry"."Remaining Amt. (LCY)") - ABS("Cust. Ledger Entry"."Total Applied Amount"));
+                                  RemAmt_Lcy_Cust:=ABS(RemAmt_Lcy_Cust);
+
+                                  IF (RemAmt_Lcy_Cust = 0) THEN
+                                    CurrReport.SKIP;
+
+                                  IF (RemAmt_Lcy_Cust > AdjustmentAmt) THEN
+                                    CurrReport.SKIP;
+
+
+                                  IF (RemAmt_Lcy_Cust <= AdjustmentAmt) THEN
+                                    BEGIN
+                                      InsertGenJnlLineforCustomer;
+                                      InsertGenBalLineforCustomer;
+                                    END;
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1000000019;;Container;
+                  Name=Options;
+                  ContainerType=ContentArea }
+
+      { 1000000018;1;Group  ;
+                  CaptionML=ENU=Entity-Type;
+                  GroupType=Group }
+
+      { 1000000017;2;Field  ;
+                  Name=Customer;
+                  CaptionML=ENU=Dealer;
+                  SourceExpr=Customer;
+                  Editable=NOT Vendor }
+
+      { 1000000016;2;Field  ;
+                  Name=Vendor;
+                  CaptionML=ENU=Non-Dealer;
+                  SourceExpr=Vendor;
+                  Editable=NOT Customer }
+
+      { 1000000015;1;Group  ;
+                  CaptionML=ENU=Dealer;
+                  Visible=Customer;
+                  Editable=Customer;
+                  GroupType=Group }
+
+      { 1000000014;2;Field  ;
+                  Name=Start Dealer No;
+                  SourceExpr="CustNo._Min";
+                  TableRelation=Customer.No. WHERE (Entity type=CONST(Dealer)) }
+
+      { 1000000013;2;Field  ;
+                  Name=End Dealer No;
+                  SourceExpr="CustNo._Max";
+                  TableRelation=Customer.No. WHERE (Entity type=CONST(Dealer)) }
+
+      { 1000000012;1;Group  ;
+                  CaptionML=ENU=Non-Dealer;
+                  Visible=Vendor;
+                  Editable=Vendor;
+                  GroupType=Group }
+
+      { 1000000011;2;Field  ;
+                  Name=Start Non-Dealer No;
+                  SourceExpr=VendNo_Min;
+                  TableRelation=Customer.No. WHERE (Entity type=CONST(NonDealer)) }
+
+      { 1000000010;2;Field  ;
+                  Name=End Non-Dealer No;
+                  SourceExpr=VendNo_Max;
+                  TableRelation=Customer.No. WHERE (Entity type=CONST(NonDealer)) }
+
+      { 1000000009;1;Group  ;
+                  CaptionML=ENU=Other Data;
+                  GroupType=Group }
+
+      { 1000000008;2;Field  ;
+                  Name=Posting Date;
+                  SourceExpr=PDate }
+
+      { 1000000007;2;Field  ;
+                  Name=As on Start Date;
+                  SourceExpr=Datefil }
+
+      { 1000000006;2;Field  ;
+                  Name=As on End Date;
+                  SourceExpr=Datefil1 }
+
+      { 1000000005;2;Field  ;
+                  Name=Adjustment Amount;
+                  SourceExpr=AdjustmentAmt }
+
+      { 1000000004;2;Field  ;
+                  Name=Balancing Account;
+                  SourceExpr="BalA/c";
+                  TableRelation="G/L Account" }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Datefil@1000000001 : Date;
+      Datefil1@1000000020 : Date;
+      AdjustmentAmt@1000000002 : Decimal;
+      "GLlA/c"@1000000003 : Record 15;
+      "BalA/c"@1000000004 : Code[50];
+      Cnt@1000000005 : Integer;
+      Text001@1000000006 : TextConst 'ENU=Please enter the VALID date.';
+      GenJnlLine11@1000000007 : Record 81;
+      RemAmt_Lcy@1000000008 : Decimal;
+      RemAmt_Lcy_Cust@1000000009 : Decimal;
+      Text002@1000000010 : TextConst 'ENU=Adjustment Amount should be greater than Zero.';
+      Text003@1000000011 : TextConst 'ENU=Please fill the value in Balancing A/C.';
+      VendNo@1000000012 : Code[50];
+      VendNo_Min@1000000014 : Code[50];
+      VendNo_Max@1000000015 : Code[50];
+      "CustNo."@1000000013 : Code[50];
+      "CustNo._Min"@1000000016 : Code[50];
+      "CustNo._Max"@1000000017 : Code[50];
+      PDate@1000000018 : Date;
+      Text004@1000000019 : TextConst 'ENU=Please enter the VALID Posting  date.';
+      Vendor@1000000021 : Boolean;
+      Customer@1000000022 : Boolean;
+      Cust@1000000023 : Record 18;
+      Dealer@1000000000 : Boolean;
+      NonDealer@1000000024 : Boolean;
+
+    PROCEDURE SetGenGLLine@1000000001(SetGJnlLine@1000000000 : Record 81);
+    BEGIN
+
+      GenJnlLine11 := SetGJnlLine ;
+    END;
+
+    PROCEDURE InsertGenJnlLineforCustomer@1000000015();
+    VAR
+      GenJnlLine_update@1000000000 : Record 81;
+      LineNo@1000000001 : Integer;
+    BEGIN
+      GenJnlLine_update.RESET;
+
+      GenJnlLine_update.SETRANGE(GenJnlLine_update."Journal Template Name",GenJnlLine11."Journal Template Name");
+      GenJnlLine_update.SETRANGE(GenJnlLine_update."Journal Batch Name",GenJnlLine11."Journal Batch Name");
+
+      IF GenJnlLine_update.FINDLAST THEN
+      LineNo:=GenJnlLine_update."Line No."+10000
+      ELSE LineNo:=10000;
+
+
+      GenJnlLine_update.RESET;
+      GenJnlLine_update.INIT;
+      GenJnlLine_update."Account Type":=GenJnlLine_update."Account Type"::Customer;
+      GenJnlLine_update.VALIDATE("Account No.","Cust. Ledger Entry"."Customer No.");
+      GenJnlLine_update."Line No.":=LineNo;
+      GenJnlLine_update."Document No.":=GenJnlLine11."Document No.";
+      GenJnlLine_update.VALIDATE(GenJnlLine_update.Amount,-"Cust. Ledger Entry"."Remaining Amt. (LCY)");
+      GenJnlLine_update."Source Code":=GenJnlLine11."Source Code";
+      GenJnlLine_update."Posting Group":="Cust. Ledger Entry"."Customer Posting Group";
+      //GenJnlLine_update."Bal. Account No.":="BalA/c";
+      //GenJnlLine_update."Document Type":="Cust. Ledger Entry"."Document Type";
+      GenJnlLine_update."Applies-to Doc. Type":="Cust. Ledger Entry"."Document Type";
+      GenJnlLine_update."Applies-to Doc. No.":="Cust. Ledger Entry"."Document No.";
+      //GenJnlLine_update.VALIDATE("Currency Code","Cust. Ledger Entry"."Currency Code");
+
+      GenJnlLine_update."Currency Factor":=("Cust. Ledger Entry"."Remaining Amount"/"Cust. Ledger Entry"."Remaining Amt. (LCY)");
+      GenJnlLine_update."Shortcut Dimension 1 Code":="Cust. Ledger Entry"."Global Dimension 1 Code";
+      GenJnlLine_update."Shortcut Dimension 2 Code":="Cust. Ledger Entry"."Global Dimension 2 Code";
+      GenJnlLine_update."Journal Template Name":=GenJnlLine11."Journal Template Name";
+      GenJnlLine_update."Journal Batch Name":=GenJnlLine11."Journal Batch Name";
+      GenJnlLine_update."Posting Date":=PDate;
+      GenJnlLine_update."CV_Ledger_Entry No.":="Cust. Ledger Entry"."Entry No.";
+
+      GenJnlLine_update.INSERT;
+    END;
+
+    PROCEDURE InsertGenBalLineforCustomer@1000000011();
+    VAR
+      GenJnlLine_update@1000000001 : Record 81;
+      LineNo@1000000000 : Integer;
+    BEGIN
+      GenJnlLine_update.RESET;
+
+      GenJnlLine_update.SETRANGE(GenJnlLine_update."Journal Template Name",GenJnlLine11."Journal Template Name");
+      GenJnlLine_update.SETRANGE(GenJnlLine_update."Journal Batch Name",GenJnlLine11."Journal Batch Name");
+
+      IF GenJnlLine_update.FINDLAST THEN
+      LineNo:=GenJnlLine_update."Line No."+10000
+      ELSE LineNo:=10000;
+
+
+      GenJnlLine_update.RESET;
+      GenJnlLine_update.INIT;
+      GenJnlLine_update."Account Type":=GenJnlLine_update."Account Type"::"G/L Account";
+      GenJnlLine_update.VALIDATE("Account No.","BalA/c");
+      GenJnlLine_update."Line No.":=LineNo;
+      GenJnlLine_update."Document No.":=GenJnlLine11."Document No.";
+      GenJnlLine_update.VALIDATE(GenJnlLine_update.Amount,"Cust. Ledger Entry"."Remaining Amt. (LCY)");
+      GenJnlLine_update."Source Code":=GenJnlLine11."Source Code";
+      //GenJnlLine_update."Posting Group":="Vendor Ledger Entry"."Vendor Posting Group";
+      //GenJnlLine_update."Bal. Account No.":="BalA/c";
+      //GenJnlLine_update."Document Type":="Vendor Ledger Entry"."Document Type";
+      //GenJnlLine_update."Applies-to Doc. Type":="Vendor Ledger Entry"."Document Type";
+      //GenJnlLine_update."Applies-to Doc. No.":="Vendor Ledger Entry"."Document No.";
+      //GenJnlLine_update.VALIDATE(GenJnlLine_update."Currency Code","Vendor Ledger Entry"."Currency Code");
+      GenJnlLine_update."Currency Factor":=("Cust. Ledger Entry"."Remaining Amount"/"Cust. Ledger Entry"."Remaining Amt. (LCY)");
+      GenJnlLine_update."Shortcut Dimension 1 Code":="Cust. Ledger Entry"."Global Dimension 1 Code";
+      GenJnlLine_update."Shortcut Dimension 2 Code":="Cust. Ledger Entry"."Global Dimension 2 Code";
+
+      GenJnlLine_update."Journal Template Name":=GenJnlLine11."Journal Template Name";
+      GenJnlLine_update."Journal Batch Name":=GenJnlLine11."Journal Batch Name";
+      GenJnlLine_update."Posting Date":=PDate;
+      GenJnlLine_update.INSERT;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

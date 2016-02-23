@@ -1,0 +1,181 @@
+OBJECT Report 60029 Batch Post Gport
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/21/15;
+    Time=12:04:38;
+    Modified=Yes;
+    Version List=NAVW17.10,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Batch Post Gport Tanda Terima Return;
+               ENA=Batch Post Sales Invoices];
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 6640;    ;DataItem;                    ;
+               DataItemTable=Table36;
+               DataItemTableView=SORTING(Document Type,No.)
+                                 WHERE(Document Type=CONST(Invoice),
+                                       Interfaced=CONST(Yes),
+                                       Type Of Transaction=CONST(Gport));
+               ReqFilterHeadingML=[ENU=Sales Invoice;
+                                   ENA=Sales Invoice];
+               OnPreDataItem=BEGIN
+                               IF ReplacePostingDate AND (PostingDateReq = 0D) THEN
+                                 ERROR(Text000);
+
+                               //UPG13R2DEV.begin
+                               //YIMMA
+                               FilterGet := "Sales Header".GETFILTERS;
+                               IF FilterGet = '' THEN
+                                 ERROR(Text004);
+
+                               IF NOT Interfaced THEN BEGIN
+                               ApprovalTemplate.SETCURRENTKEY("Table ID","Document Type",Enabled);
+                               ApprovalTemplate.SETRANGE("Table ID",DATABASE::"Sales Header");
+                               //ApprovalTemplate.SETRANGE("Document Type","Document Type"::Invoice);   //UPG13R2DEV-commented
+                               ApprovalTemplate.SETRANGE("Document Type","Sales Header"."Document Type");  //UPG13R2DEV-new
+                               ApprovalTemplate.SETRANGE(Enabled,TRUE);
+                               IF ApprovalTemplate.FINDFIRST THEN
+                                 SETRANGE(Status,Status::Released);
+                               END;
+                               //YIMMA
+                               //UPG13R2DEV.end
+
+                               CounterTotal := COUNT;
+                               Window.OPEN(Text001);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF CalcInvDisc THEN
+                                    CalculateInvoiceDiscount;
+
+                                  Counter := Counter + 1;
+                                  Window.UPDATE(1,"No.");
+                                  Window.UPDATE(2,ROUND(Counter / CounterTotal * 10000,1));
+                                  CLEAR(SalesPost);
+                                  SalesPost.SetPostingDate(ReplacePostingDate,ReplaceDocumentDate,PostingDateReq);
+                                  IF SalesPost.RUN("Sales Header") THEN BEGIN
+                                    CounterOK := CounterOK + 1;
+                                    IF MARKEDONLY THEN
+                                      MARK(FALSE);
+                                  END;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                Window.CLOSE;
+                                MESSAGE(Text002,CounterOK,CounterTotal);
+                              END;
+
+               ReqFilterFields=No. }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnOpenPage=BEGIN
+                   SalesSetup.GET;
+                   CalcInvDisc := SalesSetup."Calc. Inv. Discount";
+                   ReplacePostingDate := FALSE;
+                   ReplaceDocumentDate := FALSE;
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 1   ;2   ;Field     ;
+                  Name=PostingDate;
+                  CaptionML=[ENU=Posting Date;
+                             ENA=Posting Date];
+                  SourceExpr=PostingDateReq }
+
+      { 2   ;2   ;Field     ;
+                  Name=ReplacePostingDate;
+                  CaptionML=[ENU=Replace Posting Date;
+                             ENA=Replace Posting Date];
+                  SourceExpr=ReplacePostingDate;
+                  OnValidate=BEGIN
+                               IF ReplacePostingDate THEN
+                                 MESSAGE(Text003);
+                             END;
+                              }
+
+      { 3   ;2   ;Field     ;
+                  CaptionML=[ENU=Replace Document Date;
+                             ENA=Replace Document Date];
+                  SourceExpr=ReplaceDocumentDate }
+
+      { 5   ;2   ;Field     ;
+                  CaptionML=[ENU=Calc. Inv. Discount;
+                             ENA=Calc. Inv. Discount];
+                  SourceExpr=CalcInvDisc;
+                  OnValidate=BEGIN
+                               SalesSetup.GET;
+                               SalesSetup.TESTFIELD("Calc. Inv. Discount",FALSE);
+                             END;
+                              }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=Please enter the posting date.;ENA=Please enter the posting date.';
+      Text001@1001 : TextConst 'ENU=Posting invoices   #1########## @2@@@@@@@@@@@@@;ENA=Posting invoices   #1########## @2@@@@@@@@@@@@@';
+      Text002@1002 : TextConst 'ENU=%1 invoices out of a total of %2 have now been posted.;ENA=%1 invoices out of a total of %2 have now been posted.';
+      Text003@1003 : TextConst 'ENU=The exchange rate associated with the new posting date on the sales header will not apply to the sales lines.;ENA=The exchange rate associated with the new posting date on the sales header will not apply to the sales lines.';
+      SalesLine@1005 : Record 37;
+      SalesSetup@1006 : Record 311;
+      ApprovalTemplate@1004 : Record 464;
+      SalesCalcDisc@1007 : Codeunit 60;
+      SalesPost@1008 : Codeunit 80;
+      Window@1009 : Dialog;
+      PostingDateReq@1010 : Date;
+      CounterTotal@1011 : Integer;
+      Counter@1012 : Integer;
+      CounterOK@1013 : Integer;
+      ReplacePostingDate@1014 : Boolean;
+      ReplaceDocumentDate@1015 : Boolean;
+      CalcInvDisc@1016 : Boolean;
+      FilterGet@1102159001 : Text[30];
+      Text004@1102159002 : TextConst 'ENU=Please enter No.';
+
+    PROCEDURE CalculateInvoiceDiscount@1();
+    BEGIN
+      SalesLine.RESET;
+      SalesLine.SETRANGE("Document Type","Sales Header"."Document Type");
+      SalesLine.SETRANGE("Document No.","Sales Header"."No.");
+      IF SalesLine.FINDFIRST THEN
+        IF SalesCalcDisc.RUN(SalesLine) THEN BEGIN
+          "Sales Header".GET("Sales Header"."Document Type","Sales Header"."No.");
+          COMMIT;
+        END;
+    END;
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Batch Report created to Post Interfaced Gport Tanda Terima Ret Invoices.Filteration and some code used from Batch Report of 5.0 DB.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

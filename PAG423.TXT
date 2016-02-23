@@ -1,0 +1,232 @@
+OBJECT Page 423 Customer Bank Account Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/01/15;
+    Time=19:22:51;
+    Modified=Yes;
+    Version List=NAVW17.10,NAVAPAC7.10,YIMMDEVIP1.0,SMDEV1.0,UPG13R2DEV,CR001;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Entity bank Account Card;
+               ENA=Customer Bank Account Card];
+    SourceTable=Table287;
+    PageType=Card;
+    OnOpenPage=VAR
+                 Cust@1000000000 : Record 18;
+               BEGIN
+                 Cust.RESET;
+                 Cust.SETRANGE(Cust."No.","Customer No.");
+                 IF Cust.FINDSET THEN
+                   IF (Cust."Entity type" = Cust."Entity type"::NonDealer) THEN BEGIN
+                     Flag := TRUE;
+                   END ELSE BEGIN
+                     Flag := FALSE;
+                   END;
+               END;
+
+    OnNewRecord=VAR
+                  Cust@1000000000 : Record 18;
+                BEGIN
+                  Cust.RESET;
+                  Cust.SETRANGE(Cust."No.","Customer No.");
+                  IF Cust.FINDSET THEN
+                    IF (Cust."Entity type" = Cust."Entity type"::NonDealer) THEN BEGIN
+                      Purchase :=TRUE;
+                      MODIFY;
+                    END;
+                END;
+
+    ActionList=ACTIONS
+    {
+      { 3       ;    ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 5       ;1   ;Action    ;
+                      CaptionML=[ENU=Direct Debit Mandates;
+                                 ENA=Direct Debit Mandates];
+                      RunObject=Page 1230;
+                      RunPageLink=Customer No.=FIELD(Customer No.),
+                                  Customer Bank Account Code=FIELD(Code);
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      Image=MakeAgreement;
+                      PromotedCategory=Process }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Code }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Address }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Address 2" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Post Code" }
+
+    { 1500000;2;Field     ;
+                SourceExpr=County }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Phone No." }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 12  ;2   ;Field     ;
+                CaptionML=[ENU=County/Country Code;
+                           ENA=State/Country Code];
+                SourceExpr="Country/Region Code" }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr=Contact }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Bank Branch No." }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Bank Account No." }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Transit No." }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="Last Modified Date" }
+
+    { 1102159002;2;Field  ;
+                SourceExpr="Valid Upto" }
+
+    { 1102159003;2;Field  ;
+                SourceExpr=Category;
+                Visible=FALSE }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="Type Of Transaction";
+                Visible=FALSE }
+
+    { 1000000000;2;Field  ;
+                SourceExpr=Resident }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Citizenship/Beneficiary Type" }
+
+    { 1102159005;1;Group  ;
+                CaptionML=ENU=Bank Type;
+                GroupType=Group }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="M/C";
+                Editable=NOT FLAG }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="S/P";
+                Editable=NOT FLAG }
+
+    { 1102159008;2;Field  ;
+                SourceExpr=Service;
+                Editable=NOT FLAG }
+
+    { 1102159009;2;Field  ;
+                SourceExpr=Purchase;
+                Editable=FLAG }
+
+    { 1902768601;1;Group  ;
+                CaptionML=[ENU=Communication;
+                           ENA=Communication] }
+
+    { 24  ;2   ;Field     ;
+                Name=Phone No.2;
+                SourceExpr="Phone No." }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Fax No." }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="E-Mail" }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Home Page" }
+
+    { 1905090301;1;Group  ;
+                CaptionML=[ENU=Transfer;
+                           ENA=Transfer] }
+
+    { 32  ;2   ;Field     ;
+                Name=Bank Branch No.2;
+                SourceExpr="Bank Branch No." }
+
+    { 31  ;2   ;Field     ;
+                Name=Bank Account No.2;
+                SourceExpr="Bank Account No." }
+
+    { 33  ;2   ;Field     ;
+                Name=Transit No.2;
+                SourceExpr="Transit No." }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="SWIFT Code" }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr=IBAN }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      Flag@1000000000 : Boolean;
+
+    BEGIN
+    {
+      //YIMMDEVIP1.0
+      Point No - 6 Displayed two fields "Last Modified Date" & "Valid Upto".
+      Point No - 7 Displayed field Named Category.
+      Field "Type of Transaction" hidden as not required.
+      //SMDEV1.0
+        Changed Captions to Entity all over the page.
+        Displayed Type of transaction field in Page.
+
+      //UPG13R2DEV  SV Bank code new validation shown
+      and code for visibility
+
+      [Ver.] : CR001
+      [SIGN] : SV
+      [desc] : Resident and citizenship/beneficiary type added in the report preview and excel based on the combinations.
+                SourceExpr                     Name                           Caption
+                Resident                       <Resident>                     <Resident>
+                "Citizenship/Beneficiary Type" <Citizenship/Beneficiary Type><Citizenship/Beneficiary Type>
+
+    }
+    END.
+  }
+}
+

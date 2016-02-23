@@ -1,0 +1,71 @@
+OBJECT Page 63086 Financial Mngmt Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/10/15;
+    Time=19:28:03;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table60057;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1102159004;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1102159073;1 ;ActionGroup;
+                      CaptionML=ENU=VAT;
+                      Image=Administration }
+      { 1102159072;2 ;Action    ;
+                      CaptionML=ENU=Vat In Details;
+                      RunObject=Report 50036;
+                      Image=Report }
+      { 1102159071;2 ;Action    ;
+                      CaptionML=ENU=Vat In For E-Spt;
+                      RunObject=Report 50035;
+                      Image=Report }
+      { 1102159069;2 ;Action    ;
+                      CaptionML=ENU=Vat Out For E-Spt;
+                      RunObject=Report 50037;
+                      Image=Report }
+      { 1102159070;2 ;Action    ;
+                      CaptionML=ENU=ESPT Excel Report;
+                      RunObject=Report 50038;
+                      Image=Report }
+      { 1102159057;1 ;ActionGroup;
+                      CaptionML=ENU=WHT;
+                      Image=Administration }
+      { 1102159055;2 ;Action    ;
+                      CaptionML=ENU=Calc. and Post WHT Settlement;
+                      RunObject=Report 28041;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                CaptionML=ENU=VAT/WHT Setup;
+                SourceExpr="Master setups" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      List Page created for Appliaction and Master Setup menu items.
+    }
+    END.
+  }
+}
+

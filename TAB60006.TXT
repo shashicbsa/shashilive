@@ -1,0 +1,85 @@
+OBJECT Table 60006 Item Master
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/29/11;
+    Time=10:54:43;
+    Version List=TBI1.0,YEID1.1;
+  }
+  PROPERTIES
+  {
+    OnInsert=BEGIN
+               "Date and Time (Last Modified)" := CURRENTDATETIME;
+               "User ID" :=USERID;
+             END;
+
+    OnModify=BEGIN
+               "Date and Time (Last Modified)" :=CURRENTDATETIME;
+               "User ID" :=USERID;
+             END;
+
+    OnRename=BEGIN
+               "Date and Time (Last Modified)" := CURRENTDATETIME;
+               "User ID" :=USERID;
+             END;
+
+    LookupPageID=Page60019;
+    DrillDownPageID=Page60019;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Item No.            ;Text50         }
+    { 2   ;   ;Description         ;Text250        }
+    { 3   ;   ;Unit of Measure     ;Text10        ;TableRelation="Unit of Measure";
+                                                   CaptionML=ENU=Unit of Measure }
+    { 4   ;   ;Source Type         ;Option        ;OptionCaptionML=ENU=" ,Customer,Vendor";
+                                                   OptionString=[ ,Customer,Vendor] }
+    { 5   ;   ;Source Code         ;Code20        ;TableRelation=IF (Source Type=FILTER(Customer)) Customer.No.
+                                                                 ELSE IF (Source Type=FILTER(Vendor)) Vendor.No.;
+                                                   OnValidate=VAR
+                                                                Cust@1000000000 : Record 18;
+                                                                Vend@1000000001 : Record 23;
+                                                              BEGIN
+                                                                IF ("Source Type" = "Source Type"::Customer) THEN BEGIN
+                                                                  Cust.RESET;
+                                                                  Cust.GET("Source Code");
+                                                                  "Source Name" := Cust.Name;
+                                                                END;
+
+                                                                IF ("Source Type" = "Source Type"::Vendor) THEN BEGIN
+                                                                  Vend.RESET;
+                                                                  Vend.GET("Source Code");
+                                                                  "Source Name" := Vend.Name;
+                                                                END;
+                                                              END;
+                                                               }
+    { 6   ;   ;Source Name         ;Text50         }
+    { 7   ;   ;Unit Price          ;Decimal        }
+    { 8   ;   ;Date and Time (Last Modified);DateTime;
+                                                   Editable=No }
+    { 9   ;   ;User ID             ;Code20        ;TableRelation=User;
+                                                   Editable=No }
+    { 10  ;   ;Item Category       ;Option        ;OptionString=[ ,Localized,Pass Through] }
+    { 50001;  ;Loc Code            ;Code20        ;TableRelation="Loc Master"."Loc Code";
+                                                   CaptionML=ENU=Delivery Site;
+                                                   Description=YEID Location Code }
+  }
+  KEYS
+  {
+    {    ;Item No.,Source Type,Source Code        ;Clustered=Yes }
+    {    ;Source Type,Source Code,Item No.         }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      YEID1.1 New field "Loc Code" added-RT 29Nov2011
+    }
+    END.
+  }
+}
+

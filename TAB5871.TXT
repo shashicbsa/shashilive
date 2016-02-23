@@ -1,0 +1,35 @@
+OBJECT Table 5871 Memoized Result
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Memoized Result;
+               ENA=Memoized Result];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Input               ;Decimal       ;CaptionML=[ENU=Input;
+                                                              ENA=Input] }
+    { 2   ;   ;Output              ;Boolean       ;CaptionML=[ENU=Output;
+                                                              ENA=Output] }
+  }
+  KEYS
+  {
+    {    ;Input                                   ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

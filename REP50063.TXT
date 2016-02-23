@@ -1,0 +1,212 @@
+OBJECT Report 50063 Propac Sales/Sales Rtrn Export
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/17/15;
+    Time=14:51:56;
+    Modified=Yes;
+    Version List=Propac1.0,PPNPPHDEV,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+    { 4187;    ;DataItem;                    ;
+               DataItemTable=Table50022;
+               DataItemTableView=SORTING(Document Type,Dealer Code,Invoice No.,Entry No.)
+                                 ORDER(Ascending)
+                                 WHERE(VAT Buss. Posting Group=CONST(FOREIGN));
+               OnPreDataItem=BEGIN
+                               MasterCustomerPostingSetup.GET;
+                               MasterSetup.GET;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF "Invoice No."<>PreviousInvoiceNo THEN BEGIN
+                                    SalesHeader.INIT;
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::"Credit Memo" THEN
+                                      SalesHeader."Document Type":=SalesHeader."Document Type"::Invoice; //cr.mm  to inv
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::Invoice THEN
+                                      SalesHeader."Document Type":=SalesHeader."Document Type"::"Credit Memo"; //inv to cr.mm
+
+                                    SalesHeader."No.":="Invoice No.";
+                                    SalesHeader.INSERT(TRUE);
+
+                                    SalesHeader."Reason Code":=MasterSetup."Reason (Normal)";
+
+                                    //salesheader."Currency Code":="Currency Code";
+                                    SalesHeader.VALIDATE("Posting Date","Temp Table For Propac"."Invoice Date");
+                                    SalesHeader.VALIDATE(SalesHeader."Entity type",SalesHeader."Entity type"::NonDealer); //UPG13R2DEV
+                                    SalesHeader.VALIDATE("Sell-to Customer No.","Dealer Code");
+                                    SalesHeader.VALIDATE("VAT Bus. Posting Group",MasterSetup.Foreign_Bus_Posting_Group);
+                                    SalesHeader."Old Vendor":="Old Vendor";
+                                    Cust.GET("Dealer Code");
+                                   // IF cust."vendor Type"=cust."vendor Type"::"Third Party" THEN
+                                    SalesHeader.VALIDATE("Customer Posting Group","Temp Table For Propac"."Customer Posting Group");
+                                  //  IF cust."vendor Type"=cust."vendor Type"::"Related Party" THEN
+                                  //  salesheader.VALIDATE("vendor Posting Group",MasterCustomerPostingSetup."Vndr Pstng Grp(Vndr As Dlr) RP");
+                                    SalesHeader.VALIDATE("Currency Code","Currency Code");
+
+                                    //UPG13R2DEV.begin-Exchange Rate already calculated by validating Currency Code
+                                    CurrencyExchangeRate.RESET;
+                                    CurrencyExchangeRate.SETRANGE("Currency Code","Currency Code");
+                                    CurrencyExchangeRate.SETRANGE("Starting Date","Temp Table For Propac"."Transaction Date");
+                                          IF CurrencyExchangeRate.FINDFIRST THEN BEGIN
+                                            SalesHeader."Currency Factor":=1/CurrencyExchangeRate."Relational Exch. Rate Amount";
+                                            SalesHeader."Currency Factor" := (ROUND(SalesHeader."Currency Factor",0.000000000000001,'='));          //YIMMDEVIP1.0
+                                          END;
+                                      //UPG13R2DEV.end
+
+                                    SalesHeader."Document Date":="Temp Table For Propac"."Transaction Date";
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::"Credit Memo" THEN
+                                      SalesHeader."External Document No." := "Ext.Doc.No.";
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::Invoice THEN BEGIN
+                                      SalesHeader."Applies-to Doc. Type":=SalesHeader."Applies-to Doc. Type"::"Credit Memo";
+                                      SalesHeader.VALIDATE("Applies-to Doc. No.","Temp Table For Propac"."Applied To Invoice No");
+                                    END;
+                                    SalesHeader."B/L Date":="Transaction Date";
+                                    SalesHeader.VALIDATE("Payment Terms Code","Payment Term");
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::"Credit Memo" THEN
+                                      SalesHeader."Due Date":="Temp Table For Propac"."Due Date";
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::Invoice THEN
+                                      SalesHeader."Due Date":="Temp Table For Propac"."Due Date";
+                                    SalesHeader."Type Of Transaction":=SalesHeader."Type Of Transaction"::"Propac Ex.";
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::"Credit Memo" THEN
+                                    //salesheader."vendor Cr. Memo No.":="Invoice No."; previuos blocked
+                                      //SalesHeader."Vendor Invoice No.":="Invoice No.";
+                                        SalesHeader."External Document No." := "Invoice No.";
+                                    IF "Document Type"="Temp Table For Propac"."Document Type"::Invoice THEN
+                                    //salesheader."vendor Invoice No.":="Invoice No.";    previous blocked
+                                      SalesHeader."Vendor Cr. Memo No.":="Invoice No.";
+                                    //PPNPPHDEV.begin
+                                    ConversionTableCustomer.RESET;
+                                    ConversionTableCustomer.SETRANGE("Propac Code","Temp Table For Propac"."Dealer Code");
+                                    IF ConversionTableCustomer.FINDSET THEN BEGIN
+                                      ShiptoAddress.RESET;
+                                      ShiptoAddress.SETRANGE("Customer No.",ConversionTableCustomer.NAV);
+                                      ShiptoAddress.SETRANGE(PPN,TRUE);
+                                      ShiptoAddress.SETRANGE("PPN S/P",TRUE);
+                                      IF ShiptoAddress.FINDSET THEN
+                                        SalesHeader.VALIDATE("Ship-to Code",ShiptoAddress.Code);
+                                    END;
+                                    //PPNPPHDEV.end
+                                    //UPG13R2DEV.begin
+                                    IF (Cust.TaxExampted) THEN
+                                      SalesHeader."Tax Invoice Date":=CALCDATE(MasterSetup."Propac Tax Period","Temp Table For Propac"."Invoice Date")
+                                    ELSE BEGIN
+                                      IF FORMAT(MasterSetup."Propac Tax Period") <> '' THEN
+                                        SalesHeader."Tax Invoice Date":=CALCDATE(MasterSetup."Propac Tax Period","Temp Table For Propac"."Invoice Date")
+                                      ELSE
+                                        SalesHeader."Tax Invoice Date":="Temp Table For Propac"."Invoice Date";
+                                    END;
+                                    //UPG13R2DEV.end
+                                    //UPG13R2DEV.begin
+                                    {IF Cust.GET("Temp Table For Propac"."Dealer Code") THEN
+                                      IF (Cust."Type of Dealer"=Cust."Type of Dealer"::DDS) THEN
+                                        ShopCode_MD_DDS:=DDS
+                                      ELSE
+                                        ShopCode_MD_DDS:=MD;
+                                    SalesHeader.VALIDATE("Shortcut Dimension 1 Code",ShopCode_MD_DDS);
+                                    }
+                                    SalesHeader.VALIDATE("Shortcut Dimension 1 Code","Temp Table For Propac"."Shop Code");
+                                    SalesHeader.VALIDATE("Shortcut Dimension 2 Code","Temp Table For Propac"."Model Code");
+                                    //UPG13R2DEV.end
+                                    SalesHeader."Posting No.":="Invoice No.";
+                                    SalesHeader.UID:=MasterSetup."PIC of PROPAC Export";
+                                    SalesHeader.Interfaced:=TRUE;
+                                    SalesHeader.MODIFY;
+                                    LineNo:=0;
+                                  END;
+                                  //For Purch. Line
+                                  SalesLine.INIT;
+                                  IF "Document Type"="Temp Table For Propac"."Document Type"::"Credit Memo" THEN
+                                    SalesLine."Document Type":=SalesLine."Document Type"::Invoice; // cr.mm to inv
+                                  IF "Document Type"="Temp Table For Propac"."Document Type"::Invoice THEN
+                                    SalesLine."Document Type":=SalesLine."Document Type"::"Credit Memo"; //inv  to credit memo
+                                  LineNo+=10000;
+                                  SalesLine."Document No.":="Invoice No.";
+                                  SalesLine."Line No.":=LineNo;
+                                  SalesLine.INSERT(TRUE);
+                                  SalesLine.VALIDATE(Type,SalesLine.Type::"G/L Account");
+                                  SalesLine.VALIDATE("No.","Account No.");
+                                  SalesLine."Reason Code":=MasterSetup."Reason (Normal)";
+                                  SalesLine."Description 2":="Ext.Doc.No.";
+                                  SalesLine.VALIDATE(Quantity,Quantity);
+                                  SalesLine.VALIDATE(SalesLine."Unit Price",Amount);
+                                  //SalesLine.VALIDATE("Shortcut Dimension 1 Code","Shop Code");     UPG13R2DEV code blocked
+                                  //SalesLine.VALIDATE("Shortcut Dimension 2 Code","Model Code");    UPG13R2DEV code blocked
+                                    //UPG13R2DEV.begin
+                                    {
+                                    IF Cust.GET("Temp Table For Propac"."Dealer Code") THEN
+                                      IF (Cust."Type of Dealer"=Cust."Type of Dealer"::DDS) THEN
+                                        ShopCode_MD_DDS:=DDS
+                                      ELSE
+                                        ShopCode_MD_DDS:=MD;
+                                    SalesLine.VALIDATE("Shortcut Dimension 1 Code",ShopCode_MD_DDS);
+                                    }
+                                    SalesLine.VALIDATE("Shortcut Dimension 1 Code","Temp Table For Propac"."Shop Code");
+                                    SalesLine.VALIDATE("Shortcut Dimension 2 Code","Temp Table For Propac"."Model Code");
+                                    //UPG13R2DEV.end
+
+                                  SalesLine.VALIDATE("Gen. Prod. Posting Group","Gen. Prod. Posting Group");
+                                  SalesLine.VALIDATE("VAT Bus. Posting Group",MasterSetup.Foreign_Bus_Posting_Group);
+                                   //UPG13R2DEV.begin
+                                  //SalesLine.VALIDATE("VAT Prod. Posting Group","Temp Table For Propac"."VAT Prod. Posting Group");
+                                  TaxMapping.SETRANGE(TaxMapping."Interface Tax","Temp Table For Propac"."VAT Prod. Posting Group");
+                                  IF TaxMapping.FINDFIRST THEN
+                                    SalesLine.VALIDATE("VAT Prod. Posting Group",TaxMapping."Purch. Inv. Tax");
+                                  //UPG13R2DEV.end
+                                  SalesLine.Narration:=Narration;
+                                  SalesLine.Interfaced:=TRUE;
+                                  SalesLine.MODIFY;
+                                  PreviousInvoiceNo:="Invoice No.";
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      PreviousInvoiceNo@1000000000 : Code[20];
+      SalesHeader@1000000001 : Record 36;
+      Cust@1000000002 : Record 18;
+      MasterCustomerPostingSetup@1000000003 : Record 50012;
+      MasterSetup@1000000004 : Record 50008;
+      LineNo@1000000005 : Integer;
+      SalesLine@1000000006 : Record 37;
+      CurrencyExchangeRate@1000000007 : Record 330;
+      ConversionTableCustomer@1102159001 : Record 50004;
+      ShiptoAddress@1102159002 : Record 222;
+      ShopCode_MD_DDS@1102159003 : Code[10];
+      DDS@1102159005 : TextConst 'ENU=410100';
+      MD@1102159004 : TextConst 'ENU=410200';
+      TaxMapping@1102159006 : Record 60059;
+
+    BEGIN
+    {
+      //PPNPPHDEV SV   ppnpph concept developed
+      //UPG13R2DEV  purchse to sale convert, tax invoice date.
+      Shop code uses mapping concept.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

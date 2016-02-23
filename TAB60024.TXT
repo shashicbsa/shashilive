@@ -1,0 +1,36 @@
+OBJECT Table 60024 AP-AR ELI DataYMKI
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/06/10;
+    Time=11:45:58;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNO                 ;Integer        }
+    { 2   ;   ;AR-MC               ;Decimal        }
+    { 3   ;   ;RentalExpan         ;Decimal        }
+    { 4   ;   ;SalesAmt            ;Decimal        }
+    { 5   ;   ;AROTH-AthCurrAss    ;Decimal        }
+    { 8   ;   ;StDate              ;Date           }
+    { 9   ;   ;EnDate              ;Date           }
+  }
+  KEYS
+  {
+    {    ;SNO                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

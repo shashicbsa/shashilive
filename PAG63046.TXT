@@ -1,0 +1,158 @@
+OBJECT Page 63046 Tax Invoice Generation-List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/24/15;
+    Time=13:19:36;
+    Modified=Yes;
+    Version List=CAUYIMM,SMDEV1.0,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50030;
+    SourceTableView=SORTING(Tax Invoice Date,Source Type,Source No.)
+                    ORDER(Ascending)
+                    WHERE(TaxDocGen=CONST(No));
+    PageType=List;
+    CardPageID=Tax Invoice Generation;
+    ActionList=ACTIONS
+    {
+      { 1102159022;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1102159024;1 ;ActionGroup;
+                      CaptionML=ENU=Reports;
+                      Visible=true;
+                      Enabled=true }
+      { 1102159023;2 ;Action    ;
+                      CaptionML=ENU=Print Sales Tax Invoice;
+                      RunObject=Report 50039;
+                      Visible=TRUE;
+                      Enabled=TRUE;
+                      Image=Report }
+      { 1102159027;  ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1102159028;1 ;ActionGroup;
+                      CaptionML=ENU=VAT OUT REPORTS }
+      { 1102159025;2 ;Action    ;
+                      CaptionML=ENU=VAT OUT for ESPT;
+                      RunObject=Report 50037;
+                      Image=Report }
+      { 1102159026;2 ;Action    ;
+                      CaptionML=ENU=VAT Report-Entity;
+                      RunObject=Report 28028;
+                      Visible=TRUE;
+                      Image=Report }
+      { 1102159029;2 ;Action    ;
+                      CaptionML=ENU=ESPT Excel Report-VAT Out Only;
+                      RunObject=Report 50089;
+                      Image=Report }
+      { 1000000000;1 ;ActionGroup;
+                      CaptionML=ENU=e-Faktur VAT OUT Report;
+                      ActionContainerType=Reports }
+      { 1000000001;2 ;Action    ;
+                      Name=e-Faktur Approved VAT OUT;
+                      RunObject=Report 62071;
+                      Image=Report }
+      { 1000000002;2 ;Action    ;
+                      Name=e-Faktur VAT OUT Return (Excel);
+                      RunObject=Report 62072;
+                      Image=Report }
+      { 1000000003;2 ;Action    ;
+                      Name=VAT OUT Details Manual Invoice for;
+                      RunObject=Report 62070;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Entry Type" }
+
+    { 1102159004;2;Field  ;
+                Width=30;
+                SourceExpr="Document No." }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="Source Type" }
+
+    { 1102159007;2;Field  ;
+                Width=30;
+                SourceExpr="Source No." }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="Document Type" }
+
+    { 1102159009;2;Field  ;
+                Width=30;
+                SourceExpr="Pre Assigned No." }
+
+    { 1102159010;2;Field  ;
+                Width=20;
+                SourceExpr="Reson Code" }
+
+    { 1102159011;2;Field  ;
+                Width=30;
+                SourceExpr=NPWP }
+
+    { 1102159030;2;Field  ;
+                SourceExpr="PPH NPWP No." }
+
+    { 1102159012;2;Field  ;
+                Width=30;
+                SourceExpr="Tax Invoice No." }
+
+    { 1102159013;2;Field  ;
+                SourceExpr="Tax Invoice Date" }
+
+    { 1102159014;2;Field  ;
+                SourceExpr=Amount }
+
+    { 1102159015;2;Field  ;
+                SourceExpr="Amount Incl VAT" }
+
+    { 1102159016;2;Field  ;
+                SourceExpr=TaxDocGen }
+
+    { 1102159017;2;Field  ;
+                Width=20;
+                SourceExpr="Currency Code" }
+
+    { 1102159018;2;Field  ;
+                Width=50;
+                SourceExpr="NPWP Name" }
+
+    { 1102159019;2;Field  ;
+                Width=70;
+                SourceExpr="NPWP Address" }
+
+    { 1102159020;2;Field  ;
+                Width=70;
+                SourceExpr="NPWP Address 2" }
+
+    { 1102159021;2;Field  ;
+                Width=30;
+                SourceExpr="NPWP City" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      // SMDEV1.0
+      New List Page Created for YIMM-VAT OUT
+    }
+    END.
+  }
+}
+

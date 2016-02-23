@@ -1,0 +1,101 @@
+OBJECT Codeunit 81 Sales-Post (Yes/No)
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/20/14;
+    Time=14:38:24;
+    Modified=Yes;
+    Version List=NAVW17.00,NAVAPAC7.00,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    TableNo=36;
+    OnRun=BEGIN
+            SalesHeader.COPY(Rec);
+            Code;
+            Rec := SalesHeader;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=&Ship,&Invoice,Ship &and Invoice;ENA=&Ship,&Invoice,Ship &and Invoice';
+      Text001@1001 : TextConst 'ENU=Do you want to post the %1?;ENA=Do you want to post the %1?';
+      Text002@1002 : TextConst 'ENU=&Receive,&Invoice,Receive &and Invoice;ENA=&Receive,&Invoice,Receive &and Invoice';
+      SalesHeader@1003 : Record 36;
+      GLSetup@150000 : Record 98;
+      Selection@1005 : Integer;
+      Text1500000@1500009 : TextConst 'ENU=Do you want to post the Tax Document?;ENA=Do you want to post the Tax Document?';
+      Text50000@1102159001 : TextConst 'ENU=Do you want to post the Document  %1?;ENA=Do you want to post the %1?';
+
+    LOCAL PROCEDURE Code@1();
+    VAR
+      SalesSetup@1002 : Record 311;
+      SalesPostViaJobQueue@1000 : Codeunit 88;
+    BEGIN
+      SalesSetup.GET;
+      WITH SalesHeader DO BEGIN
+        CASE "Document Type" OF
+          "Document Type"::Order:
+            BEGIN
+              Selection := STRMENU(Text000,3);
+              IF Selection = 0 THEN
+                EXIT;
+              Ship := Selection IN [1,3];
+              Invoice := Selection IN [2,3];
+            END;
+          "Document Type"::"Return Order":
+            BEGIN
+              Selection := STRMENU(Text002,3);
+              IF Selection = 0 THEN
+                EXIT;
+              Receive := Selection IN [1,3];
+              Invoice := Selection IN [2,3];
+            END
+          ELSE
+            IF NOT
+              //SMDEV1.0.begin
+              //CONFIRM(Text001,FALSE,"Document Type");
+              CONFIRM(Text50000,FALSE,"No.")
+              //SMDEV1.0.end
+            THEN
+              EXIT;
+        END;
+        "Print Posted Documents" := FALSE;
+
+        "Tax Document Marked" := FALSE;
+        CASE "Tax Document Type" OF
+          "Tax Document Type"::"Document Post":
+            "Tax Document Marked" := TRUE;
+          "Tax Document Type"::Prompt:
+            IF CONFIRM(Text1500000,FALSE,"Document Type") THEN
+              "Tax Document Marked" := TRUE;
+        END;
+
+        IF Invoice OR ("Document Type" IN ["Document Type"::Invoice,"Document Type"::"Credit Memo"]) THEN
+          IF GLSetup."Enable Tax Invoices" THEN BEGIN
+            IF "Tax Document Marked" THEN
+              SalesSetup.TESTFIELD("Posted Tax Invoice Nos.");
+            IF "Document Type" IN ["Document Type"::"Credit Memo","Document Type"::"Return Order"] THEN BEGIN
+              IF "Tax Document Marked" THEN
+                SalesSetup.TESTFIELD("Posted Tax Credit Memo Nos");
+            END;
+        END;
+
+        IF SalesSetup."Post with Job Queue" THEN
+          SalesPostViaJobQueue.EnqueueSalesDoc(SalesHeader)
+        ELSE
+          CODEUNIT.RUN(CODEUNIT::"Sales-Post",SalesHeader);
+      END;
+    END;
+
+    BEGIN
+    {
+      //SMDEV1.0
+      Text Constant chage for confirmation
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,386 @@
+OBJECT Page 76 Resource Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Resource Card;
+               ENA=Resource Card];
+    SourceTable=Table156;
+    PageType=Card;
+    RefreshOnActivate=Yes;
+    OnInit=BEGIN
+             MapPointVisible := TRUE;
+           END;
+
+    OnOpenPage=VAR
+                 MapMgt@1000 : Codeunit 802;
+               BEGIN
+                 IF NOT MapMgt.TestSetup THEN
+                   MapPointVisible := FALSE;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 56      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Resource;
+                                 ENA=&Resource];
+                      Image=Resource }
+      { 58      ;2   ;Action    ;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      RunObject=Page 223;
+                      RunPageLink=No.=FIELD(No.),
+                                  Date Filter=FIELD(Date Filter),
+                                  Unit of Measure Filter=FIELD(Unit of Measure Filter),
+                                  Chargeable Filter=FIELD(Chargeable Filter);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 84      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      RunObject=Page 540;
+                      RunPageLink=Table ID=CONST(156),
+                                  No.=FIELD(No.);
+                      Image=Dimensions }
+      { 73      ;2   ;Action    ;
+                      CaptionML=[ENU=&Picture;
+                                 ENA=&Picture];
+                      RunObject=Page 407;
+                      RunPageLink=No.=FIELD(No.);
+                      Image=Picture }
+      { 70      ;2   ;Action    ;
+                      CaptionML=[ENU=E&xtended Texts;
+                                 ENA=E&xtended Texts];
+                      RunObject=Page 391;
+                      RunPageView=SORTING(Table Name,No.,Language Code,All Language Codes,Starting Date,Ending Date);
+                      RunPageLink=Table Name=CONST(Resource),
+                                  No.=FIELD(No.);
+                      Image=Text }
+      { 77      ;2   ;Action    ;
+                      CaptionML=[ENU=Units of Measure;
+                                 ENA=Units of Measure];
+                      RunObject=Page 210;
+                      RunPageLink=Resource No.=FIELD(No.);
+                      Image=UnitOfMeasure }
+      { 36      ;2   ;Action    ;
+                      CaptionML=[ENU=S&kills;
+                                 ENA=S&kills];
+                      RunObject=Page 6019;
+                      RunPageLink=Type=CONST(Resource),
+                                  No.=FIELD(No.);
+                      Image=Skills }
+      { 34      ;2   ;Separator ;
+                      CaptionML=[ENU="";
+                                 ENA=""] }
+      { 37      ;2   ;Action    ;
+                      CaptionML=[ENU=Resource L&ocations;
+                                 ENA=Resource L&ocations];
+                      RunObject=Page 6015;
+                      RunPageView=SORTING(Resource No.);
+                      RunPageLink=Resource No.=FIELD(No.);
+                      Image=Resource }
+      { 59      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 124;
+                      RunPageLink=Table Name=CONST(Resource),
+                                  No.=FIELD(No.);
+                      Image=ViewComments }
+      { 80      ;2   ;Action    ;
+                      CaptionML=[ENU=Online Map;
+                                 ENA=Online Map];
+                      Image=Map;
+                      OnAction=BEGIN
+                                 DisplayMap;
+                               END;
+                                }
+      { 69      ;2   ;Separator  }
+      { 51      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Prices;
+                                 ENA=&Prices];
+                      Image=Price }
+      { 61      ;2   ;Action    ;
+                      CaptionML=[ENU=Costs;
+                                 ENA=Costs];
+                      RunObject=Page 203;
+                      RunPageLink=Type=CONST(Resource),
+                                  Code=FIELD(No.);
+                      Promoted=Yes;
+                      Image=ResourceCosts;
+                      PromotedCategory=Process }
+      { 62      ;2   ;Action    ;
+                      CaptionML=[ENU=Prices;
+                                 ENA=Prices];
+                      RunObject=Page 204;
+                      RunPageLink=Type=CONST(Resource),
+                                  Code=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Price;
+                      PromotedCategory=Process }
+      { 50      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Plan&ning;
+                                 ENA=Plan&ning];
+                      Image=Planning }
+      { 63      ;2   ;Action    ;
+                      CaptionML=[ENU=Resource &Capacity;
+                                 ENA=Resource &Capacity];
+                      RunObject=Page 213;
+                      RunPageOnRec=Yes;
+                      Image=Capacity }
+      { 64      ;2   ;Action    ;
+                      CaptionML=[ENU=Resource &Allocated per Job;
+                                 ENA=Resource &Allocated per Job];
+                      RunObject=Page 221;
+                      RunPageLink=Resource Filter=FIELD(No.);
+                      Image=ViewJob }
+      { 76      ;2   ;Action    ;
+                      CaptionML=[ENU=Resource Allocated per Service &Order;
+                                 ENA=Resource Allocated per Service &Order];
+                      RunObject=Page 6008;
+                      RunPageLink=Resource Filter=FIELD(No.);
+                      Image=ViewServiceOrder }
+      { 66      ;2   ;Action    ;
+                      CaptionML=[ENU=Resource A&vailability;
+                                 ENA=Resource A&vailability];
+                      RunObject=Page 225;
+                      RunPageLink=No.=FIELD(No.),
+                                  Base Unit of Measure=FIELD(Base Unit of Measure),
+                                  Chargeable Filter=FIELD(Chargeable Filter);
+                      Image=Calendar }
+      { 19      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Service;
+                                 ENA=Service];
+                      Image=ServiceZone }
+      { 35      ;2   ;Action    ;
+                      CaptionML=[ENU=Service &Zones;
+                                 ENA=Service &Zones];
+                      RunObject=Page 6021;
+                      RunPageLink=Resource No.=FIELD(No.);
+                      Image=ServiceZone }
+      { 17      ;1   ;ActionGroup;
+                      CaptionML=[ENU=History;
+                                 ENA=History];
+                      Image=History }
+      { 60      ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=[ENU=Ledger E&ntries;
+                                 ENA=Ledger E&ntries];
+                      RunObject=Page 202;
+                      RunPageView=SORTING(Resource No.);
+                      RunPageLink=Resource No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=ResourceLedger;
+                      PromotedCategory=Process }
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1901205806;1 ;Action    ;
+                      CaptionML=[ENU=Resource Statistics;
+                                 ENA=Resource Statistics];
+                      RunObject=Report 1105;
+                      Promoted=Yes;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 1907688806;1 ;Action    ;
+                      CaptionML=[ENU=Resource Usage;
+                                 ENA=Resource Usage];
+                      RunObject=Report 1106;
+                      Promoted=Yes;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 1907042906;1 ;Action    ;
+                      CaptionML=[ENU=Resource - Cost Breakdown;
+                                 ENA=Resource - Cost Breakdown];
+                      RunObject=Report 1107;
+                      Promoted=Yes;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 15      ;0   ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 13      ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 9       ;2   ;Action    ;
+                      Name=CreateTimeSheets;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Create Time Sheets;
+                                 ENA=Create Time Sheets];
+                      Image=NewTimesheet;
+                      OnAction=BEGIN
+                                 CreateTimeSheets;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                Importance=Promoted;
+                OnAssistEdit=BEGIN
+                               IF AssistEdit(xRec) THEN
+                                 CurrPage.UPDATE;
+                             END;
+                              }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Type;
+                Importance=Promoted }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Base Unit of Measure";
+                Importance=Promoted }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Search Name" }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Resource Group No.";
+                Importance=Promoted }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr=Blocked }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Last Date Modified" }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Use Time Sheet" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Time Sheet Owner User ID" }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Time Sheet Approver User ID" }
+
+    { 1905885101;1;Group  ;
+                CaptionML=[ENU=Invoicing;
+                           ENA=Invoicing] }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Direct Unit Cost" }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Indirect Cost %" }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Unit Cost" }
+
+    { 46  ;2   ;Field     ;
+                SourceExpr="Price/Profit Calculation" }
+
+    { 44  ;2   ;Field     ;
+                SourceExpr="Profit %" }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Unit Price" }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Gen. Prod. Posting Group";
+                Importance=Promoted }
+
+    { 74  ;2   ;Field     ;
+                SourceExpr="VAT Prod. Posting Group";
+                Importance=Promoted }
+
+    { 1500000;2;Field     ;
+                SourceExpr="WHT Product Posting Group" }
+
+    { 71  ;2   ;Field     ;
+                SourceExpr="Automatic Ext. Texts" }
+
+    { 78  ;2   ;Field     ;
+                SourceExpr="IC Partner Purch. G/L Acc. No." }
+
+    { 1904603601;1;Group  ;
+                CaptionML=[ENU=Personal Data;
+                           ENA=Personal Data] }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Job Title" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr=Address }
+
+    { 23  ;2   ;Field     ;
+                SourceExpr="Address 2" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Post Code" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 1500002;2;Field     ;
+                SourceExpr=County }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Social Security No." }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr=Education }
+
+    { 54  ;2   ;Field     ;
+                SourceExpr="Contract Class" }
+
+    { 1500004;2;Field     ;
+                CaptionML=[ENU=County/Country Code;
+                           ENA=State/Country Code];
+                SourceExpr="Country/Region Code" }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Employment Date" }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1906609707;1;Part   ;
+                SubPageLink=No.=FIELD(No.),
+                            Unit of Measure Filter=FIELD(Unit of Measure Filter),
+                            Chargeable Filter=FIELD(Chargeable Filter),
+                            Service Zone Filter=FIELD(Service Zone Filter);
+                PagePartID=Page9107;
+                Visible=TRUE;
+                PartType=Page }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      MapPointVisible@19022708 : Boolean INDATASET;
+
+    BEGIN
+    END.
+  }
+}
+

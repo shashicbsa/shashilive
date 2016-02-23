@@ -1,0 +1,116 @@
+OBJECT Report 16632 WHT E-Filing
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT E-Filing;
+               ENA=WHT E-Filing];
+    ProcessingOnly=Yes;
+    OnPreReport=VAR
+                  RBMgt@1500000 : Codeunit 419;
+                BEGIN
+                  Path := RBMgt.ServerTempFileName('xml');
+                END;
+
+    OnPostReport=VAR
+                   ToFile@1500000 : Text[1024];
+                 BEGIN
+                   ToFile := Text16524;
+                   DOWNLOAD(Path,Text16507,'',Text16523,ToFile);
+                 END;
+
+  }
+  DATASET
+  {
+    { 5444;    ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               MaxIteration=1;
+               OnAfterGetRecord=BEGIN
+                                  IF NOT FileOpened THEN BEGIN
+                                    TestFile.CREATE(Path);
+                                    TestFile.CREATEOUTSTREAM(TestStream);
+                                    FileOpened := TRUE;
+                                  END;
+
+                                  FIlterVendID := Vendid;
+                                  EFilingXMLPort.SETDESTINATION(TestStream);
+                                  EFilingXMLPort.InitVariables(FIlterVendID,ReturnPeriod,BranchCode,PayeeBranchCode);
+                                  EFilingXMLPort.EXPORT;
+                                  TestFile.CLOSE;
+
+                                  MESSAGE(Text16508);
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 3   ;2   ;Field     ;
+                  CaptionML=[ENU=Return Period;
+                             ENA=Return Period];
+                  SourceExpr=ReturnPeriod }
+
+      { 6   ;2   ;Field     ;
+                  CaptionML=[ENU=Branch Code;
+                             ENA=Branch Code];
+                  SourceExpr=BranchCode }
+
+      { 8   ;2   ;Field     ;
+                  CaptionML=[ENU=Pay-to/buy-from Vendor;
+                             ENA=Pay-to/buy-from Vendor];
+                  SourceExpr=Vendid;
+                  TableRelation=Vendor }
+
+      { 9   ;2   ;Field     ;
+                  CaptionML=[ENU=Payee Branch Code;
+                             ENA=Payee Branch Code];
+                  SourceExpr=PayeeBranchCode }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      EFilingXMLPort@1500010 : XMLport 16630;
+      TestFile@1001 : File;
+      TestStream@1000 : OutStream;
+      ReturnPeriod@1006 : Text[30];
+      BranchCode@1005 : Text[3];
+      PayeeBranchCode@1004 : Text[3];
+      Path@1500000 : Text[1024];
+      Vendid@1003 : Code[20];
+      FIlterVendID@1009 : Code[20];
+      Text16523@1500004 : TextConst 'ENU=XML Files (*.xml)|*.xml|All Files (*.*)|*.*;ENA=XML Files (*.xml)|*.xml|All Files (*.*)|*.*';
+      Text16524@1500003 : TextConst 'ENU=E-Filing.xml;ENA=E-Filing.xml';
+      FileOpened@1500006 : Boolean;
+      Text16507@1500008 : TextConst 'ENU=Export to Xml file.;ENA=Export to Xml file.';
+      Text16508@1500002 : TextConst 'ENU=WHT EFiling Export Complete.;ENA=WHT EFiling Export Complete.';
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

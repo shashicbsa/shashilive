@@ -1,0 +1,1095 @@
+OBJECT Page 51 Purchase Invoice
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/29/14;
+    Time=14:39:32;
+    Modified=Yes;
+    Version List=NAVW17.10,NAVAPAC7.10,YIMMNTT,YIMMNTAP,NTTR,ACON,YEID1.0,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Tanda Terima;
+               ENA=Tanda Terima];
+    SourceTable=Table38;
+    SourceTableView=WHERE(Document Type=FILTER(Invoice),
+                          UID=FILTER(USERID),
+                          Reason Code=FILTER(NORMAL));
+    PageType=Document;
+    RefreshOnActivate=Yes;
+    OnInit=BEGIN
+             VendorExchangeRateACYEditable := TRUE;
+             // UPG13.begin
+             "Old VendorEnable" := TRUE;
+             "New Or CancelEnable" := TRUE;
+             "G-Port Ref No.Enable" := TRUE;
+             "B/L DateEnable" := TRUE;
+             "Type Of TransactionEnable" := TRUE;
+             "Posting No. SeriesVisible" := TRUE;
+             "Old VendorVisible" := TRUE;
+             "New Or CancelVisible" := TRUE;
+             "G-Port Ref No.Visible" := TRUE;
+             "B/L DateVisible" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+             // UPG13.end
+           END;
+
+    OnOpenPage=BEGIN
+                 IF UserMgt.GetPurchasesFilter <> '' THEN BEGIN
+                   FILTERGROUP(2);
+                   SETRANGE("Responsibility Center",UserMgt.GetPurchasesFilter);
+                   FILTERGROUP(0);
+                 // UPG13.begin
+                 END ELSE BEGIN
+                 //YIMMRYUID-Start
+                   FILTERGROUP(2);
+                   SETRANGE(UID,USERID);
+                   FILTERGROUP(0);
+                 //YIMMRYUID-End
+                 // UPG13.end
+                 END;
+                 PurchSetup.GET;
+                 VendorExchangeRateACYEditable := PurchSetup."Enable Vendor GST Amount (ACY)";
+                 Enablefields_Pur; // UPG13
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       JobQueueVisible := "Job Queue Status" = "Job Queue Status"::"Scheduled for Posting";
+                     END;
+
+    OnNewRecord=BEGIN
+                  "Responsibility Center" := UserMgt.GetPurchasesFilter;
+                  // UPG13.begin
+                  //YIMMRYUID -Start
+                  UID:=USERID;
+                  //YIMMRYUID - End
+
+
+                  //YIMMNRC-Start
+                  MasterSetup.GET;
+                  "Reason Code":=MasterSetup."Reason (Normal)";
+                  //YIMMNRC-End
+                  // UPG13.end
+                END;
+
+    OnModifyRecord=BEGIN
+                     // UPG13.begin
+                     //YIMMRYUID -Start
+                     UID:=USERID;
+
+                     //YIMMNRC-Start
+                     MasterSetup.GET;
+                     "Reason Code":=MasterSetup."Reason (Normal)";
+                     //YIMMNRC-End
+
+
+                     //YIMMRYUID - End
+                     // UPG13.end
+                   END;
+
+    OnDeleteRecord=BEGIN
+                     CurrPage.SAVERECORD;
+                     EXIT(ConfirmDeletion);
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 55      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Invoice;
+                                 ENA=&Invoice];
+                      Image=Invoice }
+      { 57      ;2   ;Action    ;
+                      Name=Statistics;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CalcInvDiscForHeader;
+                                 COMMIT;
+                                 PAGE.RUNMODAL(PAGE::"Purchase Statistics",Rec);
+                               END;
+                                }
+      { 58      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Vendor;
+                                 ENA=Vendor];
+                      RunObject=Page 26;
+                      RunPageLink=No.=FIELD(Buy-from Vendor No.);
+                      Image=Vendor }
+      { 59      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 66;
+                      RunPageLink=Document Type=FIELD(Document Type),
+                                  No.=FIELD(No.),
+                                  Document Line No.=CONST(0);
+                      Image=ViewComments }
+      { 113     ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDocDim;
+                                 CurrPage.SAVERECORD;
+                               END;
+                                }
+      { 141     ;2   ;Action    ;
+                      CaptionML=[ENU=Approvals;
+                                 ENA=Approvals];
+                      Image=Approvals;
+                      OnAction=VAR
+                                 ApprovalEntries@1001 : Page 658;
+                               BEGIN
+                                 ApprovalEntries.Setfilters(DATABASE::"Purchase Header","Document Type","No.");
+                                 ApprovalEntries.RUN;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000012;1 ;Action    ;
+                      Name=Tax Report;
+                      CaptionML=ENU=Tax Report;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 //CurrPage.SETSELECTIONFILTER(Rec);
+                                 //MESSAGE("No.");
+
+
+
+
+
+                                 PurchaseHeader.RESET;
+                                 PurchaseHeader.SETRANGE(PurchaseHeader."Document Type","Document Type");
+                                 PurchaseHeader.SETRANGE(PurchaseHeader."No.","No.");
+
+                                 IF PurchaseHeader.FIND('-') THEN
+                                 BEGIN
+                                 CheckValidation.CheckPurchaseValidation(PurchaseHeader,FALSE);
+                                 REPORT.RUNMODAL(50013,TRUE,FALSE,PurchaseHeader);
+
+                                 END;
+
+                                 //PurchLine.SETRANGE(PurchLine."Document No.","No.");
+                               END;
+                                }
+      { 1000000002;1 ;Action    ;
+                      Name=Report;
+                      CaptionML=ENU=Report;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 // UPG13.begin
+                                 PurchHeader.SETRANGE(PurchHeader."No.","No.");
+                                 PurchHeader.SETRANGE(PurchHeader."Document Type","Document Type");
+                                 REPORT.RUNMODAL(50004,TRUE,FALSE,PurchHeader);
+                                 // UPG13.end
+                               END;
+                                }
+      { 1000000003;1 ;Action    ;
+                      Name=Voucher Befor Posting;
+                      CaptionML=ENU=Slip;
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 // UPG13.begin
+                                 //YIMMNTTST
+
+                                 {
+                                 CurrPage.SETSELECTIONFILTER(Rec);
+                                 PurchHeader.SETRANGE(PurchHeader."No.","No.");
+                                 PurchHeader.SETRANGE(PurchHeader."Document Type","Document Type");
+                                 REPORT.RUNMODAL(50001,TRUE,FALSE,Rec);
+                                 //  REPORT.RUNMODAL(50001,TRUE,FALSE,PurchHeader);
+                                 }
+                                  ReportPrint.PrintPurchHeader1(Rec);
+
+                                 //YIMMNTTEN
+                                 // UPG13.end
+                               END;
+                                }
+      { 9       ;1   ;ActionGroup;
+                      CaptionML=[ENU=Release;
+                                 ENA=Release];
+                      Image=Release }
+      { 120     ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F9;
+                      CaptionML=[ENU=Re&lease;
+                                 ENA=Re&lease];
+                      Promoted=Yes;
+                      Image=ReleaseDoc;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 ReleasePurchDoc@1000 : Codeunit 415;
+                               BEGIN
+                                 ReleasePurchDoc.PerformManualRelease(Rec);
+                               END;
+                                }
+      { 121     ;2   ;Action    ;
+                      CaptionML=[ENU=Re&open;
+                                 ENA=Re&open];
+                      Image=ReOpen;
+                      OnAction=VAR
+                                 ReleasePurchDoc@1001 : Codeunit 415;
+                               BEGIN
+                                 ReleasePurchDoc.PerformManualReopen(Rec);
+                               END;
+                                }
+      { 60      ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 61      ;2   ;Action    ;
+                      CaptionML=[ENU=Calculate &Invoice Discount;
+                                 ENA=Calculate &Invoice Discount];
+                      Image=CalculateInvoiceDiscount;
+                      OnAction=BEGIN
+                                 ApproveCalcInvDisc;
+                               END;
+                                }
+      { 133     ;2   ;Separator  }
+      { 132     ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Get St&d. Vend. Purchase Codes;
+                                 ENA=Get St&d. Vend. Purchase Codes];
+                      Image=VendorCode;
+                      OnAction=VAR
+                                 StdVendPurchCode@1000 : Record 175;
+                               BEGIN
+                                 StdVendPurchCode.InsertPurchLines(Rec);
+                               END;
+                                }
+      { 136     ;2   ;Separator  }
+      { 62      ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Copy Document;
+                                 ENA=Copy Document];
+                      Promoted=Yes;
+                      Image=CopyDocument;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CopyPurchDoc.SetPurchHeader(Rec);
+                                 CopyPurchDoc.RUNMODAL;
+                                 CLEAR(CopyPurchDoc);
+                               END;
+                                }
+      { 112     ;2   ;Action    ;
+                      Name=MoveNegativeLines;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Move Negative Lines;
+                                 ENA=Move Negative Lines];
+                      Image=MoveNegativeLines;
+                      OnAction=BEGIN
+                                 CLEAR(MoveNegPurchLines);
+                                 MoveNegPurchLines.SetPurchHeader(Rec);
+                                 MoveNegPurchLines.RUNMODAL;
+                                 MoveNegPurchLines.ShowDocument;
+                               END;
+                                }
+      { 137     ;2   ;Separator  }
+      { 142     ;2   ;Action    ;
+                      CaptionML=[ENU=Send A&pproval Request;
+                                 ENA=Send A&pproval Request];
+                      Image=SendApprovalRequest;
+                      OnAction=VAR
+                                 ApprovalMgt@1001 : Codeunit 439;
+                                 PurchH@1000000001 : Record 38;
+                               BEGIN
+                                 // IF ApprovalMgt.SendPurchaseApprovalRequest(Rec) THEN; // UPG13
+                                 // UPG13.begin
+                                 //TESTFIELD("Vendor Invoice No.");
+
+
+                                 PurchH.RESET;
+                                 IF PurchH.GET(Rec."Document Type",Rec."No.") THEN;
+
+                                 PurchH.SETRECFILTER;
+
+
+                                 IF (Rec."Document Type"=Rec."Document Type"::Invoice) THEN
+                                 // IF REPORT.SAVEASHTML(50045,APPLICATIONPATH+'Slip.html',FALSE,PurchH) THEN; // UPG09R2
+                                   IF REPORT.SAVEASPDF(50045,APPLICATIONPATH+'Slip.pdf',PurchH) THEN; // UPG09R2
+
+                                 IF (Rec."Document Type"=Rec."Document Type"::"Credit Memo") THEN
+                                 // IF REPORT.SAVEASHTML(50047,APPLICATIONPATH+'Slip.html',FALSE,PurchH) THEN; // UPG09R2
+                                   IF REPORT.SAVEASPDF(50047,APPLICATIONPATH+'Slip.pdf',PurchH) THEN; // UPG09R2
+
+                                 CurrPage.UPDATE(TRUE);
+
+                                 PurchH.RESET;
+                                 IF PurchH.GET(Rec."Document Type",Rec."No.") THEN;
+
+                                 CurrPage.UPDATE(TRUE);
+                                 IF ApprovalMgt.SendPurchaseApprovalRequest(PurchH) THEN;
+                                 // UPG13.end
+                               END;
+                                }
+      { 143     ;2   ;Action    ;
+                      CaptionML=[ENU=Cancel Approval Re&quest;
+                                 ENA=Cancel Approval Re&quest];
+                      Image=Cancel;
+                      OnAction=VAR
+                                 ApprovalMgt@1001 : Codeunit 439;
+                               BEGIN
+                                 IF ApprovalMgt.CancelPurchaseApprovalRequest(Rec,TRUE,TRUE) THEN;
+                               END;
+                                }
+      { 144     ;2   ;Separator  }
+      { 66      ;1   ;ActionGroup;
+                      CaptionML=[ENU=P&osting;
+                                 ENA=P&osting];
+                      Image=Post }
+      { 68      ;2   ;Action    ;
+                      Name=Post;
+                      ShortCutKey=F9;
+                      CaptionML=[ENU=P&ost;
+                                 ENA=P&ost];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=PostOrder;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Post(CODEUNIT::"Purch.-Post (Yes/No)");
+                               END;
+                                }
+      { 67      ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Test Report;
+                                 ENA=Test Report];
+                      Image=TestReport;
+                      OnAction=BEGIN
+                                 ReportPrint.PrintPurchHeader(Rec);
+                               END;
+                                }
+      { 69      ;2   ;Action    ;
+                      ShortCutKey=Shift+F9;
+                      CaptionML=[ENU=Post and &Print;
+                                 ENA=Post and &Print];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=PostPrint;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Post(CODEUNIT::"Purch.-Post + Print");
+                               END;
+                                }
+      { 70      ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Post &Batch;
+                                 ENA=Post &Batch];
+                      Image=PostBatch;
+                      OnAction=BEGIN
+                                 REPORT.RUNMODAL(REPORT::"Batch Post Purchase Invoices",TRUE,TRUE,Rec);
+                                 CurrPage.UPDATE(FALSE);
+                               END;
+                                }
+      { 7       ;2   ;Action    ;
+                      CaptionML=[ENU=Remove From Job Queue;
+                                 ENA=Remove From Job Queue];
+                      Visible=JobQueueVisible;
+                      Image=RemoveLine;
+                      OnAction=BEGIN
+                                 CancelBackgroundPosting;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                Importance=Promoted;
+                OnAssistEdit=BEGIN
+                               IF AssistEdit(xRec) THEN
+                                 CurrPage.UPDATE;
+                             END;
+                              }
+
+    { 1000000010;2;Field  ;
+                CaptionML=ENU=Type Of Transaction;
+                SourceExpr="Type Of Transaction";
+                Visible="Type Of TransactionVisible";
+                Enabled="Type Of TransactionEnable" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Old Vendor";
+                Visible="Old VendorVisible";
+                Enabled="Old VendorEnable";
+                OnLookup=VAR
+                           Conversion@1000000000 : Record 50003;
+                         BEGIN
+                           // UPG13.begin
+                           //YIMMACONST
+                           CASE "Type Of Transaction" OF
+                             "Type Of Transaction"::Direct: BEGIN
+                                Conversion.FILTERGROUP(2);
+                                Conversion.SETFILTER(Conversion.COMP,COMPANYNAME);
+                                Conversion.SETFILTER(Conversion.Pymac,'<>%1','');
+                                Conversion.FILTERGROUP(0);
+                                IF PAGE.RUNMODAL(50008,Conversion) = ACTION::LookupOK THEN BEGIN
+                                  VALIDATE("Buy-from Vendor No.",Conversion.NAV);
+                                  VALIDATE("Currency Code",Conversion.Currency);
+                                  VALIDATE("Order Address Code",Conversion.NPWP);
+                                  "Old Vendor" :=Conversion.Pymac;
+                                  MODIFY;
+                                END;
+                             END;
+                             "Type Of Transaction"::Indirect: BEGIN
+                                Conversion.FILTERGROUP(2);
+                                Conversion.SETFILTER(Conversion.COMP,COMPANYNAME);
+                                Conversion.SETFILTER(Conversion."Eproc Code",'<>%1','');
+                                Conversion.FILTERGROUP(0);
+                                IF PAGE.RUNMODAL(50008,Conversion) = ACTION::LookupOK THEN BEGIN
+                                  VALIDATE("Buy-from Vendor No.",Conversion.NAV);
+                                  VALIDATE("Currency Code",Conversion.Currency);
+                                  VALIDATE("Order Address Code",Conversion.NPWP);
+                                  "Old Vendor" :=Conversion."Eproc Code";
+                                  MODIFY;
+                                END;
+                             END;
+                             "Type Of Transaction"::Import: BEGIN
+                                Conversion.FILTERGROUP(2);
+                                Conversion.SETFILTER(Conversion.COMP,COMPANYNAME);
+                                Conversion.SETFILTER(Conversion."Propac Code",'<>%1','');
+                                Conversion.FILTERGROUP(0);
+                                IF PAGE.RUNMODAL(50008,Conversion) = ACTION::LookupOK THEN BEGIN
+                                  VALIDATE("Buy-from Vendor No.",Conversion.NAV);
+                                  VALIDATE("Currency Code",Conversion.Currency);
+                                  VALIDATE("Order Address Code",Conversion.NPWP);
+                                  "Old Vendor" :=Conversion."Propac Code";
+                                  MODIFY;
+                                END;
+                             END;
+                             "Type Of Transaction"::Others: BEGIN
+                                Conversion.FILTERGROUP(2);
+                                Conversion.SETFILTER(Conversion.COMP,COMPANYNAME);
+                                Conversion.SETFILTER(Conversion.GL,'<>%1','');
+                                Conversion.FILTERGROUP(0);
+                                IF PAGE.RUNMODAL(50008,Conversion) = ACTION::LookupOK THEN BEGIN
+                                  VALIDATE("Buy-from Vendor No.",Conversion.NAV);
+                                  VALIDATE("Currency Code",Conversion.Currency);
+                                  VALIDATE("Order Address Code",Conversion.NPWP);
+                                  "Old Vendor" :=Conversion.GL;
+                                  MODIFY;
+                                END;
+                             END;
+                             "Type Of Transaction"::FA: BEGIN
+                                Conversion.FILTERGROUP(2);
+                                Conversion.SETFILTER(Conversion.COMP,COMPANYNAME);
+                                Conversion.SETFILTER(Conversion.FA,'<>%1','');
+                                Conversion.FILTERGROUP(0);
+                                IF PAGE.RUNMODAL(50008,Conversion) = ACTION::LookupOK THEN BEGIN
+                                  VALIDATE("Buy-from Vendor No.",Conversion.NAV);
+                                  VALIDATE("Currency Code",Conversion.Currency);
+                                  VALIDATE("Order Address Code",Conversion.NPWP);
+                                  "Old Vendor" :=Conversion.FA;
+                                  MODIFY;
+                                END;
+                             END;
+                           END;
+                           //YIMMACONEN
+                           // UPG13.end
+                         END;
+                          }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor No.";
+                Importance=Promoted;
+                OnValidate=BEGIN
+                             BuyfromVendorNoOnAfterValidate;
+                           END;
+                            }
+
+    { 128 ;2   ;Field     ;
+                SourceExpr="Buy-from Contact No." }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor Name" }
+
+    { 72  ;2   ;Field     ;
+                SourceExpr="Buy-from Address";
+                Importance=Additional }
+
+    { 74  ;2   ;Field     ;
+                SourceExpr="Buy-from Address 2";
+                Importance=Additional }
+
+    { 77  ;2   ;Field     ;
+                SourceExpr="Buy-from Post Code";
+                Importance=Additional }
+
+    { 1102159002;2;Field  ;
+                CaptionML=[ENU=NPWP No.;
+                           ENA=NPWP No.];
+                SourceExpr="Order Address Code" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="New NPWP No" }
+
+    { 76  ;2   ;Field     ;
+                SourceExpr="Buy-from City" }
+
+    { 1500000;2;Field     ;
+                SourceExpr="Buy-from County" }
+
+    { 1500002;2;Field     ;
+                CaptionML=[ENU=Buy-from County/Country Code;
+                           ENA=Buy-from State/Country Code];
+                SourceExpr="Buy-from Country/Region Code" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Buy-from Contact";
+                Importance=Additional }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Importance=Promoted }
+
+    { 43  ;2   ;Field     ;
+                SourceExpr="Document Date" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Incoming Document Entry No.";
+                Visible=FALSE }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Vendor Invoice No." }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="B/L Date";
+                Visible="B/L DateVisible";
+                Enabled="B/L DateEnable" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Posting No. Series";
+                Visible="Posting No. SeriesVisible" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Vendor Posting Group" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="Currency Code";
+                Importance=Promoted;
+                OnAssistEdit=BEGIN
+                               CLEAR(ChangeExchangeRate);
+                               IF "Posting Date" <> 0D THEN
+                                 ChangeExchangeRate.SetParameter("Currency Code","Currency Factor","Posting Date")
+                               ELSE
+                                 ChangeExchangeRate.SetParameter("Currency Code","Currency Factor",WORKDATE);
+                               IF ChangeExchangeRate.RUNMODAL = ACTION::OK THEN BEGIN
+                                 VALIDATE("Currency Factor",ChangeExchangeRate.GetParameter);
+                                 CurrPage.UPDATE;
+                               END;
+                               CLEAR(ChangeExchangeRate);
+                             END;
+                              }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Purchaser Code";
+                Importance=Additional;
+                OnValidate=BEGIN
+                             PurchaserCodeOnAfterValidate;
+                           END;
+                            }
+
+    { 1102601000;2;Field  ;
+                SourceExpr="Campaign No.";
+                Importance=Additional }
+
+    { 115 ;2   ;Field     ;
+                SourceExpr="Responsibility Center";
+                Importance=Additional }
+
+    { 65  ;2   ;Field     ;
+                SourceExpr="Assigned User ID" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Job Queue Status";
+                Importance=Additional }
+
+    { 118 ;2   ;Field     ;
+                SourceExpr=Status;
+                Importance=Promoted }
+
+    { 1000000031;2;Field  ;
+                SourceExpr="G-Port Ref No.";
+                Visible="G-Port Ref No.Visible";
+                Enabled="G-Port Ref No.Enable" }
+
+    { 1000000045;2;Field  ;
+                SourceExpr="New Or Cancel";
+                Visible="New Or CancelVisible";
+                Enabled="New Or CancelEnable";
+                Editable=FALSE }
+
+    { 54  ;1   ;Part      ;
+                Name=PurchLines;
+                SubPageLink=Document No.=FIELD(No.);
+                PagePartID=Page55 }
+
+    { 1905885101;1;Group  ;
+                CaptionML=[ENU=Invoicing;
+                           ENA=Invoicing] }
+
+    { 1000000037;2;Field  ;
+                SourceExpr="Payment Terms Code" }
+
+    { 1000000038;2;Field  ;
+                SourceExpr="Payment Discount %" }
+
+    { 1000000039;2;Field  ;
+                SourceExpr="Pmt. Discount Date" }
+
+    { 1000000040;2;Field  ;
+                SourceExpr="Payment Method Code" }
+
+    { 1000000041;2;Field  ;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 1000000043;2;Field  ;
+                SourceExpr="Prices Including VAT";
+                OnValidate=BEGIN
+                             PricesIncludingVATOnAfterValid;
+                           END;
+                            }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Pay-to Vendor No.";
+                Importance=Promoted;
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             PaytoVendorNoOnAfterValidate;
+                           END;
+                            }
+
+    { 130 ;2   ;Field     ;
+                SourceExpr="Pay-to Contact No.";
+                Importance=Additional;
+                Visible=FALSE }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Pay-to Name";
+                Visible=FALSE }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Pay-to Address";
+                Importance=Additional;
+                Visible=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Pay-to Address 2";
+                Importance=Additional;
+                Visible=FALSE }
+
+    { 82  ;2   ;Field     ;
+                SourceExpr="Pay-to Post Code";
+                Importance=Additional;
+                Visible=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Pay-to City";
+                Visible=FALSE }
+
+    { 1500008;2;Field     ;
+                SourceExpr="Pay-to County";
+                Visible=FALSE }
+
+    { 1500010;2;Field     ;
+                CaptionML=[ENU=Pay-to County/Country Code;
+                           ENA=Pay-to State/Country Code];
+                SourceExpr="Pay-to Country/Region Code";
+                Visible=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Pay-to Contact";
+                Importance=Additional;
+                Visible=FALSE }
+
+    { 1500001;2;Field     ;
+                SourceExpr="Vendor Exchange Rate (ACY)";
+                Editable=VendorExchangeRateACYEditable }
+
+    { 85  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                OnValidate=BEGIN
+                             ShortcutDimension1CodeOnAfterV;
+                           END;
+                            }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                OnValidate=BEGIN
+                             ShortcutDimension2CodeOnAfterV;
+                           END;
+                            }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Due Date";
+                Importance=Promoted }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Payment Reference" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Creditor No." }
+
+    { 91  ;2   ;Field     ;
+                SourceExpr="On Hold" }
+
+    { 1906801201;1;Group  ;
+                CaptionML=[ENU=Shipping;
+                           ENA=Shipping] }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Ship-to Name" }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Ship-to Address" }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Ship-to Address 2" }
+
+    { 94  ;2   ;Field     ;
+                SourceExpr="Ship-to Post Code" }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Ship-to City" }
+
+    { 1500012;2;Field     ;
+                SourceExpr="Ship-to County" }
+
+    { 1500014;2;Field     ;
+                CaptionML=[ENU=Ship-to County/Country Code;
+                           ENA=Ship-to State/Country Code];
+                SourceExpr="Ship-to Country/Region Code" }
+
+    { 44  ;2   ;Field     ;
+                SourceExpr="Ship-to Contact" }
+
+    { 1000000006;2;Field  ;
+                Name=<Buy-from Contact2>;
+                SourceExpr="Buy-from Contact" }
+
+    { 89  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Importance=Promoted }
+
+    { 46  ;2   ;Field     ;
+                SourceExpr="Shipment Method Code" }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Expected Receipt Date";
+                Importance=Promoted }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Reason Code";
+                Visible=FALSE }
+
+    { 1907468901;1;Group  ;
+                CaptionML=[ENU=Foreign Trade;
+                           ENA=Foreign Trade] }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Transaction Type" }
+
+    { 100 ;2   ;Field     ;
+                SourceExpr="Transaction Specification" }
+
+    { 52  ;2   ;Field     ;
+                SourceExpr="Transport Method" }
+
+    { 96  ;2   ;Field     ;
+                SourceExpr="Entry Point" }
+
+    { 98  ;2   ;Field     ;
+                SourceExpr=Area }
+
+    { 1000000017;2;Field  ;
+                Name=<Reason Code2>;
+                SourceExpr="Reason Code" }
+
+    { 1903622801;1;Group  ;
+                CaptionML=ENU=E - Commerce }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Bank Code" }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Bank Account No" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Vend/Cust Bank Name" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Bank Address" }
+
+    { 1000000029;2;Field  ;
+                SourceExpr=BeniName }
+
+    { 1904409301;1;Group  ;
+                CaptionML=[ENU=Application;
+                           ENA=Application] }
+
+    { 1500009;2;Field     ;
+                SourceExpr="Applies-to Doc. Type" }
+
+    { 1500007;2;Field     ;
+                SourceExpr="Applies-to Doc. No." }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1906354007;1;Part   ;
+                SubPageLink=Table ID=CONST(38),
+                            Document Type=FIELD(Document Type),
+                            Document No.=FIELD(No.);
+                PagePartID=Page9092;
+                Visible=FALSE;
+                PartType=Page }
+
+    { 1901138007;1;Part   ;
+                SubPageLink=No.=FIELD(Buy-from Vendor No.);
+                PagePartID=Page9093;
+                Visible=FALSE;
+                PartType=Page }
+
+    { 1904651607;1;Part   ;
+                SubPageLink=No.=FIELD(Buy-from Vendor No.);
+                PagePartID=Page9094;
+                Visible=TRUE;
+                PartType=Page }
+
+    { 1903435607;1;Part   ;
+                SubPageLink=No.=FIELD(Buy-from Vendor No.);
+                PagePartID=Page9095;
+                Visible=TRUE;
+                PartType=Page }
+
+    { 1906949207;1;Part   ;
+                SubPageLink=No.=FIELD(Pay-to Vendor No.);
+                PagePartID=Page9096;
+                Visible=FALSE;
+                PartType=Page }
+
+    { 3   ;1   ;Part      ;
+                SubPageLink=Document Type=FIELD(Document Type),
+                            Document No.=FIELD(Document No.),
+                            Line No.=FIELD(Line No.);
+                PagePartID=Page9100;
+                ProviderID=54;
+                Visible=FALSE;
+                PartType=Page }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      PurchSetup@150000 : Record 312;
+      ChangeExchangeRate@1001 : Page 511;
+      CopyPurchDoc@1002 : Report 492;
+      MoveNegPurchLines@1005 : Report 6698;
+      ReportPrint@1003 : Codeunit 228;
+      UserMgt@1004 : Codeunit 5700;
+      CurrDate@1000000000 : Integer;
+      PurchHeader@1000000001 : Record 38;
+      PurchLine@1000000002 : Record 39;
+      MasterSetup@1000000003 : Record 50008;
+      PurchaseHeader@1000000004 : Record 38;
+      CheckValidation@1000000005 : Codeunit 50022;
+      VendorExchangeRateACYEditable@19072589 : Boolean INDATASET;
+      JobQueueVisible@1000 : Boolean INDATASET;
+      "Type Of TransactionVisible"@19059961 : Boolean INDATASET;
+      "B/L DateVisible"@19017400 : Boolean INDATASET;
+      "G-Port Ref No.Visible"@19065418 : Boolean INDATASET;
+      "New Or CancelVisible"@19032169 : Boolean INDATASET;
+      "Old VendorVisible"@19004053 : Boolean INDATASET;
+      "Posting No. SeriesVisible"@19005344 : Boolean INDATASET;
+      "Type Of TransactionEnable"@19049369 : Boolean INDATASET;
+      "B/L DateEnable"@19047711 : Boolean INDATASET;
+      "G-Port Ref No.Enable"@19062231 : Boolean INDATASET;
+      "New Or CancelEnable"@19014085 : Boolean INDATASET;
+      "Old VendorEnable"@19063631 : Boolean INDATASET;
+
+    LOCAL PROCEDURE Post@4(PostingCodeunitID@1000 : Integer);
+    BEGIN
+      SendToPosting(PostingCodeunitID);
+      IF "Job Queue Status" = "Job Queue Status"::"Scheduled for Posting" THEN
+        CurrPage.CLOSE;
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE Enablefields_Pur@1000000000();
+    VAR
+      MasterSetup1@1000000000 : Record 50008;
+    BEGIN
+      // UPG13.begin
+      MasterSetup1.GET;
+       IF ((COMPANYNAME = MasterSetup1."Company Name YMKI") OR
+          (COMPANYNAME = MasterSetup1."Company Name YMNI")) THEN
+          BEGIN
+            "Type Of TransactionEnable" := FALSE;
+            "B/L DateEnable" := FALSE;
+            "Type Of TransactionVisible" := FALSE;
+            "B/L DateVisible" := FALSE;
+            "G-Port Ref No.Visible" := FALSE;
+            "G-Port Ref No.Enable" := FALSE;
+            "New Or CancelVisible" :=FALSE;
+            "New Or CancelEnable" :=FALSE;
+            "Old VendorVisible" :=FALSE;
+            "Old VendorEnable" :=FALSE;
+          END
+        ELSE
+           IF (COMPANYNAME = MasterSetup1."Company Name YMMWJ") THEN
+              BEGIN
+                "B/L DateEnable" := FALSE;
+                "B/L DateVisible" := FALSE;
+                "G-Port Ref No.Visible" := FALSE;
+                "G-Port Ref No.Enable" := FALSE;
+                "New Or CancelVisible" :=FALSE;
+                "New Or CancelEnable" :=FALSE;
+                "Old VendorVisible" :=FALSE;
+                "Old VendorEnable" :=FALSE;
+
+              END
+        ELSE
+          IF (COMPANYNAME = MasterSetup1."Company Name YEID") THEN
+          BEGIN
+            "Type Of TransactionEnable" := FALSE;
+            //CurrPage."B/L Date".ENABLED := FALSE;
+            "Type Of TransactionVisible" := FALSE;
+            //CurrPage."B/L Date".VISIBLE := FALSE;
+            "G-Port Ref No.Visible" := FALSE;
+            "G-Port Ref No.Enable" := FALSE;
+            "New Or CancelVisible" :=FALSE;
+            "New Or CancelEnable" :=FALSE;
+            "Old VendorVisible" :=FALSE;
+            "Old VendorEnable" :=FALSE;
+            "Posting No. SeriesVisible" :=FALSE;
+          END
+        ELSE
+            BEGIN
+             "Type Of TransactionEnable" := TRUE;
+             "B/L DateEnable" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+             "B/L DateVisible" := TRUE;
+             "G-Port Ref No.Visible" := TRUE;
+             "G-Port Ref No.Enable" := TRUE;
+             "New Or CancelVisible" := TRUE;
+             "New Or CancelEnable" := TRUE;
+             "Old VendorVisible" :=TRUE;
+             "Old VendorEnable" :=TRUE;
+
+            END;
+      // UPG13.end
+    END;
+
+    LOCAL PROCEDURE ApproveCalcInvDisc@1();
+    BEGIN
+      CurrPage.PurchLines.PAGE.ApproveCalcInvDisc;
+    END;
+
+    LOCAL PROCEDURE BuyfromVendorNoOnAfterValidate@19032492();
+    BEGIN
+      IF GETFILTER("Buy-from Vendor No.") = xRec."Buy-from Vendor No." THEN
+        IF "Buy-from Vendor No." <> xRec."Buy-from Vendor No." THEN
+          SETRANGE("Buy-from Vendor No.");
+      CurrPage.UPDATE;
+      // UPG13.begin
+      {
+      CurrDate:=DATE2DMY("Document Date",1);
+      MESSAGE('date is %1',CurrDate);
+
+      IF CurrDate <= 25 THEN
+      "Payment Terms Code":='CM + 25'
+      ELSE
+      "Payment Terms Code":='CM + 28';
+      MODIFY(TRUE);
+      }
+      // UPG13.end
+    END;
+
+    LOCAL PROCEDURE PurchaserCodeOnAfterValidate@19046120();
+    BEGIN
+      CurrPage.PurchLines.PAGE.UpdateForm(TRUE);
+    END;
+
+    LOCAL PROCEDURE PaytoVendorNoOnAfterValidate@19048314();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE ShortcutDimension1CodeOnAfterV@19029405();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE ShortcutDimension2CodeOnAfterV@19008725();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE PricesIncludingVATOnAfterValid@19009096();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    BEGIN
+    {
+      //YIMMNTT
+       1)Button added for Voucher report before posting.
+       2)CODE ADDED FOR POSTING THRU TENDER TERIMA NO. ONLY
+
+      //YIMMNVBP
+       1)BUTTON ADDED FOR VOUCHER REPORT BEFORE POSTING.
+
+      //YIMMNTAP
+       1)CODE ADDED FOR CONDITION CHECK FOR STATUS OF PURCHASE INVOICE.
+
+      //YIMMNTTR
+       1)BUTTON ADDED FOR REPORT OF TENDA TERIMA.
+
+      //YIMMACON
+       1)AUTOMATIC SELECTION OF VENDOR UPON SELECTION OF OLD VENDOR
+
+      //New button added for VAT In Process
+
+
+      //YIMMRYUID - This is to Insert Cuurent User Id into a Variable UID.Only the Person Who Creates the
+      Tanda Terima Can See or Modify It.
+
+      //YIMMNRC- To insert the reacson code as normal for normal transactions.
+
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

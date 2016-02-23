@@ -1,0 +1,38 @@
+OBJECT Table 60026 EliSetupYMMWJ
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/06/10;
+    Time=10:41:49;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;PrimaryKey          ;Code10         }
+    { 2   ;   ;ARDomMC             ;Code20         }
+    { 3   ;   ;ARDomOth            ;Code20         }
+    { 4   ;   ;APTrade             ;Code20         }
+    { 5   ;   ;OthCurrAsset        ;Code20         }
+    { 6   ;   ;ARDomMC_bal         ;Code20         }
+    { 7   ;   ;ARDomOth_bal        ;Code20         }
+    { 8   ;   ;APTrade_bal         ;Code20         }
+    { 9   ;   ;OthCurrAsset_bal    ;Code20         }
+  }
+  KEYS
+  {
+    {    ;PrimaryKey                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

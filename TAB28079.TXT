@@ -1,0 +1,53 @@
+OBJECT Table 28079 Tax Document Buffer Build
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/04;
+    Time=12:00:00;
+    Version List=NAVAP4.00,YIMMAVATO,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Tax Document Buffer Build;
+               ENA=Tax Document Buffer Build];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+    { 10  ;   ;Bill-to Customer No.;Code20        ;CaptionML=[ENU=Bill-to Customer No.;
+                                                              ENA=Bill-to Customer No.];
+                                                   Editable=No }
+    { 11  ;   ;Currency Code       ;Code10        ;CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code];
+                                                   Editable=No }
+    { 12  ;   ;Payment Discount %  ;Integer       ;CaptionML=[ENU=Payment Discount %;
+                                                              ENA=Payment Discount %];
+                                                   Editable=No }
+    { 50005;  ;Tax Invoice Date    ;Date          ;Description=YIMMATAx }
+  }
+  KEYS
+  {
+    {    ;Document No.                            ;Clustered=Yes }
+    {    ;Bill-to Customer No.,Currency Code,Payment Discount % }
+    {    ;Tax Invoice Date                         }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

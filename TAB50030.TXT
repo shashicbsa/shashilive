@@ -1,0 +1,59 @@
+OBJECT Table 50030 VATOUT_Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/10/09;
+    Time=10:33:32;
+    Version List=YIMMAVATO,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry Type          ;Option        ;OptionCaptionML=ENU=,Purchase,Sale;
+                                                   OptionString=,Purchase,Sale }
+    { 2   ;   ;Document No.        ;Code20         }
+    { 3   ;   ;Posting Date        ;Date           }
+    { 4   ;   ;Source Type         ;Option        ;OptionCaptionML=ENU=Customer,Vendor;
+                                                   OptionString=Customer,Vendor }
+    { 5   ;   ;Source No.          ;Code20        ;TableRelation=IF (Source Type=CONST(Customer)) Customer
+                                                                 ELSE IF (Source Type=CONST(Vendor)) Vendor }
+    { 6   ;   ;Document Type       ;Option        ;OptionCaptionML=ENU=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order;
+                                                   OptionString=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order }
+    { 7   ;   ;Pre Assigned No.    ;Code20         }
+    { 8   ;   ;Reson Code          ;Code10         }
+    { 9   ;   ;NPWP                ;Code20         }
+    { 10  ;   ;Tax Invoice No.     ;Code20         }
+    { 11  ;   ;Tax Invoice Date    ;Date           }
+    { 12  ;   ;Amount              ;Decimal       ;FieldClass=Normal }
+    { 13  ;   ;Amount Incl VAT     ;Decimal       ;FieldClass=Normal }
+    { 14  ;   ;TaxDocGen           ;Boolean        }
+    { 15  ;   ;Currency Code       ;Code10         }
+    { 16  ;   ;NPWP Name           ;Text50         }
+    { 17  ;   ;NPWP Address        ;Text50         }
+    { 18  ;   ;NPWP Address 2      ;Text50         }
+    { 19  ;   ;NPWP City           ;Text30         }
+    { 50015;  ;PPH NPWP No.        ;Code20        ;Description=PPNPPHDEV }
+  }
+  KEYS
+  {
+    {    ;Entry Type,Document No.,Document Type   ;Clustered=Yes }
+    {    ;Tax Invoice Date                         }
+    {    ;Tax Invoice Date,Source Type,Source No.  }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //YIMMRVATO
+      1) NEW TABLE IS DESIGNED TO MAP THE VATOUT PROCESS
+    }
+    END.
+  }
+}
+

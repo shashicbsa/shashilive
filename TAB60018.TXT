@@ -1,0 +1,30 @@
+OBJECT Table 60018 TempDocBuffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/17/10;
+    Time=[ 8:33:43];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;DocNo               ;Code50         }
+  }
+  KEYS
+  {
+    {    ;DocNo                                   ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

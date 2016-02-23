@@ -1,0 +1,737 @@
+OBJECT Page 63055 Receipt Approve Form-2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/20/14;
+    Time=16:36:50;
+    Modified=Yes;
+    Version List=YIMMDEVIP1.0,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Receipt Approve Form-2;
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table81;
+    PageType=List;
+    SourceTableTemporary=Yes;
+    OnOpenPage=BEGIN
+                 InitTempTable;
+                 ExpandAll; // UPG13R2
+                 //SetRecFilters;
+
+                 CurrPage.UPDATE(FALSE);
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       SetExpansionStatus;
+                       DescriptionOnFormat;
+                     END;
+
+    OnModifyRecord=VAR
+                     ReqLine@1000 : Record 81;
+                   BEGIN
+                     ReqLine := Rec;
+                     ReqLine.MODIFY(TRUE);
+                   END;
+
+    OnDeleteRecord=VAR
+                     xReqLine@1000 : Record 81;
+                   BEGIN
+                     xReqLine := Rec;
+                     WHILE (NEXT <> 0) AND (Level > xReqLine.Level) DO
+                       DELETE(TRUE);
+                     Rec := xReqLine;
+                     xReqLine.DELETE(TRUE);
+                     DELETE;
+                     EXIT(FALSE);
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 100     ;1   ;ActionGroup;
+                      CaptionML=ENU=&Card }
+      { 19      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      Image=EditLines;
+                      OnAction=VAR
+                                 Item@1000 : Record 27;
+                               BEGIN
+                                 //Item."No." := "No.";
+                                 //FORM.RUN(FORM::"Item Card",Item);
+                                 IF (Interfaced = TRUE) THEN
+                                  ERROR(Text003);
+                                 "GenJnl Line1".RESET;
+                                 "GenJnl Line1".FILTERGROUP := 2;
+                                 "GenJnl Line1".SETRANGE("GenJnl Line1"."Journal Template Name","Journal Template Name");
+                                 "GenJnl Line1".SETRANGE("GenJnl Line1"."Journal Batch Name","Journal Batch Name");
+                                 "GenJnl Line1".SETRANGE("GenJnl Line1"."Slip No.","Slip No.");
+                                 "GenJnl Line1".FILTERGROUP := 0;
+                                 PAGE.RUNMODAL(PAGE::"General Receipt App","GenJnl Line1");
+                                 CurrPage.CLOSE;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 39      ;1   ;ActionGroup;
+                      CaptionML=ENU=F&unctions }
+      { 92      ;2   ;Action    ;
+                      CaptionML=ENU=Exp&and/Collapse;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ToggleExpandCollapse;
+                               END;
+                                }
+      { 94      ;2   ;Action    ;
+                      CaptionML=ENU=E&xpand All;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ExpandAll;
+                               END;
+                                }
+      { 93      ;2   ;Action    ;
+                      CaptionML=ENU=C&ollapse All;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 InitTempTable;
+                               END;
+                                }
+      { 1102159001;1 ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=Reject;
+                      Promoted=No;
+                      Visible=FALSE;
+                      PromotedIsBig=Yes;
+                      Image=Reject;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 SETRANGE(Reject,TRUE);
+                                 IF FINDFIRST THEN REPEAT
+                                   GnjLine.RESET;
+                                   GnjLine.SETRANGE(GnjLine."Slip No.","Slip No.");
+                                   IF GnjLine.FINDSET THEN
+                                      REPEAT
+                                       GJnlLine11.RESET;
+                                       GJnlLine11.SETRANGE(GJnlLine11."Journal Template Name",GnjLine."Journal Template Name");
+                                       GJnlLine11.SETRANGE(GJnlLine11."Journal Batch Name",GnjLine."Journal Batch Name");
+                                       GJnlLine11.SETRANGE(GJnlLine11."Line No.",GnjLine."Line No." );
+                                           IF GJnlLine11.FINDFIRST THEN
+                                             BEGIN
+                                               GJnlLine11.RENAME(GJnlLine11."Ref. Template",GJnlLine11."Ref. Batch",GJnlLine11."Line No.");
+                                               GJnlLine11.Reject:=FALSE;
+                                               GJnlLine11.MODIFY;
+                                             END;
+
+                                          "GenJnl Line1".COPY(GJnlLine11);
+
+                                            IF "GenJnl Line1".FINDSET THEN BEGIN
+                                                   "GenJnl Line1"."Ref. Template":='';
+                                                    "GenJnl Line1"."Ref. Batch":='';
+                                                     "GenJnl Line1".MODIFY;
+                                                     END;
+
+                                      UNTIL GnjLine.NEXT=0;
+
+                                 UNTIL NEXT = 0 ;
+                                 InitTempTable;
+                                 RESET;
+                                 //RefreshTempTable;
+                                 //SetRecFilters;
+                                 CurrPage.UPDATE(TRUE);
+                               END;
+                                }
+      { 55      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=Post;
+                      Promoted=No;
+                      Visible=FALSE;
+                      PromotedIsBig=Yes;
+                      Image=Post;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 GenJnlLine@1000000001 : Record 81;
+                                 SrcCodeSetup@1000000002 : Record 242;
+                                 SalesSetup@1000000003 : Record 311;
+                                 SalesInvHeder@1000000004 : Record 112;
+                                 FLAG@1000000005 : Boolean;
+                               BEGIN
+                                 SETRANGE(Approve,TRUE);
+
+                                 // yimmr-appcpinv-st
+                                 GenJnlLine:=Rec;
+                                 SalesSetup.GET;
+
+                                 GenJnlLine.SETRANGE(GenJnlLine."Slip No.","Slip No.");
+
+                                 IF (GenJnlLine.FINDFIRST ) THEN
+
+                                   IF (GenJnlLine."Ref. Template"=SalesSetup."Post Dated Check Template")
+                                     AND
+                                     (SalesSetup."Post Dated Check Imacs Batch"=GenJnlLine."Ref. Batch") THEN
+
+                                   REPEAT
+                                    IF  (GenJnlLine."Applies-to Doc. No."='') THEN
+
+                                   BEGIN
+                                   SalesInvHeder.RESET;
+                                   SalesInvHeder.SETCURRENTKEY("Sell-to Customer No.","External Document No.");
+
+                                   SalesInvHeder.SETRANGE(SalesInvHeder."Sell-to Customer No.",GenJnlLine."Account No.");
+                                   SalesInvHeder.SETRANGE(SalesInvHeder."External Document No.",GenJnlLine."Document No.");
+                                   SalesInvHeder.SETRANGE(SalesInvHeder."Type Of Transaction",SalesInvHeder."Type Of Transaction"::Imacs);
+
+                                         IF SalesInvHeder.FINDFIRST THEN
+                                         BEGIN
+                                         GenJnlLine."Applies-to Doc. Type":=GenJnlLine."Applies-to Doc. Type"::Invoice;
+                                         GenJnlLine."Applies-to Doc. No.":=SalesInvHeder."No.";
+                                         GenJnlLine.MODIFY(TRUE);
+                                         FLAG:=TRUE;
+                                         END;
+                                   END;
+
+                                    UNTIL(GenJnlLine.NEXT=0);
+
+                                 IF (FLAG) THEN
+                                 BEGIN
+                                 Rec:=GenJnlLine;
+                                 COMMIT;
+                                 END;
+
+
+                                 // yimmr-appcpinv-EN
+
+                                 IF FINDFIRST THEN REPEAT
+                                   GnjLine.RESET;
+                                   GnjLine.SETRANGE(GnjLine."Slip No.","Slip No.");
+                                   IF GnjLine.FINDFIRST THEN
+                                    // IF NOT
+                                     CODEUNIT.RUN(CODEUNIT::"Gen. Jnl.-Post",GnjLine);
+                                     // THEN
+                                       //InitTempTable;
+                                 UNTIL NEXT = 0 ;
+                                 InitTempTable;
+                                 RESET;
+                                 //RefreshTempTable;
+                                 //SetRecFilters;
+                                 CurrPage.UPDATE(TRUE);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                IndentationColumnName=Level;
+                ShowAsTree=No;
+                GroupType=Repeater }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Document No.";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Slip No.";
+                Editable=FALSE }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Applies-to Doc. Type" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Applies-to Doc. No." }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Description;
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Debit Amount";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Credit Amount";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Cr Amount" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Dr Amount" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Ref. Template";
+                Visible=FALSE }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Ref. Batch";
+                Editable=FALSE }
+
+    { 51  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Bal. Account No." }
+
+    { 1000000008;2;Field  ;
+                SourceExpr=Approve;
+                OnValidate=BEGIN
+                             CurrPage.UPDATE(TRUE);
+                             IF (Reject = TRUE) THEN BEGIN         //YIMMDEVIP1.0
+                                Answer := DIALOG.CONFIRM(Question1);
+                                    IF (FORMAT(Answer) ='Yes') THEN  BEGIN
+                                         Reject:=FALSE;
+                                         CurrPage.UPDATE(TRUE);
+                                    END ELSE  BEGIN
+                                        ERROR('');
+                                        Approve:=FALSE;
+                                    END;
+                             END;
+                           END;
+                            }
+
+    { 1102159002;2;Field  ;
+                SourceExpr=Reject;
+                OnValidate=BEGIN
+                             CurrPage.UPDATE(TRUE);
+                             IF (Approve = TRUE) THEN BEGIN         //YIMMDEVIP1.0
+                                Answer := DIALOG.CONFIRM(Question);
+                                    IF (FORMAT(Answer) ='Yes') THEN  BEGIN
+                                         Approve:=FALSE;
+                                         CurrPage.UPDATE(TRUE);
+                                    END ELSE  BEGIN
+                                        ERROR('');
+                                        Reject:=FALSE;
+                                    END;
+                             END;
+                           END;
+                            }
+
+  }
+  CODE
+  {
+    VAR
+      ReqLine@1001 : Record 81;
+      SalesHeader@1000 : Record 36;
+      ProdOrder@1006 : Record 5405;
+      MfgUserTempl@1015 : Record 5525;
+      OrderPlanningMgt@1002 : Codeunit 5522;
+      ActualExpansionStatus@1005 : 'Has Children,Expanded,No Children';
+      DemandOrderFilter@1007 : 'All Demands,Production Demand,Sales Demand';
+      Text000@1003 : TextConst 'ENU=All items in %1 %2 %3 are available and no planning line is created for it.';
+      Text001@1008 : TextConst 'ENU=Sales';
+      Text002@1009 : TextConst 'ENU=Production';
+      GnjLine@1000000000 : Record 81;
+      "GenJnl Line1"@1000000001 : Record 81;
+      Text003@1000000002 : TextConst 'ENU=You can not modify the interfaced data';
+      DescriptionEmphasize@19010547 : Boolean INDATASET;
+      GJnlLine11@1102159001 : Record 81;
+      "LineNo."@1102159002 : Integer;
+      slipNo@1102159003 : Code[30];
+      Answer@1102159004 : Boolean;
+      Question@1102159005 : TextConst 'ENU=Approved is already marked,Do you want to Continue ?';
+      Question1@1102159006 : TextConst 'ENU=Reject is already marked,Do you want to continue ?';
+
+    PROCEDURE SetSalesOrder@2(SalesHeader2@1001 : Record 36);
+    BEGIN
+      {
+      SalesHeader := SalesHeader2;
+      DemandOrderFilter := DemandOrderFilter::"Sales Demand";
+      CurrPage.DemandOrderFilterCtrl.ENABLED := FALSE;
+      }
+    END;
+
+    PROCEDURE SetProdOrder@3(ProdOrder2@1000 : Record 5405);
+    BEGIN
+      {
+      ProdOrder := ProdOrder2;
+      DemandOrderFilter := DemandOrderFilter::"Production Demand";
+      CurrPage.DemandOrderFilterCtrl.ENABLED := FALSE;
+      }
+    END;
+
+    PROCEDURE SetExpansionStatus@16();
+    BEGIN
+      IF IsExpanded(Rec) THEN
+        ActualExpansionStatus := ActualExpansionStatus::Expanded
+      ELSE
+        IF HasChildren(Rec) THEN
+          ActualExpansionStatus := ActualExpansionStatus::"Has Children"
+        ELSE
+          ActualExpansionStatus := ActualExpansionStatus::"No Children";
+    END;
+
+    PROCEDURE InitTempTable@1();
+    VAR
+      Master@1000000000 : Record 50008;
+    BEGIN
+      Master.GET;
+      ReqLine.RESET;
+      ReqLine.COPYFILTERS(Rec);
+      ReqLine.SETRANGE("Journal Template Name",Master."Receipt Template");
+      ReqLine.SETRANGE("Journal Batch Name",Master."Receipt Batch");
+      ReqLine.SETFILTER("Ref. Batch",'<>%1',USERID);//APJOURNAL_20/07/2010
+      DELETEALL;
+      IF ReqLine.FINDSET THEN
+        REPEAT
+          IF ReqLine.Level = 0 THEN BEGIN
+            Rec := ReqLine;
+            INSERT;
+          END;
+        UNTIL ReqLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE ExpandAll@12();
+    VAR
+      ReqLine@1000 : Record 81;
+      Master1@1000000000 : Record 50008;
+    BEGIN
+      Master1.GET;
+      ReqLine.RESET;
+      ReqLine.COPYFILTERS(Rec);
+      ReqLine.SETRANGE("Journal Template Name",Master1."Receipt Template");
+      ReqLine.SETRANGE("Journal Batch Name",Master1."Receipt Batch");
+      DELETEALL;
+
+      IF ReqLine.FINDSET THEN
+        REPEAT
+          Rec := ReqLine;
+          INSERT;
+        UNTIL ReqLine.NEXT = 0;
+    END;
+
+    LOCAL PROCEDURE IsExpanded@20(ActualReqLine@1000 : Record 81) : Boolean;
+    VAR
+      xReqLine@1001 : Record 81;
+      Found@1002 : Boolean;
+    BEGIN
+      xReqLine := Rec;
+      Rec := ActualReqLine;
+      Found := (NEXT <> 0);
+      IF Found THEN
+        Found := (Level > ActualReqLine.Level);
+      Rec := xReqLine;
+      EXIT(Found);
+    END;
+
+    LOCAL PROCEDURE HasChildren@18(ActualReqLine@1000 : Record 81) : Boolean;
+    BEGIN
+      ReqLine.RESET;
+      ReqLine.COPYFILTERS(Rec);
+      ReqLine := ActualReqLine;
+      IF ReqLine.NEXT = 0 THEN
+        EXIT(FALSE)
+      ELSE
+        EXIT(ReqLine.Level > ActualReqLine.Level);
+    END;
+
+    PROCEDURE RefreshTempTable@14();
+    VAR
+      TempReqLine2@1001 : Record 81;
+      ReqLine@1000 : Record 81;
+    BEGIN
+      TempReqLine2.COPY(Rec);
+      RESET;
+      IF FIND('-') THEN
+        REPEAT
+          ReqLine := Rec;
+          IF NOT ReqLine.FIND OR
+             ((Level = 0) AND ((ReqLine.NEXT = 0) OR (ReqLine.Level = 0)))
+          THEN BEGIN
+            IF Level = 0 THEN BEGIN
+              ReqLine := Rec;
+              ReqLine.FIND;
+              ReqLine.DELETE(TRUE);
+            END;
+            DELETE
+          END;
+        UNTIL NEXT = 0;
+
+      COPY(TempReqLine2);
+    END;
+
+    LOCAL PROCEDURE ToggleExpandCollapse@4();
+    VAR
+      ReqLine@1000 : Record 81;
+      xReqLine@1001 : Record 81;
+      Master@1000000000 : Record 50008;
+    BEGIN
+      Master.GET;
+      xReqLine := Rec;
+      IF ActualExpansionStatus = 0 THEN BEGIN // Has children, but not expanded
+        ReqLine.SETRANGE("Journal Template Name",Master."Receipt Template");
+        ReqLine.SETRANGE("Journal Batch Name",Master."Receipt Batch");
+        ReqLine.SETFILTER("Line No.",'<>%1',"Line No.");
+        ReqLine.SETRANGE(Level,Level,Level + 1);
+        ReqLine := Rec;
+        IF ReqLine.NEXT <> 0 THEN
+          REPEAT
+            IF ReqLine.Level > xReqLine.Level THEN BEGIN
+              Rec := ReqLine;
+              IF INSERT THEN;
+            END;
+          UNTIL (ReqLine.NEXT = 0) OR (ReqLine.Level = xReqLine.Level);
+      END ELSE
+        IF ActualExpansionStatus = 1 THEN BEGIN // Has children and is already expanded
+          WHILE (NEXT <> 0) AND (Level > xReqLine.Level) DO
+            DELETE;
+        END;
+      Rec := xReqLine;
+      CurrPage.UPDATE;
+    END;
+
+    PROCEDURE SetRecFilters@5();
+    BEGIN
+      {
+      RESET;
+      FILTERGROUP(2);
+      SETRANGE("User ID",USERID);
+      SETRANGE("Worksheet Template Name",'');
+
+      CASE DemandOrderFilter OF
+        DemandOrderFilter::"All Demands":
+          BEGIN
+            SETRANGE("Demand Type");
+            SETCURRENTKEY("User ID","Worksheet Template Name","Journal Batch Name","Line No.");
+          END;
+        DemandOrderFilter::"Sales Demand":
+          BEGIN
+            SETRANGE("Demand Type",DATABASE::"Sales Line");
+            SETCURRENTKEY("User ID","Demand Type","Worksheet Template Name","Journal Batch Name","Line No.");
+          END;
+        DemandOrderFilter::"Production Demand":
+          BEGIN
+            SETRANGE("Demand Type",DATABASE::"Prod. Order Component");
+            SETCURRENTKEY("User ID","Demand Type","Worksheet Template Name","Journal Batch Name","Line No.");
+          END;
+      END;
+      FILTERGROUP(0);
+      }
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE ExpandOrderToPlan@10();
+    VAR
+      ReqLine@1000 : Record 81;
+    BEGIN
+      {
+      IF (SalesHeader."No." <> '') OR (ProdOrder."No." <> '') THEN BEGIN
+        ReqLine.SETCURRENTKEY("User ID","Demand Type","Demand Subtype","Demand Order No.");
+        ReqLine.SETRANGE("User ID",USERID);
+        CASE TRUE OF
+          SalesHeader."No." <> '':
+            BEGIN
+              ReqLine.SETRANGE("Demand Type",DATABASE::"Sales Line");
+              ReqLine.SETRANGE("Demand Subtype",SalesHeader."Document Type");
+              ReqLine.SETRANGE("Demand Order No.",SalesHeader."No.");
+            END;
+          ProdOrder."No." <> '':
+            BEGIN
+              ReqLine.SETRANGE("Demand Type",DATABASE::"Prod. Order Component");
+              ReqLine.SETRANGE("Demand Subtype",ProdOrder.Status);
+              ReqLine.SETRANGE("Demand Order No.",ProdOrder."No.");
+            END;
+        END;
+      }
+        IF ReqLine.FIND('-') THEN BEGIN
+          Rec := ReqLine;
+          FIND;
+          ActualExpansionStatus := 0;
+          ToggleExpandCollapse;
+        END ELSE BEGIN
+          IF SalesHeader."No." <> '' THEN
+            MESSAGE(
+              Text000,
+              Text001,
+              SalesHeader."Document Type",
+              SalesHeader."No.");
+          IF ProdOrder."No." <> '' THEN
+            MESSAGE(
+              Text000,
+              ProdOrder.Status,
+              ProdOrder.TABLECAPTION,
+              ProdOrder."No.");
+        END;
+      //END;
+    END;
+
+    PROCEDURE ShowDemandOrder@15();
+    VAR
+      SalesHeader@1001 : Record 36;
+      ProdOrder@1000 : Record 5405;
+    BEGIN
+      {
+      CASE "Demand Type" OF
+        DATABASE::"Sales Line":
+          BEGIN
+            SalesHeader.GET("Demand Subtype","Demand Order No.");
+            CASE SalesHeader."Document Type" OF
+              SalesHeader."Document Type"::Order:
+                PAGE.RUN(PAGE::"Sales Order",SalesHeader);
+              SalesHeader."Document Type"::"Return Order":
+                PAGE.RUN(PAGE::"Sales Return Order",SalesHeader);
+            END;
+          END;
+        DATABASE::"Prod. Order Component":
+          BEGIN
+            ProdOrder.GET("Demand Subtype","Demand Order No.");
+            CASE ProdOrder.Status OF
+              ProdOrder.Status::Planned:
+                PAGE.RUN(PAGE::"Planned Production Order",ProdOrder);
+              ProdOrder.Status::"Firm Planned":
+                PAGE.RUN(PAGE::"Firm Planned Prod. Order",ProdOrder);
+              ProdOrder.Status::Released:
+                PAGE.RUN(PAGE::"Released Production Order",ProdOrder);
+            END;
+          END;
+      END;
+      }
+    END;
+
+    PROCEDURE CalcQtyOnOtherLocations@6() : Decimal;
+    VAR
+      QtyOnOtherLocation@1000 : Decimal;
+    BEGIN
+      {
+      QtyOnOtherLocation := OrderPlanningMgt.AvailQtyOnOtherLocations(Rec); // Base Unit
+      IF "Qty. per Unit of Measure" = 0 THEN
+        "Qty. per Unit of Measure" := 1;
+      QtyOnOtherLocation := ROUND(QtyOnOtherLocation / "Qty. per Unit of Measure",0.00001);
+
+      EXIT(QtyOnOtherLocation);
+      }
+    END;
+
+    PROCEDURE CalcQtyOnBlanketOrders@7() : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE CalcQtyATP@8() : Decimal;
+    VAR
+      QtyATP@1000 : Decimal;
+    BEGIN
+      {
+      QtyATP := OrderPlanningMgt.CalcATPQty("No.","Variant Code","Location Code","Demand Date"); // Base Unit
+      IF "Qty. per Unit of Measure" = 0 THEN
+        "Qty. per Unit of Measure" := 1;
+      QtyATP := ROUND(QtyATP / "Qty. per Unit of Measure",0.00001);
+
+      EXIT(QtyATP);
+      }
+    END;
+
+    PROCEDURE CalcEarliestShptDateAvailable@9() : Date;
+    VAR
+      Item@1000 : Record 27;
+    BEGIN
+      {
+      IF "No." <> '' THEN BEGIN
+        Item.GET("No.");
+        IF Item."Order Tracking Policy" = Item."Order Tracking Policy"::"Tracking & Action Msg." THEN
+          EXIT;
+      END;
+      EXIT(OrderPlanningMgt.CalcATPEarliestDate("No.","Variant Code","Location Code","Demand Date","Quantity (Base)"));
+      }
+    END;
+
+    PROCEDURE CalcSubstitionAvailable@11() : Boolean;
+    BEGIN
+      //EXIT(OrderPlanningMgt.SubstitutionPossible(Rec));
+    END;
+
+    PROCEDURE CalcPlan@13();
+    VAR
+      ReqLine@1001 : Record 246;
+    BEGIN
+      RESET;
+      DELETEALL;
+
+      CLEAR(OrderPlanningMgt);
+      CASE DemandOrderFilter OF
+        DemandOrderFilter::"Sales Demand":
+          //OrderPlanningMgt.SetSalesOrder(SalesHeader); // UPG13C
+          OrderPlanningMgt.SetSalesOrder; // UPG13C
+        DemandOrderFilter::"Production Demand":
+          //OrderPlanningMgt.SetProdOrder(ProdOrder); // UPG13C
+          OrderPlanningMgt.SetProdOrder; // UPG13C
+      END;
+      OrderPlanningMgt.GetOrdersToPlan(ReqLine);
+
+      InitTempTable;
+      ExpandOrderToPlan;
+      SetRecFilters;
+
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE UpdateSupplyFrom@17();
+    BEGIN
+      //CurrPage."Supply From".EDITABLE("Replenishment System" <> "Replenishment System"::"Prod. Order");
+    END;
+
+    LOCAL PROCEDURE ActualExpansionStatusOnPush@19057112();
+    BEGIN
+      ToggleExpandCollapse;
+    END;
+
+    LOCAL PROCEDURE DescriptionOnFormat@19023855();
+    BEGIN
+      //IF Level > 0 THEN
+       // CurrPage.Description.UPDATEINDENT := (Level + "Planning Level") * 220;
+
+      IF (Level = 0) OR (ActualExpansionStatus < 2) THEN
+        DescriptionEmphasize := TRUE;
+    END;
+
+    BEGIN
+    {
+      //YIMMASL
+      1) FORM IS DESIGNED TO POST AND APPROVE ALL THE PAYMENT RECEIPT TRANSACTION.
+
+      2)// yimmr-appcpinv-tHIS cODE IS TO APPLY PAYMENT wITH iNVOICE OF imacs oNLY
+
+
+      3)  //APJNL1.0
+       // APJOURNAL_20/07/2010--> For Sepration of Aprrval Entry for Same User.
+
+      // UPG13C
+      Code added or edited to solve complation errors after migrating merged and customized objects to 2013 from 2009 R2
+      // UPG13R2
+      2013 to 2013R2 Merged Code/New Code.
+
+      //YIMMDEVIP1.0
+      Issue no.28
+      Page created to view the detailed lines of Approval Page. Page is made uneditable.
+      Reject and Post fields are removed.
+
+      //SMDEV1.0
+      Changed Visibilty of some fields.
+      New Page for Detail Aaproval Lines
+    }
+    END.
+  }
+}
+

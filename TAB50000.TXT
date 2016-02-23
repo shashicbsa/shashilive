@@ -1,0 +1,33 @@
+OBJECT Table 50000 Master Setup-Melco
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/06/11;
+    Time=10:18:37;
+    Version List=Mel1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10         }
+    { 2   ;   ;Auth. User for Sales Invoice;Code10;TableRelation=User.State }
+    { 3   ;   ;Auth. User for Purch. Invoice;Code10 }
+    { 4   ;   ;DepositBalAcc       ;Code20        ;TableRelation="Bank Account".No. }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

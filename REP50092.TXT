@@ -1,0 +1,3767 @@
+OBJECT Report 50092 CustomerAging-Update
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/09/15;
+    Time=17:21:01;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Entity Aging;
+    OnPreReport=BEGIN
+
+                  IF (AgingDate=0D) THEN
+                   ERROR('please specify date');
+
+
+                  IF (Print2exl=TRUE) THEN
+                  BEGIN
+                    ExcelBuf.DELETEALL;
+
+                    MakeExcelInfo;
+                  END;
+
+                  CompanyInformation.GET;
+
+                  UPdateCurr := 'IDR';
+                END;
+
+    OnPostReport=BEGIN
+
+                   IF (Print2exl=TRUE) THEN
+                   CreateExcelbook;
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table18;
+               DataItemTableView=SORTING(No.)
+                                 ORDER(Ascending);
+               PrintOnlyIfDetail=Yes;
+               OnPreDataItem=BEGIN
+
+
+                               //TBI1.0 BEGIN
+                               MasterSetup.GET;
+                               //IF (COMPANYNAME = MasterSetup."Company Name TBI") THEN
+                               //  Customer.SETRANGE(TBI,TRUE);
+                               //TBI1.0 END
+
+
+                               //ExcelBuf.NewRow;
+                               //ExcelBuf.AddColumn(Customer."No.",FALSE,'',TRUE,FALSE,TRUE,'');
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  //Counter:=0;
+
+
+                                  IF (Print2exl = TRUE) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE);
+                                END;
+
+               OnPostDataItem=BEGIN
+                                 IF CLE_OriginalAmt_LCY<> 0 THEN
+                                 Func_GF;  //nk
+
+                                 IF GrandTotal_CLE_RemainingAmt_LCY <> 0 THEN
+                                  Func_Footer;
+                              END;
+
+               ReqFilterFields=No. }
+
+    { 1102159002;1;Column;Name_Customer      ;
+               SourceExpr=Customer.Name }
+
+    { 1102159017;1;Column;No_Customer        ;
+               SourceExpr=Customer."No." }
+
+    { 1102159003;1;DataItem;                 ;
+               DataItemTable=Table21;
+               DataItemTableView=SORTING(Customer Posting Group,Customer No.,Type Of Transaction,Posting Date,Currency Code)
+                                 ORDER(Ascending);
+               PrintOnlyIfDetail=No;
+               OnPreDataItem=BEGIN
+
+                               SETRANGE("Cust. Ledger Entry"."Posting Date",0D,AgingDate);
+                               SETRANGE("Cust. Ledger Entry"."Date Filter",0D,AgingDate);
+
+                               //Var_TOT:=format("Cust. Ledger Entry"."Type Of Transaction");
+                               //message(format(Var_TOT));
+                               Flag:=1;
+
+                               AppliedBy := '';
+                               AppliedDate := '';
+
+
+                               Var_TOT := '';
+                               Var_Cust := '';
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  CleLoc@1102159001 : Record 21;
+                                  CleLoc2@1102159002 : Record 21;
+                                BEGIN
+
+                                  // code for filteration of Vendor Aging with AP accounts and AR Accounts--start
+
+                                  //message(format(Var_TOT));
+
+
+                                  //nk
+                                  //IF(Flag=1)THEN
+                                  //Var_TOT:=FORMAT("Cust. Ledger Entry"."Type Of Transaction");
+                                  //nk
+
+
+
+                                  //====================================CLE - ONafterGetRecord
+
+                                  IF ("AP/AR" = "AP/AR"::AP) THEN
+                                    BEGIN
+                                      AccountType:=' AP ACCOUNTS ONLY';
+                                      CustPostingSetup.GET("Cust. Ledger Entry"."Customer Posting Group");
+                                       IF (CustPostingSetup."Reason Code" <> 'SALRT') THEN
+                                        CurrReport.SKIP;
+                                    END
+                                   ELSE IF ("AP/AR" = "AP/AR"::AR) THEN
+                                     BEGIN
+                                      AccountType:=' AR ACCOUNTS ONLY';
+                                      CustPostingSetup.GET("Cust. Ledger Entry"."Customer Posting Group");
+                                       IF (CustPostingSetup."Reason Code" <> 'NORMAL') THEN
+                                        CurrReport.SKIP;
+                                     END
+                                   ELSE IF ("AP/AR" = "AP/AR"::Both) THEN
+                                   AccountType:=' BOTH ACCOUNTS ';
+
+                                  // code for filteration of Vendor Aging with AP accounts and AR Accounts--end
+
+
+                                  CALCFIELDS("Original Amt. (LCY)","Original Amount","Remaining Amount","Remaining Amt. (LCY)");
+
+
+                                  CLE.RESET;
+                                  CLE.SETRANGE(CLE."Entry No.","Cust. Ledger Entry"."Entry No.");
+                                  CLE.SETRANGE(CLE."Date Filter",0D,AgingDate);
+                                  IF CLE.FIND('-') THEN
+                                  CLE.CALCFIELDS("Original Amt. (LCY)","Original Amount","Remaining Amount","Remaining Amt. (LCY)");
+
+
+                                  IF (CLE."Remaining Amount"=0) THEN  BEGIN
+                                  CurrReport.SKIP;
+                                  END ELSE BEGIN
+                                   IF(FORMAT("Cust. Ledger Entry"."Type Of Transaction")<>Var_TOT) THEN BEGIN
+                                   IF CLE_OriginalAmt_LCY<> 0 THEN
+                                   Func_GF;  //nk
+                                   Var_TOT := FORMAT("Cust. Ledger Entry"."Type Of Transaction");
+                                  END;
+                                  CLE_OriginalAmt_LCY+="Cust. Ledger Entry"."Original Amt. (LCY)";
+                                  //Message('hi  '+format(CLE_OriginalAmt_LCY)+'  '+format("Cust. Ledger Entry"."Original Amt. (LCY)"));
+                                  CLE_RemainingAmt_LCY+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+
+                                  IF "Cust. Ledger Entry"."Customer No." <> Var_Cust THEN BEGIN
+                                    IF GrandTotal_CLE_RemainingAmt_LCY <> 0 THEN
+                                    Func_Footer;
+                                    Var_Cust := "Cust. Ledger Entry"."Customer No.";
+                                    GrandTotal_CLE_RemainingAmt_LCY := 0;
+                                  END;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  SIH.RESET;
+                                  IF SIH.GET("Cust. Ledger Entry"."Document No.") THEN;
+
+
+                                  Counter:=Counter+1;
+                                  Interval:=0;
+
+                                  Interval:=(AgingDate-("Cust. Ledger Entry"."Due Date"));
+                                  //Message(format(Interval)+'     '+format("Cust. Ledger Entry"."Original Amt. (LCY)"));
+
+
+                                  //==================   CLE Body 3 onPreSection
+
+                                  IF (Summary <> TRUE ) THEN
+                                  BEGIN
+
+                                  IF (FORMAT("Cust. Ledger Entry"."Type Of Transaction")<>TransactType) THEN
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn('Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Type Of Transaction"),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.NewRow;
+                                  No:=1;
+
+                                  END;
+
+                                  END;
+                                  IF (Print2exl = TRUE) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE);
+
+
+
+
+                                  //=============================CLE BODY 3 OnPostSection
+                                  TransactType:=FORMAT("Cust. Ledger Entry"."Type Of Transaction");
+
+
+
+
+                                  //===============================CLE Body 4  OnPreSection
+
+
+                                  NotDueAmt:=0;
+                                  "1to30Amt":=0;
+                                  "31to60Amt":=0;
+                                  "61to90Amt":=0;
+                                  "91to180Amt":=0;
+                                  "181to360Amt":=0;
+
+
+                                  IF  (Summary <> TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Posting Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  IF (DocType<>'') THEN
+                                  BEGIN
+                                   ExcelBuf.AddColumn("Cust. Ledger Entry".DocType,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   DocumenType:="Cust. Ledger Entry".DocType;
+                                  END
+                                  ELSE
+                                  BEGIN
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Type"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  DocumenType:=FORMAT("Cust. Ledger Entry"."Document Type");
+                                  END;
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(Customer.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer Posting Group"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry".Narration,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 1 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 2 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."External Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+
+                                  CleLoc2.RESET;
+                                  CleLoc2.SETRANGE("Transaction No.","Cust. Ledger Entry"."Transaction No.");
+                                  IF CleLoc.FINDSET THEN BEGIN
+                                  IF GLentry.GET("Cust. Ledger Entry"."Entry No.") THEN//nk
+                                   ExcelBuf.AddColumn(GLentry."Slip No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(SIH."Pre-Assigned No.",FALSE,'',FALSE,FALSE,TRUE,'@');
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Due Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Tax Invoice No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Commercial Invoice No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //=======================================================deepa
+
+
+                                  CleLoc.RESET;
+                                  CleLoc.SETRANGE(CleLoc."Document No.","Cust. Ledger Entry"."Document No.");
+                                  IF CleLoc.FINDFIRST THEN
+                                    CheckAppliedBy(CleLoc);
+
+                                  AppliedBy := COPYSTR(AppliedBy,1,249);
+                                  //ExcelBuf.AddColumn(FORMAT(AppliedBy),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);  //settlement Slip No.    // Ashish
+                                  //ExcelBuf.AddColumn(FORMAT(AppliedDate),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);    //Settlement Slip date  // Ashish
+                                  AppliedDate:='';
+                                  AppliedBy:='';
+
+                                  //ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Vend/Cust Bank Name"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Bank Account No"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  END
+
+                                  ELSE
+                                  BEGIN
+                                   ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  END;
+                                  //NK.END
+
+
+
+
+                                  //ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Due Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Currency Code",FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  IF ("Cust. Ledger Entry"."Original Currency Factor"<>0) THEN
+                                  ExcelBuf.AddColumn(FORMAT(1/"Cust. Ledger Entry"."Original Currency Factor"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number)
+                                  ELSE
+                                  ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  IF ("Cust. Ledger Entry"."Currency Code" <> '' ) THEN
+                                    ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"/"Cust. Ledger Entry"."Remaining Amount") ,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number)
+                                   ELSE
+                                    ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //NotDueAmt:=(CLE."Remaining Amt. (LCY)");
+                                  //NotDue+=CLE."Remaining Amt. (LCY)";
+                                  NotDueAmt:="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  NotDue+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //"1to30Amt":=CLE."Remaining Amt. (LCY)";
+                                  //"1to30"+=CLE."Remaining Amt. (LCY)";
+                                  "1to30Amt":="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  "1to30"+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //"31to60Amt":=CLE."Remaining Amt. (LCY)";
+                                  //"31to60"+=CLE."Remaining Amt. (LCY)";
+                                  "31to60Amt":="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  "31to60"+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "61to90Amt":="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  "61to90"+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "91to180Amt":="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  "91to180"+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  "181to360Amt":="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  "181to360"+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END
+
+                                  ELSE
+                                  IF  (Summary = TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  NotDue+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  "1to30"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  "31to60"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  "61to90"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  "91to180"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  "181to360"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END;
+
+
+                                  IF (Print2exl = TRUE) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE);
+
+                                   END;
+
+                                  //================================CLE BOdy 4   OnPreSection
+
+                                  {
+
+                                  NotDueAmt:=0;
+                                  "1to30Amt":=0;
+                                  "31to60Amt":=0;
+                                  "61to90Amt":=0;
+                                  "91to180Amt":=0;
+                                  "181to360Amt":=0;
+
+
+
+
+
+                                  IF  (Summary <> TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN                  // UPG13R2DEV.BEGIN
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Posting Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  IF (DocType<>'') THEN
+                                  BEGIN
+                                   ExcelBuf.AddColumn("Cust. Ledger Entry".DocType,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   DocumenType:="Cust. Ledger Entry".DocType;
+                                  END
+                                  ELSE
+                                  BEGIN
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Type"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  DocumenType:=FORMAT("Cust. Ledger Entry"."Document Type");
+                                  END;
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(Customer.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer Posting Group"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry".Narration,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 1 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 2 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."External Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+
+
+                                  CleLoc2.reset;
+                                  CleLoc2.SETRANGE("Transaction No.","Cust. Ledger Entry"."Transaction No.");
+                                  IF CleLoc.FINDSET THEN BEGIN
+                                  IF GLentry.GET("Cust. Ledger Entry"."Entry No.") THEN //nk
+                                   ExcelBuf.AddColumn(GLentry."Slip No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(SIH."Pre-Assigned No.",FALSE,'',FALSE,FALSE,TRUE,'@');
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Due Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Tax Invoice No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Commercial Invoice No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //=======================================================deepa
+
+
+                                  CleLoc.RESET;
+                                  CleLoc.SETRANGE(CleLoc."Document No.","Cust. Ledger Entry"."Document No.");
+                                  IF CleLoc.FINDFIRST THEN
+                                  CheckAppliedBy(CleLoc);
+                                  //ExcelBuf.AddColumn(FORMAT(AppliedBy),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+                                  //ExcelBuf.AddColumn(FORMAT(AppliedDate),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+                                  AppliedDate:='';
+                                  AppliedBy:='';
+
+                                  //ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Vend/Cust Bank Name"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Bank Account No"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  END;
+
+                                  ELSE    //NK.ST
+                                  BEGIN
+                                  // ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn('',FALSE,'',FALSE,FAL  SE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE  ,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);      // Ashish
+
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  END;
+                                  //NK.END
+
+                                  ///============================================
+                                  IF ("Cust. Ledger Entry"."Currency Code" = '') THEN BEGIN //ashish
+                                  "Cust. Ledger Entry"."Currency Code" := UPdateCurr;
+                                  END;
+
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Currency Code",FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  IF ("Cust. Ledger Entry"."Original Currency Factor"<>0) THEN
+                                  ExcelBuf.AddColumn(FORMAT(1/"Cust. Ledger Entry"."Original Currency Factor"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number)
+                                  ELSE
+                                  ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  IF ("Cust. Ledger Entry"."Currency Code" <> '' ) THEN
+                                    ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"/"Cust. Ledger Entry"."Remaining Amount")
+                                        ,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number)
+                                   ELSE
+                                    ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  NotDueAmt:=(CLE."Remaining Amt. (LCY)");
+                                  NotDue+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "1to30Amt":=CLE."Remaining Amt. (LCY)";
+                                  "1to30"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "31to60Amt":=CLE."Remaining Amt. (LCY)";
+                                  "31to60"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "61to90Amt":=CLE."Remaining Amt. (LCY)";
+                                  "61to90"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "91to180Amt":=CLE."Remaining Amt. (LCY)";
+                                  "91to180"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+                                  "181to360Amt":=CLE."Remaining Amt. (LCY)";
+                                  "181to360"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END
+
+                                  ELSE
+                                  IF  (Summary = TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  NotDue+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  "1to30"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  "31to60"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  "61to90"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  "91to180"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  "181to360"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END;
+
+
+                                  IF (Print2exl = TRUE) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE);
+
+
+                                  }
+
+
+                                  //deepa
+                                   {
+                                  //MESSAGE('onafter  '+'  '+FORMAT("Cust. Ledger Entry"."Entry No.")+'  '+FORMAT("Cust. Ledger Entry"."Type Of Transaction"));
+                                  CLE_Var2.RESET;
+                                  CLE_Var2.SETFILTER(CLE_Var2."Type Of Transaction",'=%1',"Cust. Ledger Entry"."Type Of Transaction");
+                                      IF(CLE_Var2.FINDLAST) THEN BEGIN
+                                      //MESSAGE('after filter  '+'  '+FORMAT(CLE_Var2."Entry No.")+'   '+FORMAT(CLE_Var2."Type Of Transaction"));
+                                      IF(CLE_Var2."Entry No."="Cust. Ledger Entry"."Entry No.")THEN BEGIN
+
+                                    //=====================================CLE Group FOoter 5   OnPreSection
+                                  IF (Summary <>  TRUE) THEN
+                                  BEGIN
+                                  "Cust. Ledger Entry".CALCFIELDS("Remaining Amt. (LCY)");
+                                  IF (No=1) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                  //MEssage('gf...');
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('Total for Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Type Of Transaction",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Original Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Number);
+                                  ExcelBuf.AddColumn(NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("1to30",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("31to60",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("61to90",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("91to180",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("181to360",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.NewRow;
+
+                                  END;
+
+                                  END;
+
+                                  Tot_NotDue+=NotDue;
+                                  Tot_181to360+="181to360";
+                                  Tot_91to180+="91to180";
+                                  Tot_61to90+="61to90";
+                                  Tot_31to60+="31to60";
+                                  Tot_1to30+="1to30";
+
+                                  NotDue:=0;
+                                  "1to30":=0;
+                                  "31to60":=0;
+                                  "61to90":=0;
+                                  "91to180":=0;
+                                  "181to360":=0;
+
+
+                                  IF (Print2exl = TRUE) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE);
+
+                                   END;
+                                   END;
+                                   //====================================CLE group Footer 5 - OnPostSection
+
+                                   CustNumber:="Cust. Ledger Entry"."Customer No.";
+
+                                  }
+
+
+                                  Var_TOT:=FORMAT("Cust. Ledger Entry"."Type Of Transaction");
+                                  Flag:=0;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                {
+                                //=======================================CLE GroupFooter 5
+                                //Func_GF;
+
+                                //============================================ CLE  Footer 6
+
+                                //nk
+                                 // message('hello..');
+                                  IF (Summary <> TRUE) THEN
+                                BEGIN
+                                //message('true...fototer'+'   '+format("Cust. Ledger Entry"."Remaining Amt. (LCY)"));
+                                 IF ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                BEGIN
+
+                                 ExcelBuf.NewRow;
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 //ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                // ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(GrandTotal_CLE_RemainingAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                 ExcelBuf.NewRow;
+
+                                END;
+
+                                END
+
+                                ELSE
+
+
+
+                                BEGIN
+
+
+                                //MESSAGE('hi...');
+                                "Cust. Ledger Entry".CALCFIELDS("Remaining Amt. (LCY)");
+                                 ExcelBuf.NewRow;
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(AccountType,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(FORMAT(Customer.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                 //ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'');
+
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                 ExcelBuf.AddColumn(GrandTotal_CLE_RemainingAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Number);
+
+
+
+                                 ExcelBuf.AddColumn(Tot_NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(Tot_1to30,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(Tot_31to60,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(Tot_61to90,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(Tot_91to180,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                 ExcelBuf.AddColumn(Tot_181to360,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                 ExcelBuf.NewRow;
+
+                                END;
+
+
+                                IF (Print2exl = TRUE) THEN
+                                 CurrReport.SHOWOUTPUT(FALSE);
+
+                                }
+
+                                //==========================CLE Footer 6 onpostsection
+
+                                TotLcY+="Cust. Ledger Entry"."Remaining Amt. (LCY)";
+                                Tot_NotDue:=0;
+                                Tot_181to360:=0;
+                                Tot_91to180:=0;
+                                Tot_61to90:=0;
+                                Tot_31to60:=0;
+                                Tot_1to30:=0;
+                              END;
+
+               CalcFields=Original Amt. (LCY),Remaining Amt. (LCY);
+               DataItemLink=Customer No.=FIELD(No.) }
+
+    { 1102159010;2;Column;GLentry_SlipNo     ;
+               SourceExpr=GLentry."Slip No." }
+
+    { 1102159004;2;Column;Type_Of_Transaction;
+               SourceExpr="Cust. Ledger Entry"."Type Of Transaction" }
+
+    { 1102159025;2;Column;Narration_CustLedgerEntry;
+               SourceExpr="Cust. Ledger Entry".Narration }
+
+    { 1102159006;2;Column;Document_Date      ;
+               SourceExpr="Cust. Ledger Entry"."Document Date" }
+
+    { 1102159007;2;Column;Due_Date           ;
+               SourceExpr="Cust. Ledger Entry"."Due Date" }
+
+    { 1102159008;2;Column;Remaining_Amt_LCY  ;
+               SourceExpr="Cust. Ledger Entry"."Remaining Amt. (LCY)" }
+
+    { 1102159019;2;Column;TaxInvoiceNo       ;
+               SourceExpr="Cust. Ledger Entry"."Tax Invoice No." }
+
+    { 1102159020;2;Column;Commercial_Invoice_No;
+               SourceExpr="Cust. Ledger Entry"."Commercial Invoice No." }
+
+    { 1102159009;2;Column;Original_Amt_LCY   ;
+               SourceExpr="Cust. Ledger Entry"."Original Amt. (LCY)" }
+
+    { 1102159022;2;Column;Bank_AccountNo     ;
+               SourceExpr="Cust. Ledger Entry"."Bank Account No" }
+
+    { 1102159023;2;Column;Bank_Name          ;
+               SourceExpr="Cust. Ledger Entry"."Vend/Cust Bank Name" }
+
+    { 1102159011;2;Column;CompanyInformation_Name;
+               SourceExpr=CompanyInformation.Name }
+
+    { 1102159012;2;Column;CompanyInformation_Address;
+               SourceExpr=CompanyInformation.Address }
+
+    { 1102159013;2;Column;CompanyInformation_Address2;
+               SourceExpr=CompanyInformation."Address 2" }
+
+    { 1102159018;2;Column;CompanyInformation_IRD_No;
+               SourceExpr=CompanyInformation."IRD No." }
+
+    { 1102159014;2;Column;CompanyInformation_City;
+               SourceExpr=CompanyInformation.City }
+
+    { 1102159015;2;Column;No                 ;
+               SourceExpr=No }
+
+    { 1102159016;2;Column;DocumenType        ;
+               SourceExpr=DocumenType }
+
+    { 1102159021;2;Column;COMPANYNAME        ;
+               SourceExpr=DATABASE.COMPANYNAME }
+
+    { 1102159024;2;Column;CustomerNo_CustLedgerEntry;
+               SourceExpr="Cust. Ledger Entry"."Customer No." }
+
+    { 1102159005;2;Column;TransactType       ;
+               SourceExpr=TransactType }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1102159001;;Container;
+                  ContainerType=ContentArea }
+
+      { 1102159002;1;Group  ;
+                  GroupType=Group }
+
+      { 1102159003;2;Field  ;
+                  Name=Aged As Of....;
+                  SourceExpr=AgingDate }
+
+      { 1102159004;2;Field  ;
+                  Name=Entity Aging by Summary;
+                  SourceExpr=Summary }
+
+      { 1102159005;2;Field  ;
+                  Name=Print To Excel;
+                  SourceExpr=Print2exl }
+
+      { 1102159006;2;Field  ;
+                  Name=Only AP/AR/Both Accounts....;
+                  SourceExpr="AP/AR" }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ExcelBuf@1102159037 : TEMPORARY Record 370;
+      AgingDate@1102159036 : Date;
+      Interval@1102159035 : Integer;
+      Counter@1102159034 : Integer;
+      CLE@1102159033 : Record 21;
+      TransactType@1102159032 : Text[50];
+      No@1102159031 : Integer;
+      TotLcY@1102159030 : Decimal;
+      SIH@1102159029 : Record 112;
+      "AP/AR"@1102159028 : 'AP,AR,Both';
+      CustPostingSetup@1102159027 : Record 92;
+      Summary@1102159026 : Boolean;
+      AccountType@1102159025 : Text[150];
+      GLentry@1102159024 : Record 17;
+      NotDue@1102159023 : Decimal;
+      NotDueAmt@1102159022 : Decimal;
+      "1to30"@1102159021 : Decimal;
+      "1to30Amt"@1102159020 : Decimal;
+      Tot_1to30@1102159019 : Decimal;
+      "31to60"@1102159018 : Decimal;
+      "31to60Amt"@1102159017 : Decimal;
+      Tot_31to60@1102159016 : Decimal;
+      "61to90"@1102159015 : Decimal;
+      "61to90Amt"@1102159014 : Decimal;
+      Tot_61to90@1102159013 : Decimal;
+      "91to180"@1102159012 : Decimal;
+      "91to180Amt"@1102159011 : Decimal;
+      Tot_91to180@1102159010 : Decimal;
+      "181to360"@1102159009 : Decimal;
+      "181to360Amt"@1102159008 : Decimal;
+      Tot_181to360@1102159007 : Decimal;
+      Tot_NotDue@1102159006 : Decimal;
+      CustNumber@1102159005 : Code[50];
+      DocumenType@1102159004 : Code[50];
+      Print2exl@1102159003 : Boolean;
+      CompanyInformation@1102159002 : Record 79;
+      MasterSetup@1102159001 : Record 50008;
+      Text000@1102159050 : TextConst 'ENU=Balance On : %1';
+      Text001@1102159049 : TextConst 'ENU=CustomerAging-Update';
+      Text002@1102159048 : TextConst 'ENU=Data';
+      Text003@1102159047 : TextConst 'ENU=Debit';
+      Text004@1102159046 : TextConst 'ENU=Credit';
+      Text005@1102159045 : TextConst 'ENU=Company Name';
+      Text006@1102159044 : TextConst 'ENU=Report No.';
+      Text007@1102159043 : TextConst 'ENU=Report Name';
+      Text008@1102159042 : TextConst 'ENU=User ID';
+      Text009@1102159041 : TextConst 'ENU=Date';
+      Text010@1102159040 : TextConst 'ENU=Date Filter';
+      Text011@1102159039 : TextConst 'ENU=Period End Date';
+      Text012@1102159038 : TextConst 'ENU=Please Specify Date Range';
+      UPdateCurr@1102159051 : Text[10];
+      AppliedBy@1102159053 : Text[1024];
+      AppliedDate@1102159052 : Text;
+      Var_TOT@1102159054 : Text[1024];
+      Flag@1102159055 : Integer;
+      CLE_Var2@1102159056 : Record 21;
+      CLE_OriginalAmt_LCY@1102159057 : Decimal;
+      CLE_RemainingAmt_LCY@1102159058 : Decimal;
+      GrandTotal_CLE_OriginalAmt_LCY@1102159059 : Decimal;
+      GrandTotal_CLE_RemainingAmt_LCY@1102159060 : Decimal;
+      Var_Cust@1102159061 : Code[20];
+
+    PROCEDURE MakeExcelInfo@3();
+    BEGIN
+      ExcelBuf.SetUseInfoSheet;
+      ExcelBuf.AddInfoColumn(FORMAT(Text005),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);           //UPG13R2DEV.BEGIN
+      ExcelBuf.AddInfoColumn(COMPANYNAME,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text007),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(FORMAT(Text001),FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text006),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(REPORT::"CustomerAging-Update",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text008),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(USERID,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text009),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(AgingDate,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text010),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(Customer.GETFILTER("Date Filter"),FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.ClearNewRow;                                                                                                        //UPG13R2DEV.END
+      MakeExcelDataHeader;
+    END;
+
+    LOCAL PROCEDURE MakeExcelDataHeader@2();
+    BEGIN
+      ExcelBuf.NewRow;                                                                                                             //UPG13R2DEV.BEGIN
+      ExcelBuf.AddColumn('Posting  Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Dealer/NonDealer  Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Dealer/NonDealer Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Posting Group',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn('Narration',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn('Shop Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Model Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('P/O Number',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Slip Number',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Due Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Tax Invoice No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Commercial Invoice No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('Settlement slip No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('Settlement Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('Bank Account Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('Bank Account No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn('Currency Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Original Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Starting Conversion Rate',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Original Amount LCY',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Remaining Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Current Conversion Rate',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Remaining Amount LCY',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Not Due',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('01 to 30',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('31 to 60',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('61 to 90',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('91 to 180',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('180 to 360',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                                                                                                                                //UPG13R2DEV.END
+      ExcelBuf.NewRow;
+    END;
+
+    PROCEDURE MakeExcelDataBody@4();
+    VAR
+      BlankFiller@1000 : Text[250];
+    BEGIN
+    END;
+
+    PROCEDURE CreateExcelbook@1();
+    BEGIN
+      {ExcelBuf.CreateBook;
+      ExcelBuf.CreateSheet(Text002,Text001,COMPANYNAME,USERID);
+      ExcelBuf.GiveUserControl;
+      ERROR('');
+       }
+      ExcelBuf.CreateBookAndOpenExcel(Text002,Text001,COMPANYNAME,USERID);           //UPG13R2DEV
+      ExcelBuf.GiveUserControl;
+      ERROR('');
+    END;
+
+    PROCEDURE CheckAppliedBy@1102159002(VAR RecLoc@1102159001 : Record 21);
+    VAR
+      CLE_Loc@1102159002 : Record 21;
+    BEGIN
+      //YIMMDEVIP1.0 start
+
+      //UPG13R2DEV.begin
+      //deepa
+      CLE_Loc.RESET;
+      CLE_Loc := RecLoc;
+      CLE_Loc.COPYFILTERS(RecLoc);
+      CLE_Loc.SETFILTER("Slip No.",'<>%1','');
+
+      IF(CLE_Loc.FINDSET) THEN
+      REPEAT
+        AppliedBy := CLE_Loc."Slip No."+'|'+AppliedBy;
+      //  message(AppliedBy);
+      AppliedDate := AppliedDate + '|' + FORMAT(CLE_Loc."Slip Date");
+      UNTIL CLE.NEXT = 0;
+
+      IF((AppliedBy<>'') OR(AppliedDate<>'')) THEN BEGIN
+      AppliedBy:= DELSTR(AppliedBy,STRLEN(AppliedBy),1);
+      AppliedDate:= DELSTR(AppliedDate,STRLEN(AppliedDate),1);
+      END;
+      //UPG13R2DEV.end
+
+
+      {
+      cle.RESET;
+      AppliedBy := '';
+      AppliedDate := '';
+      cle := RecLoc;
+      IF cle."Entry No." <> 0 THEN BEGIN
+        CreateCustLedgEntry := cle;
+        FindApplnEntriesDtldtLedgEntry;
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Entry No.");
+
+        IF CreateCustLedgEntry."Closed by Entry No." <> 0 THEN BEGIN
+          cle."Entry No." := CreateCustLedgEntry."Closed by Entry No.";
+          cle.MARK(TRUE);
+        END;
+
+        cle.SETCURRENTKEY("Closed by Entry No.");
+        cle.SETRANGE("Closed by Entry No.",CreateCustLedgEntry."Entry No.");
+        IF cle.FIND('-') THEN
+          REPEAT
+            cle.MARK(TRUE);
+          UNTIL RecLoc.NEXT = 0;
+
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Closed by Entry No.");
+      END;
+
+      cle.MARKEDONLY(TRUE);
+
+
+      IF cle.FINDFIRST THEN
+      BEGIN
+        AppliedBy :=cle."Slip No.";
+        MESSAGE(AppliedBy);
+        AppliedDate := FORMAT(cle."Slip Date");
+      END;
+      IF cle.NEXT <> 0 THEN
+      }
+
+
+
+
+
+      {
+      cle.RESET;
+      AppliedBy := '';
+      AppliedDate := '';
+      cle := RecLoc;
+      IF cle."Entry No." <> 0 THEN BEGIN
+        CreateCustLedgEntry := cle;
+        FindApplnEntriesDtldtLedgEntry;
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Entry No.");
+
+        IF CreateCustLedgEntry."Closed by Entry No." <> 0 THEN BEGIN
+          cle."Entry No." := CreateCustLedgEntry."Closed by Entry No.";
+          cle.MARK(TRUE);
+        END;
+
+        cle.SETCURRENTKEY("Closed by Entry No.");
+        cle.SETRANGE("Closed by Entry No.",CreateCustLedgEntry."Entry No.");
+        IF cle.FIND('-') THEN
+          REPEAT
+            cle.MARK(TRUE);
+          UNTIL RecLoc.NEXT = 0;
+
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Closed by Entry No.");
+      END;
+
+      cle.MARKEDONLY(TRUE);
+
+      IF cle.FINDFIRST THEN
+      BEGIN
+        AppliedBy :=cle."Slip No.";
+        MESSAGE(AppliedBy);
+        AppliedDate := FORMAT(cle."Slip Date");
+      END;
+      IF cle.NEXT <> 0 THEN
+      REPEAT
+        AppliedBy := AppliedBy+'|'+cle."Slip No.";
+        AppliedDate := AppliedDate + '|' + FORMAT(cle."Slip Date");
+      UNTIL cle.NEXT = 0;
+      }
+
+
+
+      //YIMMDEVIP1.0 end
+    END;
+
+    PROCEDURE Func_GF@1102159001();
+    BEGIN
+        //=====================================CLE Group FOoter 5   OnPreSection
+      //  Message('hi..');
+        {
+      IF (Summary <>  TRUE) THEN
+      BEGIN
+      "Cust. Ledger Entry".CALCFIELDS("Remaining Amt. (LCY)");
+      IF (No=1) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+      BEGIN
+      }
+      //MEssage('gf...');
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Total for Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn("Cust. Ledger Entry"."Type Of Transaction",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(Var_TOT,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+      //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn("Cust. Ledger Entry"."Original Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn(CLE_OriginalAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);//23
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(CLE_RemainingAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+
+      ExcelBuf.AddColumn(NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("1to30",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("31to60",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("61to90",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("91to180",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("181to360",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      {
+      END;
+
+      END;
+       }
+      Tot_NotDue+=NotDue;
+      Tot_181to360+="181to360";
+      Tot_91to180+="91to180";
+      Tot_61to90+="61to90";
+      Tot_31to60+="31to60";
+      Tot_1to30+="1to30";
+
+      NotDue:=0;
+      "1to30":=0;
+      "31to60":=0;
+      "61to90":=0;
+      "91to180":=0;
+      "181to360":=0;
+
+
+      IF (Print2exl = TRUE) THEN
+       CurrReport.SHOWOUTPUT(FALSE);
+
+       //  message('gf  '+format(CLE_OriginalAmt_LCY));
+      GrandTotal_CLE_OriginalAmt_LCY+=CLE_OriginalAmt_LCY;
+      GrandTotal_CLE_RemainingAmt_LCY+=CLE_RemainingAmt_LCY;
+
+      CLE_OriginalAmt_LCY:=0;
+      CLE_RemainingAmt_LCY:=0;
+
+
+       //====================================CLE group Footer 5 - OnPostSection
+
+       CustNumber:="Cust. Ledger Entry"."Customer No.";
+    END;
+
+    PROCEDURE Func_Footer@1102159004();
+    BEGIN
+      //=======================================CLE GroupFooter 5
+      //Func_GF;
+
+      //============================================ CLE  Footer 6
+
+      //nk
+       // message('hello..');
+        IF (Summary <> TRUE) THEN
+      BEGIN
+      //message('true...fototer'+'   '+format("Cust. Ledger Entry"."Remaining Amt. (LCY)"));
+       IF ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+      BEGIN
+
+       ExcelBuf.NewRow;
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      // ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(GrandTotal_CLE_RemainingAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Number);
+
+       ExcelBuf.NewRow;
+
+      END;
+
+      END
+
+      ELSE
+
+
+
+      BEGIN
+
+
+      //MESSAGE('hi...');
+      "Cust. Ledger Entry".CALCFIELDS("Remaining Amt. (LCY)");
+       ExcelBuf.NewRow;
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(AccountType,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(FORMAT(Customer.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       //ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+       //ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'');
+
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+       ExcelBuf.AddColumn(GrandTotal_CLE_RemainingAmt_LCY,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Number);
+
+
+
+       ExcelBuf.AddColumn(Tot_NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(Tot_1to30,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(Tot_31to60,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(Tot_61to90,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(Tot_91to180,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+       ExcelBuf.AddColumn(Tot_181to360,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+       ExcelBuf.NewRow;
+
+      END;
+
+
+      IF (Print2exl = TRUE) THEN
+       CurrReport.SHOWOUTPUT(FALSE);
+    END;
+
+    BEGIN
+    {
+
+      //TBI1.0 - BY RSS - Set filter for TBI Customers When Company opened is TBI
+
+      //YIMM1.0 SOME COLUMN DELETED WHEN PRINT ON NORMAL PAPER.
+
+      //UPG13R2DEV
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:DataSourceID>bcb8c31a-3694-45f2-a9e7-0949400196a3</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="Name_Customer">
+          <DataField>Name_Customer</DataField>
+        </Field>
+        <Field Name="No_Customer">
+          <DataField>No_Customer</DataField>
+        </Field>
+        <Field Name="GLentry_SlipNo">
+          <DataField>GLentry_SlipNo</DataField>
+        </Field>
+        <Field Name="Type_Of_Transaction">
+          <DataField>Type_Of_Transaction</DataField>
+        </Field>
+        <Field Name="Narration_CustLedgerEntry">
+          <DataField>Narration_CustLedgerEntry</DataField>
+        </Field>
+        <Field Name="Document_Date">
+          <DataField>Document_Date</DataField>
+        </Field>
+        <Field Name="Due_Date">
+          <DataField>Due_Date</DataField>
+        </Field>
+        <Field Name="Remaining_Amt_LCY">
+          <DataField>Remaining_Amt_LCY</DataField>
+        </Field>
+        <Field Name="Remaining_Amt_LCYFormat">
+          <DataField>Remaining_Amt_LCYFormat</DataField>
+        </Field>
+        <Field Name="TaxInvoiceNo">
+          <DataField>TaxInvoiceNo</DataField>
+        </Field>
+        <Field Name="Commercial_Invoice_No">
+          <DataField>Commercial_Invoice_No</DataField>
+        </Field>
+        <Field Name="Original_Amt_LCY">
+          <DataField>Original_Amt_LCY</DataField>
+        </Field>
+        <Field Name="Original_Amt_LCYFormat">
+          <DataField>Original_Amt_LCYFormat</DataField>
+        </Field>
+        <Field Name="Bank_AccountNo">
+          <DataField>Bank_AccountNo</DataField>
+        </Field>
+        <Field Name="Bank_Name">
+          <DataField>Bank_Name</DataField>
+        </Field>
+        <Field Name="CompanyInformation_Name">
+          <DataField>CompanyInformation_Name</DataField>
+        </Field>
+        <Field Name="CompanyInformation_Address">
+          <DataField>CompanyInformation_Address</DataField>
+        </Field>
+        <Field Name="CompanyInformation_Address2">
+          <DataField>CompanyInformation_Address2</DataField>
+        </Field>
+        <Field Name="CompanyInformation_IRD_No">
+          <DataField>CompanyInformation_IRD_No</DataField>
+        </Field>
+        <Field Name="CompanyInformation_City">
+          <DataField>CompanyInformation_City</DataField>
+        </Field>
+        <Field Name="No">
+          <DataField>No</DataField>
+        </Field>
+        <Field Name="DocumenType">
+          <DataField>DocumenType</DataField>
+        </Field>
+        <Field Name="COMPANYNAME">
+          <DataField>COMPANYNAME</DataField>
+        </Field>
+        <Field Name="CustomerNo_CustLedgerEntry">
+          <DataField>CustomerNo_CustLedgerEntry</DataField>
+        </Field>
+        <Field Name="TransactType">
+          <DataField>TransactType</DataField>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>DataSet</rd:DataSetName>
+        <rd:SchemaPath>Report.xsd</rd:SchemaPath>
+        <rd:TableName>Result</rd:TableName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Tablix1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1.51389in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.61583in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.80931in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.02779in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.30278in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.89583in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.15625in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.20833in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.25in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>DocType</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox2">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Cust Name</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox2</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox3">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Narration</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox4">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Doc Date</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox5">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Slip No.</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox6">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Due Date</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox7">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Orig. Amt LCY</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox7</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox8">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Rem. Amt LCY</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox8</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.18606in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox199">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Customer NO.</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox199</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_Customer">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!No_Customer.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_Customer</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox203">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox203</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox209">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox209</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox215">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox215</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox221">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox221</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox227">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox227</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox233">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox233</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.1874in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox155">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Transaction Type :</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox155</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Type_Of_Transaction1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Type_Of_Transaction.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Type_Of_Transaction1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox204">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox204</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox210">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox210</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox216">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox216</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox222">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox222</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox228">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox228</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox234">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox234</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.18606in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DocumenType1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DocumenType.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>DocumenType1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Name_Customer1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Name_Customer.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Name_Customer1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Narration_CustLedgerEntry1">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Narration_CustLedgerEntry.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Narration_CustLedgerEntry1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox211">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatDateTime(Fields!Document_Date.Value,dateformat.ShortDate)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>dd-MM-yy</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox211</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox217">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!GLentry_SlipNo.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox217</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox223">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatDateTime(Fields!Due_Date.Value,dateformat.ShortDate)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <Format>dd-MM-yy</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox223</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox229">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Fields!Original_Amt_LCY.Value,2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox229</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox235">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(sum(Fields!Remaining_Amt_LCY.Value),2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox235</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.1874in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox141">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox141</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox142">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox142</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox206">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox206</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox212">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Total for Transaction Type:</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox212</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox224">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox224</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox230">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(sum(Fields!Original_Amt_LCY.Value),2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox230</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox236">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(sum(Fields!Remaining_Amt_LCY.Value),2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox236</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.18606in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox244">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox244</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox245">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox245</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox246">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox246</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox247">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox247</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox248">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox248</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox249">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox249</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox250">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox250</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox251">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox251</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.1874in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox194">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox194</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox195">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox195</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox207">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox207</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox213">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Total Remaining Amount (LCY)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox213</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox225">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox225</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox231">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Sum(Fields!Original_Amt_LCY.Value),2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox231</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox237">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Sum(Fields!Remaining_Amt_LCY.Value),2)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox237</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Color>LightGrey</Color>
+                              <Style>None</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="No_Customer1">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!No_Customer.Value</GroupExpression>
+                    </GroupExpressions>
+                    <PageBreak>
+                      <BreakLocation>Between</BreakLocation>
+                    </PageBreak>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!No_Customer.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixMembers>
+                    <TablixMember>
+                      <KeepWithGroup>After</KeepWithGroup>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>After</KeepWithGroup>
+                    </TablixMember>
+                    <TablixMember>
+                      <Group Name="Type_Of_Transaction">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!Type_Of_Transaction.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!CustomerNo_CustLedgerEntry.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                        </TablixMember>
+                        <TablixMember>
+                          <Group Name="Details" />
+                        </TablixMember>
+                        <TablixMember>
+                          <KeepWithGroup>Before</KeepWithGroup>
+                        </TablixMember>
+                        <TablixMember>
+                          <KeepWithGroup>Before</KeepWithGroup>
+                        </TablixMember>
+                      </TablixMembers>
+                    </TablixMember>
+                    <TablixMember>
+                      <KeepWithGroup>Before</KeepWithGroup>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <RepeatColumnHeaders>true</RepeatColumnHeaders>
+            <RepeatRowHeaders>true</RepeatRowHeaders>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Top>0.05556in</Top>
+            <Left>0.075in</Left>
+            <Height>1.37038in</Height>
+            <Width>10.53001in</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+        </ReportItems>
+        <Height>1.42594in</Height>
+        <Style />
+      </Body>
+      <Width>10.60501in</Width>
+      <Page>
+        <PageHeader>
+          <Height>0.90625in</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="Textbox50">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>= "Customer Aging- " +First(Fields!COMPANYNAME.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.58556in</Top>
+              <Left>4.03348in</Left>
+              <Height>0.25125in</Height>
+              <Width>2.96875in</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox51">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=First(Fields!CompanyInformation_Name.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.10935cm</Top>
+              <Left>0.15557cm</Left>
+              <Height>0.18654in</Height>
+              <Width>6.70014in</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox52">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=First(Fields!CompanyInformation_Address.Value, "DataSet_Result")+" " + First(Fields!CompanyInformation_Address2.Value, "DataSet_Result")+"  " + First(Fields!CompanyInformation_City.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.2818in</Top>
+              <Left>0.15557cm</Left>
+              <Height>0.18654in</Height>
+              <Width>6.70014in</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox53">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Globals!ExecutionTime</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                        <Format>d MMMM yyyy</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.07083in</Top>
+              <Left>7.54876in</Left>
+              <Height>0.22347in</Height>
+              <Width>2.96875in</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox54">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Page No.  "&amp;Globals!PageNumber</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.3068in</Top>
+              <Left>9.53488in</Left>
+              <Height>0.24209in</Height>
+              <Width>0.99652in</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox56">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=User!UserID</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Right</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox50</rd:DefaultName>
+              <Top>0.56278in</Top>
+              <Left>7.57376in</Left>
+              <Height>0.17834in</Height>
+              <Width>2.96875in</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageHeader>
+        <PageHeight>8.5in</PageHeight>
+        <PageWidth>11in</PageWidth>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

@@ -1,0 +1,39 @@
+OBJECT Table 60037 Budget System Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/19/12;
+    Time=13:26:07;
+    Version List=Bud1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary key         ;Code10         }
+    { 11  ;   ;Actaul Data Sheet Path;Text250      }
+    { 12  ;   ;Actaul Data Sheet Name Prefix;Text100 }
+    { 21  ;   ;Month Run Day       ;Integer       ;MinValue=1;
+                                                   MaxValue=28 }
+  }
+  KEYS
+  {
+    {    ;Primary key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      Date(DD-MM-YY)          Sign      Ref.                        Description
+      11-10-12                NTN       NIFMYIM018/FI/121005/009    This Table is designed for setup values of  the Actual And Budgeted
+                                                                    Data files for A1 Steer Sytem( NAV --> A1 Steer Interface.)
+    }
+    END.
+  }
+}
+

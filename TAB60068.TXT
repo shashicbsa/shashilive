@@ -1,0 +1,32 @@
+OBJECT Table 60068 Menu Description
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/22/15;
+    Time=18:25:38;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Text30         }
+    { 2   ;   ;Description         ;Text100        }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,129 @@
+OBJECT Table 9610 XML Schema Element
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/02/13;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.35800;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=XML Schema Element;
+               ENA=XML Schema Element];
+  }
+  FIELDS
+  {
+    { 1   ;   ;XML Schema Code     ;Code20        ;TableRelation="XML Schema";
+                                                   CaptionML=[ENU=XML Schema Code;
+                                                              ENA=XML Schema Code] }
+    { 2   ;   ;ID                  ;Integer       ;CaptionML=[ENU=ID;
+                                                              ENA=ID] }
+    { 3   ;   ;Parent ID           ;Integer       ;CaptionML=[ENU=Parent ID;
+                                                              ENA=Parent ID] }
+    { 4   ;   ;Node Name           ;Text250       ;CaptionML=[ENU=Node Name;
+                                                              ENA=Node Name] }
+    { 5   ;   ;Node Type           ;Option        ;CaptionML=[ENU=Node Type;
+                                                              ENA=Node Type];
+                                                   OptionCaptionML=[ENU=Element,Attribute;
+                                                                    ENA=Element,Attribute];
+                                                   OptionString=Element,Attribute }
+    { 6   ;   ;Data Type           ;Text250       ;CaptionML=[ENU=Data Type;
+                                                              ENA=Data Type] }
+    { 7   ;   ;MinOccurs           ;Integer       ;CaptionML=[ENU=MinOccurs;
+                                                              ENA=MinOccurs] }
+    { 8   ;   ;MaxOccurs           ;Integer       ;CaptionML=[ENU=MaxOccurs;
+                                                              ENA=MaxOccurs] }
+    { 9   ;   ;Choice              ;Boolean       ;CaptionML=[ENU=Choice;
+                                                              ENA=Choice] }
+    { 20  ;   ;Sort Key            ;Text200       ;CaptionML=[ENU=Sort Key;
+                                                              ENA=Sort Key] }
+    { 21  ;   ;Indentation         ;Integer       ;CaptionML=[ENU=Indentation;
+                                                              ENA=Indentation] }
+    { 22  ;   ;Visible             ;Boolean       ;InitValue=Yes;
+                                                   CaptionML=[ENU=Visible;
+                                                              ENA=Visible] }
+    { 23  ;   ;Selected            ;Boolean       ;OnValidate=VAR
+                                                                xID@1000 : Integer;
+                                                              BEGIN
+                                                                xID := ID;
+
+                                                                MODIFY;
+                                                                IF Selected THEN BEGIN
+                                                                  WHILE Indentation > 0 DO BEGIN
+                                                                    GET("XML Schema Code","Parent ID");
+                                                                    IF NOT Selected THEN BEGIN
+                                                                      Selected := TRUE;
+                                                                      MODIFY;
+                                                                    END;
+                                                                  END;
+                                                                  GET("XML Schema Code",xID);
+                                                                  SelectMandatoryNodes;
+                                                                END;
+                                                              END;
+
+                                                   CaptionML=[ENU=Selected;
+                                                              ENA=Selected] }
+    { 24  ;   ;Simple Data Type    ;Text50        ;CaptionML=[ENU=Simple Data Type;
+                                                              ENA=Simple Data Type];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;XML Schema Code,ID                      ;Clustered=Yes }
+    {    ;Parent ID,XML Schema Code                }
+    {    ;XML Schema Code,Sort Key                 }
+    {    ;Node Name,XML Schema Code                }
+    {    ;Data Type,XML Schema Code                }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    PROCEDURE IsLeaf@1063() : Boolean;
+    VAR
+      ChildXMLSchemaElement@1061 : Record 9610;
+    BEGIN
+      ChildXMLSchemaElement.SETRANGE("XML Schema Code","XML Schema Code");
+      ChildXMLSchemaElement.SETRANGE("Parent ID",ID);
+      ChildXMLSchemaElement.SETRANGE("Node Type","Node Type"::Element);
+      EXIT(ChildXMLSchemaElement.ISEMPTY);
+    END;
+
+    PROCEDURE GetFullPath@1() : Text;
+    VAR
+      ParentXMLSchemaElement@1000 : Record 9610;
+      Prefix@1001 : Text;
+      Suffix@1002 : Text;
+    BEGIN
+      Prefix := '/';
+      IF "Node Type" = "Node Type"::Attribute THEN BEGIN
+        Prefix := '[@';
+        Suffix := ']'
+      END;
+
+      IF ParentXMLSchemaElement.GET("XML Schema Code","Parent ID") THEN
+        EXIT(ParentXMLSchemaElement.GetFullPath + Prefix + "Node Name" + Suffix);
+      EXIT(Prefix + "Node Name" + Suffix);
+    END;
+
+    PROCEDURE SelectMandatoryNodes@3();
+    VAR
+      XMLSchemaElement@1000 : Record 9610;
+    BEGIN
+      XMLSchemaElement.SETRANGE("XML Schema Code","XML Schema Code");
+      XMLSchemaElement.SETRANGE("Parent ID",ID);
+      IF XMLSchemaElement.FINDSET THEN
+        REPEAT
+          XMLSchemaElement.Selected := XMLSchemaElement.Selected OR (XMLSchemaElement.MinOccurs > 0);
+          XMLSchemaElement.MODIFY;
+          XMLSchemaElement.SelectMandatoryNodes;
+        UNTIL XMLSchemaElement.NEXT = 0;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

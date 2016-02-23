@@ -1,0 +1,1079 @@
+OBJECT Codeunit 50034 Selling Out Batch MKT Activity
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/16/16;
+    Time=19:46:56;
+    Modified=Yes;
+    Version List=CR001;
+  }
+  PROPERTIES
+  {
+    SingleInstance=No;
+    OnRun=VAR
+            FileName@1000000005 : Text[255];
+            SheetName@1000000004 : Text[255];
+            XLBuff@1000000003 : Record 50002;
+            NoOfRec@1000000002 : Integer;
+            i@1000000001 : Integer;
+            Cust@1000000006 : Record 50004;
+            Cust_Master@1000000000 : Record 18;
+            Ship_Add@1000000007 : Record 222;
+            GenLed_Setup@1000000009 : Record 98;
+            Dim_Value@1000000008 : Record 349;
+            Curry@1000000010 : Record 4;
+            "G/L"@1000000011 : Record 15;
+            AreaCode_WHT@1000000012 : Record 50017;
+            LocalRecIfDimMapSetup@1000000014 : Record 60066;
+            LocalIntRes@1000000013 : Integer;
+            LocalCodeRes@1000000015 : Code[10];
+            R_WHTBusiPostGrp@1000000016 : Record 28040;
+            R_WHTProdPostGrp@1000000017 : Record 28041;
+            DownloadFile@1000000018 : Text[100];
+            LDia_Indicator@1000000019 : Dialog;
+            LInt_Count@1000000020 : Integer;
+            LInt_TotalRecs@1000000021 : Integer;
+          BEGIN
+            //trial
+            LDia_Indicator.OPEN('Validating ExcelSheet @1@@@@@@@@@@@@@@@');
+            LInt_Count := 1;
+            //trial
+
+            READY := FALSE;
+            XLBuff.DELETEALL;
+            Master_Setup.GET;
+            _R_MasterSetupII.GET;
+
+            DateformatCheck := DateformatCheck.DateTimeFormatCheck;
+            Ch:=9;
+
+            FileName := Master_Setup."Interface File Path" + '\' + _R_MasterSetupII.OY_MC_IF_FILE_Name;
+            IF FileName = '' THEN
+              EXIT;
+            //svIF CONFIRM('want to upload') THEN
+            //svIF NOT UPLOAD('Select interface excel file to upload', '', '', '', FileName) THEN
+            //svEXIT;
+            LogFile := Master_Setup."Interface File Path" + '\' + 'LOG-' + 'MKT Activities.Txt';
+            SheetName := 'MKT Activities';
+            //SheetName := XLBuff.SelectSheetsName(FileName);
+
+            F1.CREATE(LogFile);
+            F1.CREATEOUTSTREAM(Outstreamobj);
+            F1.TEXTMODE(TRUE);
+
+            XLBuff.OpenBook(FileName, SheetName);
+            XLBuff.ReadSheet();
+            IF XLBuff.FINDLAST THEN
+              NoOfRec := XLBuff."Row No.";
+            //trial
+            LInt_TotalRecs := NoOfRec;
+            //trial
+
+            IF (NoOfRec = 1) THEN
+              ErrorInFile := TRUE;
+
+            FOR i := 2 TO NoOfRec DO BEGIN
+              //trial
+              LInt_Count := LInt_Count + 1;
+              LDia_Indicator.UPDATE(1,ROUND(10000 / (LInt_TotalRecs / LInt_Count),1));
+              //trial
+
+              XLBuff.RESET;
+              XLBuff.SETRANGE("Row No.", i);
+              IF XLBuff.FINDFIRST THEN REPEAT
+                EntryNo := i - 1;
+            ////Reading the document no.
+                IF XLBuff."Column No." = 1 THEN
+                  EVALUATE(InvoiceNo, XLBuff."Cell Value as Text");
+
+            ///Reading the Dealer Code
+
+                IF XLBuff."Column No." = 2 THEN BEGIN
+                  EVALUATE(DealerCode, XLBuff."Cell Value as Text");
+                  IF DealerCode = '' THEN
+                    Error_Cust := TRUE
+                  ELSE BEGIN
+                    Cust.RESET;
+                    Cust.SETRANGE("Imacs Code", DealerCode);
+                    IF Cust.FINDFIRST THEN BEGIN
+                      IF NOT Cust_Master.GET(Cust.NAV) THEN
+                        Error_Cust := TRUE
+                      ELSE BEGIN
+                        IF ((Cust_Master."Customer Type" = Cust_Master."Customer Type"::" ") OR
+                            (Cust_Master."Type of Dealer" = Cust_Master."Type of Dealer"::" ") OR
+                            (Cust_Master."Gen. Bus. Posting Group" = '') OR
+                            (Cust_Master."VAT Bus. Posting Group" = '') OR
+                            (Cust_Master."WHT Business Posting Group" = '') OR
+                            (Cust_Master."Customer Posting Group" = ''))
+                          THEN
+                            Error_Cust_Setup := TRUE;
+                      END;
+                    END ELSE
+                      Error_Conver := TRUE;
+                  END;
+                END;
+            ///Reading the Transaction Date
+
+                IF XLBuff."Column No." = 3 THEN BEGIN
+                  IF EVALUATE(TransDate, XLBuff."Cell Value as Text") THEN BEGIN
+                  {    //Ok:= DateformatCheck.CHECK(XLBuff."Cell Value as Text");  //UPG13R2DEV
+                    Ok := DateformatCheck.checkDateTime(XLBuff."Cell Value as Text"); //UPG13R2DEV
+                    IF NOT (Ok) THEN
+                      Error_TransDate := TRUE;   }
+                  END ELSE
+                    Error_TransDate := TRUE;
+                END;
+
+            ///READING THE COMMERCIAL INVOICE DATE.
+                IF XLBuff."Column No." = 4 THEN  BEGIN
+                  IF EVALUATE(InvoiceDate, XLBuff."Cell Value as Text") THEN BEGIN
+                {    //Ok:= DateformatCheck.CHECK(XLBuff."Cell Value as Text");  //UPG13R2DEV
+                    Ok := DateformatCheck.checkDateTime(XLBuff."Cell Value as Text"); //UPG13R2DEV
+                  }
+                   END ELSE
+                    Error_InvDate := TRUE;
+                END;
+
+            //READING EXTERNAL DOCUMENT NO.
+                IF XLBuff."Column No." = 5 THEN BEGIN
+                  EVALUATE(ExtDocNo, XLBuff."Cell Value as Text");
+                END;
+
+
+            //READING DUE DATE
+                //>>08102013/VK/CR#020-New Code
+                IF XLBuff."Column No." = 6 THEN BEGIN    //No. change from 7 to 6 because UPG13R2DEV //SV
+                 IF EVALUATE(DueDate, XLBuff."Cell Value as Text") THEN BEGIN
+
+                     IF DueDate < TransDate THEN BEGIN
+                       Error_DueDateCheck := TRUE;
+                   END;
+                 END ELSE
+                     Error_DueDate := TRUE;
+                END;
+                //<<08102013/VK/CR#020-New Code
+            //Reading dimension 1 Shop Code
+                IF XLBuff."Column No." = 7 THEN BEGIN
+                  EVALUATE(ShopCode, XLBuff."Cell Value as Text");
+                  IF ShopCode <> '' THEN BEGIN
+                    IF LocalRecIfDimMapSetup.GET THEN;
+                    IF LocalRecIfDimMapSetup.Others THEN BEGIN
+                      LocalCodeRes := GetDim1Value(ShopCode);
+                      IF (LocalCodeRes = 'NOT FOUND') THEN
+                        Error_Dim1 := TRUE
+                      ELSE
+                        ShopCode1 := Dim_Value.Code;
+                    END ELSE BEGIN
+                      GenLed_Setup.GET;
+                      Dim_Value.RESET;
+                      Dim_Value.SETRANGE(Dim_Value."Dimension Code", GenLed_Setup."Global Dimension 1 Code");
+                      Dim_Value.SETRANGE(Dim_Value.Name, ShopCode);
+                      IF NOT Dim_Value.FINDFIRST THEN
+                        Error_Dim1 := TRUE
+                      ELSE
+                        ShopCode1 := Dim_Value.Code;
+                    END;
+                  END ELSE
+                    Error_Dim1 := TRUE;
+                END;
+
+
+
+            ///READING DIMENSION CODE 2 "model code"
+                IF XLBuff."Column No." = 8 THEN BEGIN
+                  EVALUATE(ModelCode, XLBuff."Cell Value as Text");
+                  IF ModelCode <> '' THEN BEGIN
+                    GenLed_Setup.GET;
+                    Dim_Value.RESET;
+                    Dim_Value.SETRANGE(Dim_Value."Dimension Code", GenLed_Setup."Shortcut Dimension 2 Code");
+                    Dim_Value.SETRANGE(Dim_Value.Name, ModelCode);
+                    IF NOT Dim_Value.FINDFIRST THEN
+                      Error_Dim3 := TRUE
+                    ELSE
+                      ShopCode2 := Dim_Value.Code;
+                  END ELSE
+                     Error_Dim3 := TRUE;
+                END;
+            //Reading dimension code 3 selling expense code
+                IF XLBuff."Column No." = 9 THEN BEGIN
+                  EVALUATE(SellExpCode, XLBuff."Cell Value as Text");
+                  IF SellExpCode <> '' THEN BEGIN
+                    GenLed_Setup.GET;
+                    Dim_Value.RESET;
+                    Dim_Value.SETRANGE(Dim_Value."Dimension Code", GenLed_Setup."Shortcut Dimension 3 Code");
+                    Dim_Value.SETRANGE(Dim_Value.Name, SellExpCode);
+                    IF NOT Dim_Value.FINDFIRST THEN
+                      Error_Dim4 := TRUE
+                    ELSE
+                      SellExp := Dim_Value.Code;
+                  END ELSE
+                    Error_Dim4 := TRUE;
+                END;
+
+
+            //READING narration
+                IF XLBuff."Column No." = 10 THEN BEGIN
+                  EVALUATE(Narration,XLBuff."Cell Value as Text");
+                END;
+
+            //READING CURRENCY CODE
+                IF XLBuff."Column No." = 11 THEN BEGIN
+                  EVALUATE(CurrencyCode, XLBuff."Cell Value as Text");
+                  IF CurrencyCode <> '' THEN BEGIN
+                    Curry.RESET;
+                    IF NOT Curry.GET(CurrencyCode) THEN
+                       Error_Curr := TRUE;
+                  END;
+                END;
+            //Reading Tax Invoice No.
+            IF XLBuff."Column No." = 12 THEN
+              EVALUATE(_C_TaxInvNo, XLBuff."Cell Value as Text");
+
+            ///READING TAX INV DATE.
+                IF XLBuff."Column No." = 13 THEN BEGIN
+                  IF EVALUATE(TaxInvDate, XLBuff."Cell Value as Text") THEN BEGIN
+                    IF (TaxInvDate <> 0D) THEN BEGIN
+                      Date3MonthsAgo := CALCDATE('<-CM>', CALCDATE('<-3M>', TransDate));
+                      CurrentMonthLastDate := CALCDATE('<CM>', TransDate);
+                      IF((TaxInvDate) < ( Date3MonthsAgo)) THEN
+                       Error_TaxInvDateCheck1 := TRUE;
+                      IF((TaxInvDate) > (CurrentMonthLastDate)) THEN
+                       Error_TaxInvDateCheck2 := TRUE;
+                    END;
+                    //END;
+                  END ELSE
+                    Error_TaxInvDate := TRUE;
+                END;
+
+
+            //READING ACCOUNT NO.
+                IF XLBuff."Column No." = 14 THEN BEGIN
+                  EVALUATE(AccNo, XLBuff."Cell Value as Text");
+                  IF AccNo <> '' THEN BEGIN
+                     "G/L".RESET;
+                      IF NOT "G/L".GET(AccNo) THEN
+                       "Error_G/L" := TRUE;
+                  END ELSE
+                     "Error_G/L" := TRUE;
+                END;
+
+            //READING AMOUNT FIELD
+                IF XLBuff."Column No." = 15 THEN BEGIN
+                  IF EVALUATE(Amt, XLBuff."Cell Value as Text") THEN BEGIN
+                   IF FORMAT(Amt) = '' THEN
+                    Error_Amount := TRUE;
+                  END ELSE
+                    Error_Amount := TRUE;
+                END;
+
+
+            //READING VAT FLAG
+                IF XLBuff."Column No." = 16 THEN BEGIN
+                  IF NOT EVALUATE(VAT, XLBuff."Cell Value as Text") THEN BEGIN
+                    GBoo_Err_VAT := TRUE;
+                  END;
+
+            //READING VAT FLAG
+                  Result := GetPPNNpwpNumber(DealerCode, VAT);
+                  CASE Result OF
+                    1:
+                      Error_Cust := TRUE;
+                    2:
+                      Error_Conver := TRUE;
+                    3:
+                      Error_Npwp := TRUE;
+                  END;
+
+
+                  IF VAT AND (_C_TaxInvNo = '') THEN
+                    _B_BlkTaxInvNo := TRUE
+                  ELSE IF VAT AND (TaxInvDate = 0D) THEN
+                    _B_BlkTaxInvDate := TRUE
+                  ELSE IF VAT AND (_C_TaxInvNo <> '') AND (TaxInvDate <> 0D) THEN BEGIN      //check duplicate Tax invoice No.
+                    _B_DTPPI := CheckDuplicateTIN1(_C_TaxInvNo);                             //duplicate in Posted Purch. Invoice
+                    _B_DTPI := CheckDuplicateTIN2(_C_TaxInvNo);                              //duplicare in Purch. Invoice
+                    _B_DTSI := CheckDuplicateTIN3(_C_TaxInvNo);                              //duplicate in sales Invoice
+                    _B_DTPSI := CheckDuplicateTIN4(_C_TaxInvNo);                             //duplicate in posted sales Invoice
+                    _B_DTF := CheckDuplicateTIN5(_C_TaxInvNo);                               //duplicate in File Itself
+                    IF (_B_DTPPI OR _B_DTPI OR _B_DTSI OR _B_DTPSI OR _B_DTF) THEN
+                      _B_DupTIN := TRUE;
+
+                    _R_TempTable.RESET;
+                    IF _R_TempTable.FINDLAST THEN
+                      _I_EntryNo := _R_TempTable."Entry No." + 1
+                    ELSE
+                      _I_EntryNo := 1;
+                    _R_TempTable."Entry No." := _I_EntryNo;
+                    _R_TempTable.INSERT(TRUE);
+                    _R_TempTable."Tax Invoice No." := _C_TaxInvNo;
+                    _R_TempTable.MODIFY(TRUE);
+                  END;
+                END;
+
+
+
+            {
+            Result1 := GetPPHNpwpNumber(DealerCode);
+            CASE Result1 OF
+              1:
+                Error_Cust := TRUE;
+              2:
+                Error_Conver := TRUE;
+              3:
+                Error_PPH_Npwp := TRUE;
+            END;
+            }
+
+
+
+            //READING B/L DATE
+
+                IF XLBuff."Column No." = 17 THEN BEGIN
+                  EVALUATE(BLDate, XLBuff."Cell Value as Text");
+                END;
+
+            //>>Reading WHT Busi. psoting group
+            IF XLBuff."Column No." = 18 THEN BEGIN
+              EVALUATE(_T_WhtBusiPostGrp, XLBuff."Cell Value as Text");
+              IF (GetPPHNpwpNumber(DealerCode) = 4) THEN
+                Npwp := TRUE;
+            END;
+
+            //Reading WHT Prod. psoting group
+            IF XLBuff."Column No." = 19 THEN BEGIN
+              EVALUATE(_T_WhtProdPostGrp, XLBuff."Cell Value as Text");
+              IF _T_WhtProdPostGrp <> '' THEN BEGIN
+                IF _T_WhtBusiPostGrp <> '' THEN BEGIN
+                  IF R_WHTBusiPostGrp.GET(_T_WhtBusiPostGrp) THEN BEGIN
+                    IF R_WHTProdPostGrp.GET(_T_WhtProdPostGrp) THEN BEGIN
+                      _R_WhtPostSetup.RESET;
+                      _R_WhtPostSetup.SETRANGE("WHT Business Posting Group", _T_WhtBusiPostGrp);
+                      _R_WhtPostSetup.SETRANGE("Reason Code", Master_Setup."Reason (Sale as Purchase)");
+                      _R_WhtPostSetup.SETRANGE(NPWP, Npwp);
+                      _R_WhtPostSetup.SETRANGE("WHT Product Posting Group", _T_WhtProdPostGrp);
+                      IF NOT _R_WhtPostSetup.FINDSET THEN
+                        Error_WHTPostingSetup := TRUE;
+                    END ELSE
+                      _B_WHTProdPostGrp := TRUE;
+                  END ELSE
+                    _B_ErrWHTBusiPostGrp := TRUE;
+                END ELSE
+                  _B_BlkWHTBusiPostGrp := TRUE;
+              END;
+            END;
+            //READING ARE CODE
+                IF XLBuff."Column No." = 20 THEN BEGIN
+                  EVALUATE(AreaCode, XLBuff."Cell Value as Text");
+                  IF AreaCode <> '' THEN BEGIN
+                     AreaCode_WHT.RESET;
+                     IF NOT AreaCode_WHT.GET(AreaCode) THEN
+                       Error_WHT := TRUE;
+                  END ELSE
+                     Error_WHT := TRUE;
+                END;
+
+                IF XLBuff."Column No." = 21 THEN BEGIN                                  ///Reading Category Code
+                  EVALUATE(_C_NpwpBankCategory, XLBuff."Cell Value as Text");
+                  IF _C_NpwpBankCategory <> '' THEN BEGIN
+                    IF NOT (_C_NpwpBankCategory IN ['SP','MC','SV']) THEN
+                      _B_ErrNpwpBankCategory := TRUE;
+                  END ELSE
+                    _B_BlankNpwpBankCategory := TRUE;
+                END;
+
+
+                IF XLBuff."Column No." = 22 THEN BEGIN                                  ///Reading Type of Transaction
+                  IF NOT EVALUATE(GOpt_TypeOfTrans,XLBuff."Cell Value as Text") THEN
+                    GBoo_ErrTypeOfTrans := TRUE
+                END;
+
+
+            UNTIL XLBuff.NEXT=0;
+
+            ///CODE FOR ERROR LOG FILE
+                IF (Error_Cust OR Error_Npwp OR Error_TransDate OR Error_InvDate OR
+                    "Error_G/L" OR Error_Amount OR Error_Conver OR Error_Dim1 OR
+                    Error_Dim3 OR Error_Curr OR  Error_WHT OR Error_Cust_Setup OR
+                    Error_DueDate OR Error_DueDateCheck OR Error_PPH_Npwp OR
+                    Error_Dim4 OR Error_TaxInvDate OR Error_TaxInvDateCheck1 OR
+                    Error_TaxInvDateCheck2 OR Error_WHTPostingSetup OR
+                    _B_ErrWHTBusiPostGrp OR _B_BlkWHTBusiPostGrp OR
+                    _B_WHTProdPostGrp OR _B_BlkTaxInvNo OR _B_BlkTaxInvDate OR
+                    _B_DupTIN OR _B_ErrNpwpBankCategory OR GBoo_ErrTypeOfTrans OR
+                    _B_BlankNpwpBankCategory OR GBoo_Err_VAT) THEN BEGIN //08102013/VK/CR#020  //PPNPPHDEV    //UPG13R2DEV//SV
+
+                  Flag := TRUE;
+
+                  Outstreamobj.WRITETEXT(FORMAT(EntryNo));
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+
+                  IF Error_Cust THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Dealer Code');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_Cust_Setup THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Setup Value is Missing for the Customer.');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                  END;
+
+                  IF Error_Npwp THEN BEGIN
+                    Outstreamobj.WRITETEXT('! PPN M/C NPWP No. not found for entity'); //PPNPPHDEV
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  //PPNPPHDEV.begin
+                  IF Error_PPH_Npwp THEN BEGIN
+                    Outstreamobj.WRITETEXT('! PPH M/C NPWP No. not found for entity'); //PPNPPHDEV
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  //PPNPPHDEV.end
+                  IF Error_TransDate THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Transaction Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_BlkTaxInvNo THEN BEGIN
+                    Outstreamobj.WRITETEXT('Error ! VAT is applied but Tax Invoice No. is Blank');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_BlkTaxInvDate THEN BEGIN
+                    Outstreamobj.WRITETEXT('Error ! VAT is applied but Tax Invoice Date is Blank');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_DTPPI THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text001 + _T_DupTINDocNo);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_DTPI THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text002 + _T_DupTINDocNo);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_DTSI THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text003 + _T_DupTINDocNo);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_DTPSI THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text004 + _T_DupTINDocNo);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_DTF THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text005);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF GBoo_Err_VAT THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text008);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_InvDate THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Invoice Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  //>>08102013/VK/CR#020
+                  IF Error_DueDate THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Due Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_DueDateCheck THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Due Date should not be less than Transaction Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  //<<08102013/VK/CR#020
+                  //SV UPG13R2DEV>>>
+                  IF Error_TaxInvDate THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in Tax Invoice Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF Error_TaxInvDateCheck1 THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Tax Invoice Date should Not be Less Than Three Months Before Posting Date');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF Error_TaxInvDateCheck2 THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Tax Invoice Date  should Not be Greater Than Current Month');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_ErrWHTBusiPostGrp THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in WHT Busi. Posting Group(Not Found)');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_WHTProdPostGrp THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in WHT Prod. Posting Group(Not Found)');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_BlkWHTBusiPostGrp THEN BEGIN
+                    Outstreamobj.WRITETEXT('! WHT Product Posting Group is applied but WHT Busi. Posting Group is Blank');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF Error_WHTPostingSetup THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in WHT Posting Setup');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF "Error_G/L" THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In G/L Account');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_Amount THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Amount');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_Conver THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Conversion Table for Dealer Code');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_Dim1 THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Dimmension Code 1 ');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_Dim3 THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Dimmension Code 2'); //SV changed from 3 to 2 UPG13R2DEV
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF Error_Dim4 THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error In Dimmension Code 3');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+
+                  IF Error_WHT THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in  WHT Area Code');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_ErrNpwpBankCategory THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error in NPWP and Bank Category Code');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF _B_BlankNpwpBankCategory THEN BEGIN
+                    Outstreamobj.WRITETEXT('! Error Blank NPWP and Bank Category Code');
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  IF GBoo_ErrTypeOfTrans THEN BEGIN
+                    Outstreamobj.WRITETEXT(Text007);
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                  END;
+                  Outstreamobj.WRITETEXT();
+                END ELSE
+                  BEGIN
+                    Outstreamobj.WRITETEXT(FORMAT(EntryNo));
+                    Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                    Outstreamobj.WRITETEXT('Process Sucessfully');
+                    Outstreamobj.WRITETEXT();
+                  END;
+              EntryNo := EntryNo +1;
+
+              ResetAllVariables();
+            END;
+            //trial
+            LDia_Indicator.CLOSE;
+            //trial
+            _R_TempTable.DELETEALL(TRUE);
+            FOR i := 2 TO NoOfRec DO BEGIN
+              IF NOT Flag THEN BEGIN
+                EntryNo:=i-1;
+                InsertInTempTable(i);
+                EntryNo := EntryNo + 1;
+              END;
+            END;
+
+            IF ErrorInFile THEN BEGIN
+              Outstreamobj.WRITETEXT('! Error In Interface File');
+              Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+              SalesInvIntfc.DELETEALL;
+            END;
+
+            F1.CLOSE;
+            ResetAllVariables();
+
+            IF READY THEN
+              IncReport.RUN
+            ELSE
+              MESSAGE('ERROR' + '\' + '\' + 'Check log file for more information.');
+            {
+            IF CONFIRM('File Name : ' + _R_MasterSetupII.OY_MC_IF_FILE_Name +'\'+ 'Sheet Name : '+SheetName + '\'
+                       + 'Process Complete' + '\' + '\' + '!!Check log file for errors**' + '\' + '\' +'Do you want to download log file ?') THEN BEGIN
+              DownloadFile := 'LOG-MKT Activities.Txt';
+              DOWNLOAD(LogFile, 'Download Log File', '', '', DownloadFile);
+            END;
+            }
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      InvoiceNo@1000000000 : Code[20];
+      DealerCode@1000000001 : Code[20];
+      TransDate@1000000002 : Date;
+      InvoiceDate@1000000003 : Date;
+      ExtDocNo@1000000004 : Code[20];
+      NPWPNo@1000000005 : Code[20];
+      PayDate@1000000006 : Date;
+      ShopCode@1000000007 : Code[10];
+      ModelCode@1000000008 : Code[10];
+      CurrencyCode@1000000009 : Code[10];
+      TaxInvDate@1000000010 : Date;
+      AccNo@1000000011 : Code[20];
+      Amt@1000000012 : Decimal;
+      VAT@1000000013 : Boolean;
+      BLDate@1000000014 : Date;
+      AreaCode@1000000015 : Code[10];
+      EntryNo@1000000016 : Integer;
+      ErrorInRow@1000000017 : Boolean;
+      ErrorInFile@1000000018 : Boolean;
+      SalesInvIntfc@1000000019 : Record 50009;
+      DateformatCheck@1000000020 : DotNet "'DateTimeFun, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'.DateTimeFun.DateTimeFormatCheck";
+      text006@1000000022 : TextConst 'ENU=Import EXCEL  File';
+      Ch@1000000023 : Char;
+      Master_Setup@1000000024 : Record 50008;
+      LogFile@1000000025 : Text[250];
+      F1@1000000026 : File;
+      Outstreamobj@1000000027 : OutStream;
+      Error_Cust@1000000029 : Boolean;
+      Error_Cust_Setup@1000000028 : Boolean;
+      Error_TransDate@1000000032 : Boolean;
+      Error_InvDate@1000000031 : Boolean;
+      Ok@1000000030 : Boolean;
+      Error_Conver@1000000033 : Boolean;
+      Error_Npwp@1000000034 : Boolean;
+      Error_Dim1@1000000036 : Boolean;
+      Error_Dim3@1000000035 : Boolean;
+      Error_Curr@1000000037 : Boolean;
+      Error_CurrBlank@1000000038 : Boolean;
+      "Error_G/L"@1000000039 : Boolean;
+      Error_Amount@1000000040 : Boolean;
+      Error_WHT@1000000041 : Boolean;
+      Flag@1000000042 : Boolean;
+      READY@1000000043 : Boolean;
+      IncReport@1000000044 : Report 50071;
+      ShopCode1@1000000045 : Code[10];
+      ShopCode2@1000000046 : Code[10];
+      Error_DueDate@1102159003 : Boolean;
+      DueDate@1102159002 : Date;
+      Error_DueDateCheck@1102159001 : Boolean;
+      Result@1102159004 : Integer;
+      Result1@1102159005 : Integer;
+      Error_PPH_Npwp@1102159006 : Boolean;
+      SellExpCode@1000000021 : Text[30];
+      Error_Dim4@1000000047 : Boolean;
+      SellExp@1000000048 : Text[30];
+      Narration@1000000049 : Text[150];
+      Error_TaxInvDate@1000000050 : Boolean;
+      Date3MonthsAgo@1000000051 : Date;
+      CurrentMonthLastDate@1000000052 : Date;
+      Error_TaxInvDateCheck1@1000000053 : Boolean;
+      Error_TaxInvDateCheck2@1000000054 : Boolean;
+      _T_WhtProdPostGrp@1000000055 : Text[20];
+      _B_BlkWHTProd@1000000062 : Boolean;
+      _R_WhtPostSetup@1000000056 : Record 28043;
+      Npwp@1000000057 : Boolean;
+      Error_WHTPostingSetup@1000000058 : Boolean;
+      _T_WhtBusiPostGrp@1000000059 : Text;
+      _B_ErrWHTBusiPostGrp@1000000060 : Boolean;
+      _B_BlkWHTBusiPostGrp@1000000061 : Boolean;
+      _B_WHTProdPostGrp@1000000063 : Boolean;
+      _R_MasterSetupII@1000000064 : Record 60053;
+      _C_TaxInvNo@1000000065 : Code[30];
+      _B_BlkTaxInvNo@1000000066 : Boolean;
+      _B_BlkTaxInv@1000000067 : Boolean;
+      _B_BlkTaxInvDate@1000000068 : Boolean;
+      _B_DTPPI@1000000069 : Boolean;
+      _B_DTPI@1000000070 : Boolean;
+      _B_DTSI@1000000071 : Boolean;
+      _B_DTPSI@1000000072 : Boolean;
+      _B_DTF@1000000073 : Boolean;
+      _B_DupTIN@1000000074 : Boolean;
+      _T_DupTINDocNo@1000000075 : Text[50];
+      Text001@1000000076 : TextConst 'ENU=Error! Tax Invoice No. already exist in Posted Purchase Invoice Document No.:';
+      Text002@1000000077 : TextConst 'ENU=Error! Tax Invoice No. already exist in Purchase Invoice Document No.:';
+      Text003@1000000078 : TextConst 'ENU=Error! Tax Invoice No. already exist in Sales Invoice Document No.:';
+      Text004@1000000079 : TextConst 'ENU=Error! Tax Invoice No. already exist in Posted Sales Invoice Document No.:';
+      Text005@1000000080 : TextConst 'ENU=Error! Tax Invoice No. already exist in the excelsheet';
+      _I_EntryNo@1000000082 : Integer;
+      _R_TempTable@1000000083 : Record 50009;
+      CallFun@1000000081 : Report 50071;
+      _C_NpwpBankCategory@1000000084 : Code[10];
+      _B_BlankNpwpBankCategory@1000000085 : Boolean;
+      _B_ErrNpwpBankCategory@1000000086 : Boolean;
+      GOpt_TypeOfTrans@1000000087 : ',Selling In,Selling Out,Direct,Indirect,Adm.MKT,Free Service,Claim,Promotion,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Other YMKI,Propac Ex.,Intrst_Deposit,Imacs-ATV,Imacs-Generator,Imacs-CBU,Campaign,DDS1 Vendor,DDS2 Vendor,DDS3 Vendor,DDS4 Vendor,DDS5 Vendor,DDS6 Vendor,DDS7 Vendor,DDS8 Vendor,DDS9 Vendor,MKT Vendor,SVC Vendor,MS Vendor,POD Vendor,Others Purchase,Ekspedisi Log-POD';
+      GBoo_ErrTypeOfTrans@1000000088 : Boolean;
+      Text007@1000000089 : TextConst 'ENU=Error! Type Of Transaction(*mandatory) is not valid';
+      GBoo_Err_VAT@1000000090 : Boolean;
+      Text008@1000000091 : TextConst 'ENU=Error! VAT must be either 0 or 1 in the excelsheet.';
+
+    PROCEDURE InsertInTempTable@1000000045(Loop@1000000001 : Integer);
+    VAR
+      ExBuffRec@1000000002 : Record 50002;
+      DimValue@1000000000 : Record 349;
+      GLSetUp@1000000003 : Record 98;
+    BEGIN
+      SalesInvIntfc.INIT;
+      SalesInvIntfc."Entry No." := EntryNo;
+      //SalesInvIntfc."Sales Type":=SalesInvIntfc."Sales Type"::"Other YMKI";
+      SalesInvIntfc.INSERT;
+      ExBuffRec.RESET;
+      ExBuffRec.SETRANGE(ExBuffRec."Row No.",Loop);
+      IF ExBuffRec.FINDFIRST THEN REPEAT
+        IF ExBuffRec."Column No." = 1 THEN
+          SalesInvIntfc."No.":=ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 2 THEN
+          SalesInvIntfc."Dealer Code":=ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 3 THEN BEGIN
+          EVALUATE(SalesInvIntfc."Transaction Date",ExBuffRec."Cell Value as Text");
+        END;
+        IF ExBuffRec."Column No." = 4 THEN
+          EVALUATE(SalesInvIntfc."Invoice Date",ExBuffRec."Cell Value as Text");
+        IF ExBuffRec."Column No." = 5 THEN
+          SalesInvIntfc."Ext.Doc.No.":=ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 6 THEN
+          EVALUATE(SalesInvIntfc."Due Date",ExBuffRec."Cell Value as Text");            //08102013/VK/CR#020-New Code
+        IF ExBuffRec."Column No." = 7 THEN BEGIN
+          GLSetUp.GET;
+          DimValue.RESET;
+          DimValue.SETFILTER(DimValue."Dimension Code",GLSetUp."Global Dimension 1 Code");
+          DimValue.SETFILTER(DimValue.Name,'%1',ExBuffRec."Cell Value as Text");
+          IF DimValue.FINDFIRST THEN
+            SalesInvIntfc."Shortcut Dimension 1 Code":=DimValue.Code;
+        END;
+        IF ExBuffRec."Column No." = 8 THEN BEGIN
+          GLSetUp.GET;
+          DimValue.RESET;
+          DimValue.SETFILTER(DimValue."Dimension Code",GLSetUp."Global Dimension 2 Code");
+          DimValue.SETFILTER(DimValue.Name,'%1',ExBuffRec."Cell Value as Text");
+          IF DimValue.FINDFIRST THEN
+            SalesInvIntfc."Shortcut Dimension 2 Code":=DimValue.Code;
+        END;
+        IF ExBuffRec."Column No." = 9 THEN BEGIN
+          GLSetUp.GET;
+          DimValue.RESET;
+          DimValue.SETFILTER(DimValue."Dimension Code",GLSetUp."Shortcut Dimension 3 Code");
+          DimValue.SETFILTER(DimValue.Name,'%1',ExBuffRec."Cell Value as Text");
+          IF DimValue.FINDFIRST THEN
+            SalesInvIntfc."Shortcut Dimension 3 Code":=DimValue.Code;
+        END;
+        IF ExBuffRec."Column No." = 10 THEN
+          SalesInvIntfc.Narration := ExBuffRec."Cell Value as Text";
+
+        IF ExBuffRec."Column No." = 11 THEN
+          SalesInvIntfc.Currency:=ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 12 THEN
+          SalesInvIntfc."Tax Invoice No." := ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 13 THEN
+          EVALUATE(SalesInvIntfc."Tax Invoice Date",ExBuffRec."Cell Value as Text");
+        IF ExBuffRec."Column No." = 14 THEN
+          SalesInvIntfc."Account No.":=ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 15 THEN
+          EVALUATE(SalesInvIntfc.Amount,ExBuffRec."Cell Value as Text");
+        IF ExBuffRec."Column No." = 16 THEN
+          EVALUATE(SalesInvIntfc."VAT Required",ExBuffRec."Cell Value as Text");
+        IF ExBuffRec."Column No." = 17 THEN
+          EVALUATE(SalesInvIntfc."B/L Date",ExBuffRec."Cell Value as Text");
+        SalesInvIntfc."Interface Date":=WORKDATE;
+        IF ExBuffRec."Column No." = 18 THEN
+          SalesInvIntfc."WHT Busi Posting Group" := ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 19 THEN
+          SalesInvIntfc."WHT Prod Posting Group" := ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 20 THEN
+          SalesInvIntfc."WHT Area Code" := ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 21 THEN
+          SalesInvIntfc.NpwpBankCode := ExBuffRec."Cell Value as Text";
+        IF ExBuffRec."Column No." = 22 THEN
+          EVALUATE(SalesInvIntfc."Sales Type",ExBuffRec."Cell Value as Text");
+      UNTIL ExBuffRec.NEXT = 0;
+      SalesInvIntfc.MODIFY;
+      READY:=TRUE;
+    END;
+
+    PROCEDURE ResetAllVariables@1000000056();
+    BEGIN
+      InvoiceNo:='';
+      DealerCode:='';
+      TransDate:=0D;
+      InvoiceDate:=0D;
+      ExtDocNo:='';
+      NPWPNo:='';
+      PayDate:=0D;
+      ShopCode:='';
+      ModelCode:='';
+      CurrencyCode:='';
+      TaxInvDate:=0D;
+      AccNo:='';
+      Amt:=0;
+      VAT:=FALSE;
+      BLDate:=0D;
+      AreaCode:='';
+      EntryNo:=0;
+      DueDate := 0D; //08102013/VK/CR#020
+
+      Error_Cust := FALSE;
+      Error_Npwp := FALSE;
+      Error_TransDate := FALSE;
+      Error_InvDate := FALSE;
+      Error_Dim1 := FALSE;
+      Error_Dim3 := FALSE;
+      Error_Curr := FALSE;
+      Error_Amount := FALSE;
+      Error_Conver := FALSE;
+      "Error_G/L" := FALSE;
+      Error_WHT := FALSE;
+      Error_Cust_Setup := FALSE;
+      ErrorInFile:=FALSE;
+      Error_DueDate := FALSE;      //08102013/VK/CR#020
+      Error_DueDateCheck := FALSE; //08102013/VK/CR#020
+      Error_PPH_Npwp := FALSE;//PPNPPHDEV
+      Error_Dim4 := FALSE;
+      Error_TaxInvDate := FALSE;
+      Error_TaxInvDateCheck1 := FALSE;
+      Error_TaxInvDateCheck2 := FALSE;
+      _B_ErrWHTBusiPostGrp := FALSE;
+      Error_WHTPostingSetup := FALSE;
+      Npwp := FALSE;
+      _B_BlkWHTBusiPostGrp := FALSE;
+      _B_WHTProdPostGrp := FALSE;
+      _B_BlkTaxInvNo := FALSE;
+      _B_BlkTaxInvDate := FALSE;
+      _B_DupTIN := FALSE;
+      _T_DupTINDocNo := '';
+      _B_DTPPI := FALSE;
+      _B_DTPI := FALSE;
+      _B_DTSI := FALSE;
+      _B_DTPSI := FALSE;
+      _B_DTF := FALSE;
+      _B_BlankNpwpBankCategory := FALSE;
+      _B_ErrNpwpBankCategory := FALSE;
+      GBoo_ErrTypeOfTrans := FALSE;
+      GBoo_Err_VAT := FALSE;
+    END;
+
+    PROCEDURE duedatecalc@1000000000(trandate@1000000000 : Date) duedate : Date;
+    VAR
+      d@1000000001 : Integer;
+      m@1000000002 : Integer;
+      Y@1000000003 : Integer;
+      D1@1000000004 : Integer;
+      M1@1000000005 : Integer;
+      Y1@1000000006 : Integer;
+    BEGIN
+      d := DATE2DMY(trandate,1);
+      m := DATE2DMY(trandate,2);
+      Y := DATE2DMY(trandate,3);
+
+      IF ((m = 1) OR (m = 2) OR (m = 3) )THEN BEGIN
+       D1:= 25;
+       M1 := 4;
+       duedate:=DMY2DATE(D1,M1,Y);
+      END;
+
+      IF ((m = 4) OR (m = 5) OR (m = 6) )THEN BEGIN
+       D1:= 25;
+       M1 := 7;
+       duedate:=DMY2DATE(D1,M1,Y);
+      END;
+
+      IF ((m = 7) OR (m = 8) OR (m = 9) )THEN BEGIN
+       D1:= 25;
+       M1 := 10;
+       duedate:=DMY2DATE(D1,M1,Y);
+      END;
+
+      IF ((m = 10) OR (m = 11) OR (m = 12) )THEN BEGIN
+       D1:= 25;
+       M1 := 1;
+       Y1:=Y+1;
+       duedate:=DMY2DATE(D1,M1,Y1);
+      END;
+    END;
+
+    PROCEDURE DateTrim@1102159001(ADate@1102159001 : Text) : Text[250];
+    BEGIN
+      EXIT(DELSTR(ADate,STRLEN(ADate),1));
+    END;
+
+    PROCEDURE GetPPNNpwpNumber@1102159002("Customer code"@1102159001 : Code[30];vat@1102159005 : Boolean) return : Integer;
+    VAR
+      ConvMasterCust@1102159002 : Record 50004;
+      Cust_Master1@1102159003 : Record 18;
+      ShipAdd@1102159004 : Record 222;
+    BEGIN
+
+      IF vat THEN BEGIN
+        ConvMasterCust.RESET;
+        ConvMasterCust.SETRANGE("Imacs Code","Customer code");
+        IF ConvMasterCust.FINDFIRST THEN BEGIN
+          IF Cust_Master1.GET(ConvMasterCust.NAV) THEN BEGIN
+            ShipAdd.RESET;
+            ShipAdd.SETRANGE("Customer No.",Cust_Master1."No.");
+            ShipAdd.SETRANGE(ShipAdd.PPN,TRUE);
+            ShipAdd.SETRANGE(ShipAdd."PPN M/C",TRUE);
+            IF NOT ShipAdd.FINDFIRST THEN
+              return := 3;
+          END ELSE
+            return := 1
+        END ELSE
+          return := 2;
+      END ELSE BEGIN
+        ConvMasterCust.RESET;
+        ConvMasterCust.SETRANGE(ConvMasterCust."Imacs Code","Customer code");
+        IF ConvMasterCust.FINDFIRST THEN BEGIN
+          IF NOT Cust_Master1.GET(ConvMasterCust.NAV) THEN
+            return := 1
+        END ELSE
+            return := 2;
+      END;
+    END;
+
+    PROCEDURE GetPPHNpwpNumber@1102159004("Customer code"@1102159001 : Text[30]) return : Integer;
+    VAR
+      ConvMasterCust1@1102159002 : Record 50004;
+      Cust_Master2@1102159003 : Record 18;
+      ShipAdd1@1102159004 : Record 222;
+    BEGIN
+
+      ConvMasterCust1.RESET;
+      ConvMasterCust1.SETRANGE("Imacs Code","Customer code");
+      IF ConvMasterCust1.FINDFIRST THEN BEGIN
+        IF Cust_Master2.GET(ConvMasterCust1.NAV) THEN BEGIN
+          ShipAdd1.RESET;
+          ShipAdd1.SETRANGE("Customer No.",Cust_Master2."No.");
+          ShipAdd1.SETRANGE(PPH,TRUE);
+          ShipAdd1.SETRANGE(ShipAdd1."PPH M/C",TRUE);
+          IF NOT ShipAdd1.FINDFIRST THEN
+            return := 3
+          ELSE
+            return := 4;
+        END ELSE
+          return := 1
+      END ELSE
+          return := 2;
+    END;
+
+    PROCEDURE GetDim1Value@1000000001(Dimension1@1000000000 : Code[10]) LocalCodeReturnRes : Code[10];
+    VAR
+      LocalRecIfDimMapp@1000000001 : Record 60065;
+    BEGIN
+
+      LocalRecIfDimMapp.RESET;
+      LocalRecIfDimMapp.SETRANGE("Dimension Name",LocalRecIfDimMapp."Dimension Name"::"SHOP CODE");
+      LocalRecIfDimMapp.SETRANGE("Old YIMM Code",Dimension1);
+      IF NOT LocalRecIfDimMapp.FINDSET THEN
+        LocalCodeReturnRes := 'NOT FOUND'
+      ELSE
+        LocalCodeReturnRes := LocalRecIfDimMapp."New NAV Code";
+    END;
+
+    PROCEDURE CheckDuplicateTIN1@1000000002(TIN@1000000000 : Code[30]) Return : Boolean;
+    VAR
+      R_SalesCrMeLine@1000000001 : Record 115;
+      R_SalesInvHeader@1000000002 : Record 112;
+    BEGIN
+
+      //  --Check duplicacy in posted purchase invoice
+      R_SalesCrMeLine.RESET;
+      R_SalesCrMeLine.INIT;
+      R_SalesCrMeLine.SETCURRENTKEY("Tax Invoice No.");
+      R_SalesCrMeLine.SETFILTER("Tax Invoice No.",'%1',TIN);
+      IF (R_SalesCrMeLine.FINDSET) THEN
+        BEGIN
+          R_SalesInvHeader.RESET;
+          R_SalesInvHeader.SETRANGE("Applies-to Doc. Type",R_SalesInvHeader."Applies-to Doc. Type"::"Credit Memo");
+          R_SalesInvHeader.SETRANGE("Applies-to Doc. No.",R_SalesCrMeLine."Document No.");
+          R_SalesInvHeader.SETRANGE(ActualCreditMemo,FALSE);
+            IF NOT (R_SalesInvHeader.FINDSET) THEN BEGIN
+              _T_DupTINDocNo := R_SalesCrMeLine."Document No.";
+              Return := TRUE;
+            END;
+        END;
+    END;
+
+    PROCEDURE CheckDuplicateTIN2@1000000005(VAR TIN@1000000000 : Code[30]) Return : Boolean;
+    VAR
+      R_Salesline@1000000003 : Record 37;
+      R_SalesHdr@1000000001 : Record 36;
+      R_MasterSetup@1000000002 : Record 50008;
+    BEGIN
+
+      //  --check duplicacy in Purchase invoice
+      R_Salesline.INIT;
+      R_MasterSetup.GET;
+      R_Salesline.RESET;
+      R_Salesline.SETRANGE("Document Type",R_Salesline."Document Type"::"Credit Memo");
+      R_Salesline.SETCURRENTKEY("Tax Invoice No.");
+      R_Salesline.SETRANGE("Tax Invoice No.",TIN);
+      IF R_Salesline.FINDSET THEN BEGIN
+        R_SalesHdr.RESET;
+        IF R_SalesHdr.GET(R_SalesHdr."Document Type"::"Credit Memo",R_Salesline."Document No.") THEN
+          IF (R_SalesHdr."Reason Code" = R_MasterSetup."Reason (Sale as Purchase)") THEN BEGIN
+            _T_DupTINDocNo := R_Salesline."Document No.";
+            EXIT(TRUE);
+          END
+      END
+    END;
+
+    PROCEDURE CheckDuplicateTIN3@1000000006(TIN@1000000000 : Code[30]) Return : Boolean;
+    VAR
+      R_Salesline@1000000003 : Record 37;
+      R_SalesHdr@1000000001 : Record 36;
+      R_MasterSetup@1000000002 : Record 50008;
+    BEGIN
+
+      //  --check duplicacy in Sales invoice
+      R_MasterSetup.GET;
+      R_Salesline.RESET;
+      R_Salesline.INIT;
+      R_Salesline.SETRANGE("Document Type",R_Salesline."Document Type"::Invoice);
+      R_Salesline.SETCURRENTKEY("Tax Invoice No.");
+      R_Salesline.SETFILTER("Tax Invoice No.",'%1',TIN);
+      IF R_Salesline.FINDFIRST THEN
+        R_SalesHdr.RESET;
+        IF R_SalesHdr.GET(R_SalesHdr."Document Type"::Invoice,R_Salesline."Document No.") THEN
+          IF (R_SalesHdr."Reason Code" = R_MasterSetup."Reason (Normal)") THEN BEGIN
+            _T_DupTINDocNo := R_Salesline."Document No.";
+            Return := TRUE;
+          END
+    END;
+
+    PROCEDURE CheckDuplicateTIN4@1000000007(TIN@1000000000 : Code[30]) Return : Boolean;
+    VAR
+      R_SalesInvHdr@1000000002 : Record 112;
+      R_SalesTaxInvHdr@1000000004 : Record 28071;
+    BEGIN
+
+      //  --check duplicacy in Posted Sales invoice
+      R_SalesTaxInvHdr.RESET;
+      R_SalesTaxInvHdr.INIT;
+      IF R_SalesTaxInvHdr.GET(TIN) THEN BEGIN
+        R_SalesInvHdr.RESET;
+        R_SalesInvHdr.SETRANGE("Pre-Assigned No.",R_SalesTaxInvHdr."Pre-Assigned No.");
+        IF R_SalesInvHdr.FINDFIRST THEN BEGIN
+          _T_DupTINDocNo := R_SalesInvHdr."No.";
+          Return := TRUE;
+        END
+      END;
+    END;
+
+    PROCEDURE CheckDuplicateTIN5@1000000009(TIN@1000000000 : Code[30]) Return : Boolean;
+    VAR
+      R_SalesInIF@1000000001 : Record 50009;
+    BEGIN
+
+      //  --check duplicacy in File itself
+      R_SalesInIF.RESET;
+      R_SalesInIF.INIT;
+      R_SalesInIF.SETRANGE("Tax Invoice No.",TIN);
+      IF R_SalesInIF.FINDSET THEN
+        Return := TRUE;
+    END;
+
+    BEGIN
+    {
+      [REF] : CR001
+      [SIGN]: SV
+      [DESC]: Report created for processing of MKT Activities interfaced invoices.
+    }
+    END.
+  }
+}
+

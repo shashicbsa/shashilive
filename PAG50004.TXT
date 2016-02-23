@@ -1,0 +1,203 @@
+OBJECT Page 50004 Approver Form Sales
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/30/14;
+    Time=11:58:17;
+    Modified=Yes;
+    Version List=YIMMNTAS;
+  }
+  PROPERTIES
+  {
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    ModifyAllowed=Yes;
+    SourceTable=Table37;
+    SourceTableView=SORTING(Document Type,Document No.,Line No.)
+                    ORDER(Ascending)
+                    WHERE(Document Type=FILTER(Invoice));
+    PageType=List;
+    OnOpenPage=BEGIN
+                 FILTERGROUP(2);
+                 SETRANGE("Document Type","Document Type"::Invoice);
+                 SETRANGE("Document No.","Document No.");
+                 FILTERGROUP(0);
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000045;1 ;Action    ;
+                      CaptionML=ENU=Comment;
+                      Promoted=Yes;
+                      Image=ViewComments;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 ApprovalComments@1000000000 : Page 660;
+                               BEGIN
+                                 ApprovalComments.Setfilters(38,"Document Type","Document No.");
+                                 ApprovalComments.SetUpLine(38,"Document Type","Document No.");
+                                 ApprovalComments.RUN;
+                               END;
+                                }
+      { 1000000053;1 ;Action    ;
+                      CaptionML=ENU=Reject;
+                      Promoted=Yes;
+                      Image=Reject;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 ApprovalComment@1000000000 : Page 660;
+                               BEGIN
+                                 ApprovalEntry.RESET;
+                                 ApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Table ID",38);
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Document Type","Document Type");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Document No.","Document No.");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry.Status,ApprovalEntry.Status::Open);
+                                 IF ApprovalEntry.FIND('-') THEN
+                                   REPEAT
+                                     IF NOT ApprovalSetup.GET THEN
+                                       ERROR(Text004);
+                                     IF ApprovalSetup."Request Rejection Comment" = TRUE THEN BEGIN
+                                       ApprovalComment.Setfilters(
+                                         ApprovalEntry."Table ID",ApprovalEntry."Document Type",ApprovalEntry."Document No.");
+                                       ApprovalComment.SetUpLine(
+                                         ApprovalEntry."Table ID",ApprovalEntry."Document Type",ApprovalEntry."Document No.");
+                                       COMMIT;
+                                       IF ApprovalComment.RUNMODAL = ACTION::OK THEN BEGIN
+                                         CLEAR(ApprovalComment);
+                                         ApprovalMgt.RejectApprovalRequest(ApprovalEntry);
+                                       END;
+                                     END ELSE BEGIN
+                                       CLEAR(ApprovalComment);
+                                       ApprovalMgt.RejectApprovalRequest(ApprovalEntry);
+                                     END;
+                                   UNTIL ApprovalEntry.NEXT = 0;
+
+                                 CurrPage.CLOSE;
+                               END;
+                                }
+      { 1000000050;1 ;Action    ;
+                      CaptionML=ENU=Approve;
+                      Promoted=Yes;
+                      Image=Approve;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 //YIMMNTASST
+                                 CheckApprove("Document Type","Document No.");
+                                 //YIMMNTASEN
+                                 ApprovalEntry.RESET;
+                                 ApprovalEntry.SETCURRENTKEY("Table ID","Document Type","Document No.");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Table ID",36);
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Document Type","Document Type");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry."Document No.","Document No.");
+                                 ApprovalEntry.SETRANGE(ApprovalEntry.Status,ApprovalEntry.Status::Open);
+                                 IF ApprovalEntry.FIND('-') THEN
+                                   REPEAT
+                                     ApprovalMgt.ApproveApprovalRequest(ApprovalEntry);
+                                   UNTIL ApprovalEntry.NEXT = 0;
+
+                                 CurrPage.CLOSE;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Document Type";
+                Editable=FALSE }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Document No.";
+                Editable=FALSE }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="No.";
+                Editable=FALSE }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=Description;
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=Approve }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Description 2";
+                Editable=FALSE }
+
+    { 1000000013;2;Field  ;
+                SourceExpr=Quantity;
+                Editable=FALSE }
+
+    { 1000000017;2;Field  ;
+                SourceExpr=Amount;
+                Editable=FALSE }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Amount Including VAT";
+                Editable=FALSE }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Editable=FALSE }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Editable=FALSE }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Line Amount" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="WHT Product Posting Group" }
+
+    { 1000000029;2;Field  ;
+                SourceExpr="WHT Absorb Base" }
+
+  }
+  CODE
+  {
+    VAR
+      ApprovalEntry@1000000000 : Record 454;
+      ApprovalMgt@1000000001 : Codeunit 439;
+      ApprovalSetup@1000000002 : Record 452;
+      Text004@1000000003 : TextConst 'ENU=Approval Setup not found.';
+      TableID@1000000004 : Code[10];
+
+    PROCEDURE YMSLI@1000000001();
+    BEGIN
+    END;
+
+    PROCEDURE CheckApprove@1000000000(Doc_type@1000000000 : 'Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order';Doc_No@1000000001 : Code[20]);
+    VAR
+      Purch_Line@1000000002 : Record 39;
+      Text001@1000000003 : TextConst 'ENU=Tenda Trima %1 can not be Approved because %2 tax invoice is not approved';
+      Sales_Line@1000000004 : Record 37;
+    BEGIN
+      Sales_Line.RESET;
+      Sales_Line.SETCURRENTKEY("Document Type","Document No.","Line No.");
+      Sales_Line.SETRANGE(Sales_Line."Document Type",Doc_type);
+      Sales_Line.SETRANGE(Sales_Line."Document No.",Doc_No);
+      Sales_Line.SETFILTER(Sales_Line.Approve,'No');
+      IF Sales_Line.FINDFIRST THEN
+        ERROR(Text001,Sales_Line."Document No.",Sales_Line."Tax Invoice No.");
+    END;
+
+    BEGIN
+    {
+      //YIMMNTAS
+        1) This form is designed for the approval process for tax invoice amount in Sale process.
+    }
+    END.
+  }
+}
+

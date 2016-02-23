@@ -1,0 +1,52 @@
+OBJECT Table 315 Jobs Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Jobs Setup;
+               ENA=Jobs Setup];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10        ;CaptionML=[ENU=Primary Key;
+                                                              ENA=Primary Key] }
+    { 2   ;   ;Job Nos.            ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Job Nos.;
+                                                              ENA=Job Nos.] }
+    { 3   ;   ;Apply Usage Link by Default;Boolean;CaptionML=[ENU=Apply Usage Link by Default;
+                                                              ENA=Apply Usage Link by Default] }
+    { 4   ;   ;Default WIP Method  ;Code20        ;TableRelation="Job WIP Method".Code;
+                                                   CaptionML=[ENU=Default WIP Method;
+                                                              ENA=Default WIP Method] }
+    { 5   ;   ;Default Job Posting Group;Code10   ;TableRelation="Job Posting Group".Code;
+                                                   CaptionML=[ENU=Default Job Posting Group;
+                                                              ENA=Default Job Posting Group] }
+    { 6   ;   ;Default WIP Posting Method;Option  ;CaptionML=[ENU=Default WIP Posting Method;
+                                                              ENA=Default WIP Posting Method];
+                                                   OptionCaptionML=[ENU=Per Job,Per Job Ledger Entry;
+                                                                    ENA=Per Job,Per Job Ledger Entry];
+                                                   OptionString=Per Job,Per Job Ledger Entry }
+    { 1001;   ;Automatic Update Job Item Cost;Boolean;
+                                                   CaptionML=[ENU=Automatic Update Job Item Cost;
+                                                              ENA=Automatic Update Job Item Cost] }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

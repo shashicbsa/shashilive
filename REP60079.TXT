@@ -1,0 +1,80 @@
+OBJECT Report 60079 Session Details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/29/15;
+    Time=11:45:33;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  SessionDetails.DELETEALL;
+
+                  IF SessionEvent.FINDSET THEN BEGIN
+                   REPEAT
+                      IF ((SessionEvent."Event Type" = SessionEvent."Event Type":: Logon) OR
+                          (SessionEvent."Event Type" = SessionEvent."Event Type":: Start)) THEN BEGIN
+                            SessionDetails.INIT;
+                            SessionDetails."S.No" := SessionDetails."S.No"+1;
+                            SessionDetails.INSERT;
+                            SessionDetails."User ID" := SessionEvent."User ID";
+                            SessionDetails."Session ID":= SessionEvent."Session ID";
+                            SessionDetails."Client Type" := SessionEvent."Client Type";
+                            SessionDetails.Date := DT2DATE(SessionEvent."Event Datetime");
+                            SessionDetails."Login Date & Time" := SessionEvent."Event Datetime";
+                            SessionDetails.MODIFY;
+                      END;
+
+                      IF ((SessionEvent."Event Type" = SessionEvent."Event Type":: Logoff) OR
+                          (SessionEvent."Event Type" = SessionEvent."Event Type":: Close)  OR
+                          (SessionEvent."Event Type" = SessionEvent."Event Type":: Stop)) THEN BEGIN
+                            SessionDetails."Logoff Date & Time" := SessionEvent."Event Datetime";
+                            SessionDetails.MODIFY;
+                      END;
+
+                   UNTIL SessionEvent.NEXT =0;
+                  END;
+                END;
+
+    OnPostReport=BEGIN
+                   //MESSAGE('Done');
+                 END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      SessionDetails@1000000001 : Record 60063;
+      SessionEvent@1000000000 : Record 2000000111;
+      SalesHeader@1000000004 : Record 36;
+      SaleInvoiceHeader@1000000002 : Record 112;
+      SalesCreditMemoHeader@1000000003 : Record 114;
+      Date@1000000005 : Date;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

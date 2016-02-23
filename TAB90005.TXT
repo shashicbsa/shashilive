@@ -1,0 +1,44 @@
+OBJECT Table 90005 User Compnay Role
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/11/10;
+    Time=18:05:07;
+    Version List=TBI1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;UserID              ;Code10        ;TableRelation="User Master".UserID;
+                                                   NotBlank=Yes }
+    { 2   ;   ;Comp Role ID        ;Code10        ;TableRelation="Company Role"."Comp Role ID";
+                                                   OnValidate=BEGIN
+                                                                IF CompanyRole.GET("Comp Role ID") THEN BEGIN
+                                                                  "Application Area" := CompanyRole."Application Area";
+                                                                  "Function Name" := CompanyRole."Function Name";
+                                                                END;
+                                                              END;
+
+                                                   NotBlank=Yes }
+    { 3   ;   ;Application Area    ;Text50        ;Editable=No }
+    { 4   ;   ;Function Name       ;Text50        ;Editable=No }
+  }
+  KEYS
+  {
+    {    ;UserID,Comp Role ID                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      CompanyRole@1000000000 : Record 90003;
+
+    BEGIN
+    END.
+  }
+}
+

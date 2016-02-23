@@ -1,0 +1,2262 @@
+OBJECT Report 28041 Calc. and Post WHT Settlement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 14303=rimd;
+    CaptionML=[ENU=Calc. and Post WHT Settlement;
+               ENA=Calc. and Post WHT Settlement];
+    OnPreReport=BEGIN
+                  GLSetup.GET;
+                  IF GLSetup."Enable GST (Australia)" AND (RoundAccNo = '') THEN
+                    ERROR(Text007);
+
+                  IF NOT GLSetup."Enable GST (Australia)" THEN
+                    RoundAccNo := '';
+                END;
+
+    OnPostReport=BEGIN
+                   IF PostSettlement THEN
+                     MESSAGE(Text005);
+                 END;
+
+  }
+  DATASET
+  {
+    { 1789;    ;DataItem;WHTPostingSetup     ;
+               DataItemTable=Table28043;
+               DataItemTableView=SORTING(WHT Business Posting Group,WHT Product Posting Group)
+                                 WHERE(Revenue Type=FILTER(<>''));
+               OnPreDataItem=BEGIN
+                               LastFieldNo := FIELDNO("WHT Business Posting Group");
+                               WHTEntry.RESET;
+                               WHTEntry.FINDLAST;
+                               EntryNo := WHTEntry."Entry No." + 1;
+                             END;
+
+               ReqFilterFields=WHT Business Posting Group }
+
+    { 1500000;1;Column  ;USERID              ;
+               SourceExpr=USERID }
+
+    { 1500001;1;Column  ;CurrReport_PAGENO   ;
+               SourceExpr=CurrReport.PAGENO }
+
+    { 1500003;1;Column  ;COMPANYNAME         ;
+               SourceExpr=COMPANYNAME }
+
+    { 1500004;1;Column  ;FORMAT_TODAY_0_4_   ;
+               SourceExpr=FORMAT(TODAY,0,4) }
+
+    { 1500006;1;Column  ;STRSUBSTNO_Text004_PostSettlement_;
+               SourceExpr=STRSUBSTNO(Text004,PostSettlement) }
+
+    { 150000;1 ;Column  ;Add_WHT_Entries__Number;
+               SourceExpr="Add WHT Entries".Number }
+
+    { 1457;1   ;Column  ;WHTPostingSetup_WHT_Business_Posting_Group;
+               SourceExpr="WHT Business Posting Group" }
+
+    { 7387;1   ;Column  ;WHTPostingSetup_WHT_Product_Posting_Group;
+               SourceExpr="WHT Product Posting Group" }
+
+    { 1500002;1;Column  ;CurrReport_PAGENOCaption;
+               SourceExpr=CurrReport_PAGENOCaptionLbl }
+
+    { 1500005;1;Column  ;Calc__and_Post_WHT_SettlementCaption;
+               SourceExpr=Calc__and_Post_WHT_SettlementCaptionLbl }
+
+    { 1500007;1;Column  ;DisplayEntries_AmountCaption;
+               SourceExpr=DisplayEntries.FIELDCAPTION(Amount) }
+
+    { 1500008;1;Column  ;DisplayEntries__Amount__LCY__Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Amount (LCY)") }
+
+    { 1500009;1;Column  ;DisplayEntries_BaseCaption;
+               SourceExpr=DisplayEntries.FIELDCAPTION(Base) }
+
+    { 1500010;1;Column  ;DisplayEntries__Currency_Code_Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Currency Code") }
+
+    { 1500011;1;Column  ;DisplayEntries__WHT_Prod__Posting_Group__Control1500027Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("WHT Prod. Posting Group") }
+
+    { 1500012;1;Column  ;DisplayEntries__WHT___Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("WHT %") }
+
+    { 1500013;1;Column  ;DisplayEntries__WHT_Bus__Posting_Group__Control1500026Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("WHT Bus. Posting Group") }
+
+    { 1500014;1;Column  ;DisplayEntries__Posting_Date_Caption;
+               SourceExpr=DisplayEntries__Posting_Date_CaptionLbl }
+
+    { 1500015;1;Column  ;DisplayEntries__Bill_to_Pay_to_No__Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Bill-to/Pay-to No.") }
+
+    { 1500016;1;Column  ;DisplayEntries__Document_No__Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Document No.") }
+
+    { 1500017;1;Column  ;DisplayEntries__Document_Type_Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Document Type") }
+
+    { 1500018;1;Column  ;DisplayEntries__Entry_No__Caption;
+               SourceExpr=DisplayEntries.FIELDCAPTION("Entry No.") }
+
+    { 2398;1   ;DataItem;Add WHT Entries     ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1));
+               OnAfterGetRecord=BEGIN
+                                  SourceCodeSetup.GET;
+                                  WHTEntry.RESET;
+                                  WHTEntry.SETCURRENTKEY("Document Type","Transaction Type",Settled,"WHT Bus. Posting Group",
+                                    "WHT Prod. Posting Group","Posting Date");
+                                  WHTEntry.SETFILTER("Posting Date",'%1..%2',StartDate,EndDate);
+                                  WHTEntry.SETRANGE(Settled,FALSE);
+                                  WHTEntry.SETRANGE("Transaction Type",WHTEntry."Transaction Type"::Purchase);
+                                  WHTEntry.SETRANGE("WHT Bus. Posting Group",WHTPostingSetup."WHT Business Posting Group");
+                                  WHTEntry.SETRANGE("WHT Prod. Posting Group",WHTPostingSetup."WHT Product Posting Group");
+                                  WHTEntry.CALCSUMS("Amount (LCY)");
+                                  WHTAmount := WHTEntry."Amount (LCY)";
+                                  IF (WHTAmount <> 0) AND (RoundAccNo <> '') THEN BEGIN
+                                    TotalAmount := ROUND(WHTAmount);
+                                    RoundAmount := ROUND(TotalAmount,1,'<');
+                                    BalanceAmount := TotalAmount - RoundAmount;
+
+                                    CLEAR(GenJnlLine);
+                                    GenJnlLine."System-Created Entry" := TRUE;
+                                    GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                    GenJnlLine.Description :=
+                                      DELCHR(
+                                        STRSUBSTNO(
+                                          Text001,
+                                          WHTPostingSetup."WHT Business Posting Group",
+                                          WHTPostingSetup."WHT Product Posting Group"),
+                                        '>');
+                                    GenJnlLine."WHT Business Posting Group" := WHTPostingSetup."WHT Business Posting Group";
+                                    GenJnlLine."WHT Product Posting Group" := WHTPostingSetup."WHT Product Posting Group";
+                                    GenJnlLine."Posting Date" := PostingDate;
+                                    GenJnlLine."Document Type" := 0;
+                                    GenJnlLine."Document No." := DocNo;
+                                    GenJnlLine."Source Code" := SourceCodeSetup."WHT Settlement";
+                                    WHTPostingSetup.TESTFIELD("Payable WHT Account Code");
+                                    GenJnlLine."Account No." := WHTPostingSetup."Payable WHT Account Code";
+                                    GenJnlLine.Amount := ROUND(WHTAmount);
+                                    IF PostSettlement THEN
+                                      GenJnlPostLine.RUN(GenJnlLine);
+
+                                    CLEAR(GenJnlLine);
+                                    GenJnlLine.INIT;
+                                    GenJnlLine."System-Created Entry" := TRUE;
+                                    GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                    GenJnlLine.Description :=
+                                      DELCHR(
+                                        STRSUBSTNO(
+                                          Text001,
+                                          WHTPostingSetup."WHT Business Posting Group",
+                                          WHTPostingSetup."WHT Product Posting Group"),
+                                        '>');
+                                    GenJnlLine."WHT Business Posting Group" := WHTPostingSetup."WHT Business Posting Group";
+                                    GenJnlLine."WHT Product Posting Group" := WHTPostingSetup."WHT Product Posting Group";
+                                    GenJnlLine."Posting Date" := PostingDate;
+                                    GenJnlLine."Document Type" := 0;
+                                    GenJnlLine."Document No." := DocNo;
+                                    GenJnlLine."Source Code" := SourceCodeSetup."WHT Settlement";
+                                    GenJnlLine.Amount := -RoundAmount;
+                                    CASE AccType OF
+                                      AccType::Vendor:
+                                        GenJnlLine."Account Type" := GenJnlLine."Account Type"::Vendor;
+                                      AccType::"G/L Account":
+                                        GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                    END;
+                                    GenJnlLine."Account No." := GLAccSettle;
+                                    IF PostSettlement THEN
+                                      GenJnlPostLine.RUN(GenJnlLine);
+
+                                    CLEAR(GenJnlLine);
+                                    GenJnlLine."System-Created Entry" := TRUE;
+                                    GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                    GenJnlLine.Description := 'WHT Settlement';
+                                    GenJnlLine."WHT Business Posting Group" := WHTPostingSetup."WHT Business Posting Group";
+                                    GenJnlLine."WHT Product Posting Group" := WHTPostingSetup."WHT Product Posting Group";
+                                    GenJnlLine."Posting Date" := PostingDate;
+                                    GenJnlLine."Document Type" := 0;
+                                    GenJnlLine."Document No." := DocNo;
+                                    GenJnlLine."Source Code" := SourceCodeSetup."WHT Settlement";
+                                    GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                    GenJnlLine."Account No." := RoundAccNo;
+                                    GenJnlLine.Amount := -BalanceAmount;
+                                    IF PostSettlement THEN BEGIN
+                                      GenJnlPostLine.RUN(GenJnlLine);
+                                      WHTEntry.MODIFYALL(Settled,TRUE);
+                                    END;
+                                  END ELSE
+                                    IF (WHTAmount <> 0) AND (RoundAccNo = '') THEN BEGIN
+                                      CLEAR(GenJnlLine);
+                                      GenJnlLine."System-Created Entry" := TRUE;
+                                      GenJnlLine."Account Type" := GenJnlLine."Account Type"::"G/L Account";
+                                      GenJnlLine.Description :=
+                                        DELCHR(
+                                          STRSUBSTNO(
+                                            Text001,
+                                            WHTPostingSetup."WHT Business Posting Group",
+                                            WHTPostingSetup."WHT Product Posting Group"),
+                                          '>');
+                                      GenJnlLine."WHT Business Posting Group" := WHTPostingSetup."WHT Business Posting Group";
+                                      GenJnlLine."WHT Product Posting Group" := WHTPostingSetup."WHT Product Posting Group";
+                                      GenJnlLine."Posting Date" := PostingDate;
+                                      GenJnlLine."Document Type" := 0;
+                                      GenJnlLine."Document No." := DocNo;
+                                      GenJnlLine."Source Code" := SourceCodeSetup."WHT Settlement";
+                                      WHTPostingSetup.TESTFIELD("Payable WHT Account Code");
+                                      GenJnlLine."Account No." := WHTPostingSetup."Payable WHT Account Code";
+                                      GenJnlLine.Amount := ROUND(WHTAmount);
+                                      CASE AccType OF
+                                        AccType::Vendor:
+                                          GenJnlLine."Bal. Account Type" := GenJnlLine."Bal. Account Type"::Vendor;
+                                        AccType::"G/L Account":
+                                          GenJnlLine."Bal. Account Type" := GenJnlLine."Bal. Account Type"::"G/L Account";
+                                      END;
+                                      GenJnlLine."Bal. Account No." := GLAccSettle;
+                                      IF PostSettlement THEN BEGIN
+                                        GenJnlPostLine.RUN(GenJnlLine);
+                                        WHTEntry.MODIFYALL(Settled,TRUE);
+                                      END;
+                                    END;
+                                END;
+                                 }
+
+    { 9626;2   ;DataItem;DisplayEntries      ;
+               DataItemTable=Table28044;
+               OnPreDataItem=BEGIN
+                               RESET;
+                               SETCURRENTKEY("Document Type","Transaction Type",Settled,"WHT Bus. Posting Group",
+                                 "WHT Prod. Posting Group","Posting Date");
+                               SETFILTER("Posting Date",'%1..%2',StartDate,EndDate);
+                               SETRANGE("Transaction Type","Transaction Type"::Purchase);
+                               SETRANGE("WHT Bus. Posting Group",WHTPostingSetup."WHT Business Posting Group");
+                               SETRANGE("WHT Prod. Posting Group",WHTPostingSetup."WHT Product Posting Group");
+                               SETFILTER("Amount (LCY)",'<> 0');
+
+                               IF NOT PostSettlement THEN
+                                 SETRANGE(Settled,FALSE);
+                             END;
+                              }
+
+    { 1500035;3;Column  ;DisplayEntries__WHT_Bus__Posting_Group_;
+               SourceExpr="WHT Bus. Posting Group" }
+
+    { 1500037;3;Column  ;DisplayEntries__WHT_Prod__Posting_Group_;
+               SourceExpr="WHT Prod. Posting Group" }
+
+    { 1500021;3;Column  ;DisplayEntries__Document_Type_;
+               SourceExpr="Document Type" }
+
+    { 1500022;3;Column  ;DisplayEntries__Entry_No__;
+               SourceExpr="Entry No." }
+
+    { 1500023;3;Column  ;DisplayEntries__Document_No__;
+               SourceExpr="Document No." }
+
+    { 1500024;3;Column  ;DisplayEntries__Bill_to_Pay_to_No__;
+               SourceExpr="Bill-to/Pay-to No." }
+
+    { 1500025;3;Column  ;FORMAT__Posting_Date__;
+               SourceExpr=FORMAT("Posting Date") }
+
+    { 1500026;3;Column  ;DisplayEntries__WHT_Bus__Posting_Group__Control1500026;
+               SourceExpr="WHT Bus. Posting Group" }
+
+    { 1500027;3;Column  ;DisplayEntries__WHT_Prod__Posting_Group__Control1500027;
+               SourceExpr="WHT Prod. Posting Group" }
+
+    { 1500028;3;Column  ;DisplayEntries__WHT___;
+               SourceExpr="WHT %" }
+
+    { 1500029;3;Column  ;DisplayEntries__Amount__LCY__;
+               SourceExpr="Amount (LCY)" }
+
+    { 1500030;3;Column  ;DisplayEntries_Amount;
+               SourceExpr=Amount }
+
+    { 1500031;3;Column  ;DisplayEntries__Currency_Code_;
+               SourceExpr="Currency Code" }
+
+    { 1500032;3;Column  ;DisplayEntries_Base ;
+               SourceExpr=Base }
+
+    { 150001;3 ;Column  ;PrintWHTEntries     ;
+               SourceExpr=PrintWHTEntries }
+
+    { 1500033;3;Column  ;DisplayEntries_Base_Control1500033;
+               SourceExpr=Base }
+
+    { 1500034;3;Column  ;DisplayEntries__Amount__LCY___Control1500034;
+               SourceExpr="Amount (LCY)" }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnInit=BEGIN
+               RoundAccNoEnable := TRUE;
+             END;
+
+      OnOpenPage=BEGIN
+                   IF DescTxt = '' THEN
+                     DescTxt := 'WHT Settlement';
+                   GLSetup.GET;
+                   RoundAccNoEnable := GLSetup."Enable GST (Australia)";
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 13  ;2   ;Field     ;
+                  Name=StartingDate;
+                  CaptionML=[ENU=Starting Date;
+                             ENA=Starting Date];
+                  SourceExpr=StartDate }
+
+      { 11  ;2   ;Field     ;
+                  Name=EndingDate;
+                  CaptionML=[ENU=Ending Date;
+                             ENA=Ending Date];
+                  SourceExpr=EndDate }
+
+      { 9   ;2   ;Field     ;
+                  Name=PostingDate;
+                  CaptionML=[ENU=Posting Date;
+                             ENA=Posting Date];
+                  SourceExpr=PostingDate }
+
+      { 4   ;2   ;Field     ;
+                  Name=DocumentNo;
+                  CaptionML=[ENU=Document No.;
+                             ENA=Document No.];
+                  SourceExpr=DocNo }
+
+      { 1500006;2;Field     ;
+                  CaptionML=[ENU=Description;
+                             ENA=Description];
+                  SourceExpr=DescTxt }
+
+      { 1500002;2;Field     ;
+                  Name=SettlementAccountType;
+                  CaptionML=[ENU=Settlement Account Type;
+                             ENA=Settlement Account Type];
+                  SourceExpr=AccType }
+
+      { 3   ;2   ;Field     ;
+                  Name=SettlementAccount;
+                  CaptionML=[ENU=Settlement Account;
+                             ENA=Settlement Account];
+                  SourceExpr=GLAccSettle;
+                  OnValidate=BEGIN
+                               IF GLAccSettle <> '' THEN
+                                 CASE AccType OF
+                                   AccType::"G/L Account":
+                                     BEGIN
+                                       IF GLAcc.GET(GLAccSettle) THEN BEGIN
+                                         GLAcc.TESTFIELD("Account Type",GLAcc."Account Type"::Posting);
+                                         GLAcc.TESTFIELD(Blocked,FALSE);
+                                       END;
+                                     END;
+                                   AccType::Vendor:
+                                     BEGIN
+                                       Vendor.GET(GLAccSettle);
+                                       IF Vendor.Blocked = Vendor.Blocked::All THEN
+                                         ERROR(Text006,Vendor."No.");
+                                     END;
+                                 END;
+                             END;
+
+                  OnLookup=BEGIN
+                             CASE AccType OF
+                               AccType::"G/L Account":
+                                 BEGIN
+                                   IF PAGE.RUNMODAL(0,GLAcc,GLAcc."No.") = ACTION::LookupOK THEN BEGIN
+                                     IF GLAcc.GET(GLAcc."No.") THEN BEGIN
+                                       GLAcc.TESTFIELD("Account Type",GLAcc."Account Type"::Posting);
+                                       GLAcc.TESTFIELD(Blocked,FALSE);
+                                       GLAccSettle := GLAcc."No.";
+                                     END;
+                                   END;
+                                 END;
+                               AccType::Vendor:
+                                 BEGIN
+                                   IF PAGE.RUNMODAL(0,Vendor,Vendor."No.") = ACTION::LookupOK THEN BEGIN
+                                     IF Vendor.GET(Vendor."No.") THEN BEGIN
+                                       IF Vendor.Blocked = Vendor.Blocked::All THEN
+                                         ERROR(Text006,Vendor."No.");
+                                       GLAccSettle := Vendor."No.";
+                                     END;
+                                   END;
+                                 END;
+                             END;
+                           END;
+                            }
+
+      { 1500000;2;Field     ;
+                  Name=RoundAccNo;
+                  CaptionML=[ENU=Rounding G/L Account;
+                             ENA=Rounding G/L Account];
+                  SourceExpr=RoundAccNo;
+                  Enabled=RoundAccNoEnable;
+                  OnValidate=BEGIN
+                               IF GLAcc.GET(RoundAccNo) THEN BEGIN
+                                 GLAcc.TESTFIELD("Account Type",GLAcc."Account Type"::Posting);
+                                 GLAcc.TESTFIELD(Blocked,FALSE);
+                               END;
+                             END;
+
+                  OnLookup=BEGIN
+                             IF PAGE.RUNMODAL(0,GLAcc,GLAcc."No.") = ACTION::LookupOK THEN BEGIN
+                               IF GLAcc.GET(GLAcc."No.") THEN BEGIN
+                                 GLAcc.TESTFIELD("Account Type",GLAcc."Account Type"::Posting);
+                                 GLAcc.TESTFIELD(Blocked,FALSE);
+                                 RoundAccNo := GLAcc."No.";
+                               END;
+                             END;
+                           END;
+                            }
+
+      { 2   ;2   ;Field     ;
+                  Name=ShowWHTEntries;
+                  CaptionML=[ENU=Show WHT Entries;
+                             ENA=Show WHT Entries];
+                  SourceExpr=PrintWHTEntries }
+
+      { 1   ;2   ;Field     ;
+                  Name=Post;
+                  CaptionML=[ENU=Post;
+                             ENA=Post];
+                  SourceExpr=PostSettlement }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      LastFieldNo@1500018 : Integer;
+      PrintWHTEntries@1500016 : Boolean;
+      PostSettlement@1500015 : Boolean;
+      EntryNo@1500014 : Integer;
+      WHTAmount@1500013 : Decimal;
+      WHTEntry@1500012 : Record 28044;
+      GLAccSettle@1500010 : Code[20];
+      GenJnlLine@1500009 : Record 81;
+      SourceCodeSetup@1500008 : Record 242;
+      GenJnlPostLine@1500007 : Codeunit 12;
+      DocNo@1500006 : Text[30];
+      PostingDate@1500005 : Date;
+      StartDate@1500004 : Date;
+      EndDate@1500003 : Date;
+      AccType@1500002 : 'G/L Account,Vendor';
+      GLAcc@1500001 : Record 15;
+      Vendor@1500000 : Record 23;
+      TotalAmount@1500029 : Decimal;
+      RoundAmount@1500028 : Decimal;
+      BalanceAmount@1500027 : Decimal;
+      DescTxt@1500026 : Text[30];
+      RoundAccNo@1500025 : Code[20];
+      GLSetup@1500030 : Record 98;
+      Text001@1500024 : TextConst 'ENU=Payable WHT settlement: #1######## #2########;ENA=Payable WHT settlement: #1######## #2########';
+      Text004@1500021 : TextConst 'ENU=Post Settlement - %1;ENA=Post Settlement - %1';
+      Text005@1500020 : TextConst 'ENU=Settlement posted.;ENA=Settlement posted.';
+      Text006@1500019 : TextConst 'ENU=Blocked must be No in vendor %1;ENA=Blocked must be No in vendor %1';
+      Text007@1500031 : TextConst 'ENU=Please enter the Rounding Account;ENA=Please enter the Rounding Account';
+      RoundAccNoEnable@19036335 : Boolean INDATASET;
+      CurrReport_PAGENOCaptionLbl@1503005 : TextConst 'ENU=Page;ENA=Page';
+      Calc__and_Post_WHT_SettlementCaptionLbl@1506181 : TextConst 'ENU=Calc. and Post WHT Settlement;ENA=Calc. and Post WHT Settlement';
+      DisplayEntries__Posting_Date_CaptionLbl@1502025 : TextConst 'ENU=Posting Date;ENA=Posting Date';
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:SecurityType>None</rd:SecurityType>
+      <rd:DataSourceID>48d92f6a-9f14-4e73-bfd5-4423d583f12c</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="USERID">
+          <DataField>USERID</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENO">
+          <DataField>CurrReport_PAGENO</DataField>
+        </Field>
+        <Field Name="COMPANYNAME">
+          <DataField>COMPANYNAME</DataField>
+        </Field>
+        <Field Name="FORMAT_TODAY_0_4_">
+          <DataField>FORMAT_TODAY_0_4_</DataField>
+        </Field>
+        <Field Name="STRSUBSTNO_Text004_PostSettlement_">
+          <DataField>STRSUBSTNO_Text004_PostSettlement_</DataField>
+        </Field>
+        <Field Name="Add_WHT_Entries__Number">
+          <DataField>Add_WHT_Entries__Number</DataField>
+        </Field>
+        <Field Name="WHTPostingSetup_WHT_Business_Posting_Group">
+          <DataField>WHTPostingSetup_WHT_Business_Posting_Group</DataField>
+        </Field>
+        <Field Name="WHTPostingSetup_WHT_Product_Posting_Group">
+          <DataField>WHTPostingSetup_WHT_Product_Posting_Group</DataField>
+        </Field>
+        <Field Name="CurrReport_PAGENOCaption">
+          <DataField>CurrReport_PAGENOCaption</DataField>
+        </Field>
+        <Field Name="Calc__and_Post_WHT_SettlementCaption">
+          <DataField>Calc__and_Post_WHT_SettlementCaption</DataField>
+        </Field>
+        <Field Name="DisplayEntries_AmountCaption">
+          <DataField>DisplayEntries_AmountCaption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Amount__LCY__Caption">
+          <DataField>DisplayEntries__Amount__LCY__Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries_BaseCaption">
+          <DataField>DisplayEntries_BaseCaption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Currency_Code_Caption">
+          <DataField>DisplayEntries__Currency_Code_Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Prod__Posting_Group__Control1500027Caption">
+          <DataField>DisplayEntries__WHT_Prod__Posting_Group__Control1500027Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT___Caption">
+          <DataField>DisplayEntries__WHT___Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Bus__Posting_Group__Control1500026Caption">
+          <DataField>DisplayEntries__WHT_Bus__Posting_Group__Control1500026Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Posting_Date_Caption">
+          <DataField>DisplayEntries__Posting_Date_Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Bill_to_Pay_to_No__Caption">
+          <DataField>DisplayEntries__Bill_to_Pay_to_No__Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Document_No__Caption">
+          <DataField>DisplayEntries__Document_No__Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Document_Type_Caption">
+          <DataField>DisplayEntries__Document_Type_Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Entry_No__Caption">
+          <DataField>DisplayEntries__Entry_No__Caption</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Bus__Posting_Group_">
+          <DataField>DisplayEntries__WHT_Bus__Posting_Group_</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Prod__Posting_Group_">
+          <DataField>DisplayEntries__WHT_Prod__Posting_Group_</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Document_Type_">
+          <DataField>DisplayEntries__Document_Type_</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Entry_No__">
+          <DataField>DisplayEntries__Entry_No__</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Document_No__">
+          <DataField>DisplayEntries__Document_No__</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Bill_to_Pay_to_No__">
+          <DataField>DisplayEntries__Bill_to_Pay_to_No__</DataField>
+        </Field>
+        <Field Name="FORMAT__Posting_Date__">
+          <DataField>FORMAT__Posting_Date__</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Bus__Posting_Group__Control1500026">
+          <DataField>DisplayEntries__WHT_Bus__Posting_Group__Control1500026</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT_Prod__Posting_Group__Control1500027">
+          <DataField>DisplayEntries__WHT_Prod__Posting_Group__Control1500027</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT___">
+          <DataField>DisplayEntries__WHT___</DataField>
+        </Field>
+        <Field Name="DisplayEntries__WHT___Format">
+          <DataField>DisplayEntries__WHT___Format</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Amount__LCY__">
+          <DataField>DisplayEntries__Amount__LCY__</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Amount__LCY__Format">
+          <DataField>DisplayEntries__Amount__LCY__Format</DataField>
+        </Field>
+        <Field Name="DisplayEntries_Amount">
+          <DataField>DisplayEntries_Amount</DataField>
+        </Field>
+        <Field Name="DisplayEntries_AmountFormat">
+          <DataField>DisplayEntries_AmountFormat</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Currency_Code_">
+          <DataField>DisplayEntries__Currency_Code_</DataField>
+        </Field>
+        <Field Name="DisplayEntries_Base">
+          <DataField>DisplayEntries_Base</DataField>
+        </Field>
+        <Field Name="DisplayEntries_BaseFormat">
+          <DataField>DisplayEntries_BaseFormat</DataField>
+        </Field>
+        <Field Name="PrintWHTEntries">
+          <DataField>PrintWHTEntries</DataField>
+        </Field>
+        <Field Name="DisplayEntries_Base_Control1500033">
+          <DataField>DisplayEntries_Base_Control1500033</DataField>
+        </Field>
+        <Field Name="DisplayEntries_Base_Control1500033Format">
+          <DataField>DisplayEntries_Base_Control1500033Format</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Amount__LCY___Control1500034">
+          <DataField>DisplayEntries__Amount__LCY___Control1500034</DataField>
+        </Field>
+        <Field Name="DisplayEntries__Amount__LCY___Control1500034Format">
+          <DataField>DisplayEntries__Amount__LCY___Control1500034Format</DataField>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>DataSet</rd:DataSetName>
+        <rd:SchemaPath>Report.xsd</rd:SchemaPath>
+        <rd:TableName>Result</rd:TableName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="table2">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>7.46744cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>13.45619cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.9716cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.88722cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.51755cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox46">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!Calc__and_Post_WHT_SettlementCaption.Value)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>13</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox41">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox19">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!FORMAT_TODAY_0_4_.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>g</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>17</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>3</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox40">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!COMPANYNAME.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>16</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox36">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox37">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox39">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!CurrReport_PAGENOCaption.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>14</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox42">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!CurrReport_PAGENO.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>19</ZIndex>
+                          <Style>
+                            <BackgroundColor>White</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox2">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox2</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox30">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox33">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!USERID.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>18</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>3</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox29">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=First(Fields!STRSUBSTNO_Text004_PostSettlement_.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <ZIndex>15</ZIndex>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox25">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox25</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox28">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox28</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox27">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox27</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox26">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox26</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <Height>0.66622in</Height>
+            <ZIndex>13</ZIndex>
+          </Tablix>
+          <Textbox Name="textbox9">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries_AmountCaption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>16.95cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.8cm</Width>
+            <ZIndex>12</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox10">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Amount__LCY__Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>14.85cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.8cm</Width>
+            <ZIndex>11</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox12">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries_BaseCaption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>12.75cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.8cm</Width>
+            <ZIndex>10</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox13">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Currency_Code_Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>11.4cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.2cm</Width>
+            <ZIndex>9</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox14">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__WHT_Prod__Posting_Group__Control1500027Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>8.85cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.5cm</Width>
+            <ZIndex>8</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox15">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__WHT___Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>10.5cm</Left>
+            <Height>0.846cm</Height>
+            <Width>0.75cm</Width>
+            <ZIndex>7</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox16">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__WHT_Bus__Posting_Group__Control1500026Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>7.2cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.5cm</Width>
+            <ZIndex>6</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox20">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Posting_Date_Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>5.85cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.2cm</Width>
+            <ZIndex>5</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox21">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Bill_to_Pay_to_No__Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>4.2cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.5cm</Width>
+            <ZIndex>4</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox22">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Document_No__Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>2.1cm</Left>
+            <Height>0.846cm</Height>
+            <Width>1.5cm</Width>
+            <ZIndex>3</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox23">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Document_Type_Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Left>1.65cm</Left>
+            <Height>0.846cm</Height>
+            <Width>0.3cm</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+              <PaddingTop>6pt</PaddingTop>
+            </Style>
+          </Textbox>
+          <Textbox Name="textbox24">
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!DisplayEntries__Entry_No__Caption.Value)</Value>
+                    <Style>
+                      <FontSize>7pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>2.115cm</Top>
+            <Height>0.846cm</Height>
+            <Width>1.05cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style>
+              <VerticalAlign>Bottom</VerticalAlign>
+            </Style>
+          </Textbox>
+          <Tablix Name="Table1">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>1.35cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.675cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.8cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.875cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.35cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.65cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.65cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.9cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.35cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.95cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.115cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.115cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox1">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__WHT_Bus__Posting_Group_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox1</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox11">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__WHT_Prod__Posting_Group_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox11</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox18">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox18</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>9</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox17">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox17</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>12</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Entry_No__">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Entry_No__.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>0.3cm</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Document_Type_">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Document_Type_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.3cm</PaddingLeft>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Document_No__">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Document_No__.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>0.3cm</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Bill_to_Pay_to_No__">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Bill_to_Pay_to_No__.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>0.3cm</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Posting_Date_">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!FORMAT__Posting_Date__.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>d</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__WHT_Bus__Posting_Group__Control1500026">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__WHT_Bus__Posting_Group_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__WHT_Prod__Posting_Group__Control1500027">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__WHT_Prod__Posting_Group_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__WHT___">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__WHT___.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!DisplayEntries__WHT___Format.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Currency_Code_">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Currency_Code_.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries_Base">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries_Base.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!DisplayEntries_BaseFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Amount__LCY__">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries__Amount__LCY__.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!DisplayEntries__Amount__LCY__Format.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries_Amount">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!DisplayEntries_Amount.Value</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>=Fields!DisplayEntries_AmountFormat.Value</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox32">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox32</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>9</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries_Base_Control1500033">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!DisplayEntries_Base.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>=First(Fields!DisplayEntries_Base_Control1500033Format.Value)</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="DisplayEntries__Amount__LCY___Control1500034">
+                          <CanGrow>true</CanGrow>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Sum(Fields!DisplayEntries__Amount__LCY__.Value)</Value>
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>=First(Fields!DisplayEntries__Amount__LCY___Control1500034Format.Value)</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox43">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox43</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.423cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="textbox53">
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style />
+                                </TextRun>
+                              </TextRuns>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>textbox53</rd:DefaultName>
+                          <Style>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>12</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Group Name="Table1_Group2">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!WHTPostingSetup_WHT_Business_Posting_Group.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Group Name="Table1_Group">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!WHTPostingSetup_WHT_Business_Posting_Group.Value</GroupExpression>
+                          <GroupExpression>=Fields!WHTPostingSetup_WHT_Product_Posting_Group.Value</GroupExpression>
+                          <GroupExpression>=Fields!Add_WHT_Entries__Number.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <TablixMembers>
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <Group Name="Table1_Details_Group">
+                            <DataElementName>Detail</DataElementName>
+                          </Group>
+                          <TablixMembers>
+                            <TablixMember>
+                              <Visibility>
+                                <Hidden>=IIF(Fields!PrintWHTEntries.Value,False,True)</Hidden>
+                              </Visibility>
+                            </TablixMember>
+                          </TablixMembers>
+                          <DataElementName>Detail_Collection</DataElementName>
+                          <DataElementOutput>Output</DataElementOutput>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <KeepWithGroup>Before</KeepWithGroup>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <KeepWithGroup>Before</KeepWithGroup>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                      </TablixMembers>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Filters>
+              <Filter>
+                <FilterExpression>=isNothing(Fields!DisplayEntries__WHT_Bus__Posting_Group_.Value)</FilterExpression>
+                <Operator>Equal</Operator>
+                <FilterValues>
+                  <FilterValue>=False</FilterValue>
+                </FilterValues>
+              </Filter>
+            </Filters>
+            <Top>3.384cm</Top>
+            <Height>0.83278in</Height>
+            <Width>7.39462in</Width>
+          </Tablix>
+        </ReportItems>
+        <Height>5.49926cm</Height>
+      </Body>
+      <Width>24.3cm</Width>
+      <Page>
+        <PageHeight>21cm</PageHeight>
+        <PageWidth>29.7cm</PageWidth>
+        <InteractiveHeight>11in</InteractiveHeight>
+        <InteractiveWidth>8.5in</InteractiveWidth>
+        <LeftMargin>1.5cm</LeftMargin>
+        <RightMargin>0cm</RightMargin>
+        <TopMargin>2cm</TopMargin>
+        <BottomMargin>2cm</BottomMargin>
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Invalid</rd:ReportUnitType>
+  <rd:ReportID>be7bbd91-0b9d-4d1a-9898-62869b60e96c</rd:ReportID>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

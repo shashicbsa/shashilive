@@ -1,0 +1,86 @@
+OBJECT Table 60013 G/L Budget Journal
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/10/14;
+    Time=14:23:10;
+    Modified=Yes;
+    Version List=YIMM-CONSOL,UPG13C;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=G/L Budget Journal;
+    LookupPageID=Page120;
+    DrillDownPageID=Page120;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer       ;CaptionML=ENU=Entry No. }
+    { 2   ;   ;Budget Name         ;Code10        ;TableRelation="G/L Budget Name";
+                                                   CaptionML=ENU=Budget Name }
+    { 3   ;   ;G/L Account No.     ;Code20        ;TableRelation="G/L Account";
+                                                   CaptionML=ENU=G/L Account No. }
+    { 4   ;   ;Date                ;Date          ;CaptionML=ENU=Date;
+                                                   ClosingDates=Yes }
+    { 5   ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Global Dimension 1 Code;
+                                                   CaptionClass='1,1,1' }
+    { 6   ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Global Dimension 2 Code;
+                                                   CaptionClass='1,1,2' }
+    { 7   ;   ;Amount              ;Decimal       ;CaptionML=ENU=Amount;
+                                                   AutoFormatType=1 }
+    { 9   ;   ;Description         ;Text50        ;CaptionML=ENU=Description }
+    { 10  ;   ;Business Unit Code  ;Code10        ;TableRelation="Business Unit";
+                                                   CaptionML=ENU=Business Unit Code }
+    { 11  ;   ;User ID             ;Code20        ;TableRelation=User;
+                                                   OnLookup=VAR
+                                                              LoginMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=User ID;
+                                                   Editable=No }
+    { 12  ;   ;Budget Dimension 1 Code;Code20     ;CaptionML=ENU=Budget Dimension 1 Code }
+    { 13  ;   ;Budget Dimension 2 Code;Code20     ;CaptionML=ENU=Budget Dimension 2 Code }
+    { 14  ;   ;Budget Dimension 3 Code;Code20     ;CaptionML=ENU=Budget Dimension 3 Code }
+    { 15  ;   ;Budget Dimension 4 Code;Code20     ;CaptionML=ENU=Budget Dimension 4 Code }
+    { 50000;  ;Source Type         ;Option        ;CaptionML=ENU=Source Type;
+                                                   OptionCaptionML=ENU=" ,Customer,Vendor,Bank Account,Fixed Asset";
+                                                   OptionString=[ ,Customer,Vendor,Bank Account,Fixed Asset] }
+    { 50001;  ;Source No.          ;Code20        ;TableRelation=IF (Source Type=CONST(Customer)) Customer
+                                                                 ELSE IF (Source Type=CONST(Vendor)) Vendor
+                                                                 ELSE IF (Source Type=CONST(Bank Account)) "Bank Account"
+                                                                 ELSE IF (Source Type=CONST(Fixed Asset)) "Fixed Asset";
+                                                   CaptionML=ENU=Source No. }
+    { 50002;  ;AP/ AR Elimination  ;Boolean        }
+    { 50003;  ;Amount Description  ;Text50         }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;Budget Name,G/L Account No.,Date,Global Dimension 1 Code,Global Dimension 2 Code;
+                                                   SumIndexFields=Amount }
+    {    ;Budget Name,G/L Account No.,Business Unit Code,Global Dimension 1 Code,Global Dimension 2 Code,Budget Dimension 1 Code,Budget Dimension 2 Code,Budget Dimension 3 Code,Budget Dimension 4 Code,Date;
+                                                   SumIndexFields=Amount }
+    {    ;Budget Name,G/L Account No.,Description,Date }
+    {    ;Budget Name,G/L Account No.,Global Dimension 1 Code,Date;
+                                                   SumIndexFields=Amount }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13C
+        Code added or edited to solve complation errors after migrating merged and customized objects to 2013 from 2009 R2
+        Deleted Unwanted Variables Local.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,47 @@
+OBJECT Table 75001 GL Acc for Melco1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=05/25/11;
+    Time=[ 3:33:52];
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Account No.         ;Code20         }
+    { 2   ;   ;Name                ;Text30         }
+    { 3   ;   ;Income/Balance      ;Option        ;CaptionML=ENU=Income/Balance;
+                                                   OptionCaptionML=ENU=Income Statement,Balance Sheet;
+                                                   OptionString=Income Statement,Balance Sheet }
+    { 4   ;   ;Account Type        ;Option        ;OnValidate=VAR
+                                                                GLEntry@1000 : Record 17;
+                                                                GLBudgetEntry@1001 : Record 96;
+                                                              BEGIN
+                                                              END;
+
+                                                   CaptionML=ENU=Account Type;
+                                                   OptionCaptionML=ENU=Posting,Heading,Total,Begin-Total,End-Total;
+                                                   OptionString=Posting,Heading,Total,Begin-Total,End-Total }
+    { 34  ;   ;Totaling            ;Text250       ;ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=Totaling }
+    { 35  ;   ;Exist In COA        ;Boolean        }
+  }
+  KEYS
+  {
+    {    ;Account No.                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

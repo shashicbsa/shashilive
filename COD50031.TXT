@@ -1,0 +1,684 @@
+OBJECT Codeunit 50031 TMS Purch Inv Interface Batch
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/15/15;
+    Time=[ 9:47:11];
+    Modified=Yes;
+    Version List=CR#003,UPG13R2DEV,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    TableNo=472;
+    OnRun=BEGIN
+            //>> UPG13R2DEV SV
+            MasterSetup.GET;
+            MasterSetup2.GET;
+
+            Filename := MasterSetup."Interface File Path" + '\' + MasterSetup2."TMS Purchase Invoice";
+            LogFileName := MasterSetup."Interface File Path" + '\' + 'LOG-' + MasterSetup2."TMS Purchase Invoice";
+
+            LF.CREATE(LogFileName);
+            LF.CREATEOUTSTREAM(OutstreamObj);
+            LF.TEXTMODE(TRUE);
+
+            IF (NOT F.OPEN(Filename)) THEN BEGIN
+              LF.CLOSE;
+              EXIT;
+            END;
+
+            IF ValidateData THEN BEGIN
+              TMSPurchIntfUpload.RUN;
+
+            END;
+            //<< UPG13R2DEV SV
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      MasterSetup@1102159036 : Record 50008;
+      MasterSetup2@1102159035 : Record 60053;
+      GeneralLedgerSetup@1102159034 : Record 98;
+      Filename@1102159033 : Text[1024];
+      LogFileName@1102159032 : Text[1024];
+      F@1102159031 : File;
+      LF@1102159030 : File;
+      InstreamObj@1102159029 : InStream;
+      OutstreamObj@1102159028 : OutStream;
+      EntryNo@1102159027 : Integer;
+      TMSValue@1102159026 : Text[255];
+      TMSVendInvoiceNo@1102159025 : Code[20];
+      TMSVendCode@1102159024 : Code[20];
+      TMSTransactionDate@1102159023 : Date;
+      TMSVendInvoiceDate@1102159022 : Date;
+      TMSKwitansiNo@1102159021 : Code[20];
+      TMSNPWPNo@1102159020 : Code[20];
+      TMSDueDate@1102159019 : Date;
+      TMSDimCode1@1102159018 : Code[10];
+      TMSDimCode2@1102159017 : Code[10];
+      TMSCurrency@1102159016 : Code[10];
+      TMSTaxInvoiceNo@1102159015 : Code[20];
+      TMSTaxInvoiceDate@1102159014 : Date;
+      TMSAccountNo@1102159013 : Code[20];
+      TMSAmount@1102159012 : Decimal;
+      TMSVATReq@1102159011 : Boolean;
+      TMSBLDate@1102159010 : Date;
+      TMSDescription@1102159009 : Code[80];
+      DateFormatCheck@1102159008 : DotNet "'DateTimeFun, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'.DateTimeFun.DateTimeFormatCheck";
+      OK@1102159007 : Boolean;
+      TMSPurchIntfUpload@1102159006 : Report 60052;
+      TMSDimCode3@1102159005 : Code[10];
+      Dim_Value@1102159004 : Record 349;
+      GenLed_Setup@1102159003 : Record 98;
+      Date3MonthsAgo@1102159002 : Date;
+      CurrentMonthLastDate@1102159001 : Date;
+      Result@1102159037 : Integer;
+      ShipAddress@1102159038 : Record 222;
+
+    PROCEDURE InsertInTempTable@1102159001();
+    VAR
+      TMSPurchInterface@1102159001 : Record 60055;
+    BEGIN
+
+      TMSPurchInterface.INIT;
+      TMSPurchInterface."Entry No." := EntryNo;
+      TMSPurchInterface.INSERT;
+
+      TMSPurchInterface."Vendor Invoice No." := TMSVendInvoiceNo;
+      TMSPurchInterface."Vendor Code" := TMSVendCode;
+      TMSPurchInterface."Transaction Date" := TMSTransactionDate;
+      TMSPurchInterface."Vendor Invoice Date" := TMSVendInvoiceDate;
+      TMSPurchInterface."Kwitansi No." := TMSKwitansiNo;
+      //TMSPurchInterface."NPWP No." := TMSNPWPNo; //PPNPPHDEV Previous code commented
+      TMSPurchInterface."Due Date" := TMSDueDate;
+      TMSPurchInterface."Shortcut Dimension Code 1":=TMSDimCode1;
+      TMSPurchInterface."Shorcut Dimension Code 2" := TMSDimCode2;
+      TMSPurchInterface.Currency := TMSCurrency;
+      TMSPurchInterface."Tax Invoice No." := TMSTaxInvoiceNo;
+      TMSPurchInterface."Tax Invoice Date" := TMSTaxInvoiceDate;
+      TMSPurchInterface."Account No." := TMSAccountNo;
+      TMSPurchInterface.Amount := TMSAmount;
+      TMSPurchInterface."VAT Required" := TMSVATReq;
+      TMSPurchInterface."BL Date" := TMSBLDate;
+      TMSPurchInterface.Description := TMSDescription;
+      TMSPurchInterface.MODIFY;
+    END;
+
+    PROCEDURE ResetAll@1102159002();
+    BEGIN
+    END;
+
+    PROCEDURE ValidateData@1102159005() : Boolean;
+    VAR
+      Ch@1102159001 : Char;
+      ErrorInFile@1102159002 : Boolean;
+      ErrorInRow@1102159003 : Boolean;
+      VendorConv@1102159004 : Record 50003;
+      Vendor@1102159005 : Record 23;
+      OrderAddress@1102159006 : Record 224;
+      DimensionValue@1102159007 : Record 349;
+      Currency@1102159008 : Record 4;
+      PurchLine@1102159009 : Record 39;
+      PurchInvLine@1102159010 : Record 123;
+      PurchCrMemoLine@1102159011 : Record 125;
+      PurchCrMemoHdr@1102159012 : Record 124;
+      GLAccount@1102159013 : Record 15;
+      "//SHASHI"@1102159019 : Text;
+      Customer@1102159014 : Record 18;
+      ShipToAddress@1102159015 : Record 222;
+      SalesLine@1102159016 : Record 37;
+      SalesInvLine@1102159017 : Record 113;
+      SalesCrMemoHdr@1102159018 : Record 114;
+      SalesCrMemoLine@1102159020 : Record 115;
+      ConvTableCust@1102159021 : Record 50004;
+      CustBankAcc@1102159022 : Record 287;
+      "//DimNewConcept"@1000000000 : Text;
+      LocalRecIFDimMapSetup@1000000001 : Record 60066;
+      LocalCodeRes@1000000002 : Code[10];
+    BEGIN
+      GeneralLedgerSetup.GET;
+      ErrorInFile :=FALSE;
+      Ch := 9;
+      EntryNo := 0;
+
+      //IF ISCLEAR(DateFormatCheck) THEN  //UPG13R2DEV
+      //CREATE(DateFormatCheck,FALSE,TRUE); //UPG13R2DEV
+      DateFormatCheck := DateFormatCheck.DateTimeFormatCheck; //UPG13R2DEV
+
+      F.CREATEINSTREAM(InstreamObj);
+
+      WHILE NOT InstreamObj.EOS DO BEGIN
+
+        EntryNo := EntryNo + 1;
+        ErrorInRow := FALSE;
+        Result := 0;
+        //----Creating Log Entry No.----
+        OutstreamObj.WRITE(FORMAT(EntryNo));
+        OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+
+        //----Reading Vendor Invoice No.----
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSVendInvoiceNo,TMSValue);
+        IF TMSVendInvoiceNo = '' THEN BEGIN
+          OutstreamObj.WRITETEXT('! Entity Invoice No. cannot be blank');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading Vendor Code----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSVendCode,TMSValue);
+        IF TMSVendCode = '' THEN BEGIN
+          OutstreamObj.WRITETEXT('! Entity Code cannot be blank');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END ELSE
+          Customer.RESET;
+          IF NOT Customer.GET(TMSVendCode) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Entity does not exist in Entity Master');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END ELSE BEGIN
+            IF ((Customer."Customer Type" = Customer."Customer Type"::" ") OR
+                (Customer."Gen. Bus. Posting Group"= '') OR
+                (Customer."VAT Bus. Posting Group" = '') OR
+                (Customer."WHT Business Posting Group" = '') OR
+                (Customer."Customer Posting Group" = ''))
+            THEN BEGIN
+              OutstreamObj.WRITETEXT('! Setup Value is missing for this Entity');
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END;
+          END;
+          //END;
+          {
+          // bank code validation.begin  SV
+          ConvTableCust.RESET;
+          ConvTableCust.SETRANGE("Tms Code",TMSVendCode);
+          IF ConvTableCust.FINDSET THEN BEGIN
+            IF ConvTableCust."Bank Code" = '' THEN BEGIN
+              OutstreamObj.WRITETEXT('! Bank Code not found for entity TMS Code in Conversion Setup');
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END;
+          END ELSE BEGIN
+            OutstreamObj.WRITETEXT('! Entity Tms Code not found in Conversion Setup ');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+          // bank code validation.end    SV
+          }////UPG13R2DEV  SV Bank code new validation Bank code valdiation previous code blocked
+
+
+        //----Reading Transaction Date----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,11);
+        IF EVALUATE(TMSTransactionDate,TMSValue) THEN BEGIN
+          //OK := DateFormatCheck.CHECK(TMSValue);  //UPG13R2DEV
+          OK := DateFormatCheck.checkDateTime(DateTrim(TMSValue)); //UPG13R2DEV
+          IF NOT(OK) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Error in Transaction Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Error in Transaction Date');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading Vendor Invoice Date----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,11);
+        IF EVALUATE(TMSVendInvoiceDate,TMSValue) THEN BEGIN
+          //OK := DateFormatCheck.CHECK(TMSValue);  //UPG13R2DEV
+          OK := DateFormatCheck.checkDateTime(DateTrim(TMSValue)); //UPG13R2DEV
+          //>>04112014/SV
+          IF(TMSTransactionDate < TMSVendInvoiceDate) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Posting Date Can Not be Less than Invoice Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+           END;
+          //<<04112014/SV
+          IF NOT(OK) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Error in Entity Invoice Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Error in Entity Invoice Date');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading Kwitansi No.----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSKwitansiNo,TMSValue);
+        IF TMSKwitansiNo = '' THEN BEGIN
+          OutstreamObj.WRITETEXT('! Kwitansi No is not Defined');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading NPWP No.----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSNPWPNo,TMSValue);
+        //PPNPPHDEV.begin
+        {IF TMSNPWPNo = '' THEN BEGIN
+          IF NOT Customer.GET(TMSVendCode) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Entity does not exist in Entity Master');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+            IF Customer.GET(TMSVendCode) THEN BEGIN
+               ShipToAddress.RESET;
+              IF NOT ShipToAddress.GET(Customer."No.",TMSNPWPNo) THEN BEGIN
+                OutstreamObj.WRITETEXT('! NPWP No. '+TMSNPWPNo+'is not registered for Entity '+Customer."No.");
+                OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+                ErrorInRow := TRUE;
+              END;
+            END ELSE BEGIN
+              OutstreamObj.WRITETEXT('! Entity does not exist in Entity Master');
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END;
+        END;}//Previous code commented
+        //PPNPPHDEV.end
+
+        //----Reading Due Date----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,11);
+        IF EVALUATE(TMSDueDate,TMSValue) THEN BEGIN
+            //OK := DateFormatCheck.CHECK(TMSValue);  //UPG13R2DEV
+            OK := DateFormatCheck.checkDateTime(DateTrim(TMSValue)); //UPG13R2DEV
+          IF NOT(OK) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Error in Due Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Error in Due Date');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading Dimension Code 1----
+        //Dimension value new concept.start>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        {
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,10);
+        EVALUATE(TMSDimCode1,TMSValue);
+        IF TMSDimCode1 <> '' THEN BEGIN
+          DimensionValue.RESET;
+          DimensionValue.SETRANGE(DimensionValue."Dimension Code",GeneralLedgerSetup."Global Dimension 1 Code");
+          DimensionValue.SETRANGE(DimensionValue.Name,TMSDimCode1); //SV CR#003  tms will send yimm code
+          IF DimensionValue.FINDFIRST THEN       //SV CR#003  04112014
+          TMSDimCode1:=DimensionValue.Code;      //SV CR#003  04112014
+
+          IF NOT DimensionValue.FINDFIRST THEN BEGIN
+            OutstreamObj.WRITETEXT('! Shop Code '+ FORMAT(TMSDimCode1) + 'does not exist');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Shop Code cannot be Blank');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+        }////Dimension value new concept.previous code blocked
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,10);
+        EVALUATE(TMSDimCode1,TMSValue);
+        IF TMSDimCode1 <> '' THEN BEGIN
+          IF LocalRecIFDimMapSetup.GET THEN;
+          IF LocalRecIFDimMapSetup."NIMS(TMS)" THEN BEGIN
+            LocalCodeRes := GetDim1Value(TMSDimCode1);
+            IF (LocalCodeRes = 'NOT FOUND') THEN BEGIN
+              OutstreamObj.WRITETEXT('! Shop Code '+ FORMAT(TMSDimCode1) + 'does not exist');
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END ELSE
+              TMSDimCode1 := LocalCodeRes;
+          END ELSE BEGIN
+            DimensionValue.RESET;
+            DimensionValue.SETRANGE(DimensionValue."Dimension Code",GeneralLedgerSetup."Global Dimension 1 Code");
+            DimensionValue.SETRANGE(DimensionValue.Name,TMSDimCode1); //SV CR#003  tms will send yimm code
+            IF DimensionValue.FINDFIRST THEN       //SV CR#003  04112014
+              TMSDimCode1:=DimensionValue.Code;      //SV CR#003  04112014
+
+            IF NOT DimensionValue.FINDFIRST THEN BEGIN
+              OutstreamObj.WRITETEXT('! Shop Code '+ FORMAT(TMSDimCode1) + 'does not exist');
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Shop Code cannot be Blank');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //Dimension value new concept.end<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        //----Reading Dimension Code 2----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,10);
+        //EVALUATE(TMSDimCode2,TMSValue);  code commented dim2 code from master setup  //SV
+        //>> SV CR#003
+        TMSDimCode2:=MasterSetup."TMS Model Dimension";
+        //<< SV CR#003
+
+        //----Reading Currency Code----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,10);
+        EVALUATE(TMSCurrency,TMSValue);
+
+        IF TMSCurrency <> '' THEN BEGIN
+          Currency.RESET;
+          IF NOT Currency.GET(TMSCurrency) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Currency Code '+ FORMAT(TMSCurrency) + 'does not exist');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END;
+
+        {////UPG13R2DEV  SV Bank code new validation Bank code valdiation new concept.begin
+        ConvTableCust.RESET;
+        ConvTableCust.SETRANGE("Tms Code",TMSVendCode);
+        IF ConvTableCust.FINDSET THEN BEGIN
+          CustBankAcc.RESET;
+          CustBankAcc.SETRANGE("Customer No.",ConvTableCust.NAV);
+          CustBankAcc.SETRANGE(Purchase,TRUE);
+          IF (TMSCurrency = '') OR (TMSCurrency = 'IDR') THEN
+            CustBankAcc.SETRANGE("Currency Code",'')
+          ELSE
+            CustBankAcc.SETRANGE("Currency Code",TMSCurrency);
+          IF NOT ( (CustBankAcc.FINDSET) AND (CustBankAcc.Code <> '') ) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Bank Code for Non-Dealer Account not found for entity');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Entity Tms Code not found in Conversion Setup ');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+        ////UPG13R2DEV  SV Bank code new validation Bank code valdiation new concept.end
+        }//blocked for parallel run
+        //code written for parallel run>>>>
+        ConvTableCust.RESET;
+        ConvTableCust.SETRANGE("Tms Code",TMSVendCode);
+        IF NOT ConvTableCust.FINDSET THEN BEGIN
+          OutstreamObj.WRITETEXT('! Entity Tms Code not found in Conversion Setup ');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+        //code written for parallel run<<<<
+
+        //----Reading Tax Invoice No.----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSTaxInvoiceNo,TMSValue);
+
+        IF TMSTaxInvoiceNo <> '' THEN BEGIN
+          SalesLine.RESET;
+          SalesLine.SETCURRENTKEY("Tax Invoice No.");
+          SalesLine.SETRANGE("Tax Invoice No.",TMSTaxInvoiceNo);
+          SalesLine.SETRANGE("Document Type",SalesLine."Document Type"::Invoice);
+          SalesLine.SETRANGE("Reason Code",MasterSetup."Reason (Normal)");
+          //SalesLine.SETRANGE("New NPWP.",TMSNPWPNo);   PPNPPHDEV Previous code commented
+          //PPNPPHDEV.begin
+          ShipAddress.RESET;
+          ShipAddress.SETRANGE("Customer No.",TMSVendCode);
+          ShipAddress.SETRANGE(PPN,TRUE);
+          ShipAddress.SETRANGE("PPN Non Dealer",TRUE);
+          IF ShipAddress.FINDFIRST THEN
+            SalesLine.SETRANGE(SalesLine."Ship-to Code",ShipAddress.Code);
+          //PPNPPHDEV.end
+          IF SalesLine.FINDFIRST THEN BEGIN
+            OutstreamObj.WRITETEXT('! Tax Invoice No. '+ FORMAT(TMSTaxInvoiceNo) + 'already exists in Tanda Terima No.'
+                                    + FORMAT(SalesLine."Document No."));
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+
+          SalesInvLine.RESET;
+          SalesInvLine.SETCURRENTKEY("Tax Invoice No.");
+          SalesInvLine.SETRANGE("Tax Invoice No.",TMSTaxInvoiceNo);
+          SalesInvLine.SETRANGE("Reason Code",MasterSetup."Reason (Normal)");
+          //SalesInvLine.SETRANGE("New NPWP.",TMSNPWPNo);   PPNPPHDEV Previous code commented
+          //PPNPPHDEV.begin
+          ShipAddress.RESET;
+          ShipAddress.SETRANGE("Customer No.",TMSVendCode);
+          ShipAddress.SETRANGE(PPN,TRUE);
+          ShipAddress.SETRANGE("PPN Non Dealer",TRUE);
+          IF ShipAddress.FINDFIRST THEN
+            SalesLine.SETRANGE(SalesLine."Ship-to Code",ShipAddress.Code);
+          //PPNPPHDEV.end
+          IF SalesInvLine.FINDFIRST THEN BEGIN
+            SalesCrMemoHdr.RESET;
+            SalesCrMemoHdr.SETRANGE("Applies-to Doc. Type",SalesCrMemoHdr."Applies-to Doc. Type"::Invoice);
+            SalesCrMemoHdr.SETRANGE("Applies-to Doc. No.",SalesInvLine."Document No.");
+            SalesCrMemoHdr.SETRANGE(ActualCreditMemo,FALSE);
+            IF NOT SalesCrMemoHdr.FINDFIRST THEN BEGIN
+
+              OutstreamObj.WRITETEXT('! Tax Invoice No. '+ FORMAT(TMSTaxInvoiceNo) + 'already exists in Posted Tanda Terima No.'
+                                    + FORMAT(SalesInvLine."Document No."));
+              OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+              ErrorInRow := TRUE;
+            END ELSE BEGIN
+              SalesCrMemoLine.RESET;
+              SalesCrMemoLine.SETRANGE("Document No.",SalesCrMemoHdr."No.");
+              SalesCrMemoLine.SETRANGE("Tax Invoice No.",TMSTaxInvoiceNo);
+              IF NOT SalesCrMemoLine.FINDFIRST THEN BEGIN
+                OutstreamObj.WRITETEXT('! Tax Invoice No. '+ FORMAT(TMSTaxInvoiceNo) + 'already exists in Posted Tanda Terima No.'
+                                    + FORMAT(SalesInvLine."Document No."));
+                OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+                ErrorInRow := TRUE;
+              END;
+            END;
+          END;
+        END;
+
+        //----Reading Tax Invoice Date----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,11);
+        IF EVALUATE(TMSTaxInvoiceDate,TMSValue) THEN BEGIN
+
+          //OK := DateFormatCheck.CHECK(TMSValue);  //UPG13R2DEV
+          OK := DateFormatCheck.checkDateTime(DateTrim(TMSValue)); //UPG13R2DEV
+        //>>04112014/SV
+              Date3MonthsAgo := CALCDATE('<-CM>',CALCDATE('<-3M>',TMSTransactionDate));
+              CurrentMonthLastDate := CALCDATE('<CM>',TODAY);
+           IF((TMSTaxInvoiceDate) < ( Date3MonthsAgo)) THEN BEGIN
+             OutstreamObj.WRITETEXT('! Tax Invoice Date should Not be Less Than Three Months Before Posting Date');
+             OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+             ErrorInRow := TRUE;
+           END;
+           IF((TMSTaxInvoiceDate) > (CurrentMonthLastDate)) THEN BEGIN
+             OutstreamObj.WRITETEXT('! Tax Invoice Date  should Not be Greater Than Current Month');
+             OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+             ErrorInRow := TRUE;
+           END;
+       //<<04112014/SV
+          IF NOT(OK) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Error in Tax Invoice Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Error in Tax Invoice Date');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+        //----Reading Account No.----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+        EVALUATE(TMSAccountNo,TMSValue);
+         IF TMSAccountNo <> '' THEN BEGIN
+          GLAccount.RESET;
+          IF NOT GLAccount.GET(TMSAccountNo) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Account No.' + TMSAccountNo + 'does not exist');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Account No cannot be blank');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+
+      //>>SV
+        //----- Reading Amount ----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,20);
+
+        IF EVALUATE(TMSAmount,TMSValue) THEN BEGIN
+          IF FORMAT(TMSAmount) = '' THEN BEGIN
+          OutstreamObj.WRITETEXT('! Error in Amount');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+        END;
+
+      //<<SV
+
+
+
+        //----Reading VAT Required----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,3);
+       IF  EVALUATE(TMSVATReq,TMSValue) THEN BEGIN
+          IF (FORMAT(TMSVATReq) = '') OR ((FORMAT(TMSVATReq) <> 'No') AND (FORMAT(TMSVATReq) <> 'Yes'))  //MIMPIND002/001/140806/003 SV
+          THEN BEGIN
+          OutstreamObj.WRITETEXT('! Error in VAT Flag');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END;
+        END;
+      //PPNPPHDEV.begin
+       Result := GetPPNNpwpNumber(TMSVendCode,TMSVATReq);
+       IF (Result = 1) THEN BEGIN
+         OutstreamObj.WRITETEXT('! PPN(PPN NonDealer) NPWP No. Not found for entity');
+         OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+         ErrorInRow := TRUE;
+       END
+       ELSE IF (Result = 2) THEN BEGIN
+         OutstreamObj.WRITETEXT('! Entity does not exist in Entity Master');
+         OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+         ErrorInRow := TRUE;
+       END;
+      //PPNPPHDEV.end
+
+        //----Reading B/L Date----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,11);
+        {IF EVALUATE(TMSBLDate,TMSValue) THEN BEGIN
+            //OK := DateFormatCheck.CHECK(TMSValue);  //UPG13R2DEV
+            OK := DateformatCheck.checkDateTime(DateTrim(TMSValue)); //UPG13R2DEV
+          IF NOT(OK) THEN BEGIN
+            OutstreamObj.WRITETEXT('! Error in B/L Date');
+            OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+            ErrorInRow := TRUE;
+          END;
+        END ELSE BEGIN
+          OutstreamObj.WRITETEXT('! Error in B/L Date');
+          OutstreamObj.WRITETEXT(FORMAT(Ch,1,'<CHAR>'));
+          ErrorInRow := TRUE;
+        END; }  //Code commented because b\l date should be blank according to requirement
+
+        //----Reading Description----
+        InstreamObj.READTEXT(TMSValue,1);
+        InstreamObj.READTEXT(TMSValue,50); //80 is converted to 50
+        IF EVALUATE(TMSDescription,TMSValue) THEN;
+          IF ErrorInRow THEN
+          ErrorInFile:=TRUE
+        ELSE BEGIN
+          OutstreamObj.WRITETEXT('Processed Successfully');
+          InsertInTempTable;
+        END;
+        InstreamObj.READTEXT(TMSValue,1);
+        OutstreamObj.WRITETEXT();
+        ResetAll();
+
+      END;
+      LF.CLOSE;
+
+      EXIT (NOT ErrorInFile);
+    END;
+
+    PROCEDURE DateTrim@1102159003(ADate@1102159001 : Text) : Text[250];
+    BEGIN
+      EXIT(DELSTR(ADate,STRLEN(ADate),1));
+    END;
+
+    PROCEDURE GetPPNNpwpNumber@1102159004("Customer code"@1102159001 : Code[30];vat@1102159005 : Boolean) return : Integer;
+    VAR
+      ConvMasterCust@1102159002 : Record 50004;
+      Cust_Master1@1102159003 : Record 18;
+      ShipAdd@1102159004 : Record 222;
+    BEGIN
+
+        //new funtion for ppnpph npwp validation  //PPNPPHDEV
+      IF vat THEN BEGIN
+        IF Cust_Master1.GET("Customer code") THEN BEGIN
+          ShipAdd.RESET;
+          ShipAdd.SETRANGE("Customer No.",Cust_Master1."No.");
+          ShipAdd.SETRANGE(ShipAdd.PPN,TRUE);
+          ShipAdd.SETRANGE("PPN Non Dealer",TRUE);
+          IF NOT ShipAdd.FINDFIRST THEN
+            return := 1;
+        END ELSE
+          return := 2;
+      END ELSE BEGIN
+        IF NOT Cust_Master1.GET("Customer code") THEN
+          return := 2
+      END;
+    END;
+
+    PROCEDURE GetDim1Value@1000000002(Dimension1@1000000000 : Code[10]) LocalCodeReturnRes : Code[10];
+    VAR
+      LocalRecIfDimMapp@1000000001 : Record 60065;
+    BEGIN
+
+      LocalRecIfDimMapp.RESET;
+      LocalRecIfDimMapp.SETRANGE("Dimension Name",LocalRecIfDimMapp."Dimension Name"::"SHOP CODE");
+      LocalRecIfDimMapp.SETRANGE("Old YIMM Code",Dimension1);
+      IF LocalRecIfDimMapp.FINDFIRST THEN
+        LocalCodeReturnRes := LocalRecIfDimMapp."New NAV Code"
+      ELSE
+        LocalCodeReturnRes := 'NOT FOUND';
+    END;
+
+    BEGIN
+    {
+
+      Date               Sign                 Ref_ID                            Description
+      01102014          SV/VK                 CR#003  MIMPIND002/001/140806/003              New Batch for NAV-TMS(Purchase Invoice) Interface
+
+      //UPG13R2DEV  SV 19122014
+      Newly created
+
+      //UPG13R2DEV
+      Modifications for 2013R2DB. Dotnet variable "DateFormatCheck" is modified. Also "DateTrim" function is created to remove a space in Date fields in interface files.
+      //PPNPPHDEV SV 06042015 ppnpph concept developed
+      //Bank code validation SV
+
+      ////UPG13R2DEV  SV Bank code new validation SV 30062015 Bank code new concept
+
+      [UPG13R2DEV]
+      [SIGN]  : SV
+      [REF]   : Dimension value new concept
+      [DESC]  : Dimension value new concept.New mapping table introduced and will be used(based on setup) untill all other systems are updated to use new dimension values.
+                After all other system updated mapping will be obsolate
+    }
+    END.
+  }
+}
+

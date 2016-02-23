@@ -1,0 +1,46 @@
+OBJECT Table 60046 HFMrowHeader1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/23/10;
+    Time=[ 8:56:24];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;LineNo              ;Integer       ;AutoIncrement=No }
+    { 2   ;   ;Name                ;Code10        ;TableRelation=HFMcolHeader1.Name }
+    { 3   ;   ;VendorFilter        ;Code200       ;TableRelation=Vendor;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No }
+    { 4   ;   ;PostingGroupFilter  ;Code250       ;TableRelation="Vendor Posting Group";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No }
+    { 5   ;   ;Accountfilter       ;Code250       ;TableRelation="G/L Account";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No }
+    { 6   ;   ;ColNo               ;Integer        }
+    { 7   ;   ;SearchGL            ;Boolean        }
+    { 8   ;   ;RowNo               ;Integer        }
+  }
+  KEYS
+  {
+    {    ;LineNo,Name                             ;Clustered=Yes }
+    {    ;VendorFilter,ColNo                       }
+    {    ;VendorFilter,RowNo,ColNo                 }
+    {    ;RowNo                                    }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

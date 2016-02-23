@@ -1,0 +1,36 @@
+OBJECT Table 50040 Area Code DDS
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/31/09;
+    Time=15:10:15;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page50092;
+  }
+  FIELDS
+  {
+    { 1   ;   ;DDS Code            ;Code10         }
+    { 2   ;   ;Name                ;Text50         }
+  }
+  KEYS
+  {
+    {    ;DDS Code                                ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      // Table Is created to identity the customer belongs to which DDS which would help in making the
+      Payment (Suggest Dealer Payment)
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,325 @@
+OBJECT Page 50080 Posted Vendor Sales Invoice
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/01/14;
+    Time=15:45:27;
+    Modified=Yes;
+    Version List=NAVW15.00.01,NAVAP5.00,UPG13C;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Posted Vendor Sales Invoice;
+    InsertAllowed=No;
+    SourceTable=Table124;
+    SourceTableView=SORTING(No.)
+                    ORDER(Ascending)
+                    WHERE(Reason Code=FILTER(PURRT));
+    PageType=Document;
+    RefreshOnActivate=Yes;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 45      ;1   ;ActionGroup;
+                      CaptionML=ENU=&Cr. Memo }
+      { 8       ;2   ;Action    ;
+                      ShortCutKey=F7;
+                      CaptionML=ENU=Statistics;
+                      RunObject=Page 401;
+                      RunPageLink=No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 47      ;2   ;Action    ;
+                      CaptionML=ENU=Co&mments;
+                      RunObject=Page 66;
+                      RunPageLink=Document Type=CONST(Posted Credit Memo),
+                                  No.=FIELD(No.),
+                                  Document Line No.=CONST(0);
+                      Image=ViewComments }
+      { 79      ;2   ;Action    ;
+                      CaptionML=ENU=Dimensions;
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions; // UPG13C
+                               END;
+                                }
+      { 88      ;2   ;Action    ;
+                      CaptionML=ENU=Approvals;
+                      Image=Approvals;
+                      OnAction=VAR
+                                 PostedApprovalEntries@1001 : Page 659;
+                               BEGIN
+                                 PostedApprovalEntries.Setfilters(DATABASE::"Purch. Cr. Memo Hdr.","No.");
+                                 PostedApprovalEntries.RUN;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 48      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=&Print;
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CurrPage.SETSELECTIONFILTER(PurchCrMemoHeader);
+                                 PurchCrMemoHeader.PrintRecords(TRUE);
+                               END;
+                                }
+      { 49      ;1   ;Action    ;
+                      CaptionML=ENU=&Navigate;
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=ENU=General }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                Editable=FALSE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor No.";
+                Editable=FALSE }
+
+    { 91  ;2   ;Field     ;
+                SourceExpr="Buy-from Contact No.";
+                Editable=FALSE }
+
+    { 51  ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor Name";
+                Editable=FALSE }
+
+    { 53  ;2   ;Field     ;
+                SourceExpr="Buy-from Address";
+                Editable=FALSE }
+
+    { 55  ;2   ;Field     ;
+                SourceExpr="Buy-from Address 2";
+                Editable=FALSE }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=ENU=Buy-from Post Code/City;
+                SourceExpr="Buy-from Post Code";
+                Editable=FALSE }
+
+    { 57  ;2   ;Field     ;
+                SourceExpr="Buy-from City";
+                Editable=FALSE }
+
+    { 1500000;2;Field     ;
+                SourceExpr="Buy-from County";
+                Editable=FALSE }
+
+    { 1500002;2;Field     ;
+                CaptionML=ENU=Buy-from County/Country Code;
+                SourceExpr="Buy-from Country/Region Code";
+                Editable=FALSE }
+
+    { 59  ;2   ;Field     ;
+                SourceExpr="Buy-from Contact";
+                Editable=FALSE }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Editable=FALSE }
+
+    { 31  ;2   ;Field     ;
+                SourceExpr="Document Date";
+                Editable=FALSE }
+
+    { 63  ;2   ;Field     ;
+                SourceExpr="Pre-Assigned No.";
+                Editable=FALSE }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Vendor Cr. Memo No.";
+                Editable=FALSE }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Order Address Code";
+                Editable=FALSE }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Purchaser Code";
+                Editable=FALSE }
+
+    { 80  ;2   ;Field     ;
+                SourceExpr="Responsibility Center";
+                Editable=FALSE }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="No. Printed";
+                Editable=FALSE }
+
+    { 44  ;1   ;Part      ;
+                Name=PurchCrMemoLines;
+                SubPageLink=Document No.=FIELD(No.);
+                PagePartID=Page141 }
+
+    { 1905885101;1;Group  ;
+                CaptionML=ENU=Invoicing }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Pay-to Vendor No.";
+                Editable=FALSE }
+
+    { 93  ;2   ;Field     ;
+                SourceExpr="Pay-to Contact No.";
+                Editable=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Pay-to Name";
+                Editable=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Pay-to Address";
+                Editable=FALSE }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Pay-to Address 2";
+                Editable=FALSE }
+
+    { 70  ;2   ;Field     ;
+                CaptionML=ENU=Pay-to Post Code/City;
+                SourceExpr="Pay-to Post Code";
+                Editable=FALSE }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Pay-to City";
+                Editable=FALSE }
+
+    { 1500004;2;Field     ;
+                SourceExpr="Pay-to County";
+                Editable=FALSE }
+
+    { 1500006;2;Field     ;
+                CaptionML=ENU=Pay-to County/Country Code;
+                SourceExpr="Pay-to Country/Region Code";
+                Editable=FALSE }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Pay-to Contact";
+                Editable=FALSE }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Editable=FALSE }
+
+    { 66  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Editable=FALSE }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Applies-to Doc. Type";
+                Editable=FALSE }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Applies-to Doc. No.";
+                Editable=FALSE }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="YMNI Type of Sales";
+                Editable=FALSE }
+
+    { 1906801201;1;Group  ;
+                CaptionML=ENU=Shipping }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Ship-to Name";
+                Editable=FALSE }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Ship-to Address";
+                Editable=FALSE }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Ship-to Address 2";
+                Editable=FALSE }
+
+    { 72  ;2   ;Field     ;
+                CaptionML=ENU=Ship-to Post Code/City;
+                SourceExpr="Ship-to Post Code";
+                Editable=FALSE }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Ship-to City";
+                Editable=FALSE }
+
+    { 1500008;2;Field     ;
+                SourceExpr="Ship-to County";
+                Editable=FALSE }
+
+    { 1500010;2;Field     ;
+                CaptionML=ENU=Ship-to County/Country Code;
+                SourceExpr="Ship-to Country/Region Code";
+                Editable=FALSE }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Ship-to Contact";
+                Editable=FALSE }
+
+    { 68  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Editable=FALSE }
+
+    { 1907468901;1;Group  ;
+                CaptionML=ENU=Foreign Trade }
+
+    { 75  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                OnAssistEdit=BEGIN
+                               ChangeExchangeRate.SetParameter("Currency Code","Currency Factor","Posting Date");
+                               ChangeExchangeRate.EDITABLE(FALSE);
+                               IF ChangeExchangeRate.RUNMODAL = ACTION::OK THEN BEGIN
+                                 "Currency Factor" := ChangeExchangeRate.GetParameter;
+                                 MODIFY;
+                               END;
+                               CLEAR(ChangeExchangeRate);
+                             END;
+                              }
+
+    { 1902492201;1;Group  ;
+                CaptionML=ENU=Adjustment Details }
+
+    { 1500001;2;Field     ;
+                SourceExpr=Adjustment }
+
+    { 1500009;2;Field     ;
+                SourceExpr="BAS Adjustment" }
+
+    { 1500013;2;Field     ;
+                SourceExpr="Adjustment Applies-to" }
+
+    { 1500015;2;Field     ;
+                SourceExpr="Reason Code" }
+
+  }
+  CODE
+  {
+    VAR
+      PurchCrMemoHeader@1000 : Record 124;
+      ChangeExchangeRate@1001 : Page 511;
+
+    BEGIN
+    {
+      // UPG13C
+      Code added or edited to solve compilation errors after migrating merged and customized objects to 2013 from 2009 R2
+    }
+    END.
+  }
+}
+

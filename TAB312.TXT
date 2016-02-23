@@ -1,0 +1,226 @@
+OBJECT Table 312 Purchases & Payables Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10,NAVAPAC7.10,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Purchases & Payables Setup;
+               ENA=Purchases & Payables Setup];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10        ;CaptionML=[ENU=Primary Key;
+                                                              ENA=Primary Key] }
+    { 2   ;   ;Discount Posting    ;Option        ;CaptionML=[ENU=Discount Posting;
+                                                              ENA=Discount Posting];
+                                                   OptionCaptionML=[ENU=No Discounts,Invoice Discounts,Line Discounts,All Discounts;
+                                                                    ENA=No Discounts,Invoice Discounts,Line Discounts,All Discounts];
+                                                   OptionString=No Discounts,Invoice Discounts,Line Discounts,All Discounts }
+    { 6   ;   ;Receipt on Invoice  ;Boolean       ;CaptionML=[ENU=Receipt on Invoice;
+                                                              ENA=Receipt on Invoice] }
+    { 7   ;   ;Invoice Rounding    ;Boolean       ;CaptionML=[ENU=Invoice Rounding;
+                                                              ENA=Invoice Rounding] }
+    { 8   ;   ;Ext. Doc. No. Mandatory;Boolean    ;InitValue=Yes;
+                                                   CaptionML=[ENU=Ext. Doc. No. Mandatory;
+                                                              ENA=Ext. Doc. No. Mandatory] }
+    { 9   ;   ;Vendor Nos.         ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Vendor Nos.;
+                                                              ENA=Vendor Nos.] }
+    { 10  ;   ;Quote Nos.          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Quote Nos.;
+                                                              ENA=Quote Nos.] }
+    { 11  ;   ;Order Nos.          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Order Nos.;
+                                                              ENA=Order Nos.] }
+    { 12  ;   ;Invoice Nos.        ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Invoice Nos.;
+                                                              ENA=Invoice Nos.] }
+    { 13  ;   ;Posted Invoice Nos. ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Invoice Nos.;
+                                                              ENA=Posted Invoice Nos.] }
+    { 14  ;   ;Credit Memo Nos.    ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Credit Memo Nos.;
+                                                              ENA=CR/Adj Note Nos.] }
+    { 15  ;   ;Posted Credit Memo Nos.;Code10     ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Credit Memo Nos.;
+                                                              ENA=Posted CR/Adj Note Nos.] }
+    { 16  ;   ;Posted Receipt Nos. ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Receipt Nos.;
+                                                              ENA=Posted Receipt Nos.] }
+    { 19  ;   ;Blanket Order Nos.  ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Blanket Order Nos.;
+                                                              ENA=Blanket Order Nos.] }
+    { 20  ;   ;Calc. Inv. Discount ;Boolean       ;CaptionML=[ENU=Calc. Inv. Discount;
+                                                              ENA=Calc. Inv. Discount] }
+    { 21  ;   ;Appln. between Currencies;Option   ;CaptionML=[ENU=Appln. between Currencies;
+                                                              ENA=Appln. between Currencies];
+                                                   OptionCaptionML=[ENU=None,EMU,All;
+                                                                    ENA=None,EMU,All];
+                                                   OptionString=None,EMU,All }
+    { 22  ;   ;Copy Comments Blanket to Order;Boolean;
+                                                   InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Comments Blanket to Order;
+                                                              ENA=Copy Comments Blanket to Order] }
+    { 23  ;   ;Copy Comments Order to Invoice;Boolean;
+                                                   InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Comments Order to Invoice;
+                                                              ENA=Copy Comments Order to Invoice] }
+    { 24  ;   ;Copy Comments Order to Receipt;Boolean;
+                                                   InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Comments Order to Receipt;
+                                                              ENA=Copy Comments Order to Receipt] }
+    { 25  ;   ;Allow VAT Difference;Boolean       ;CaptionML=[ENU=Allow VAT Difference;
+                                                              ENA=Allow GST Difference] }
+    { 26  ;   ;Calc. Inv. Disc. per VAT ID;Boolean;CaptionML=[ENU=Calc. Inv. Disc. per VAT ID;
+                                                              ENA=Calc. Inv. Disc. per GST ID] }
+    { 27  ;   ;Posted Prepmt. Inv. Nos.;Code10    ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Prepmt. Inv. Nos.;
+                                                              ENA=Posted Prepmt. Inv. Nos.] }
+    { 28  ;   ;Posted Prepmt. Cr. Memo Nos.;Code10;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Prepmt. Cr. Memo Nos.;
+                                                              ENA=Posted Prepmt. CR/Adj Note Nos.] }
+    { 29  ;   ;Check Prepmt. when Posting;Boolean ;CaptionML=[ENU=Check Prepmt. when Posting;
+                                                              ENA=Check Prepmt. when Posting] }
+    { 35  ;   ;Default Posting Date;Option        ;CaptionML=[ENU=Default Posting Date;
+                                                              ENA=Default Posting Date];
+                                                   OptionCaptionML=[ENU=Work Date,No Date;
+                                                                    ENA=Work Date,No Date];
+                                                   OptionString=Work Date,No Date }
+    { 36  ;   ;Default Qty. to Receive;Option     ;CaptionML=[ENU=Default Qty. to Receive;
+                                                              ENA=Default Qty. to Receive];
+                                                   OptionCaptionML=[ENU=Remainder,Blank;
+                                                                    ENA=Remainder,Blank];
+                                                   OptionString=Remainder,Blank }
+    { 37  ;   ;Archive Quotes and Orders;Boolean  ;CaptionML=[ENU=Archive Quotes and Orders;
+                                                              ENA=Archive Quotes and Orders] }
+    { 38  ;   ;Post with Job Queue ;Boolean       ;CaptionML=[ENU=Post with Job Queue;
+                                                              ENA=Post with Job Queue] }
+    { 39  ;   ;Job Queue Category Code;Code10     ;TableRelation="Job Queue Category";
+                                                   CaptionML=[ENU=Job Queue Category Code;
+                                                              ENA=Job Queue Category Code] }
+    { 40  ;   ;Job Queue Priority for Post;Integer;InitValue=1000;
+                                                   OnValidate=BEGIN
+                                                                IF "Job Queue Priority for Post" < 0 THEN
+                                                                  ERROR(Text001);
+                                                              END;
+
+                                                   CaptionML=[ENU=Job Queue Priority for Post;
+                                                              ENA=Job Queue Priority for Post];
+                                                   MinValue=0 }
+    { 41  ;   ;Post & Print with Job Queue;Boolean;CaptionML=[ENU=Post & Print with Job Queue;
+                                                              ENA=Post & Print with Job Queue] }
+    { 42  ;   ;Job Q. Prio. for Post & Print;Integer;
+                                                   InitValue=1000;
+                                                   OnValidate=BEGIN
+                                                                IF "Job Queue Priority for Post" < 0 THEN
+                                                                  ERROR(Text001);
+                                                              END;
+
+                                                   CaptionML=[ENU=Job Queue Priority for Post & Print;
+                                                              ENA=Job Queue Priority for Post & Print];
+                                                   MinValue=0 }
+    { 43  ;   ;Notify On Success   ;Boolean       ;CaptionML=[ENU=Notify On Success;
+                                                              ENA=Notify On Success] }
+    { 5800;   ;Posted Return Shpt. Nos.;Code10    ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Return Shpt. Nos.;
+                                                              ENA=Posted Return Shpt. Nos.] }
+    { 5801;   ;Copy Cmts Ret.Ord. to Ret.Shpt;Boolean;
+                                                   InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Cmts Ret.Ord. to Ret.Shpt;
+                                                              ENA=Copy Cmts Ret.Ord. to Ret.Shpt] }
+    { 5802;   ;Copy Cmts Ret.Ord. to Cr. Memo;Boolean;
+                                                   InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Cmts Ret.Ord. to Cr. Memo;
+                                                              ENA=Copy Cmts Ret.Ord. to CR/Adj Note] }
+    { 6600;   ;Return Order Nos.   ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Return Order Nos.;
+                                                              ENA=Return Order Nos.] }
+    { 6601;   ;Return Shipment on Credit Memo;Boolean;
+                                                   CaptionML=[ENU=Return Shipment on Credit Memo;
+                                                              ENA=Return Shipment on CR/Adj Note] }
+    { 6602;   ;Exact Cost Reversing Mandatory;Boolean;
+                                                   CaptionML=[ENU=Exact Cost Reversing Mandatory;
+                                                              ENA=Exact Cost Reversing Mandatory] }
+    { 11610;  ;GST Prod. Posting Group;Code10     ;TableRelation="VAT Posting Setup"."VAT Prod. Posting Group";
+                                                   CaptionML=[ENU=GST Prod. Posting Group;
+                                                              ENA=GST Prod. Posting Group] }
+    { 11611;  ;Pre-GST Prod. Posting Group;Code10 ;TableRelation="VAT Posting Setup"."VAT Prod. Posting Group";
+                                                   CaptionML=[ENU=Pre-GST Prod. Posting Group;
+                                                              ENA=Pre-GST Prod. Posting Group] }
+    { 11612;  ;Vendor Registration Warning;Boolean;CaptionML=[ENU=Vendor Registration Warning;
+                                                              ENA=Vendor Registration Warning] }
+    { 11613;  ;Payment Discount Reason Code;Code10;TableRelation="Reason Code".Code;
+                                                   CaptionML=[ENU=Payment Discount Reason Code;
+                                                              ENA=Payment Discount Reason Code] }
+    { 28040;  ;WHT Certificate No. Series;Code10  ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=WHT Certificate No. Series;
+                                                              ENA=WHT Certificate No. Series] }
+    { 28041;  ;Print Dialog        ;Boolean       ;CaptionML=[ENU=Print Dialog;
+                                                              ENA=Print Dialogue] }
+    { 28042;  ;Print WHT Docs. on Pay. Post;Boolean;
+                                                   CaptionML=[ENU=Print WHT Docs. on Pay. Post;
+                                                              ENA=Print WHT Docs. on Pay. Post] }
+    { 28043;  ;Print WHT Docs. on Credit Memo;Boolean;
+                                                   CaptionML=[ENU=Print WHT Docs. on Credit Memo;
+                                                              ENA=Print WHT Docs. on CR/Adj Note] }
+    { 28070;  ;Posted Tax Invoice Nos.;Code10     ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Tax Invoice Nos.;
+                                                              ENA=Posted Tax Invoice Nos.] }
+    { 28071;  ;Posted Tax Credit Memo Nos;Code10  ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Tax Credit Memo Nos;
+                                                              ENA=Posted Tax CR/Adj Note Nos] }
+    { 28072;  ;Posted Non Tax Invoice Nos.;Code10 ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Non Tax Invoice Nos.;
+                                                              ENA=Posted Non Tax Invoice Nos.] }
+    { 28073;  ;Posted Non Tax Credit Memo Nos;Code10;
+                                                   TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Non Tax Credit Memo Nos;
+                                                              ENA=Posted Non Tax CR/Adj Note Nos] }
+    { 28087;  ;Enable Vendor GST Amount (ACY);Boolean;
+                                                   CaptionML=[ENU=Enable Vendor GST Amount (ACY);
+                                                              ENA=Enable Vendor GST Amount (ACY)] }
+    { 28090;  ;Post Dated Check Template;Code20   ;TableRelation="Gen. Journal Template";
+                                                   CaptionML=[ENU=Post Dated Check Template;
+                                                              ENA=Post Dated Cheque Template] }
+    { 28091;  ;Post Dated Check Batch;Code20      ;TableRelation="Gen. Journal Batch".Name WHERE (Journal Template Name=FIELD(Post Dated Check Template),
+                                                                                                  Bal. Account Type=CONST(Bank Account));
+                                                   CaptionML=[ENU=Post Dated Check Batch;
+                                                              ENA=Post Dated Cheque Batch] }
+    { 50001;  ;PurchaseCreditMemoCorrection;Code10;TableRelation="No. Series";
+                                                   Description=Field to Create the Series OF Correction Credit Memo }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text001@1000 : TextConst 'ENU=Job Queue Priority must be zero or positive.;ENA=Job Queue Priority must be zero or positive.';
+
+    PROCEDURE JobQueueActive@1() : Boolean;
+    BEGIN
+      GET;
+      EXIT("Post with Job Queue" OR "Post & Print with Job Queue");
+    END;
+
+    BEGIN
+    {
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

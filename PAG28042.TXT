@@ -1,0 +1,41 @@
+OBJECT Page 28042 WHT Revenue Types
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/04;
+    Time=12:00:00;
+    Version List=NAVAP4.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT Revenue Types;
+               ENA=WHT Revenue Types];
+    SourceTable=Table28042;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500000;1;Group     ;
+                GroupType=Repeater }
+
+    { 1500001;2;Field     ;
+                SourceExpr=Code }
+
+    { 1500003;2;Field     ;
+                SourceExpr=Description }
+
+    { 1500005;2;Field     ;
+                SourceExpr=Sequence }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

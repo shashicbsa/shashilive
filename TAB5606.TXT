@@ -1,0 +1,365 @@
+OBJECT Table 5606 FA Posting Group
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    OnDelete=BEGIN
+               FAAlloc.SETRANGE(Code,Code);
+               FAAlloc.DELETEALL(TRUE);
+             END;
+
+    CaptionML=[ENU=FA Posting Group;
+               ENA=FA Posting Group];
+    LookupPageID=Page5613;
+    DrillDownPageID=Page5613;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Acquisition Cost Account;Code20    ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Acquisition Cost Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Acquisition Cost Account;
+                                                              ENA=Acquisition Cost Account] }
+    { 3   ;   ;Accum. Depreciation Account;Code20 ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Accum. Depreciation Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Accum. Depreciation Account;
+                                                              ENA=Accum. Depreciation Account] }
+    { 4   ;   ;Write-Down Account  ;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Write-Down Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Write-Down Account;
+                                                              ENA=Write-Down Account] }
+    { 5   ;   ;Appreciation Account;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Appreciation Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Appreciation Account;
+                                                              ENA=Appreciation Account] }
+    { 6   ;   ;Custom 1 Account    ;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 1 Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 1 Account;
+                                                              ENA=Custom 1 Account] }
+    { 7   ;   ;Custom 2 Account    ;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 2 Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 2 Account;
+                                                              ENA=Custom 2 Account] }
+    { 8   ;   ;Acq. Cost Acc. on Disposal;Code20  ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Acq. Cost Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Acq. Cost Acc. on Disposal;
+                                                              ENA=Acq. Cost Acc. on Disposal] }
+    { 9   ;   ;Accum. Depr. Acc. on Disposal;Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Accum. Depr. Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Accum. Depr. Acc. on Disposal;
+                                                              ENA=Accum. Depr. Acc. on Disposal] }
+    { 10  ;   ;Write-Down Acc. on Disposal;Code20 ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Write-Down Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Write-Down Acc. on Disposal;
+                                                              ENA=Write-Down Acc. on Disposal] }
+    { 11  ;   ;Appreciation Acc. on Disposal;Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Appreciation Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Appreciation Acc. on Disposal;
+                                                              ENA=Appreciation Acc. on Disposal] }
+    { 12  ;   ;Custom 1 Account on Disposal;Code20;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 1 Account on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 1 Account on Disposal;
+                                                              ENA=Custom 1 Account on Disposal] }
+    { 13  ;   ;Custom 2 Account on Disposal;Code20;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 2 Account on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 2 Account on Disposal;
+                                                              ENA=Custom 2 Account on Disposal] }
+    { 14  ;   ;Gains Acc. on Disposal;Code20      ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Gains Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Gains Acc. on Disposal;
+                                                              ENA=Gains Acc. on Disposal] }
+    { 15  ;   ;Losses Acc. on Disposal;Code20     ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Losses Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Losses Acc. on Disposal;
+                                                              ENA=Losses Acc. on Disposal] }
+    { 16  ;   ;Book Val. Acc. on Disp. (Gain);Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Book Val. Acc. on Disp. (Gain)",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Book Val. Acc. on Disp. (Gain);
+                                                              ENA=Book Val. Acc. on Disp. (Gain)] }
+    { 17  ;   ;Sales Acc. on Disp. (Gain);Code20  ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Sales Acc. on Disp. (Gain)",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Sales Acc. on Disp. (Gain);
+                                                              ENA=Sales Acc. on Disp. (Gain)] }
+    { 18  ;   ;Write-Down Bal. Acc. on Disp.;Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Write-Down Bal. Acc. on Disp.",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Write-Down Bal. Acc. on Disp.;
+                                                              ENA=Write-Down Bal. Acc. on Disp.] }
+    { 19  ;   ;Apprec. Bal. Acc. on Disp.;Code20  ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Apprec. Bal. Acc. on Disp.",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Apprec. Bal. Acc. on Disp.;
+                                                              ENA=Apprec. Bal. Acc. on Disp.] }
+    { 20  ;   ;Custom 1 Bal. Acc. on Disposal;Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 1 Bal. Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 1 Bal. Acc. on Disposal;
+                                                              ENA=Custom 1 Bal. Acc. on Disposal] }
+    { 21  ;   ;Custom 2 Bal. Acc. on Disposal;Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 2 Bal. Acc. on Disposal",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 2 Bal. Acc. on Disposal;
+                                                              ENA=Custom 2 Bal. Acc. on Disposal] }
+    { 22  ;   ;Maintenance Expense Account;Code20 ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Maintenance Expense Account",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Maintenance Expense Account;
+                                                              ENA=Maintenance Expense Account] }
+    { 23  ;   ;Maintenance Bal. Acc.;Code20       ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Maintenance Bal. Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Maintenance Bal. Acc.;
+                                                              ENA=Maintenance Bal. Acc.] }
+    { 24  ;   ;Acquisition Cost Bal. Acc.;Code20  ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Acquisition Cost Bal. Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Acquisition Cost Bal. Acc.;
+                                                              ENA=Acquisition Cost Bal. Acc.] }
+    { 25  ;   ;Depreciation Expense Acc.;Code20   ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Depreciation Expense Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Depreciation Expense Acc.;
+                                                              ENA=Depreciation Expense Acc.] }
+    { 26  ;   ;Write-Down Expense Acc.;Code20     ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Write-Down Expense Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Write-Down Expense Acc.;
+                                                              ENA=Write-Down Expense Acc.] }
+    { 27  ;   ;Appreciation Bal. Account;Code20   ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Appreciation Bal. Account",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Appreciation Bal. Account;
+                                                              ENA=Appreciation Bal. Account] }
+    { 28  ;   ;Custom 1 Expense Acc.;Code20       ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 1 Expense Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 1 Expense Acc.;
+                                                              ENA=Custom 1 Expense Acc.] }
+    { 29  ;   ;Custom 2 Expense Acc.;Code20       ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Custom 2 Expense Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Custom 2 Expense Acc.;
+                                                              ENA=Custom 2 Expense Acc.] }
+    { 30  ;   ;Sales Bal. Acc.     ;Code20        ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Sales Bal. Acc.",TRUE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Sales Bal. Acc.;
+                                                              ENA=Sales Bal. Acc.] }
+    { 31  ;   ;Allocated Acquisition Cost %;Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Acquisition)));
+                                                   CaptionML=[ENU=Allocated Acquisition Cost %;
+                                                              ENA=Allocated Acquisition Cost %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 32  ;   ;Allocated Depreciation %;Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Depreciation)));
+                                                   CaptionML=[ENU=Allocated Depreciation %;
+                                                              ENA=Allocated Depreciation %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 33  ;   ;Allocated Write-Down %;Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Write-Down)));
+                                                   CaptionML=[ENU=Allocated Write-Down %;
+                                                              ENA=Allocated Write-Down %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 34  ;   ;Allocated Appreciation %;Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Appreciation)));
+                                                   CaptionML=[ENU=Allocated Appreciation %;
+                                                              ENA=Allocated Appreciation %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 35  ;   ;Allocated Custom 1 %;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Custom 1)));
+                                                   CaptionML=[ENU=Allocated Custom 1 %;
+                                                              ENA=Allocated Custom 1 %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 36  ;   ;Allocated Custom 2 %;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Custom 2)));
+                                                   CaptionML=[ENU=Allocated Custom 2 %;
+                                                              ENA=Allocated Custom 2 %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 37  ;   ;Allocated Sales Price %;Decimal    ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Disposal)));
+                                                   CaptionML=[ENU=Allocated Sales Price %;
+                                                              ENA=Allocated Sales Price %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 38  ;   ;Allocated Maintenance %;Decimal    ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Maintenance)));
+                                                   CaptionML=[ENU=Allocated Maintenance %;
+                                                              ENA=Allocated Maintenance %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 39  ;   ;Allocated Gain %    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Gain)));
+                                                   CaptionML=[ENU=Allocated Gain %;
+                                                              ENA=Allocated Gain %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 40  ;   ;Allocated Loss %    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST(Loss)));
+                                                   CaptionML=[ENU=Allocated Loss %;
+                                                              ENA=Allocated Loss %];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 41  ;   ;Allocated Book Value % (Gain);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST("Book Value (Gain)")));
+                                                   CaptionML=[ENU=Allocated Book Value % (Gain);
+                                                              ENA=Allocated Book Value % (Gain)];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 42  ;   ;Allocated Book Value % (Loss);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("FA Allocation"."Allocation %" WHERE (Code=FIELD(Code),
+                                                                                                         Allocation Type=CONST("Book Value (Loss)")));
+                                                   CaptionML=[ENU=Allocated Book Value % (Loss);
+                                                              ENA=Allocated Book Value % (Loss)];
+                                                   DecimalPlaces=1:1;
+                                                   Editable=No }
+    { 43  ;   ;Sales Acc. on Disp. (Loss);Code20  ;TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Sales Acc. on Disp. (Loss)",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Sales Acc. on Disp. (Loss);
+                                                              ENA=Sales Acc. on Disp. (Loss)] }
+    { 44  ;   ;Book Val. Acc. on Disp. (Loss);Code20;
+                                                   TableRelation="G/L Account";
+                                                   OnValidate=BEGIN
+                                                                CheckGLAcc("Book Val. Acc. on Disp. (Loss)",FALSE);
+                                                              END;
+
+                                                   CaptionML=[ENU=Book Val. Acc. on Disp. (Loss);
+                                                              ENA=Book Val. Acc. on Disp. (Loss)] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      FAAlloc@1000 : Record 5615;
+      GLAcc@1001 : Record 15;
+
+    PROCEDURE CheckGLAcc@1(AccNo@1000 : Code[20];DirectPosting@1001 : Boolean);
+    BEGIN
+      IF AccNo = '' THEN
+        EXIT;
+      GLAcc.GET(AccNo);
+      GLAcc.CheckGLAcc;
+      IF DirectPosting THEN
+        GLAcc.TESTFIELD("Direct Posting");
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

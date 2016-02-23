@@ -1,0 +1,221 @@
+OBJECT Codeunit 50063 CalcYMMWJInvestment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/09/11;
+    Time=[ 8:28:19];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    TableNo=60021;
+    OnRun=BEGIN
+            InvestYMMWJ.GET;
+            MasterSetup.GET;
+
+            StDate:=StartD;
+            EnDate:=EndD;
+
+
+
+            RESET_ALL;
+
+                AccountingPeriod.RESET;
+                AccountingPeriod.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                AccountingPeriod.SETCURRENTKEY(Closed);
+                AccountingPeriod.SETRANGE(Closed,FALSE);
+                AccountingPeriod.FINDFIRST;
+                FiscalYearStartDate := AccountingPeriod."Starting Date";
+
+                LastFiscalYearEnd:=CLOSINGDATE(FiscalYearStartDate-1);
+
+
+             GLENTRY.RESET;
+             GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+             GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+             GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',InvestYMMWJ."Investment In YMMWJ");
+             GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,LastFiscalYearEnd);
+
+             IF GLENTRY.FINDFIRST THEN
+               REPEAT
+
+               InvestmentYMMWJAmt:=InvestmentYMMWJAmt+GLENTRY.Amount;
+
+               UNTIL(GLENTRY.NEXT=0);
+
+            //MESSAGE('%1',InvestmentYMMWJAmt);
+
+
+
+             GLENTRY.RESET;
+             GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+             GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+             GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',InvestYMMWJ."Share Holder Equity-St");
+             GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,LastFiscalYearEnd);
+
+             IF GLENTRY.FINDFIRST THEN
+               REPEAT
+
+               ShareAmt:=ShareAmt+GLENTRY.Amount;
+
+               UNTIL(GLENTRY.NEXT=0);
+
+             //MESSAGE('%1',ShareAmt);
+
+
+             GLENTRY.RESET;
+             GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+             GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+
+             GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1..%2',InvestYMMWJ."Current Net Profit-Comm-St",
+             InvestYMMWJ."Current Net Profit-Comm-En");
+
+             GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,EnDate);
+
+             IF GLENTRY.FINDFIRST THEN
+               REPEAT
+
+               CurrNetProfitAmt:=CurrNetProfitAmt+GLENTRY.Amount;
+
+               UNTIL(GLENTRY.NEXT=0);
+
+             //MESSAGE('%1',CurrNetProfitAmt);
+
+
+
+
+             GLENTRY.RESET;
+             GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+             GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+
+             GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1..%2',InvestYMMWJ."Deviden-St",
+             InvestYMMWJ."Deviden-En");
+
+             GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,EnDate);
+
+             IF GLENTRY.FINDFIRST THEN
+               REPEAT
+
+               Dividen:=Dividen+GLENTRY.Amount;
+
+               UNTIL(GLENTRY.NEXT=0);
+
+            // MESSAGE('%1',Dividen);
+
+
+             GLENTRY.RESET;
+             GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM Consol");
+             GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+             GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',InvestYMMWJ."Minority Interest (B/S)");
+             GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,LastFiscalYearEnd);
+
+             IF GLENTRY.FINDFIRST THEN
+               REPEAT
+
+               MinIntBS:=MinIntBS+GLENTRY.Amount;
+
+               UNTIL(GLENTRY.NEXT=0);
+
+
+
+            InsertInvestmentData;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      InvestYMMWJ@1000000000 : Record 60019;
+      MasterSetup@1000000001 : Record 50008;
+      AccountingPeriod@1000000002 : Record 50;
+      FiscalYearStartDate@1000000003 : Date;
+      LastFiscalYearEnd@1000000004 : Date;
+      GLENTRY@1000000005 : Record 17;
+      InvestmentYMMWJAmt@1000000006 : Decimal;
+      ShareAmt@1000000009 : Decimal;
+      StDate@1000000007 : Date;
+      EnDate@1000000008 : Date;
+      CurrNetProfitAmt@1000000010 : Decimal;
+      Dividen@1000000011 : Decimal;
+      SalePurchaseYMMWJ@1000000012 : Record 60017;
+      MinIntBS@1000000013 : Decimal;
+
+    PROCEDURE RESET_ALL@1000000000();
+    BEGIN
+    END;
+
+    PROCEDURE InsertInvestmentData@1000000001();
+    VAR
+      InvestmentYmmwjData@1000000000 : Record 60020;
+      SerNO@1000000001 : Integer;
+      "Sales YIMM to YMMWJ"@1000000002 : Decimal;
+      "Sales YMMWJ to YIMM"@1000000003 : Decimal;
+    BEGIN
+      SalePurchaseYMMWJ.RESET;
+      SalePurchaseYMMWJ.SETRANGE(SalePurchaseYMMWJ.StarDate,StDate);
+      SalePurchaseYMMWJ.SETRANGE(SalePurchaseYMMWJ.EndDate,EnDate);
+
+      IF SalePurchaseYMMWJ.FINDFIRST THEN;
+
+
+      InvestmentYmmwjData.RESET;
+      InvestmentYmmwjData.SETCURRENTKEY(InvestmentYmmwjData.SNO);
+      InvestmentYmmwjData.SETRANGE(InvestmentYmmwjData.StartDate,StDate);
+      InvestmentYmmwjData.SETRANGE(InvestmentYmmwjData.EndDate,EnDate);
+
+      IF InvestmentYmmwjData.FINDFIRST THEN
+           InvestmentYmmwjData.DELETE(TRUE);
+
+
+      InvestmentYmmwjData.RESET;
+      InvestmentYmmwjData.SETCURRENTKEY(InvestmentYmmwjData.SNO);
+
+      IF InvestmentYmmwjData.FINDLAST THEN
+         SerNO:=InvestmentYmmwjData.SNO+1
+      ELSE
+         SerNO:=1;
+
+
+      InvestmentYmmwjData.SNO:=SerNO;
+      InvestmentYmmwjData."Investment In YMMWJ":=(InvestmentYMMWJAmt);
+      InvestmentYmmwjData."SHAREHOLDERS' EQUITY":=ShareAmt*(-1);
+      InvestmentYmmwjData."Current  net profit (cum)":=CurrNetProfitAmt*(-1);
+      InvestmentYmmwjData.Deviden:=Dividen*(-1);
+
+
+      "Sales YIMM to YMMWJ":=SalePurchaseYMMWJ."Beginning stock-COGS"+
+      ABS(SalePurchaseYMMWJ."Material Cost OTH YMMWJ"+SalePurchaseYMMWJ."Sales OTH LOC - RP")
+      -ABS((SalePurchaseYMMWJ."Ending stock in YMMWJ"+SalePurchaseYMMWJ.WIP)*((((SalePurchaseYMMWJ."Sales OTH LOC - RP")
+      +(SalePurchaseYMMWJ."Material Cost OTH YMMWJ"))/(SalePurchaseYMMWJ."Sales OTH LOC - RP"))))
+      -ABS((SalePurchaseYMMWJ."Material Cost OTH YMMWJ"+SalePurchaseYMMWJ."Sales OTH LOC - RP"));
+
+
+      "Sales YMMWJ to YIMM":=ABS(SalePurchaseYMMWJ."Sales M/C Loc"-SalePurchaseYMMWJ."Main Material M/C Loc R/M"-
+      SalePurchaseYMMWJ."Main Material M/C Loc Loc"+
+      SalePurchaseYMMWJ."Sales Oth Loc - RP-WJ"+SalePurchaseYMMWJ."Material Cost Oth Loc - Oth")+SalePurchaseYMMWJ."Beginning stock"
+      +(SalePurchaseYMMWJ."EndStockFG-WJ")*(((SalePurchaseYMMWJ."Main Material M/C Loc Loc"+
+      SalePurchaseYMMWJ."Main Material M/C Loc R/M"-SalePurchaseYMMWJ."Sales M/C Loc")/(SalePurchaseYMMWJ."Sales M/C Loc")))
+      +(SalePurchaseYMMWJ."Sales M/C Loc"-SalePurchaseYMMWJ."Main Material M/C Loc R/M"-SalePurchaseYMMWJ."Main Material M/C Loc Loc")
+      +(SalePurchaseYMMWJ."Sales Oth Loc - RP-WJ"+SalePurchaseYMMWJ."Material Cost Oth Loc - Oth");
+
+
+      InvestmentYmmwjData."Loss_Gain On Sales":="Sales YIMM to YMMWJ"+"Sales YMMWJ to YIMM";
+
+
+
+
+      //MESSAGE('%1',"Sales YIMM to YMMWJ");
+      //MESSAGE('%1',"Sales YMMWJ to YIMM");
+
+      InvestmentYmmwjData."Minority Interest (B/S)":=MinIntBS*(-1);
+
+      InvestmentYmmwjData.StartDate:=StDate;
+      InvestmentYmmwjData.EndDate:=EnDate;
+      InvestmentYmmwjData.INSERT(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

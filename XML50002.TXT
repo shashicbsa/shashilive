@@ -1,0 +1,58 @@
+OBJECT XMLport 50002 Access Import
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/28/15;
+    Time=18:25:02;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    Direction=Export;
+    Format=Variable Text;
+  }
+  ELEMENTS
+  {
+    { [{E1EFCF06-B842-4706-BFF3-CA17CA38FDCE}];  ;Root                ;Element ;Text     }
+
+    { [{50984498-CE69-45C4-BCAB-F66DDF90B6D7}];1 ;AccessControlCopy   ;Element ;Table   ;
+                                                  SourceTable=Table83600 }
+
+    { [{43F4A5C5-6CF4-4EEA-982B-BF0D7AB2AEC8}];2 ;RID                 ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Access Control Copy 1::Role ID }
+
+    { [{E6D21FBF-B605-4C4D-82F8-261B4D80E006}];2 ;Company             ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Access Control Copy 1::Company Name }
+
+    { [{1EFE38BC-9363-4CCA-9B90-F0264B25AA28}];2 ;Uname               ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Access Control Copy 1::User Name }
+
+    { [{E089022A-8BF1-463B-A531-F9748C65C09E}];2 ;Rname               ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Access Control Copy 1::Role Name }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

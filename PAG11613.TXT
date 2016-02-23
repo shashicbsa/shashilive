@@ -1,0 +1,50 @@
+OBJECT Page 11613 BAS Business Units-Settlement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=BAS Business Units-Settlement;
+               ENA=BAS Business Units-Settlement];
+    SourceTable=Table11603;
+    PageType=List;
+    OnInit=VAR
+             GLSetup@1450000 : Record 98;
+           BEGIN
+             GLSetup.GET;
+             GLSetup.TESTFIELD("Enable GST (Australia)",TRUE);
+           END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                Editable=FALSE;
+                GroupType=Repeater }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Company Name" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Document No." }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="BAS Version" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,59 @@
+OBJECT Table 70011 TBI - Vendors All
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/04/10;
+    Time=10:47:00;
+    Version List=TBI1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Vendor Code         ;Code20         }
+    { 2   ;   ;AccPac Code         ;Text250        }
+    { 3   ;   ;Nav Account Name    ;Text50        ;Editable=No }
+    { 4   ;   ;Address             ;Text50         }
+    { 5   ;   ;Address 2           ;Text50         }
+    { 6   ;   ;City                ;Text30         }
+    { 7   ;   ;Post Code           ;Code20         }
+    { 8   ;   ;Contact             ;Text50         }
+    { 9   ;   ;Phone No.           ;Text30         }
+    { 10  ;   ;Currency Code       ;Code10         }
+    { 11  ;   ;Vendor Type         ;Option        ;OptionCaptionML=ENU=" ,Third Party,Related Party,Others";
+                                                   OptionString=[ ,Third Party,Related Party,Others] }
+    { 12  ;   ;Gen. Business Posting Group;Code10  }
+    { 13  ;   ;WHT Business Posting Group;Code10   }
+    { 15  ;   ;Bank Account No.    ;Text30         }
+    { 16  ;   ;Bank Name           ;Text50         }
+    { 17  ;   ;Bank Address        ;Text50         }
+    { 18  ;   ;Bank Address 2      ;Text50         }
+    { 20  ;   ;NPWP No.            ;Code20         }
+    { 21  ;   ;NPWP Name           ;Text50         }
+    { 22  ;   ;NPWP Address        ;Text50         }
+    { 23  ;   ;NPWP Address 1      ;Text50         }
+    { 24  ;   ;NPWP City           ;Text30         }
+    { 25  ;   ;NPWP Post Code      ;Code20         }
+    { 26  ;   ;NPWP Phone No.      ;Text30         }
+    { 27  ;   ;Existing/New        ;Option        ;OptionCaptionML=ENU=" ,Existing,New";
+                                                   OptionString=[ ,Existing,New] }
+  }
+  KEYS
+  {
+    {    ;Vendor Code,Nav Account Name            ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Vend@1000000001 : Record 23;
+      Cust@1000000000 : Record 18;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,44 @@
+OBJECT Table 60047 HFMcolHeader1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/09/11;
+    Time=13:15:58;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Name;
+    LookupPageID=Page62043;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Sno                 ;Integer        }
+    { 2   ;   ;Name                ;Code20         }
+    { 3   ;   ;ColHead0            ;Code100        }
+    { 4   ;   ;ColHead1            ;Code100        }
+    { 5   ;   ;ColHead2            ;Code100        }
+    { 6   ;   ;ColHead3            ;Code100        }
+    { 7   ;   ;ColHead4            ;Code100        }
+    { 8   ;   ;ColHead5            ;Code100        }
+    { 9   ;   ;ColHead6            ;Code100        }
+    { 10  ;   ;ColHead7            ;Code100        }
+    { 11  ;   ;ColHead8            ;Code100        }
+    { 12  ;   ;ColHead9            ;Code100        }
+    { 13  ;   ;ColHead10           ;Code100        }
+  }
+  KEYS
+  {
+    {    ;Name,Sno                                ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

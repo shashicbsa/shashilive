@@ -1,0 +1,31 @@
+OBJECT Table 50035 PYMAC MAPPING
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/09/09;
+    Time=19:04:44;
+    Version List=PYMAC;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;NAVAccCode          ;Code20         }
+    { 2   ;   ;PYMAC_CODE          ;Code20         }
+  }
+  KEYS
+  {
+    {    ;NAVAccCode                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

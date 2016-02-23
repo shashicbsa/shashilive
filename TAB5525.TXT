@@ -1,0 +1,91 @@
+OBJECT Table 5525 Manufacturing User Template
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Manufacturing User Template;
+               ENA=Manufacturing User Template];
+  }
+  FIELDS
+  {
+    { 1   ;   ;User ID             ;Code50        ;TableRelation=User."User Name";
+                                                   OnValidate=VAR
+                                                                UserMgt@1000 : Codeunit 418;
+                                                              BEGIN
+                                                                UserMgt.ValidateUserID("User ID");
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              UserMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              UserMgt.LookupUserID("User ID");
+                                                            END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              ENA=User ID] }
+    { 2   ;   ;Create Purchase Order;Option       ;CaptionML=[ENU=Create Purchase Order;
+                                                              ENA=Create Purchase Order];
+                                                   OptionCaptionML=[ENU=" ,Make Purch. Orders,Make Purch. Orders & Print,Copy to Req. Wksh";
+                                                                    ENA=" ,Make Purch. Orders,Make Purch. Orders & Print,Copy to Req. Wksh"];
+                                                   OptionString=[ ,Make Purch. Orders,Make Purch. Orders & Print,Copy to Req. Wksh] }
+    { 3   ;   ;Create Production Order;Option     ;CaptionML=[ENU=Create Production Order;
+                                                              ENA=Create Production Order];
+                                                   OptionCaptionML=[ENU=" ,Planned,Firm Planned,Firm Planned & Print,Copy to Req. Wksh";
+                                                                    ENA=" ,Planned,Firm Planned,Firm Planned & Print,Copy to Req. Wksh"];
+                                                   OptionString=[ ,Planned,Firm Planned,Firm Planned & Print,Copy to Req. Wksh] }
+    { 4   ;   ;Create Transfer Order;Option       ;CaptionML=[ENU=Create Transfer Order;
+                                                              ENA=Create Transfer Order];
+                                                   OptionCaptionML=[ENU=" ,Make Trans. Orders,Make Trans. Order & Print,Copy to Req. Wksh";
+                                                                    ENA=" ,Make Trans. Orders,Make Trans. Order & Print,Copy to Req. Wksh"];
+                                                   OptionString=[ ,Make Trans. Orders,Make Trans. Order & Print,Copy to Req. Wksh] }
+    { 5   ;   ;Create Assembly Order;Option       ;CaptionML=[ENU=Create Assembly Order;
+                                                              ENA=Create Assembly Order];
+                                                   OptionCaptionML=[ENU=" ,Make Assembly Orders,Make Assembly Orders & Print";
+                                                                    ENA=" ,Make Assembly Orders,Make Assembly Orders & Print"];
+                                                   OptionString=[ ,Make Assembly Orders,Make Assembly Orders & Print] }
+    { 11  ;   ;Purchase Req. Wksh. Template;Code10;TableRelation="Req. Wksh. Template";
+                                                   CaptionML=[ENU=Purchase Req. Wksh. Template;
+                                                              ENA=Purchase Req. Wksh. Template] }
+    { 12  ;   ;Purchase Wksh. Name ;Code10        ;TableRelation="Requisition Wksh. Name".Name WHERE (Worksheet Template Name=FIELD(Purchase Req. Wksh. Template));
+                                                   CaptionML=[ENU=Purchase Wksh. Name;
+                                                              ENA=Purchase Wksh. Name] }
+    { 15  ;   ;Prod. Req. Wksh. Template;Code10   ;TableRelation="Req. Wksh. Template";
+                                                   CaptionML=[ENU=Prod. Req. Wksh. Template;
+                                                              ENA=Prod. Req. Wksh. Template] }
+    { 16  ;   ;Prod. Wksh. Name    ;Code10        ;TableRelation="Requisition Wksh. Name".Name WHERE (Worksheet Template Name=FIELD(Prod. Req. Wksh. Template));
+                                                   CaptionML=[ENU=Prod. Wksh. Name;
+                                                              ENA=Prod. Wksh. Name] }
+    { 19  ;   ;Transfer Req. Wksh. Template;Code10;TableRelation="Req. Wksh. Template";
+                                                   CaptionML=[ENU=Transfer Req. Wksh. Template;
+                                                              ENA=Transfer Req. Wksh. Template] }
+    { 20  ;   ;Transfer Wksh. Name ;Code10        ;TableRelation="Requisition Wksh. Name".Name WHERE (Worksheet Template Name=FIELD(Transfer Req. Wksh. Template));
+                                                   CaptionML=[ENU=Transfer Wksh. Name;
+                                                              ENA=Transfer Wksh. Name] }
+    { 21  ;   ;Make Orders         ;Option        ;CaptionML=[ENU=Make Orders;
+                                                              ENA=Make Orders];
+                                                   OptionCaptionML=[ENU=The Active Line,The Active Order,All Lines;
+                                                                    ENA=The Active Line,The Active Order,All Lines];
+                                                   OptionString=The Active Line,The Active Order,All Lines }
+  }
+  KEYS
+  {
+    {    ;User ID                                 ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

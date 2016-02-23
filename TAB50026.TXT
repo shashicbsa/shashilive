@@ -1,0 +1,48 @@
+OBJECT Table 50026 TBL_EPROC1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=05/27/09;
+    Time=[ 7:29:59];
+    Version List=EPROC_AMMEND;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Serial No           ;Code10         }
+    { 2   ;   ;Posting Date        ;Date           }
+    { 3   ;   ;Vendor No           ;Code20         }
+    { 4   ;   ;Vendor Posting Group;Code10         }
+    { 5   ;   ;Currency            ;Code10         }
+    { 6   ;   ;Document Date       ;Date           }
+    { 7   ;   ;Vendor Invoice No   ;Text30         }
+    { 8   ;   ;PO No               ;Text30         }
+    { 9   ;   ;Cost Center         ;Code20         }
+    { 11  ;   ;Tax Rate            ;Decimal        }
+    { 12  ;   ;Payment Term        ;Code10         }
+    { 13  ;   ;GL Account Code     ;Code10         }
+    { 14  ;   ;Quantity            ;Decimal        }
+    { 15  ;   ;Narration           ;Text250        }
+    { 16  ;   ;Unit Of Measure     ;Code10         }
+    { 17  ;   ;Price Exceluding VAT;Decimal        }
+    { 18  ;   ;EPROC_NO            ;Text100        }
+    { 19  ;   ;VAT_INV_NO          ;Text19         }
+  }
+  KEYS
+  {
+    {    ;Serial No                               ;Clustered=Yes }
+    {    ;EPROC_NO                                 }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

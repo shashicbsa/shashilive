@@ -1,0 +1,129 @@
+OBJECT Codeunit 50082 RevColRow-12
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/27/10;
+    Time=11:46:47;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    TableNo=60034;
+    OnRun=BEGIN
+            //------------------------------------------------------------------------------------------
+            ExcelBuf1.RESET;
+            ExcelBuf1.SETCURRENTKEY(ExcelBuf1."Row No.");
+
+            IF (ExcelBuf1.FINDLAST) THEN
+             MaxRowNo:=ExcelBuf1."Row No.";
+
+            //------------------------------------------------------------------------------------------
+
+            ExcelBuf1.RESET;
+            ExcelBuf1.SETCURRENTKEY(ExcelBuf1."Column No.");
+            IF (ExcelBuf1.FINDLAST) THEN
+              MaxColNo:=ExcelBuf1."Column No.";
+
+
+            //------------------------------------------------------------------------------------------
+
+            ExcelBuf2.RESET;
+             ExcelBuf2.DELETEALL;
+             FOR Int:=1 TO MaxRowNo DO
+
+              BEGIN
+              ExcelBuf2.EntryNo:=Int;
+              ExcelBuf2.INSERT;
+              END;
+
+            //------------------------------------------------------------------------------------------
+
+            FOR Int:=1 TO MaxColNo DO
+            BEGIN
+
+            ExcelBuf1.RESET;
+            ExcelBuf1.SETCURRENTKEY(ExcelBuf1."Column No.");
+            ExcelBuf1.SETRANGE(ExcelBuf1."Column No.",Int);
+
+             IF (ExcelBuf1.FINDFIRST) THEN
+               REPEAT
+               ExcelBuf2.RESET;
+               ExcelBuf2.SETRANGE(ExcelBuf2.EntryNo,ExcelBuf1."Row No.");
+
+                IF (ExcelBuf2.FINDFIRST) THEN
+                    BEGIN
+
+                     InsertCol(Int);
+                     ExcelBuf2.MODIFY;
+
+                     END;
+               UNTIL(ExcelBuf1.NEXT=0);
+
+            END;
+
+            //-------------------------------------------------------------------------------------------
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      ExcelBuf1@1000000000 : Record 60034;
+      ExcelBuf2@1000000001 : Record 60035;
+      MaxRowNo@1000000002 : Integer;
+      MaxColNo@1000000003 : Integer;
+      Int@1000000004 : Integer;
+
+    PROCEDURE InsertCol@1000000000(ColNo@1000000000 : Integer);
+    BEGIN
+      IF (ColNo=1) THEN
+      ExcelBuf2.Col1:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=2) THEN
+      ExcelBuf2.Col2:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=3) THEN
+      ExcelBuf2.Col3:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=4) THEN
+      ExcelBuf2.Col4:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=5) THEN
+      ExcelBuf2.Col5:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=6) THEN
+      ExcelBuf2.Col6:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=7) THEN
+      ExcelBuf2.Col7:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=8) THEN
+      ExcelBuf2.Col8:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=9) THEN
+      ExcelBuf2.Col9:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=10) THEN
+      ExcelBuf2.Col10:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=11) THEN
+      ExcelBuf2.Col11:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=12) THEN
+      ExcelBuf2.Col12:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=13) THEN
+      ExcelBuf2.Col13:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=14) THEN
+      ExcelBuf2.Col14:=ExcelBuf1."Cell Value as Text";
+
+      IF (ColNo=15) THEN
+      ExcelBuf2.Col15:=ExcelBuf1."Cell Value as Text";
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

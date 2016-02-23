@@ -1,0 +1,184 @@
+OBJECT Page 301 Ship-to Address List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/23/15;
+    Time=10:34:37;
+    Modified=Yes;
+    Version List=NAVW17.00,UPG13,UPG13R2,YIMMDEVIP1.0,SMDEV1.0,PPNPPHDEV,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Address List;
+               ENA=Ship-to Address List];
+    SourceTable=Table222;
+    SourceTableView=SORTING(Customer No.,Code)
+                    ORDER(Ascending)
+                    WHERE(Blocked=CONST(No));
+    DataCaptionFields=Customer No.;
+    PageType=List;
+    CardPageID=Ship-to Address;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 10      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Address;
+                                 ENA=&Address];
+                      Image=Addresses }
+      { 11      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      RunObject=Page 300;
+                      RunPageLink=Customer No.=FIELD(Customer No.),
+                                  Code=FIELD(Code);
+                      Image=EditLines }
+      { 1102601000;2 ;Action    ;
+                      CaptionML=[ENU=Online Map;
+                                 ENA=Online Map];
+                      Image=Map;
+                      OnAction=BEGIN
+                                 DisplayMap;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                Width=20;
+                CaptionML=[ENU=Tax ID (NPWP);
+                           ENA=Code];
+                SourceExpr=Code }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Customer No." }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Name 2";
+                Importance=Standard }
+
+    { 1000000001;2;Field  ;
+                SourceExpr=Address }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Address 2" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Last Date Modified" }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="NpPkp No." }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="PPN M/C" }
+
+    { 1102159012;2;Field  ;
+                SourceExpr="PPN S/P" }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="PPN Service" }
+
+    { 1102159005;2;Field  ;
+                CaptionML=ENU=PPN Purchase;
+                SourceExpr="PPN Non Dealer" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="PPH M/C" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="PPH S/P" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="PPH Service" }
+
+    { 1102159009;2;Field  ;
+                CaptionML=ENU=PPH Purchase;
+                SourceExpr="PPH Non Dealer" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=Blocked }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name;
+                Visible=FALSE }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr="Post Code";
+                Visible=FALSE }
+
+    { 25  ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Country/Region Code";
+                Visible=FALSE }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Phone No.";
+                Visible=FALSE }
+
+    { 19  ;2   ;Field     ;
+                SourceExpr="Fax No.";
+                Visible=FALSE }
+
+    { 21  ;2   ;Field     ;
+                SourceExpr=Contact;
+                Visible=FALSE }
+
+    { 23  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Visible=TRUE }
+
+    { 1102159011;2;Field  ;
+                SourceExpr=PPN }
+
+    { 1102159002;2;Field  ;
+                SourceExpr=PPH }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+      //YIMMDEVIP1.0
+      Point No. 8 - Displayed two new fields for information. PPN & PPH.
+      Point No 20 - Display field NPKP No.
+      //SMDEV1.0
+      Changed Visibilty of some fields
+      //PPNPPHDEV
+      Fields displayed for PPN/PPH New Concept.
+      ////UPG13R2DEV
+      Sequence of field changed
+      NPKP No. went up
+      Caption and width of code field changed
+    }
+    END.
+  }
+}
+

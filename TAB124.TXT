@@ -1,0 +1,583 @@
+OBJECT Table 124 Purch. Cr. Memo Hdr.
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/28/14;
+    Time=11:34:58;
+    Modified=Yes;
+    Version List=NAVW17.10,NAVAPAC7.10,TBI1.0,YIMM1.0,Mel1.0,CR#018,CR#023,UPG09R2,UPG13,UPG13R2,CAUYIMM;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=No.,Buy-from Vendor Name;
+    OnDelete=BEGIN
+               LOCKTABLE;
+               PostPurchLinesDelete.DeletePurchCrMemoLines(Rec);
+
+               PurchCommentLine.SETRANGE("Document Type",PurchCommentLine."Document Type"::"Posted Credit Memo");
+               PurchCommentLine.SETRANGE("No.","No.");
+               PurchCommentLine.DELETEALL;
+
+               ApprovalsMgt.DeletePostedApprovalEntry(DATABASE::"Purch. Cr. Memo Hdr.","No.");
+               PostCodeCheck.DeleteAllAddressID(DATABASE::"Purch. Cr. Memo Hdr.",Rec.GETPOSITION);
+             END;
+
+    OnRename=BEGIN
+               PostCodeCheck.MoveAllAddressID(
+                 DATABASE::"Purch. Cr. Memo Hdr.",Rec.GETPOSITION,
+                 DATABASE::"Purch. Cr. Memo Hdr.",xRec.GETPOSITION);
+             END;
+
+    CaptionML=[ENU=Purch. Cr. Memo Hdr.;
+               ENA=Purch. CR/Adj Note Hdr.];
+    LookupPageID=Page147;
+    DrillDownPageID=Page147;
+  }
+  FIELDS
+  {
+    { 2   ;   ;Buy-from Vendor No. ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=[ENU=Buy-from Vendor No.;
+                                                              ENA=Buy-from Vendor No.];
+                                                   NotBlank=Yes }
+    { 3   ;   ;No.                 ;Code20        ;CaptionML=[ENU=No.;
+                                                              ENA=No.] }
+    { 4   ;   ;Pay-to Vendor No.   ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=[ENU=Pay-to Vendor No.;
+                                                              ENA=Pay-to Vendor No.];
+                                                   NotBlank=Yes }
+    { 5   ;   ;Pay-to Name         ;Text50        ;CaptionML=[ENU=Pay-to Name;
+                                                              ENA=Pay-to Name] }
+    { 6   ;   ;Pay-to Name 2       ;Text50        ;CaptionML=[ENU=Pay-to Name 2;
+                                                              ENA=Pay-to Name 2] }
+    { 7   ;   ;Pay-to Address      ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,4,
+                                                                  "Pay-to Name","Pay-to Name 2","Pay-to Contact","Pay-to Address","Pay-to Address 2",
+                                                                  "Pay-to City","Pay-to Post Code","Pay-to County","Pay-to Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Pay-to Address;
+                                                              ENA=Pay-to Address] }
+    { 8   ;   ;Pay-to Address 2    ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,4,
+                                                                  "Pay-to Name","Pay-to Name 2","Pay-to Contact","Pay-to Address","Pay-to Address 2",
+                                                                  "Pay-to City","Pay-to Post Code","Pay-to County","Pay-to Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Pay-to Address 2;
+                                                              ENA=Pay-to Address 2] }
+    { 9   ;   ;Pay-to City         ;Text30        ;TableRelation="Post Code".City;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Pay-to City;
+                                                              ENA=Pay-to City] }
+    { 10  ;   ;Pay-to Contact      ;Text50        ;CaptionML=[ENU=Pay-to Contact;
+                                                              ENA=Pay-to Contact] }
+    { 11  ;   ;Your Reference      ;Text35        ;CaptionML=[ENU=Your Reference;
+                                                              ENA=Your Reference] }
+    { 12  ;   ;Ship-to Code        ;Code20        ;TableRelation="Ship-to Address".Code WHERE (Customer No.=FIELD(Sell-to Customer No.));
+                                                   CaptionML=[ENU=Ship-to Code;
+                                                              ENA=Ship-to Code] }
+    { 13  ;   ;Ship-to Name        ;Text50        ;CaptionML=[ENU=Ship-to Name;
+                                                              ENA=Ship-to Name] }
+    { 14  ;   ;Ship-to Name 2      ;Text50        ;CaptionML=[ENU=Ship-to Name 2;
+                                                              ENA=Ship-to Name 2] }
+    { 15  ;   ;Ship-to Address     ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,2,
+                                                                  "Ship-to Name","Ship-to Name 2","Ship-to Contact","Ship-to Address","Ship-to Address 2",
+                                                                  "Ship-to City","Ship-to Post Code","Ship-to County","Ship-to Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Ship-to Address;
+                                                              ENA=Ship-to Address] }
+    { 16  ;   ;Ship-to Address 2   ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,2,
+                                                                  "Ship-to Name","Ship-to Name 2","Ship-to Contact","Ship-to Address","Ship-to Address 2",
+                                                                  "Ship-to City","Ship-to Post Code","Ship-to County","Ship-to Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Ship-to Address 2;
+                                                              ENA=Ship-to Address 2] }
+    { 17  ;   ;Ship-to City        ;Text30        ;TableRelation="Post Code".City;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Ship-to City;
+                                                              ENA=Ship-to City] }
+    { 18  ;   ;Ship-to Contact     ;Text50        ;CaptionML=[ENU=Ship-to Contact;
+                                                              ENA=Ship-to Contact] }
+    { 20  ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 21  ;   ;Expected Receipt Date;Date         ;CaptionML=[ENU=Expected Receipt Date;
+                                                              ENA=Expected Receipt Date] }
+    { 22  ;   ;Posting Description ;Text50        ;CaptionML=[ENU=Posting Description;
+                                                              ENA=Posting Description] }
+    { 23  ;   ;Payment Terms Code  ;Code10        ;TableRelation="Payment Terms";
+                                                   CaptionML=[ENU=Payment Terms Code;
+                                                              ENA=Payment Terms Code] }
+    { 24  ;   ;Due Date            ;Date          ;CaptionML=[ENU=Due Date;
+                                                              ENA=Due Date] }
+    { 25  ;   ;Payment Discount %  ;Decimal       ;CaptionML=[ENU=Payment Discount %;
+                                                              ENA=Payment Discount %];
+                                                   DecimalPlaces=0:5 }
+    { 26  ;   ;Pmt. Discount Date  ;Date          ;CaptionML=[ENU=Pmt. Discount Date;
+                                                              ENA=Pmt. Discount Date] }
+    { 27  ;   ;Shipment Method Code;Code10        ;TableRelation="Shipment Method";
+                                                   CaptionML=[ENU=Shipment Method Code;
+                                                              ENA=Shipment Method Code] }
+    { 28  ;   ;Location Code       ;Code10        ;TableRelation=Location WHERE (Use As In-Transit=CONST(No));
+                                                   CaptionML=[ENU=Location Code;
+                                                              ENA=Location Code] }
+    { 29  ;   ;Shortcut Dimension 1 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Shortcut Dimension 1 Code;
+                                                              ENA=Shortcut Dimension 1 Code];
+                                                   CaptionClass='1,2,1' }
+    { 30  ;   ;Shortcut Dimension 2 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Shortcut Dimension 2 Code;
+                                                              ENA=Shortcut Dimension 2 Code];
+                                                   CaptionClass='1,2,2' }
+    { 31  ;   ;Vendor Posting Group;Code10        ;TableRelation="Vendor Posting Group";
+                                                   CaptionML=[ENU=Vendor Posting Group;
+                                                              ENA=Vendor Posting Group];
+                                                   Editable=No }
+    { 32  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code];
+                                                   Editable=No }
+    { 33  ;   ;Currency Factor     ;Decimal       ;CaptionML=[ENU=Currency Factor;
+                                                              ENA=Currency Factor];
+                                                   DecimalPlaces=0:15;
+                                                   MinValue=0 }
+    { 35  ;   ;Prices Including VAT;Boolean       ;CaptionML=[ENU=Prices Including VAT;
+                                                              ENA=Prices Including GST] }
+    { 37  ;   ;Invoice Disc. Code  ;Code20        ;CaptionML=[ENU=Invoice Disc. Code;
+                                                              ENA=Invoice Disc. Code] }
+    { 41  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=[ENU=Language Code;
+                                                              ENA=Language Code] }
+    { 43  ;   ;Purchaser Code      ;Code10        ;TableRelation=Salesperson/Purchaser;
+                                                   CaptionML=[ENU=Purchaser Code;
+                                                              ENA=Purchaser Code] }
+    { 46  ;   ;Comment             ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("Purch. Comment Line" WHERE (Document Type=CONST(Posted Credit Memo),
+                                                                                                  No.=FIELD(No.),
+                                                                                                  Document Line No.=CONST(0)));
+                                                   CaptionML=[ENU=Comment;
+                                                              ENA=Comment];
+                                                   Editable=No }
+    { 47  ;   ;No. Printed         ;Integer       ;CaptionML=[ENU=No. Printed;
+                                                              ENA=No. Printed];
+                                                   Editable=No }
+    { 51  ;   ;On Hold             ;Code3         ;CaptionML=[ENU=On Hold;
+                                                              ENA=On Hold] }
+    { 52  ;   ;Applies-to Doc. Type;Option        ;CaptionML=[ENU=Applies-to Doc. Type;
+                                                              ENA=Applies-to Doc. Type];
+                                                   OptionCaptionML=[ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                                    ENA=" ,Payment,Invoice,CR/Adj Note,Finance Charge Memo,Reminder,Refund"];
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 53  ;   ;Applies-to Doc. No. ;Code20        ;OnLookup=BEGIN
+                                                              VendLedgEntry.SETCURRENTKEY("Document No.");
+                                                              VendLedgEntry.SETRANGE("Document Type","Applies-to Doc. Type");
+                                                              VendLedgEntry.SETRANGE("Document No.","Applies-to Doc. No.");
+                                                              PAGE.RUN(0,VendLedgEntry);
+                                                            END;
+
+                                                   CaptionML=[ENU=Applies-to Doc. No.;
+                                                              ENA=Applies-to Doc. No.] }
+    { 55  ;   ;Bal. Account No.    ;Code20        ;TableRelation=IF (Bal. Account Type=CONST(G/L Account)) "G/L Account"
+                                                                 ELSE IF (Bal. Account Type=CONST(Bank Account)) "Bank Account";
+                                                   CaptionML=[ENU=Bal. Account No.;
+                                                              ENA=Bal. Account No.] }
+    { 60  ;   ;Amount              ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purch. Cr. Memo Line".Amount WHERE (Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Amount;
+                                                              ENA=Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 61  ;   ;Amount Including VAT;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purch. Cr. Memo Line"."Amount Including VAT" WHERE (Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Amount Including VAT;
+                                                              ENA=Amount Including GST];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 69  ;   ;Vendor Cr. Memo No. ;Code35        ;CaptionML=[ENU=Vendor Cr. Memo No.;
+                                                              ENA=Vendor CR/Adj Note No.] }
+    { 70  ;   ;VAT Registration No.;Text20        ;CaptionML=[ENU=VAT Registration No.;
+                                                              ENA=Exemption Certificate No.] }
+    { 72  ;   ;Sell-to Customer No.;Code20        ;TableRelation=Customer;
+                                                   CaptionML=[ENU=Sell-to Customer No.;
+                                                              ENA=Sell-to Customer No.] }
+    { 73  ;   ;Reason Code         ;Code10        ;TableRelation="Reason Code";
+                                                   CaptionML=[ENU=Reason Code;
+                                                              ENA=Reason Code] }
+    { 74  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              ENA=Gen. Bus. Posting Group] }
+    { 76  ;   ;Transaction Type    ;Code10        ;TableRelation="Transaction Type";
+                                                   CaptionML=[ENU=Transaction Type;
+                                                              ENA=Transaction Type] }
+    { 77  ;   ;Transport Method    ;Code10        ;TableRelation="Transport Method";
+                                                   CaptionML=[ENU=Transport Method;
+                                                              ENA=Transport Method] }
+    { 78  ;   ;VAT Country/Region Code;Code10     ;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=VAT Country/Region Code;
+                                                              ENA=GST Country/Region Code] }
+    { 79  ;   ;Buy-from Vendor Name;Text50        ;CaptionML=[ENU=Buy-from Vendor Name;
+                                                              ENA=Buy-from Vendor Name] }
+    { 80  ;   ;Buy-from Vendor Name 2;Text50      ;CaptionML=[ENU=Buy-from Vendor Name 2;
+                                                              ENA=Buy-from Vendor Name 2] }
+    { 81  ;   ;Buy-from Address    ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,5,
+                                                                  "Buy-from Vendor Name","Buy-from Vendor Name 2","Buy-from Contact","Buy-from Address","Buy-from Address 2",
+                                                                  "Buy-from City","Buy-from Post Code","Buy-from County","Buy-from Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Buy-from Address;
+                                                              ENA=Buy-from Address] }
+    { 82  ;   ;Buy-from Address 2  ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Purchase Header",Rec.GETPOSITION,5,
+                                                                  "Buy-from Vendor Name","Buy-from Vendor Name 2","Buy-from Contact","Buy-from Address","Buy-from Address 2",
+                                                                  "Buy-from City","Buy-from Post Code","Buy-from County","Buy-from Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Buy-from Address 2;
+                                                              ENA=Buy-from Address 2] }
+    { 83  ;   ;Buy-from City       ;Text30        ;TableRelation="Post Code".City;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Buy-from City;
+                                                              ENA=Buy-from City] }
+    { 84  ;   ;Buy-from Contact    ;Text50        ;CaptionML=[ENU=Buy-from Contact;
+                                                              ENA=Buy-from Contact] }
+    { 85  ;   ;Pay-to Post Code    ;Code20        ;TableRelation="Post Code";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Pay-to Post Code;
+                                                              ENA=Pay-to Post Code] }
+    { 86  ;   ;Pay-to County       ;Text30        ;CaptionML=[ENU=Pay-to County;
+                                                              ENA=Pay-to State] }
+    { 87  ;   ;Pay-to Country/Region Code;Code10  ;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=Pay-to Country/Region Code;
+                                                              ENA=Pay-to Country/Region Code] }
+    { 88  ;   ;Buy-from Post Code  ;Code20        ;TableRelation="Post Code";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Buy-from Post Code;
+                                                              ENA=Buy-from Post Code] }
+    { 89  ;   ;Buy-from County     ;Text30        ;CaptionML=[ENU=Buy-from County;
+                                                              ENA=Buy-from State] }
+    { 90  ;   ;Buy-from Country/Region Code;Code10;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=Buy-from Country/Region Code;
+                                                              ENA=Buy-from Country/Region Code] }
+    { 91  ;   ;Ship-to Post Code   ;Code20        ;TableRelation="Post Code";
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Ship-to Post Code;
+                                                              ENA=Ship-to Post Code] }
+    { 92  ;   ;Ship-to County      ;Text30        ;CaptionML=[ENU=Ship-to County;
+                                                              ENA=Ship-to State] }
+    { 93  ;   ;Ship-to Country/Region Code;Code10 ;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=Ship-to Country/Region Code;
+                                                              ENA=Ship-to Country/Region Code] }
+    { 94  ;   ;Bal. Account Type   ;Option        ;CaptionML=[ENU=Bal. Account Type;
+                                                              ENA=Bal. Account Type];
+                                                   OptionCaptionML=[ENU=G/L Account,Bank Account;
+                                                                    ENA=G/L Account,Bank Account];
+                                                   OptionString=G/L Account,Bank Account }
+    { 95  ;   ;Order Address Code  ;Code20        ;TableRelation="Order Address".Code WHERE (Vendor No.=FIELD(Buy-from Vendor No.));
+                                                   CaptionML=[ENU=Order Address Code;
+                                                              ENA=Order Address Code];
+                                                   Description=YIMMNNPWP }
+    { 97  ;   ;Entry Point         ;Code10        ;TableRelation="Entry/Exit Point";
+                                                   CaptionML=[ENU=Entry Point;
+                                                              ENA=Entry Point] }
+    { 98  ;   ;Correction          ;Boolean       ;CaptionML=[ENU=Correction;
+                                                              ENA=Correction] }
+    { 99  ;   ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              ENA=Document Date] }
+    { 101 ;   ;Area                ;Code10        ;TableRelation=Area;
+                                                   CaptionML=[ENU=Area;
+                                                              ENA=Area] }
+    { 102 ;   ;Transaction Specification;Code10   ;TableRelation="Transaction Specification";
+                                                   CaptionML=[ENU=Transaction Specification;
+                                                              ENA=Transaction Specification] }
+    { 104 ;   ;Payment Method Code ;Code10        ;TableRelation="Payment Method";
+                                                   CaptionML=[ENU=Payment Method Code;
+                                                              ENA=Payment Method Code] }
+    { 107 ;   ;Pre-Assigned No. Series;Code10     ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Pre-Assigned No. Series;
+                                                              ENA=Pre-Assigned No. Series] }
+    { 108 ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=No. Series;
+                                                              ENA=No. Series];
+                                                   Editable=No }
+    { 111 ;   ;Pre-Assigned No.    ;Code20        ;CaptionML=[ENU=Pre-Assigned No.;
+                                                              ENA=Pre-Assigned No.] }
+    { 112 ;   ;User ID             ;Code50        ;TableRelation=User."User Name";
+                                                   OnLookup=VAR
+                                                              UserMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              UserMgt.LookupUserID("User ID");
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              ENA=User ID] }
+    { 113 ;   ;Source Code         ;Code10        ;TableRelation="Source Code";
+                                                   CaptionML=[ENU=Source Code;
+                                                              ENA=Source Code] }
+    { 114 ;   ;Tax Area Code       ;Code20        ;TableRelation="Tax Area";
+                                                   CaptionML=[ENU=Tax Area Code;
+                                                              ENA=US Tax Area Code] }
+    { 115 ;   ;Tax Liable          ;Boolean       ;CaptionML=[ENU=Tax Liable;
+                                                              ENA=US Tax Liable] }
+    { 116 ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=[ENU=VAT Bus. Posting Group;
+                                                              ENA=GST Bus. Posting Group] }
+    { 119 ;   ;VAT Base Discount % ;Decimal       ;CaptionML=[ENU=VAT Base Discount %;
+                                                              ENA=GST Base Discount %];
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   MaxValue=100 }
+    { 138 ;   ;Prepmt. Cr. Memo No. Series;Code10 ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Prepmt. Cr. Memo No. Series;
+                                                              ENA=Prepmt. CR/Adj Note No. Series] }
+    { 140 ;   ;Prepayment Credit Memo;Boolean     ;CaptionML=[ENU=Prepayment Credit Memo;
+                                                              ENA=Prepayment CR/Adj Note] }
+    { 141 ;   ;Prepayment Order No.;Code20        ;CaptionML=[ENU=Prepayment Order No.;
+                                                              ENA=Prepayment Order No.] }
+    { 480 ;   ;Dimension Set ID    ;Integer       ;TableRelation="Dimension Set Entry";
+                                                   OnLookup=BEGIN
+                                                              ShowDimensions;
+                                                            END;
+
+                                                   CaptionML=[ENU=Dimension Set ID;
+                                                              ENA=Dimension Set ID];
+                                                   Editable=No }
+    { 1300;   ;Canceled            ;Boolean       ;CaptionML=[ENU=Canceled;
+                                                              ENA=Cancelled] }
+    { 1302;   ;Paid                ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=-Exist("Vendor Ledger Entry" WHERE (Entry No.=FIELD(Vendor Ledger Entry No.),
+                                                                                                   Open=FILTER(Yes)));
+                                                   CaptionML=[ENU=Paid;
+                                                              ENA=Paid];
+                                                   Editable=No }
+    { 1303;   ;Remaining Amount    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Vendor Ledger Entry No.=FIELD(Vendor Ledger Entry No.)));
+                                                   CaptionML=[ENU=Remaining Amount;
+                                                              ENA=Remaining Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 1304;   ;Vendor Ledger Entry No.;Integer    ;TableRelation="Vendor Ledger Entry"."Entry No.";
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Vendor Ledger Entry No.;
+                                                              ENA=Vendor Ledger Entry No.];
+                                                   Editable=No }
+    { 1305;   ;Invoice Discount Amount;Decimal    ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purch. Cr. Memo Line"."Inv. Discount Amount" WHERE (Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Invoice Discount Amount;
+                                                              ENA=Invoice Discount Amount];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 5050;   ;Campaign No.        ;Code20        ;TableRelation=Campaign;
+                                                   CaptionML=[ENU=Campaign No.;
+                                                              ENA=Campaign No.] }
+    { 5052;   ;Buy-from Contact No.;Code20        ;TableRelation=Contact;
+                                                   CaptionML=[ENU=Buy-from Contact No.;
+                                                              ENA=Buy-from Contact No.] }
+    { 5053;   ;Pay-to Contact No.  ;Code20        ;TableRelation=Contact;
+                                                   CaptionML=[ENU=Pay-to Contact No.;
+                                                              ENA=Pay-to Contact No.] }
+    { 5700;   ;Responsibility Center;Code10       ;TableRelation="Responsibility Center";
+                                                   CaptionML=[ENU=Responsibility Center;
+                                                              ENA=Responsibility Centre] }
+    { 6601;   ;Return Order No.    ;Code20        ;CaptionML=[ENU=Return Order No.;
+                                                              ENA=Return Order No.] }
+    { 6602;   ;Return Order No. Series;Code10     ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Return Order No. Series;
+                                                              ENA=Return Order No. Series] }
+    { 11612;  ;Adjustment          ;Boolean       ;CaptionML=[ENU=Adjustment;
+                                                              ENA=Adjustment];
+                                                   Editable=No }
+    { 11613;  ;BAS Adjustment      ;Boolean       ;CaptionML=[ENU=BAS Adjustment;
+                                                              ENA=BAS Adjustment];
+                                                   Editable=No }
+    { 11614;  ;Adjustment Applies-to;Code20       ;CaptionML=[ENU=Adjustment Applies-to;
+                                                              ENA=Adjustment Applies-to] }
+    { 11620;  ;ABN                 ;Text14        ;CaptionML=[ENU=ABN;
+                                                              ENA=ABN];
+                                                   Numeric=Yes;
+                                                   Editable=No }
+    { 11622;  ;ABN Division Part No.;Text3        ;CaptionML=[ENU=ABN Division Part No.;
+                                                              ENA=ABN Division Part No.] }
+    { 28040;  ;WHT Business Posting Group;Code10  ;TableRelation="WHT Business Posting Group";
+                                                   CaptionML=[ENU=WHT Business Posting Group;
+                                                              ENA=WHT Business Posting Group] }
+    { 28041;  ;Rem. WHT Prepaid Amount (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("WHT Entry"."Remaining Unrealized Amount" WHERE (Document Type=CONST(Credit Memo),
+                                                                                                                    Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Rem. WHT Prepaid Amount (LCY);
+                                                              ENA=Rem. WHT Prepaid Amount (LCY)] }
+    { 28042;  ;Paid WHT Prepaid Amount (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("WHT Entry".Amount WHERE (Document Type=CONST(Refund),
+                                                                                             Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Paid WHT Prepaid Amount (LCY);
+                                                              ENA=Paid WHT Prepaid Amount (LCY)] }
+    { 28043;  ;Total WHT Prepaid Amount (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("WHT Entry"."Unrealized Amount" WHERE (Document Type=CONST(Credit Memo),
+                                                                                                          Document No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Total WHT Prepaid Amount (LCY);
+                                                              ENA=Total WHT Prepaid Amount (LCY)] }
+    { 28045;  ;Actual Vendor No.   ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=[ENU=Actual Vendor No.;
+                                                              ENA=Actual Vendor No.] }
+    { 28070;  ;Printed Tax Document;Boolean       ;CaptionML=[ENU=Printed Tax Document;
+                                                              ENA=Printed Tax Document];
+                                                   Editable=No }
+    { 28071;  ;Posted Tax Document ;Boolean       ;CaptionML=[ENU=Posted Tax Document;
+                                                              ENA=Posted Tax Document];
+                                                   Editable=No }
+    { 28073;  ;Tax Date Filter     ;Date          ;FieldClass=FlowFilter;
+                                                   CaptionML=[ENU=Tax Date Filter;
+                                                              ENA=Tax Date Filter] }
+    { 28074;  ;Tax Document Marked ;Boolean       ;CaptionML=[ENU=Tax Document Marked;
+                                                              ENA=Tax Document Marked];
+                                                   Editable=No }
+    { 28075;  ;Invoice Print Type  ;Option        ;CaptionML=[ENU=Invoice Print Type;
+                                                              ENA=Invoice Print Type];
+                                                   OptionCaptionML=[ENU=Invoice,Tax Invoice (Items),Tax Invoice (Services);
+                                                                    ENA=Invoice,Tax Invoice (Items),Tax Invoice (Services)];
+                                                   OptionString=Invoice,Tax Invoice (Items),Tax Invoice (Services);
+                                                   Editable=No }
+    { 50007;  ;Type Of Transaction ;Option        ;OptionCaptionML=ENU=" ,Selling In,Selling Out,Direct,Indirect,Adm.MKT,Free Service,Claim,Promotion,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Other YMKI,Propac Ex.,Intrst_Deposit,Imacs-ATV,Imacs-Generator,Imacs-CBU,Campaign,DDS1 Vendor,DDS2 Vendor,DDS3 Vendor,DDS4 Vendor,DDS5 Vendor,DDS6 Vendor,DDS7 Vendor,DDS8 Vendor,DDS9 Vendor,MKT Vendor,SVC Vendor,MS Vendor,POD Vendor,Others Purchase,Ekspedisi Log-POD";
+                                                   OptionString=[ ,Selling In,Selling Out,Direct,Indirect,Adm.MKT,Free Service,Claim,Promotion,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Other YMKI,Propac Ex.,Intrst_Deposit,Imacs-ATV,Imacs-Generator,Imacs-CBU,Campaign,DDS1 Vendor,DDS2 Vendor,DDS3 Vendor,DDS4 Vendor,DDS5 Vendor,DDS6 Vendor,DDS7 Vendor,DDS8 Vendor,DDS9 Vendor,MKT Vendor,SVC Vendor,MS Vendor,POD Vendor,Others Purchase,Ekspedisi Log-POD];
+                                                   Description=YIMMATOP,CR#018 & 023-Options added for Imacs }
+    { 50009;  ;UID                 ;Code50        ;Description=YIMMRYUID,CAUYIMM }
+    { 50012;  ;G-Port Ref No.      ;Code20        ;Description=YIMMAKS For Gport }
+    { 50014;  ;New NPWP No         ;Code20        ;Description=YIMMCH }
+    { 50015;  ;Bank Code           ;Code20        ;TableRelation="Vendor Bank Account".Code WHERE (Vendor No.=FIELD(Pay-to Vendor No.));
+                                                   Description=YIMMRBDTL }
+    { 50016;  ;Bank Account No     ;Code50        ;Description=YIMMRBDTL }
+    { 50017;  ;Vend/Cust Bank Name ;Text50        ;Description=YIMMRBDTL }
+    { 50018;  ;Bank Address        ;Text50        ;Description=YIMMRBDTL }
+    { 50019;  ;BeniName            ;Text50        ;Description=YIMMRBDTL }
+    { 50024;  ;Slip Amount         ;Decimal        }
+    { 50025;  ;Slip Amount (LCY)   ;Decimal        }
+    { 50026;  ;Destination         ;Text50        ;Description=YIMMSRYMKI }
+    { 50027;  ;ActualCreditMemo    ;Boolean       ;Description=Field To Identify Actual and Correction In Credit Memo }
+    { 50031;  ;Total Case          ;Code20        ;Description=YIMM1.0 }
+    { 50032;  ;G.WEIGHT            ;Decimal       ;Description=YIMM1.0 }
+    { 50033;  ;N.WEIGHT            ;Decimal       ;Description=YIMM1.0 }
+    { 50034;  ;MEASURE             ;Decimal       ;Description=YIMM1.0 }
+    { 50035;  ;Case Mark           ;Code100       ;Description=YIMM1.0 }
+    { 50036;  ;Attention / Division;Code100       ;Description=YIMM1.0 }
+    { 50037;  ;Vessel Name / Voyage;Code50        ;Description=YIMM1.0 }
+    { 51000;  ;AccPac Receipt No.  ;Code20        ;Description=TBI - to validate unique receipt no. from AccPac }
+    { 52000;  ;Quote No ( Project No.);Code20     ;Description=For Melco to Capture the Quote No. }
+    { 52001;  ;Deposit             ;Boolean        }
+    { 52002;  ;ClaimNo             ;Code20        ;Description=For Getting the Claim No }
+    { 52003;  ;ExpansesCode        ;Code20        ;TableRelation=ExpansesCode.ExpanseCode;
+                                                   Description=Field For the Expanses Code }
+    { 52005;  ;YMNI Type of Sales  ;Option        ;OptionCaptionML=ENU=" ,Unit,Material,Laboratorium,Others";
+                                                   OptionString=[ ,Unit,Material,Laboratorium,Others] }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+    {    ;Pre-Assigned No.,New NPWP No             }
+    {    ;Vendor Cr. Memo No.,Posting Date         }
+    {    ;Return Order No.                         }
+    {    ;Buy-from Vendor No.                      }
+    {    ;Prepayment Order No.                    ;KeyGroups=PrePmt }
+    {    ;Pay-to Vendor No.                        }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;No.,Buy-from Vendor No.,Pay-to Vendor No.,Posting Date,Posting Description }
+  }
+  CODE
+  {
+    VAR
+      PurchCrMemoHeader@1000 : Record 124;
+      PurchCommentLine@1001 : Record 43;
+      VendLedgEntry@1002 : Record 25;
+      PostPurchLinesDelete@1003 : Codeunit 364;
+      DimMgt@1004 : Codeunit 408;
+      ApprovalsMgt@1008 : Codeunit 439;
+      UserSetupMgt@1005 : Codeunit 5700;
+      PostCodeCheck@1500000 : Codeunit 28000;
+
+    PROCEDURE PrintRecords@1(ShowRequestForm@1000 : Boolean);
+    VAR
+      ReportSelection@1001 : Record 77;
+    BEGIN
+      WITH PurchCrMemoHeader DO BEGIN
+        COPY(Rec);
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"P.Cr.Memo");
+        ReportSelection.SETFILTER("Report ID",'<>0');
+        ReportSelection.FIND('-');
+        REPEAT
+          REPORT.RUNMODAL(ReportSelection."Report ID",ShowRequestForm,FALSE,PurchCrMemoHeader);
+        UNTIL ReportSelection.NEXT = 0;
+      END;
+    END;
+
+    PROCEDURE Navigate@2();
+    VAR
+      NavigateForm@1000 : Page 344;
+    BEGIN
+      NavigateForm.SetDoc("Posting Date","No.");
+      NavigateForm.RUN;
+    END;
+
+    PROCEDURE ShowDimensions@3();
+    BEGIN
+      DimMgt.ShowDimensionSet("Dimension Set ID",STRSUBSTNO('%1 %2',TABLECAPTION,"No."));
+    END;
+
+    PROCEDURE SetSecurityFilterOnRespCenter@4();
+    BEGIN
+      IF UserSetupMgt.GetPurchasesFilter <> '' THEN BEGIN
+        FILTERGROUP(2);
+        SETRANGE("Responsibility Center",UserSetupMgt.GetPurchasesFilter);
+        FILTERGROUP(0);
+      END;
+    END;
+
+    BEGIN
+    {
+      //YIMMATOP
+         field Added "Type of Purchase" for payments to vendor based on type of purchase
+      //YIMMNNPWP
+       Length of the field is expanded.(ID-95)
+      //YIMMCH
+        New Field Is added to Flow (New Npwp No)
+      //TBI field added for TBI
+      - to validate unique receipt no. from AccPac
+      //YIMM1.0 - fIELD ADDED FOR THE CR REFERENCE TO CREATE VENDOR SALES INVOICE FOR EXPORT ONLY AND FOR REPORT PURPOSE.
+
+      //Mel1.0- Field added for Melco Specific Customizatiopn ( ID 52000 - to capture the Proejct Code- Quote No.)
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //Old Version
+      NAVW17.00
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+      //CAUYIMM - Changed UID Length from 10 to 50.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,50 @@
+OBJECT Table 60056 E-FAKTUR Detail Invoice
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/13/15;
+    Time=20:16:15;
+    Modified=Yes;
+    Version List=E-FAKTUR1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No            ;Integer       ;Description=entry }
+    { 2   ;   ;Invoice No.         ;Code20        ;Description=Document no. }
+    { 3   ;   ;Reference No.       ;Code20        ;Description=Ext. doc number }
+    { 4   ;   ;Customer/Entity Code;Code20        ;Description=Buy from vendor no./sale-to-customer no. }
+    { 5   ;   ;Object Code/Item No ;Text30         }
+    { 6   ;   ;Object/Item Name    ;Text250        }
+    { 7   ;   ;Unit Price          ;Decimal       ;Description=Direct unit code excl. vat/Unit Price Excl.vat }
+    { 8   ;   ;Total Quantity      ;Decimal       ;Description=Quantity,Always one in NAV }
+    { 9   ;   ;Total Price         ;Decimal       ;Description=Amount including VAT }
+    { 10  ;   ;Discount            ;Decimal        }
+    { 11  ;   ;Base Amount Before Tax;Decimal      }
+    { 12  ;   ;VAT/PPN             ;Decimal        }
+    { 13  ;   ;PPNBM Tariff        ;Decimal        }
+    { 14  ;   ;PPNBM               ;Decimal        }
+    { 15  ;   ;Tax Invoice Date    ;Date          ;Description=Date for filter in this table }
+  }
+  KEYS
+  {
+    {    ;Entry No                                ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+
+
+      //E-FAKTUR1.0 New Table created to export Detail invoice File for NAV - E-FAKTUR  I/F  System
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,217 @@
+OBJECT Report 50016 TMS Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/16/15;
+    Time=10:01:30;
+    Modified=Yes;
+    Version List=UPG13R2DEV,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   LineNo := 10000;
+                   DocNo := '';
+                   Master_Setup.GET;
+                 END;
+
+    OnPreReport=BEGIN
+                  Imcas_Interface.RESET;
+                  Imcas_Interface.SETCURRENTKEY(Imcas_Interface."No.",Imcas_Interface."Dealer Code");
+                  Imcas_Interface.SETRANGE(Imcas_Interface."Sales Type",Imcas_Interface."Sales Type"::TMS);
+                  IF Imcas_Interface.FINDFIRST THEN REPEAT
+                    IF DocNo <> Imcas_Interface."No." THEN BEGIN
+                      Sales_Header.RESET;
+                      Sales_Header.INIT;
+                      Sales_Header."Document Type" := Sales_Header."Document Type"::Invoice;
+                      Sales_Header."No." := Imcas_Interface."No.";
+                      Sales_Header."Reason Code" := Master_Setup."Reason (Normal)";//YIMMNEW
+                      Sales_Header.INSERT(TRUE);
+                      //PPNPPHDEV.begin
+                      {Conversion_Cust.RESET;
+                      Conversion_Cust.SETRANGE(Conversion_Cust."Tms Code",Imcas_Interface."Dealer Code");
+                      //IF Imcas_Interface."Npwp no." <> '' THEN BEGIN  //CR#003 SV
+                      IF (Imcas_Interface."Npwp no." <> '00.000.000.0-000.000')THEN BEGIN // CR#003 SV
+                        Conversion_Cust.SETRANGE(Conversion_Cust.NPWP,Imcas_Interface."Npwp no.");
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                          Sales_Header.VALIDATE(Sales_Header."Ship-to Code",Conversion_Cust.NPWP);
+                        END;
+                      END ELSE BEGIN
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                        END;
+                      END; } //Previous code commented
+                      Conversion_Cust.RESET;
+                      Conversion_Cust.SETRANGE("Tms Code",Imcas_Interface."Dealer Code");
+                      IF Conversion_Cust.FINDSET THEN BEGIN
+                        Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                        Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                        Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                        ShipAddr.RESET;
+                        ShipAddr.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                        ShipAddr.SETRANGE(PPN,TRUE);
+                        ShipAddr.SETRANGE("PPN Service",TRUE);
+                        IF ShipAddr.FINDSET THEN
+                          Sales_Header.VALIDATE("Ship-to Code",ShipAddr.Code);
+                        ShipAddr.RESET;
+                        ShipAddr.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                        ShipAddr.SETRANGE(PPH,TRUE);
+                        ShipAddr.SETRANGE("PPH Service",TRUE);
+                        IF ShipAddr.FINDSET THEN
+                          Sales_Header.VALIDATE("New NPWP No.",ShipAddr.Code);
+                      END;
+                      //PPNPPHDEV.end
+                      Cust.GET(Conversion_Cust.NAV);
+                      Cust_Posting.GET;
+                      CASE Cust."Customer Type" OF
+                        Cust."Customer Type"::"Related Party":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local Others Related Party");
+                        Cust."Customer Type"::"Third Party":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local Others Third Party");
+                      END;
+                      Master_Setup.GET;//YIMMNEW
+                      Sales_Header."Type Of Transaction" := Sales_Header."Type Of Transaction"::TMS;
+                      Sales_Header."Order Date" := Imcas_Interface."Transaction Date";
+                      Sales_Header.VALIDATE(Sales_Header."Shipment Date",Imcas_Interface."Transaction Date");
+                      Sales_Header.VALIDATE(Sales_Header."Due Date",Imcas_Interface."Due Date");
+                      Sales_Header.VALIDATE(Sales_Header."Currency Code",Imcas_Interface.Currency);
+                      Sales_Header."Posting No." := Imcas_Interface."No.";
+                      //PPNPPHDEV.begin
+                      {
+                      IF Imcas_Interface."Npwp no." ='00.000.000.0-000.000' THEN          //SV CR#003 19112014
+                      Sales_Header.VALIDATE(Sales_Header."New NPWP No.",Imcas_Interface."Npwp no.");  //SV CR#003 19112014
+                      }
+                      //PPNPPHDEV.end
+                  //Change New Regulation Date -17-05-09 By Rajesh Yadav
+
+                      //Mon := DATE2DMY(Imcas_Interface."Invoice Date",2);
+                      //Yr :=  DATE2DMY(Imcas_Interface."Invoice Date",3);
+
+                      //Sales_Header."Tax Invoice Date" := Master_Setup.Lastdate(Mon,Yr);
+
+                      Sales_Header."Tax Invoice Date":=Imcas_Interface."Tax Invoice Date";
+
+                  //Change New Regulation Date -17-05-09 By Rajesh Yadav
+
+                      Sales_Header."B/L Date" := Imcas_Interface."B/L Date";
+                      Sales_Header."External Document No." := Imcas_Interface."Ext.Doc.No.";
+                      Sales_Header.Interfaced := TRUE;
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 1 Code",Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 2 Code",Master_Setup."TMS Model Dimension");
+                      Sales_Header.ValidateShortcutDimCode(3,Master_Setup."TMS Selling Ex Dimension");
+                      Sales_Header.MODIFY;
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      Sales_Line.VALIDATE(Sales_Line."Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+                      IF Imcas_Interface."VAT Required" THEN BEGIN
+                        Master_Setup.GET;
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      END;
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line."Shortcut Dimension 1 Code" := Imcas_Interface."Shortcut Dimension 1 Code";
+                  //    Sales_Line."Shortcut Dimension 2 Code" := Imcas_Interface."Shortcut Dimension 2 Code";
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.Narration := Imcas_Interface.Narration;//YIMMIAFP
+                      Sales_Line.AreaCode := Imcas_Interface."WHT Area Code";//YIMMIAFP
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END ELSE BEGIN
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      Sales_Line.VALIDATE(Sales_Line."Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+                      IF Imcas_Interface."VAT Required" THEN BEGIN
+                        Master_Setup.GET;
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      END;
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line."Shortcut Dimension 1 Code" := Imcas_Interface."Shortcut Dimension 1 Code";
+                  //    Sales_Line."Shortcut Dimension 2 Code" := Imcas_Interface."Shortcut Dimension 2 Code";
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.Narration := Imcas_Interface.Narration;//YIMMIAFP
+                      Sales_Line.AreaCode := Imcas_Interface."WHT Area Code";//YIMMIAFP
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END;
+                    Imcas_Interface.DELETE;
+                  UNTIL Imcas_Interface.NEXT = 0;
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Sales_Header@1102159012 : Record 36;
+      Sales_Line@1102159011 : Record 37;
+      Conversion_Cust@1102159010 : Record 50004;
+      LineNo@1102159009 : Integer;
+      Imcas_Interface@1102159008 : Record 50009;
+      DocNo@1102159007 : Code[20];
+      Master_Setup@1102159006 : Record 50008;
+      Exp@1102159005 : Text[30];
+      Mon@1102159004 : Integer;
+      Yr@1102159003 : Integer;
+      Cust@1102159002 : Record 18;
+      Cust_Posting@1102159001 : Record 50012;
+      ShipAddr@1102159013 : Record 222;
+
+    BEGIN
+    {
+
+
+      //YIMMIAFP
+      1) CODE ADDED TO INSERT WHT AREA CODE AND NARRATION FIELD
+      //YIMMNEW
+      1) CODE ADDED TO INSERT DEFAULT G.P.P.G AND DEFAULT REASON CODE
+
+      SIGN     REfID         DESC
+      SV       CR#003        Restrictions on Blank NPWP No.
+
+      UPG13R2DEV SV 15122014
+      Newly created   in 13R2
+      //PPNPPHDEV SV ppnpph concet developed 06042015
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

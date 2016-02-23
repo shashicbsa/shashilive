@@ -1,0 +1,105 @@
+OBJECT Codeunit 50033 TMS Currency Exch Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/01/15;
+    Time=14:53:40;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    TableNo=472;
+    OnRun=BEGIN
+
+            Master_setup.GET;
+            Master_setup_2.GET;
+
+
+            ch:=9;
+            InterfaceFile := Master_setup_2."Interface file path Export" + '\'+ Master_setup_2."TMS Currency Exchange";
+
+
+            F1.CREATE(InterfaceFile);
+            F1.CREATEOUTSTREAM(Outstreamobj);
+            F1.TEXTMODE(TRUE);
+            Curr_exc_rate.SETFILTER(Curr_exc_rate."Starting Date",'=%1',TODAY);
+            IF Curr_exc_rate.FINDSET THEN
+
+            REPEAT
+
+              Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Starting Date",0,'<Year4>/<Month,2>/<Day,2>'),11,' '));
+              Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+              Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Currency Code"),10,' '));
+              Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+              Outstreamobj.WRITETEXT(PADSTR(FORMAT('IDR'),10,' '));
+              Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+              Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Relational Exch. Rate Amount",0,9),20,' '));
+              Outstreamobj.WRITETEXT();
+
+            UNTIL Curr_exc_rate.NEXT=0;
+
+            F1.CLOSE;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      InterfaceFile@1102159011 : Text[250];
+      Master_setup@1102159010 : Record 50008;
+      F1@1102159009 : File;
+      Outstreamobj@1102159008 : OutStream;
+      Curr_exc_rate@1102159007 : Record 330;
+      Starting_date@1102159006 : Date;
+      "Currency Code From"@1102159005 : Code[10];
+      "Currency Code To"@1102159004 : Code[10];
+      Exchange_rate@1102159003 : Decimal;
+      ch@1102159002 : Char;
+      Master_setup_2@1102159001 : Record 60053;
+
+    PROCEDURE Manual_Run@1102159001(Starting_Date@1102159001 : Date);
+    BEGIN
+      Master_setup.GET;
+      Master_setup_2.GET;
+
+
+      ch:=9;
+      InterfaceFile := Master_setup_2."Interface file path Export" + '\'+ Master_setup_2."TMS Currency Exchange";
+
+
+      F1.CREATE(InterfaceFile);
+      F1.CREATEOUTSTREAM(Outstreamobj);
+      F1.TEXTMODE(TRUE);
+      Curr_exc_rate.SETFILTER(Curr_exc_rate."Starting Date",'=%1',Starting_Date);
+      IF Curr_exc_rate.FINDSET THEN
+
+      REPEAT
+
+        Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Starting Date",0,'<Year4>/<Month,2>/<Day,2>'),11,' '));
+        Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+        Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Currency Code"),10,' '));
+        Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+        Outstreamobj.WRITETEXT(PADSTR(FORMAT('IDR'),10,' '));
+        Outstreamobj.WRITETEXT(FORMAT(ch,1,'<char>'));
+        Outstreamobj.WRITETEXT(PADSTR(FORMAT(Curr_exc_rate."Relational Exch. Rate Amount",0,9),20,' '));
+        Outstreamobj.WRITETEXT();
+
+      UNTIL Curr_exc_rate.NEXT=0;
+
+      F1.CLOSE;
+    END;
+
+    BEGIN
+    {
+
+      Date               Sign                 Ref_ID                Description
+      01102014            SV                  CR#003                New Batch for NAV-TMS(Currency Exchange) Interface
+
+      UPG13R2DEV SV 15122014
+      Newly created in 13R2
+    }
+    END.
+  }
+}
+

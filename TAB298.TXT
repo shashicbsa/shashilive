@@ -1,0 +1,164 @@
+OBJECT Table 298 Issued Reminder Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Issued Reminder Line;
+               ENA=Issued Reminder Line];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Reminder No.        ;Code20        ;TableRelation="Issued Reminder Header";
+                                                   CaptionML=[ENU=Reminder No.;
+                                                              ENA=Reminder No.] }
+    { 2   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+    { 3   ;   ;Attached to Line No.;Integer       ;TableRelation="Issued Reminder Line"."Line No." WHERE (Reminder No.=FIELD(Reminder No.));
+                                                   CaptionML=[ENU=Attached to Line No.;
+                                                              ENA=Attached to Line No.] }
+    { 4   ;   ;Type                ;Option        ;CaptionML=[ENU=Type;
+                                                              ENA=Type];
+                                                   OptionCaptionML=[ENU=" ,G/L Account,Customer Ledger Entry";
+                                                                    ENA=" ,G/L Account,Customer Ledger Entry"];
+                                                   OptionString=[ ,G/L Account,Customer Ledger Entry] }
+    { 5   ;   ;Entry No.           ;Integer       ;TableRelation="Cust. Ledger Entry";
+                                                   OnLookup=BEGIN
+                                                              IF Type <> Type::"Customer Ledger Entry" THEN
+                                                                EXIT;
+                                                              IssuedReminderHeader.GET("Reminder No.");
+                                                              CustLedgEntry.SETCURRENTKEY("Customer No.");
+                                                              CustLedgEntry.SETRANGE("Customer No.",IssuedReminderHeader."Customer No.");
+                                                              IF CustLedgEntry.GET("Entry No.") THEN;
+                                                              PAGE.RUNMODAL(0,CustLedgEntry);
+                                                            END;
+
+                                                   CaptionML=[ENU=Entry No.;
+                                                              ENA=Entry No.];
+                                                   BlankZero=Yes }
+    { 6   ;   ;No. of Reminders    ;Integer       ;CaptionML=[ENU=No. of Reminders;
+                                                              ENA=No. of Reminders] }
+    { 7   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 8   ;   ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              ENA=Document Date] }
+    { 9   ;   ;Due Date            ;Date          ;CaptionML=[ENU=Due Date;
+                                                              ENA=Due Date] }
+    { 10  ;   ;Document Type       ;Option        ;CaptionML=[ENU=Document Type;
+                                                              ENA=Document Type];
+                                                   OptionCaptionML=[ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                                    ENA=" ,Payment,Invoice,CR/Adj Note,Finance Charge Memo,Reminder,Refund"];
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 11  ;   ;Document No.        ;Code20        ;OnLookup=BEGIN
+                                                              IF Type <> Type::"Customer Ledger Entry" THEN
+                                                                EXIT;
+                                                              IssuedReminderHeader.GET("Reminder No.");
+                                                              CustLedgEntry.SETCURRENTKEY("Customer No.");
+                                                              CustLedgEntry.SETRANGE("Customer No.",IssuedReminderHeader."Customer No.");
+                                                              IF CustLedgEntry.GET("Entry No.") THEN;
+                                                              PAGE.RUNMODAL(0,CustLedgEntry);
+                                                            END;
+
+                                                   CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+    { 12  ;   ;Description         ;Text100       ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 13  ;   ;Original Amount     ;Decimal       ;CaptionML=[ENU=Original Amount;
+                                                              ENA=Original Amount];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr=GetCurrencyCodeFromHeader }
+    { 14  ;   ;Remaining Amount    ;Decimal       ;CaptionML=[ENU=Remaining Amount;
+                                                              ENA=Remaining Amount];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr=GetCurrencyCodeFromHeader }
+    { 15  ;   ;No.                 ;Code20        ;TableRelation=IF (Type=CONST(" ")) "Standard Text"
+                                                                 ELSE IF (Type=CONST(G/L Account)) "G/L Account";
+                                                   CaptionML=[ENU=No.;
+                                                              ENA=No.] }
+    { 16  ;   ;Amount              ;Decimal       ;CaptionML=[ENU=Amount;
+                                                              ENA=Amount];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr=GetCurrencyCodeFromHeader }
+    { 17  ;   ;Interest Rate       ;Decimal       ;CaptionML=[ENU=Interest Rate;
+                                                              ENA=Interest Rate];
+                                                   DecimalPlaces=0:5;
+                                                   BlankZero=Yes }
+    { 18  ;   ;Gen. Prod. Posting Group;Code10    ;TableRelation="Gen. Product Posting Group";
+                                                   CaptionML=[ENU=Gen. Prod. Posting Group;
+                                                              ENA=Gen. Prod. Posting Group] }
+    { 19  ;   ;VAT %               ;Decimal       ;CaptionML=[ENU=VAT %;
+                                                              ENA=GST %];
+                                                   DecimalPlaces=0:5 }
+    { 20  ;   ;VAT Calculation Type;Option        ;CaptionML=[ENU=VAT Calculation Type;
+                                                              ENA=GST Calculation Type];
+                                                   OptionCaptionML=[ENU=Normal VAT,Reverse Charge VAT,Full VAT,Sales Tax;
+                                                                    ENA=Normal GST,Reverse Charge GST,Full GST,US Sales Tax];
+                                                   OptionString=Normal VAT,Reverse Charge VAT,Full VAT,Sales Tax }
+    { 21  ;   ;VAT Amount          ;Decimal       ;CaptionML=[ENU=VAT Amount;
+                                                              ENA=GST Amount];
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr=GetCurrencyCodeFromHeader }
+    { 22  ;   ;Tax Group Code      ;Code10        ;TableRelation="Tax Group";
+                                                   CaptionML=[ENU=Tax Group Code;
+                                                              ENA=US Tax Group Code] }
+    { 23  ;   ;VAT Prod. Posting Group;Code10     ;TableRelation="VAT Product Posting Group";
+                                                   CaptionML=[ENU=VAT Prod. Posting Group;
+                                                              ENA=GST Prod. Posting Group] }
+    { 24  ;   ;VAT Identifier      ;Code10        ;CaptionML=[ENU=VAT Identifier;
+                                                              ENA=GST Identifier];
+                                                   Editable=No }
+    { 25  ;   ;Line Type           ;Option        ;CaptionML=[ENU=Line Type;
+                                                              ENA=Line Type];
+                                                   OptionCaptionML=[ENU=ReminderLine,Not Due,Beginning Text,Ending Text,Rounding,OnHold,Additional Fee;
+                                                                    ENA=ReminderLine,Not Due,Beginning Text,Ending Text,Rounding,OnHold,Additional Fee];
+                                                   OptionString=ReminderLine,Not Due,Beginning Text,Ending Text,Rounding,OnHold,Additional Fee }
+    { 26  ;   ;VAT Clause Code     ;Code10        ;TableRelation="VAT Clause";
+                                                   CaptionML=[ENU=VAT Clause Code;
+                                                              ENA=GST Clause Code] }
+    { 101 ;   ;System-Created Entry;Boolean       ;CaptionML=[ENU=System-Created Entry;
+                                                              ENA=System-Created Entry];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Reminder No.,Line No.                   ;SumIndexFields=Amount,VAT Amount,Remaining Amount;
+                                                   MaintainSIFTIndex=No;
+                                                   Clustered=Yes }
+    {    ;Reminder No.,Type,Line Type             ;SumIndexFields=Amount,VAT Amount,Remaining Amount;
+                                                   MaintainSQLIndex=No;
+                                                   MaintainSIFTIndex=No }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      IssuedReminderHeader@1000 : Record 297;
+      CustLedgEntry@1001 : Record 21;
+
+    PROCEDURE GetCurrencyCodeFromHeader@1() : Code[10];
+    VAR
+      IssuedReminderHeader@1000 : Record 297;
+    BEGIN
+      IF "Reminder No." = IssuedReminderHeader."No." THEN
+        EXIT(IssuedReminderHeader."Currency Code");
+
+      IF IssuedReminderHeader.GET("Reminder No.") THEN
+        EXIT(IssuedReminderHeader."Currency Code");
+
+      EXIT('');
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

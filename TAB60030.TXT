@@ -1,0 +1,46 @@
+OBJECT Table 60030 YearBudgetBuffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/12/10;
+    Time=[ 7:59:05];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNo                 ;Integer        }
+    { 2   ;   ;Code                ;Code20         }
+    { 3   ;   ;Shop/Source         ;Code20         }
+    { 4   ;   ;Name                ;Code50         }
+    { 5   ;   ;Date-1              ;Decimal        }
+    { 6   ;   ;Date-2              ;Decimal        }
+    { 7   ;   ;Date-3              ;Decimal        }
+    { 8   ;   ;Date-4              ;Decimal        }
+    { 9   ;   ;Date-5              ;Decimal        }
+    { 10  ;   ;Date-6              ;Decimal        }
+    { 11  ;   ;Date-7              ;Decimal        }
+    { 12  ;   ;Date-8              ;Decimal        }
+    { 13  ;   ;Date-9              ;Decimal        }
+    { 14  ;   ;Date-10             ;Decimal        }
+    { 15  ;   ;Date-11             ;Decimal        }
+    { 16  ;   ;Date-12             ;Decimal        }
+    { 17  ;   ;SourceNo            ;Code20         }
+  }
+  KEYS
+  {
+    {    ;SNo                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,78 @@
+OBJECT Page 63077 G/L Budget Imported Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/20/15;
+    Time=11:18:45;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50023;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Entry No." }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="Budget Name" }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="G/L Account No." }
+
+    { 1102159006;2;Field  ;
+                SourceExpr=Date }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Global Dimension 1 Name" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="Global Dimension 2 Name" }
+
+    { 1102159009;2;Field  ;
+                SourceExpr=Amount }
+
+    { 1102159010;2;Field  ;
+                SourceExpr=Description }
+
+    { 1102159011;2;Field  ;
+                SourceExpr="Business Unit Code" }
+
+    { 1102159012;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 1102159013;2;Field  ;
+                SourceExpr="Budget Dimension 1 Name" }
+
+    { 1102159014;2;Field  ;
+                SourceExpr="Budget Dimension 2 Name" }
+
+    { 1102159015;2;Field  ;
+                SourceExpr="Source Type" }
+
+    { 1102159016;2;Field  ;
+                SourceExpr="Source No." }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Pge created to view GL Budget Entry Buffer Data.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,50 @@
+OBJECT Page 63160 Ynspire Acc Code Mapping
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/10/15;
+    Time=15:16:30;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50058;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Type }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Account No." }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Transaction Type" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="YNSPIRE Shop Code" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="YNSPIRE Model Code" }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="YNSPIRE Selling Expense" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

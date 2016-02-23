@@ -1,0 +1,36 @@
+OBJECT Table 60057 Setups-YIMM2013R2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/12/14;
+    Time=11:56:43;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10         }
+    { 2   ;   ;Master setups       ;Code250        }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Table created so that a List Page can be created with this for Application and Master Setup menu.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,169 @@
+OBJECT Page 11603 BAS Calc. Schedule List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=BAS Calc. Schedule List;
+               ENA=BAS Calc. Schedule List];
+    SourceTable=Table11601;
+    PageType=List;
+    CardPageID=BAS Calculation Sheet;
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 150000  ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 150001  ;2   ;Action    ;
+                      Name=Import;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Import;
+                                 ENA=Import];
+                      Promoted=Yes;
+                      Image=Import;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 BASImportExport.SetBASCalcSheetRecord(Rec);
+                                 BASImportExport.SetDirection(0);
+                                 BASImportExport.RUNMODAL;
+                                 BASImportExport.ReturnRecord(Rec);
+                                 CLEAR(BASImportExport);
+                               END;
+                                }
+      { 150002  ;2   ;Action    ;
+                      Name=Update;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Update;
+                                 ENA=Update];
+                      Promoted=Yes;
+                      Image=Refresh;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 BASMngmt.UpdateBAS(Rec);
+                                 CLEAR(BASMngmt);
+                               END;
+                                }
+      { 150003  ;2   ;Action    ;
+                      Name=Export;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=E&xport;
+                                 ENA=E&xport];
+                      Promoted=Yes;
+                      Image=Export;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 BASImportExport.SetBASCalcSheetRecord(Rec);
+                                 BASImportExport.SetDirection(1);
+                                 BASImportExport.RUNMODAL;
+                                 BASImportExport.ReturnRecord(Rec);
+                                 CLEAR(BASImportExport);
+                               END;
+                                }
+      { 150004  ;2   ;Separator ;
+                      CaptionML=[ENU="";
+                                 ENA=""] }
+      { 150005  ;2   ;Action    ;
+                      Name=CalculateGSTSettlement;
+                      CaptionML=[ENU=Calculate GST Settlement;
+                                 ENA=Calculate GST Settlement];
+                      Promoted=Yes;
+                      Image=CalculateSalesTax;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 BASCalcSheet.RESET;
+                                 BASCalcSheet.SETRANGE(A1,A1);
+                                 BASCalcSheet.SETRANGE("BAS Version","BAS Version");
+                                 REPORT.RUNMODAL(REPORT::"Calculate GST Settlement",TRUE,FALSE,BASCalcSheet);
+                               END;
+                                }
+      { 150006  ;2   ;Action    ;
+                      CaptionML=[ENU=GST Purchase Report;
+                                 ENA=GST Purchase Report];
+                      RunObject=Report 28164 }
+      { 150007  ;2   ;Action    ;
+                      CaptionML=[ENU=GST Sales Report;
+                                 ENA=GST Sales Report];
+                      RunObject=Report 28165 }
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1905519506;1 ;Action    ;
+                      CaptionML=[ENU=GST Purchase Report;
+                                 ENA=GST Purchase Report];
+                      RunObject=Report 28164;
+                      Promoted=Yes;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 1900325206;1 ;Action    ;
+                      CaptionML=[ENU=GST Sales Report;
+                                 ENA=GST Sales Report];
+                      RunObject=Report 28165;
+                      Promoted=Yes;
+                      Image=Report;
+                      PromotedCategory=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=A1 }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="BAS Version" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=A2 }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=A3 }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr=A4 }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=A5 }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr=A6 }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr=Exported }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="User Id" }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Date of Export" }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Time of Export" }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="File Name" }
+
+  }
+  CODE
+  {
+    VAR
+      BASCalcSheet@150002 : Record 11601;
+      BASImportExport@150001 : Report 28166;
+      BASMngmt@150000 : Codeunit 11601;
+
+    BEGIN
+    END.
+  }
+}
+

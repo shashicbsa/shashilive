@@ -1,0 +1,35 @@
+OBJECT Table 50045 PostingGroups
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/02/09;
+    Time=13:04:53;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page50093;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code20         }
+    { 2   ;   ;AccCode             ;Code20         }
+    { 3   ;   ;Desc                ;Text50         }
+    { 4   ;   ;Date Filter         ;Date          ;FieldClass=FlowFilter }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+    {    ;AccCode                                  }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,421 @@
+OBJECT Page 50013 Vat Details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/10/15;
+    Time=15:25:38;
+    Modified=Yes;
+    Version List=YIMMAVATI,YIMMDEVIP1.0,SMDEV1.0,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table50015;
+    SourceTableView=SORTING(Approved,Vat Type)
+                    ORDER(Ascending)
+                    WHERE(Approved=CONST(Yes),
+                          Vat Type=CONST(In),
+                          Amount=FILTER(<>0),
+                          Updated=CONST(No),
+                          CorrectionEntry=CONST(No));
+    PageType=List;
+    OnOpenPage=BEGIN
+                 Vend_No := GETFILTER("Source No.");
+                 Doc_No := GETFILTER("Document No.");
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000010;1 ;ActionGroup;
+                      CaptionML=ENU=Post;
+                      Visible=false;
+                      Enabled=true }
+      { 1000000011;2 ;Action    ;
+                      CaptionML=ENU=Update Records;
+                      Promoted=No;
+                      Image=UpdateDescription;
+                      OnAction=VAR
+                                 PostedPurchheader@1102159001 : Record 114;
+                               BEGIN
+                                 //VatDetail := Rec;
+                                 VatDetail.COPYFILTERS(Rec);
+                                 VatDetail.SETRANGE("Document No.","Document No.");
+                                 VatDetail.SETRANGE("Approve Final",TRUE);
+                                 IF VatDetail.FINDSET THEN BEGIN
+                                   REPEAT
+                                   //PostedPurchheader.SETRANGE("Pre-Assigned No.",VatDetail."Document No.");           //YIMMDEVIP1.0
+                                   //IF PostedPurchheader.FINDSET THEN                                                         //YIMMDEVIP1.0
+                                   //BEGIN                                                                                           //YIMMDEVIP1.0
+                                     VatDetail.Approved := TRUE;
+                                     VatDetail.MODIFY;
+                                  // END ELSE                                                                                         //YIMMDEVIP1.0
+                                    // ERROR('%1 is not posted yet, Please post the invoice first',"Document No.");    //YIMMDEVIP1.0
+                                 UNTIL VatDetail.NEXT = 0;
+                                   END;
+                               END;
+                                }
+      { 1000000033;2 ;Action    ;
+                      CaptionML=ENU=Approve All;
+                      Promoted=No;
+                      Image=Approve;
+                      OnAction=VAR
+                                 VatDetl@1000000000 : Record 50015;
+                               BEGIN
+                                 VatDetl.COPYFILTERS(Rec);
+                                 VatDetl.SETRANGE(VatDetl."Document No.","Document No.");
+                                 IF VatDetl.FINDFIRST THEN REPEAT
+                                   VatDetl."Approve Final" := TRUE;
+                                   VatDetl.MODIFY;
+                                 UNTIL VatDetl.NEXT = 0;
+                               END;
+                                }
+      { 1102159010;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1102159002;1 ;ActionGroup;
+                      CaptionML=ENU=VAT Reports;
+                      Image=Report }
+      { 1102159001;2 ;Action    ;
+                      Name=Tax Report;
+                      CaptionML=ENU=Tax Report;
+                      Promoted=No;
+                      Visible=TRUE;
+                      Image=Report;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 VatDetails@1000000000 : Record 50015;
+                               BEGIN
+                                 VatDetails.COPYFILTERS(Rec);
+                                 REPORT.RUNMODAL(50093,TRUE,FALSE,Rec);
+                               END;
+                                }
+      { 1102159003;2 ;Action    ;
+                      CaptionML=ENU=Vat In Details;
+                      RunObject=Report 50036;
+                      Image=Report }
+      { 1102159004;2 ;Action    ;
+                      CaptionML=ENU=Vat In for ESPT;
+                      RunObject=Report 50035;
+                      Image=Report }
+      { 1102159005;2 ;Action    ;
+                      CaptionML=ENU=ESPT Excel Report;
+                      RunObject=Report 50038;
+                      Image=Report }
+      { 1102159014;2 ;Action    ;
+                      CaptionML=ENU=VAT Report-Entity;
+                      RunObject=Report 28028;
+                      Image=Report }
+      { 1102159015;2 ;Action    ;
+                      CaptionML=ENU=ESPT HTML Report as excel;
+                      RunObject=Report 50069;
+                      Image=Report }
+      { 1102159016;2 ;Action    ;
+                      CaptionML=ENU=Reconciliation ESPT with GL;
+                      RunObject=Report 50085;
+                      Image=Report }
+      { 1102159011;2 ;Action    ;
+                      CaptionML=ENU=ESPT Excel Report-VAT In Only;
+                      RunObject=Report 50038;
+                      Image=Report }
+      { 1000000004;1 ;ActionGroup;
+                      CaptionML=ENU=e-Faktur VAT IN Report }
+      { 1000000006;2 ;Action    ;
+                      Name=e-Faktur VAT IN Report (Excel);
+                      RunObject=Report 62073;
+                      Image=Report }
+      { 1000000002;2 ;Action    ;
+                      Name=e-Faktur VAT IN Return (Excel);
+                      RunObject=Report 62074;
+                      Image=Report }
+      { 1102159006;1 ;ActionGroup;
+                      CaptionML=ENU=WHT Reports }
+      { 1102159007;2 ;Action    ;
+                      CaptionML=ENU=WHT Budget Entity;
+                      RunObject=Report 50012;
+                      Image=Report }
+      { 1102159008;2 ;Action    ;
+                      CaptionML=ENU=WHT ESPT Report;
+                      RunObject=Report 50084;
+                      Image=Report }
+      { 1102159009;2 ;Action    ;
+                      CaptionML=ENU=Calc. and Post WHT Settlement;
+                      RunObject=Report 28041;
+                      Visible=FALSE;
+                      Image=Report }
+      { 1102159012;2 ;Action    ;
+                      CaptionML=ENU=Tax Payment Application Summary;
+                      RunObject=Report 50054;
+                      Image=Report }
+      { 1102159013;2 ;Action    ;
+                      CaptionML=ENU=Tax Payment Application Detail;
+                      RunObject=Report 50053;
+                      Image=Report }
+      { 1000000014;1 ;ActionGroup;
+                      CaptionML=ENU=WHT New Reports }
+      { 1000000013;2 ;Action    ;
+                      CaptionML=ENU=KONF. PREPAID INCOME TAX;
+                      RunObject=Report 60067;
+                      Image=Report }
+      { 1000000015;2 ;Action    ;
+                      Name=<Report KONF. VAT-IN;
+                      CaptionML=ENU=KONF.  VAT-IN;
+                      RunObject=Report 60082;
+                      Image=Report }
+      { 1000000012;2 ;Action    ;
+                      CaptionML=ENU=WHT ESPT REPORT Summary;
+                      RunObject=Report 60076;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                CaptionML=ENU=Options }
+
+    { 1000000001;2;Field  ;
+                CaptionML=ENU=Tax Date;
+                SourceExpr=Tax_Date;
+                OnValidate=BEGIN
+                             IF AppMgmt.MakeDateFilter(Tax_Date) = 0 THEN;
+                             SETFILTER("Tax Invoice Date",Tax_Date);
+                             Tax_Date := GETFILTER("Tax Invoice Date");
+                               TaxDateOnAfterValidate;
+                           END;
+                            }
+
+    { 1000000003;2;Field  ;
+                Lookup=Yes;
+                CaptionML=ENU=Tanda Terima No.;
+                SourceExpr=Doc_No;
+                OnValidate=BEGIN
+                             DocNoOnAfterValidate;
+                           END;
+                            }
+
+    { 1000000005;2;Field  ;
+                Lookup=Yes;
+                CaptionML=ENU=Supplier No;
+                SourceExpr=Vend_No;
+                OnValidate=BEGIN
+                             VendNoOnAfterValidate;
+                           END;
+
+                OnLookup=BEGIN
+                           IF PAGE.RUNMODAL(PAGE::"Vendor List",Vend) = ACTION::LookupOK THEN
+                             Vend_No := Vend."No.";
+                           UpdateVend;
+                         END;
+                          }
+
+    { 1000000007;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000009;2;Field  ;
+                SourceExpr=Approved;
+                Visible=true;
+                Editable=FALSE }
+
+    { 1000000046;2;Field  ;
+                Width=30;
+                SourceExpr="Document No.";
+                Editable=FALSE }
+
+    { 1000000052;2;Field  ;
+                Width=30;
+                SourceExpr=NPWP;
+                Editable=FALSE }
+
+    { 1102159017;2;Field  ;
+                SourceExpr="PPH NPWP No.";
+                Visible=FALSE }
+
+    { 1000000020;2;Field  ;
+                Width=50;
+                SourceExpr="NPWP Name";
+                Editable=FALSE }
+
+    { 1000000064;2;Field  ;
+                Width=30;
+                SourceExpr="Tax Invoice No.";
+                Editable=FALSE }
+
+    { 1000000066;2;Field  ;
+                SourceExpr="Tax Invoice Date" }
+
+    { 1000000026;2;Field  ;
+                SourceExpr="Amount LCY";
+                Editable=FALSE }
+
+    { 1000000016;2;Field  ;
+                Width=30;
+                SourceExpr="User ID";
+                Editable=FALSE }
+
+    { 1000000018;2;Field  ;
+                Width=50;
+                SourceExpr="User Name";
+                Editable=FALSE }
+
+    { 1000000008;2;Field  ;
+                Width=20;
+                SourceExpr=Base;
+                Editable=FALSE }
+
+    { 1000000068;2;Field  ;
+                SourceExpr=Amount;
+                Editable=FALSE }
+
+    { 1000000058;2;Field  ;
+                Width=30;
+                SourceExpr="Kwitansi No.";
+                Editable=FALSE }
+
+    { 1000000060;2;Field  ;
+                Width=30;
+                SourceExpr="Commercial Invoice No.";
+                Editable=FALSE }
+
+    { 1000000070;2;Field  ;
+                Width=10;
+                SourceExpr="VAT %";
+                Editable=FALSE }
+
+    { 1000000050;2;Field  ;
+                Width=30;
+                SourceExpr="Source No.";
+                Editable=FALSE }
+
+    { 1000000028;2;Field  ;
+                SourceExpr="Posting Date";
+                Editable=FALSE }
+
+    { 1000000056;2;Field  ;
+                SourceExpr="Due Date";
+                Editable=FALSE }
+
+    { 1000000074;2;Field  ;
+                Width=50;
+                SourceExpr="Buy-from Vendor Name";
+                Editable=FALSE }
+
+    { 1000000044;2;Field  ;
+                SourceExpr="Transaction Type";
+                Editable=FALSE }
+
+    { 1000000022;2;Field  ;
+                Width=70;
+                SourceExpr="NPWP Address";
+                Editable=FALSE }
+
+    { 1000000076;2;Field  ;
+                Width=70;
+                SourceExpr="Buy-from Address";
+                Editable=FALSE }
+
+    { 1000000054;2;Field  ;
+                Width=20;
+                SourceExpr="Currency Code";
+                Editable=FALSE }
+
+    { 1000000062;2;Field  ;
+                SourceExpr="Commercial Invoice Date";
+                Editable=FALSE }
+
+    { 1000000034;2;Field  ;
+                SourceExpr=Status;
+                Visible=TRUE;
+                Enabled=TRUE;
+                Editable=TRUE }
+
+    { 1000000038;2;Field  ;
+                Width=40;
+                SourceExpr=Comment }
+
+    { 1000000030;2;Field  ;
+                SourceExpr=Hold }
+
+    { 1000000024;2;Field  ;
+                SourceExpr=CorrectionEntry }
+
+    { 1000000048;2;Field  ;
+                SourceExpr="Source Type";
+                Editable=FALSE }
+
+    { 1000000036;2;Field  ;
+                Width=20;
+                SourceExpr=Seq;
+                Visible=true }
+
+  }
+  CODE
+  {
+    VAR
+      Tax_Date@1000000000 : Text[50];
+      Doc_No@1000000001 : Code[20];
+      Vend_No@1000000002 : Code[20];
+      Vend@1000000003 : Record 23;
+      App@1000000005 : Boolean;
+      VatDetail@1000000004 : Record 50015;
+      AppMgmt@1000000006 : Codeunit 1;
+
+    PROCEDURE UpdateVend@1000000004();
+    BEGIN
+      IF Vend_No = '' THEN
+        SETRANGE("Source No.")
+      ELSE
+        SETRANGE("Source No.",Vend_No);
+      CurrPage.UPDATE(TRUE);
+    END;
+
+    PROCEDURE UpdateTaxDate@1000000005();
+    BEGIN
+      IF Tax_Date = '' THEN
+        SETRANGE("Tax Invoice Date")
+      ELSE
+        SETFILTER("Tax Invoice Date",Tax_Date);
+      CurrPage.UPDATE(TRUE);
+    END;
+
+    PROCEDURE UpdateDoc@1000000006();
+    BEGIN
+      IF Doc_No = '' THEN
+        SETRANGE("Document No.")
+      ELSE
+        SETRANGE("Document No.",Doc_No);
+      CurrPage.UPDATE(TRUE);
+    END;
+
+    LOCAL PROCEDURE TaxDateOnAfterValidate@19006323();
+    BEGIN
+      UpdateTaxDate;
+    END;
+
+    LOCAL PROCEDURE DocNoOnAfterValidate@19031187();
+    BEGIN
+      UpdateDoc;
+    END;
+
+    LOCAL PROCEDURE VendNoOnAfterValidate@19059016();
+    BEGIN
+      UpdateVend;
+    END;
+
+    BEGIN
+    {
+      //YIMMAVATI
+      a) Form is designed to process VAT IN Approval Process
+      //YIMMDEVIP1.0
+      Point 40. Write code to select all the lines of a same document no.(On validate)
+      Point 41. Write code to check wheteher invoice has been posted before approving vat details(action- Update records)
+      //SMDEV1.0
+      Changed Visibilty  and format of Actions.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,298 @@
+OBJECT Report 62075 IF Flag And Status
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/01/15;
+    Time=19:02:53;
+    Modified=Yes;
+    Version List=CR001;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=No;
+    OnPostReport=BEGIN
+                   IF Interface AND NOT V_Status THEN
+                     MESSAGE(Text001)
+                   ELSE IF V_Status AND NOT Interface THEN
+                     MESSAGE(Text002)
+                   ELSE IF V_Status AND Interface THEN
+                     MESSAGE(Text003);
+                 END;
+
+  }
+  DATASET
+  {
+    { 1000000000;;DataItem;                  ;
+               DataItemTable=Table36;
+               DataItemTableView=;
+               OnPreDataItem=VAR
+                               _SalesLine@1000000000 : Record 37;
+                             BEGIN
+
+                               IF ("Sales Header".GETFILTER("Sales Header"."No.") = '') THEN
+                                 ERROR(Error001);
+                               IF ("Sales Header".GETFILTER("Sales Header"."Posting Date") = '') THEN
+                                 ERROR(Error002);
+                               //IF ("Sales Header".GETFILTER("Sales Header"."Document Date") = '') THEN
+                                 //ERROR(Error003);
+
+                               IF Interface AND NOT V_Status THEN BEGIN
+                                 ok := CONFIRM(Text004,FALSE,TRUE);
+                                 IF NOT ok THEN
+                                   ERROR('');
+                               END ELSE IF V_Status AND NOT Interface THEN BEGIN
+                                 ok := CONFIRM(Text005,FALSE,TRUE);
+                                 IF NOT ok THEN
+                                   ERROR('');
+                               END ELSE IF V_Status AND Interface THEN BEGIN
+                                 ok := CONFIRM(Text006,FALSE,TRUE);
+                                 IF NOT ok THEN
+                                   ERROR('');
+                               END;
+
+
+                               IF Interface THEN BEGIN
+                                 IF IFalse THEN BEGIN
+                                   IF FINDSET THEN REPEAT
+                                       Interfaced := FALSE;
+                                       MODIFY;
+                                       _SalesLine.RESET;
+                                       _SalesLine.SETRANGE("Document No.","No.");
+                                       IF _SalesLine.FINDSET THEN
+                                         REPEAT
+                                           _SalesLine.Interfaced := FALSE;
+                                           _SalesLine.MODIFY;
+                                         UNTIL _SalesLine.NEXT = 0;
+                                   UNTIL NEXT = 0;
+                                 END ELSE IF ITrue THEN BEGIN
+                                   IF FINDSET THEN REPEAT
+                                     Interfaced := TRUE;
+                                     MODIFY;
+                                     _SalesLine.RESET;
+                                     _SalesLine.SETRANGE("Document No.","No.");
+                                     IF _SalesLine.FINDSET THEN
+                                       REPEAT
+                                         _SalesLine.Interfaced := TRUE;
+                                         _SalesLine.MODIFY;
+                                       UNTIL _SalesLine.NEXT = 0;
+                                   UNTIL NEXT = 0;
+                                 END;
+                               END;
+
+                               IF V_Status THEN BEGIN
+                                 IF SOpen THEN BEGIN
+                                   IF FINDSET THEN REPEAT
+                                     Status := Status::Open;
+                                     MODIFY;
+                                   UNTIL NEXT = 0;
+                                 END ELSE IF SReleased THEN BEGIN
+                                   IF FINDSET THEN REPEAT
+                                     Status := Status::Released;
+                                     MODIFY;
+                                   UNTIL NEXT = 0;
+                                 END;
+                               END;
+                             END;
+
+               ReqFilterFields=No.,Posting Date }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1000000000;;Container;
+                  Name=General;
+                  ContainerType=ContentArea }
+
+      { 1000000001;1;Group  ;
+                  Name=Interface;
+                  GroupType=Group }
+
+      { 1000000007;2;Field  ;
+                  Name=Interfaced;
+                  SourceExpr=Interface;
+                  OnValidate=BEGIN
+                               IF Interface THEN BEGIN
+                                 Iflag := TRUE;
+                                 V_Status := FALSE;
+                                 SReleased := FALSE;
+                                 SOpen := FALSE;
+                               END;
+
+                               IF NOT Interface THEN BEGIN
+                                 ITrue := FALSE;
+                                 IFalse := FALSE;
+                               END;
+
+                             END;
+                              }
+
+      { 1000000002;2;Field  ;
+                  Name=Yes;
+                  SourceExpr=ITrue;
+                  Visible=TRUE;
+                  Enabled=TRUE;
+                  Editable=Interface;
+                  OnValidate=BEGIN
+                               IF IFalse THEN
+                                 IFalse := FALSE;
+                             END;
+                              }
+
+      { 1000000003;2;Field  ;
+                  Name=No;
+                  SourceExpr=IFalse;
+                  Editable=Interface;
+                  OnValidate=BEGIN
+                               IF ITrue THEN
+                                 ITrue := FALSE;
+                             END;
+                              }
+
+      { 1000000005;1;Group  ;
+                  Name=Status Mark;
+                  GroupType=Group }
+
+      { 1000000008;2;Field  ;
+                  Name=Status;
+                  SourceExpr=V_Status;
+                  OnValidate=BEGIN
+                               IF V_Status THEN BEGIN
+                                 Interface := FALSE;
+                                 ITrue := FALSE;
+                                 IFalse := FALSE;
+                               END;
+
+                               IF NOT V_Status THEN BEGIN
+                                 SReleased := FALSE;
+                                 SOpen := FALSE;
+                               END;
+                             END;
+                              }
+
+      { 1000000004;2;Field  ;
+                  Name=Open;
+                  SourceExpr=SOpen;
+                  Editable=V_Status;
+                  OnValidate=BEGIN
+                               IF SReleased THEN
+                                 SReleased := FALSE
+                             END;
+                              }
+
+      { 1000000006;2;Field  ;
+                  Name=Released;
+                  SourceExpr=SReleased;
+                  Editable=V_Status;
+                  OnValidate=BEGIN
+                               IF SOpen THEN
+                                 SOpen := FALSE;
+                             END;
+                              }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Interface@1000000004 : Boolean INDATASET;
+      V_Status@1000000005 : Boolean INDATASET;
+      ITrue@1000000001 : Boolean;
+      IFalse@1000000002 : Boolean;
+      SOpen@1000000003 : Boolean;
+      SReleased@1000000000 : Boolean;
+      Error001@1000000006 : TextConst 'ENU=Please insert Document No.';
+      Iflag@1000000007 : Boolean;
+      Error002@1000000008 : TextConst 'ENU=Please insert Posting Date';
+      Error003@1000000009 : TextConst 'ENU=Please insert Invoice Date';
+      Text001@1000000010 : TextConst 'ENU=Interface Flag Successfully Updated';
+      Text002@1000000011 : TextConst 'ENU=Status Successfully Updated';
+      Text003@1000000012 : TextConst 'ENU=Interface Flag and Status Successfully Updated';
+      Text004@1000000013 : TextConst 'ENU=Update Interface Flag';
+      Text005@1000000014 : TextConst 'ENU=Update Status';
+      Text006@1000000015 : TextConst 'ENU=Update Interface flag and status';
+      ok@1000000016 : Boolean;
+
+    BEGIN
+    {
+      [Ver.]  : CR001
+      [Sign.] : SV
+      [Desc.] : Report created to Update Interfaced Flag(Yes or No) of Interfaced data & to update the Invoice Status (Open or Released).
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

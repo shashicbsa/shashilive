@@ -1,0 +1,776 @@
+OBJECT Codeunit 11601 BAS Management
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/21/14;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10.00.36035;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 17=rm,
+                TableData 21=rm,
+                TableData 25=rm,
+                TableData 254=rm,
+                TableData 13082=rim,
+                TableData 13085=rimd;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      BASCalcSheet@1450001 : Record 11601;
+      BASCalcEntry@1450002 : Record 11604;
+      GLSetup@1450003 : Record 98;
+      BASBusUnits@1450004 : Record 11603;
+      GLEntry@1450005 : Record 17;
+      VATEntry@1450006 : Record 254;
+      CompanyInfo@1450007 : Record 79;
+      BASXMLFieldID@1450008 : Record 11602;
+      TempBASXMLFieldID@1450009 : TEMPORARY Record 11602;
+      BASUpdate@1450010 : Report 11604;
+      XMLDocument@1450012 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlDocument";
+      XMLNode@1450013 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      XMLNodeLast@1450014 : DotNet "'System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Xml.XmlNode";
+      Window@150003 : Dialog;
+      LineNo@1450019 : Integer;
+      BASAdjmtSet@1450022 : Boolean;
+      AdjmtSet@1450023 : Boolean;
+      Text1450000@1450025 : TextConst 'ENU=Please select a file to import.;ENA=Please select a file to import.';
+      Text1450002@1450027 : TextConst 'ENU=This BAS has already been imported.  Do you want to import a new version?;ENA=This BAS has already been imported.  Do you want to import a new version?';
+      Text1450003@1450028 : TextConst 'ENU=Please select a file to export.;ENA=Please select a file to export.';
+      Text1450004@1450029 : TextConst 'ENU=This BAS has already been exported.  Do you want to export it again?;ENA=This BAS has already been exported.  Do you want to export it again?';
+      Text1450005@1450030 : TextConst 'ENU=Version %1 of BAS %2 has already been exported. Do you wish to contnue?;ENA=Version %1 of BAS %2 has already been exported. Do you wish to contnue?';
+      Text1450006@1450031 : TextConst 'ENU=The BAS has not been updated. Please run the update function.;ENA=The BAS has not been updated. Please run the update function.';
+      Text1450007@1450032 : TextConst 'ENU=BAS %1 version %2 in %3 company does not exist.;ENA=BAS %1 version %2 in %3 company does not exist.';
+      Text1450008@1450033 : TextConst 'ENU=Updating G/L Entries:\\;ENA=Updating G/L Entries:\\';
+      Text1450009@1450034 : TextConst 'ENU=Company Name      #1####################\;ENA=Company Name      #1####################\';
+      Text1450010@1450035 : TextConst 'ENU=Entry             #2############;ENA=Entry             #2############';
+      Text1450012@150002 : TextConst 'ENU=Select the Group BAS;ENA=Select the Group BAS';
+      Text1450013@150001 : TextConst 'ENU=No BAS Business Unit has been defined.;ENA=No BAS Business Unit has been defined.';
+      Text1450011@150000 : TextConst 'ENU=BAS Business Unit %1 has already been consolidated.;ENA=BAS Business Unit %1 has already been consolidated.';
+      Text1450022@1450045 : TextConst 'ENU=BAS %1 version %2 in %3 company does not exist.;ENA=BAS %1 version %2 in %3 company does not exist.';
+      Text1450023@1450046 : TextConst 'ENU=BAS %1 version %2 in %3 company has not been updated.;ENA=BAS %1 version %2 in %3 company has not been updated.';
+      Text1450024@1450047 : TextConst 'ENU=Field BAS GST Division Factor in table General Ledger Setup should have same value in subsidiary company %1 and consolidating company %2.;ENA=Field BAS GST Division Factor in table General Ledger Setup should have same value in subsidiary company %1 and consolidating company %2.';
+      Text1450025@1450048 : TextConst 'ENU=BAS subsidaries have been consolidated successfully into BAS %1 version %2.;ENA=BAS subsidaries have been consolidated successfully into BAS %1 version %2.';
+      Text1450026@1450049 : TextConst 'ENU=Field No. %1  is system calculated or user entered field.;ENA=Field No. %1  is system calculated or user entered field.';
+      HadGLSetup@1450050 : Boolean;
+      Text1450027@1450051 : TextConst 'ENU=This BAS Calculation Sheet has been exported. It cannot be updated.;ENA=This BAS Calculation Sheet has been exported. It cannot be updated.';
+      Text1450028@1450052 : TextConst 'ENU=Default BAS Setup;ENA=Default BAS Setup';
+      Text1450029@1450053 : TextConst 'ENU=DEFAULT;ENA=DEFAULT';
+
+    PROCEDURE ImportBAS@1450000(VAR BASCalcSheet1@1450000 : Record 11601;BASFileName@1450001 : Text[250]);
+    BEGIN
+      IF BASFileName = '' THEN
+        ERROR(Text1450000);
+
+      WITH BASCalcSheet1 DO BEGIN
+        LoadXMLFile(BASFileName);
+        LoadXMLNodesInTempTable;
+
+        GetGLSetup;
+        GLSetup.TESTFIELD("BAS GST Division Factor");
+
+        INIT;
+        A1 := ReadXMLNodeValues(FIELDNO(A1));
+        BASCalcSheet.LOCKTABLE;
+        BASCalcSheet.SETRANGE(A1,A1);
+        IF BASCalcSheet.FINDLAST THEN BEGIN
+          IF NOT CONFIRM(Text1450002,FALSE) THEN
+            EXIT;
+          "BAS Version" := BASCalcSheet."BAS Version" + 1;
+        END ELSE
+          "BAS Version" := 1;
+
+        A2 := ReadXMLNodeValues(FIELDNO(A2));
+        A2a := ReadXMLNodeValues(FIELDNO(A2a));
+        CompanyInfo.GET;
+        TESTFIELD(A2,CompanyInfo.ABN);
+        IF A2a <> '' THEN
+          TESTFIELD(A2a,CompanyInfo."ABN Division Part No.");
+
+        EVALUATE(A3,ReadXMLNodeValues(FIELDNO(A3)));
+        EVALUATE(A4,ReadXMLNodeValues(FIELDNO(A4)));
+        EVALUATE(A5,ReadXMLNodeValues(FIELDNO(A5)));
+        EVALUATE(A6,ReadXMLNodeValues(FIELDNO(A6)));
+        EVALUATE(F1,ReadXMLNodeValues(FIELDNO(F1)));
+        EVALUATE(T2,ReadXMLNodeValues(FIELDNO(T2)));
+        "BAS GST Division Factor" := GLSetup."BAS GST Division Factor";
+        "File Name" := BASFileName;
+        "User Id" := USERID;
+        "BAS Setup Name" := Text1450029;
+        INSERT;
+      END;
+    END;
+
+    PROCEDURE ExportBAS@1450001(VAR BASCalcSheet2@1450000 : Record 11601;BASFileName@1450001 : Text[250]);
+    VAR
+      BASCalcSheetSubsid@1450002 : Record 11601;
+      FileMgt@1170000001 : Codeunit 419;
+      ServerFileName@1170000000 : Text[250];
+      ClientFilename@1170000002 : Text[250];
+    BEGIN
+      WITH BASCalcSheet2 DO BEGIN
+        IF BASFileName = '' THEN
+          ERROR(Text1450003);
+        IF Exported THEN
+          IF NOT CONFIRM(Text1450004,FALSE) THEN
+            EXIT;
+        GetGLSetup;
+        IF GLSetup."BAS Group Company" THEN
+          TESTFIELD(Consolidated,TRUE);
+        IF GLSetup."BAS Group Company" THEN
+          TESTFIELD("Group Consolidated",TRUE);
+
+        BASCalcSheet.SETRANGE(A1,A1);
+        BASCalcSheet.SETFILTER("BAS Version",'<>%1',"BAS Version");
+        BASCalcSheet.SETRANGE(Exported,TRUE);
+        IF BASCalcSheet.FINDLAST THEN
+          IF BASCalcSheet."BAS Version" <> "BAS Version" THEN
+            IF NOT CONFIRM(Text1450005,FALSE,BASCalcSheet."BAS Version",BASCalcSheet.A1) THEN
+              ERROR('');
+
+        IF NOT Updated THEN
+          ERROR(Text1450006);
+
+        LoadXMLFile(BASFileName);
+        LoadXMLNodesInTempTable;
+
+        TESTFIELD(A1,ReadXMLNodeValues(FIELDNO(A1)));
+
+        UpdateXMLNodeValues(FIELDNO(T2),FORMAT(ABS(T2)));
+        UpdateXMLNodeValues(FIELDNO(T3),FORMAT(ABS(T3)));
+        UpdateXMLNodeValues(FIELDNO(F2),FORMAT(ABS(F2)));
+        UpdateXMLNodeValues(FIELDNO(T4),T4);
+        UpdateXMLNodeValues(FIELDNO(F1),FORMAT(ABS(F1)));
+        UpdateXMLNodeValues(FIELDNO(F4),F4);
+        UpdateXMLNodeValues(FIELDNO(G22),FORMAT(ABS(G22)));
+        UpdateXMLNodeValues(FIELDNO(G24),G24);
+        UpdateXMLNodeValues(FIELDNO("1H"),FORMAT(ABS("1H")));
+        UpdateXMLNodeValues(FIELDNO(T8),FORMAT(ABS(T8)));
+        UpdateXMLNodeValues(FIELDNO(T9),FORMAT(ABS(T9)));
+        UpdateXMLNodeValues(FIELDNO("1A"),FORMAT(ABS("1A")));
+        UpdateXMLNodeValues(FIELDNO("1C"),FORMAT(ABS("1C")));
+        UpdateXMLNodeValues(FIELDNO("1E"),FORMAT(ABS("1E")));
+        UpdateXMLNodeValues(FIELDNO("4"),FORMAT(ABS("4")));
+        UpdateXMLNodeValues(FIELDNO("1B"),FORMAT(ABS("1B")));
+        UpdateXMLNodeValues(FIELDNO("1D"),FORMAT(ABS("1D")));
+        UpdateXMLNodeValues(FIELDNO("1F"),FORMAT(ABS("1F")));
+        UpdateXMLNodeValues(FIELDNO("1G"),FORMAT(ABS("1G")));
+        UpdateXMLNodeValues(FIELDNO("5B"),FORMAT(ABS("5B")));
+        UpdateXMLNodeValues(FIELDNO("6B"),FORMAT(ABS("6B")));
+        UpdateXMLNodeValues(FIELDNO("7C"),FORMAT(ABS("7C")));
+        UpdateXMLNodeValues(FIELDNO("7D"),FORMAT(ABS("7D")));
+        UpdateXMLNodeValues(FIELDNO(G1),FORMAT(ABS(G1)));
+        UpdateXMLNodeValues(FIELDNO(G2),FORMAT(ABS(G2)));
+        UpdateXMLNodeValues(FIELDNO(G3),FORMAT(ABS(G3)));
+        UpdateXMLNodeValues(FIELDNO(G4),FORMAT(ABS(G4)));
+        UpdateXMLNodeValues(FIELDNO(G7),FORMAT(ABS(G7)));
+        UpdateXMLNodeValues(FIELDNO(W1),FORMAT(ABS(W1)));
+        UpdateXMLNodeValues(FIELDNO(W2),FORMAT(ABS(W2)));
+        UpdateXMLNodeValues(FIELDNO(T1),FORMAT(ABS(T1)));
+        UpdateXMLNodeValues(FIELDNO(G10),FORMAT(ABS(G10)));
+        UpdateXMLNodeValues(FIELDNO(G11),FORMAT(ABS(G11)));
+        UpdateXMLNodeValues(FIELDNO(G13),FORMAT(ABS(G13)));
+        UpdateXMLNodeValues(FIELDNO(G14),FORMAT(ABS(G14)));
+        UpdateXMLNodeValues(FIELDNO(G15),FORMAT(ABS(G15)));
+        UpdateXMLNodeValues(FIELDNO(G18),FORMAT(ABS(G18)));
+        UpdateXMLNodeValues(FIELDNO(W3),FORMAT(ABS(W3)));
+        UpdateXMLNodeValues(FIELDNO(W4),FORMAT(ABS(W4)));
+
+        "User Id" := USERID;
+        "Date of Export" := TODAY;
+        "Time of Export" := TIME;
+        "File Name" := BASFileName;
+        Exported := TRUE;
+        MODIFY;
+
+        IF "Group Consolidated" THEN BEGIN
+          BASBusUnits.FINDSET;
+          REPEAT
+            BASCalcSheetSubsid.CHANGECOMPANY(BASBusUnits."Company Name");
+            IF NOT BASCalcSheetSubsid.GET(BASBusUnits."Document No.",BASBusUnits."BAS Version") THEN
+              ERROR(Text1450007,BASBusUnits."Document No.",BASBusUnits."BAS Version",BASBusUnits."Company Name");
+            BASCalcSheetSubsid.Exported := TRUE;
+            BASCalcSheetSubsid.MODIFY;
+          UNTIL BASBusUnits.NEXT = 0;
+        END;
+
+        BASCalcEntry.RESET;
+        IF GLSetup."BAS Group Company" THEN BEGIN
+          BASCalcEntry.SETCURRENTKEY("Consol. BAS Doc. No.","Consol. Version No.");
+          BASCalcEntry.SETRANGE("Consol. BAS Doc. No.",A1);
+          BASCalcEntry.SETRANGE("Consol. Version No.","BAS Version");
+        END ELSE BEGIN
+          BASCalcEntry.SETRANGE("Company Name",COMPANYNAME);
+          BASCalcEntry.SETRANGE("BAS Document No.",A1);
+          BASCalcEntry.SETRANGE("BAS Version","BAS Version");
+        END;
+
+        IF BASCalcEntry.FINDSET THEN BEGIN
+          Window.OPEN(Text1450008 + Text1450009 + Text1450010);
+          REPEAT
+            GLEntry.CHANGECOMPANY(BASCalcEntry."Company Name");
+            VATEntry.CHANGECOMPANY(BASCalcEntry."Company Name");
+            Window.UPDATE(1,BASCalcEntry."Company Name");
+            CASE BASCalcEntry.Type OF
+              BASCalcEntry.Type::"G/L Entry":
+                BEGIN
+                  GLEntry.GET(BASCalcEntry."Entry No.");
+                  Window.UPDATE(2,STRSUBSTNO('%1: %2',BASCalcEntry.Type,GLEntry."Entry No."));
+                  GLEntry."BAS Doc. No." := BASCalcEntry."BAS Document No.";
+                  GLEntry."BAS Version" := BASCalcEntry."BAS Version";
+                  GLEntry."Consol. BAS Doc. No." := BASCalcEntry."Consol. BAS Doc. No.";
+                  GLEntry."Consol. Version No." := BASCalcEntry."Consol. Version No.";
+                  GLEntry.MODIFY;
+                END;
+              BASCalcEntry.Type::"GST Entry":
+                BEGIN
+                  VATEntry.GET(BASCalcEntry."Entry No.");
+                  Window.UPDATE(2,STRSUBSTNO('%1: %2',BASCalcEntry.Type,VATEntry."Entry No."));
+                  VATEntry."BAS Doc. No." := BASCalcEntry."BAS Document No.";
+                  VATEntry."BAS Version" := BASCalcEntry."BAS Version";
+                  VATEntry."Consol. BAS Doc. No." := BASCalcEntry."Consol. BAS Doc. No.";
+                  VATEntry."Consol. Version No." := BASCalcEntry."Consol. Version No.";
+                  VATEntry.MODIFY;
+                END;
+            END;
+          UNTIL BASCalcEntry.NEXT = 0;
+        END;
+      END;
+
+      ServerFileName := FileMgt.ServerTempFileName('xml');
+      XMLDocument.Save(ServerFileName);
+      ClientFilename := FileMgt.DownloadTempFile(ServerFileName);
+      FileMgt.CopyClientFile(ClientFilename,BASFileName,TRUE);
+      FileMgt.DeleteClientFile(ClientFilename);
+    END;
+
+    PROCEDURE UpdateBAS@1450002(VAR BASCalcSheet3@1450000 : Record 11601);
+    BEGIN
+      WITH BASCalcSheet3 DO BEGIN
+        IF Exported THEN
+          ERROR(Text1450027);
+        CLEAR(BASUpdate);
+        BASUpdate.InitializeRequest(BASCalcSheet3,TRUE,0,0,FALSE);
+        BASUpdate.RUNMODAL;
+      END;
+    END;
+
+    PROCEDURE ImportSubsidiaries@1450003();
+    VAR
+      BASCalcSheetConsol@1450000 : Record 11601;
+      BASCalcSheetSubsid@1450001 : Record 11601;
+      GLSetupSubsid@1450002 : Record 98;
+      TempBASCalcSheet@1450004 : Record 11601;
+      BASCalcScheduleList@1450003 : Page 11603;
+    BEGIN
+      GetGLSetup;
+      GLSetup.TESTFIELD("Enable GST (Australia)",TRUE);
+      GLSetup.TESTFIELD("BAS to be Lodged as a Group",TRUE);
+      GLSetup.TESTFIELD("BAS Group Company",TRUE);
+
+      IF NOT BASBusUnits.FINDFIRST THEN
+        ERROR(Text1450013);
+
+      BASCalcScheduleList.LOOKUPMODE(TRUE);
+      BASCalcScheduleList.CAPTION(Text1450012);
+      IF BASCalcScheduleList.RUNMODAL <> ACTION::LookupOK THEN
+        EXIT;
+
+      BASCalcScheduleList.GETRECORD(BASCalcSheetConsol);
+      WITH TempBASCalcSheet DO BEGIN
+        INIT;
+        A1 := BASCalcSheetConsol.A1;
+        "BAS Version" := BASCalcSheetConsol."BAS Version";
+        REPEAT
+          BASBusUnits.TESTFIELD("Document No.");
+          BASBusUnits.TESTFIELD("BAS Version");
+          BASCalcSheetSubsid.CHANGECOMPANY(BASBusUnits."Company Name");
+          IF NOT BASCalcSheetSubsid.GET(BASBusUnits."Document No.",BASBusUnits."BAS Version") THEN
+            ERROR(
+              Text1450022,
+              BASBusUnits."Document No.",
+              BASBusUnits."BAS Version",
+              BASBusUnits."Company Name");
+          IF NOT BASCalcSheetSubsid.Updated THEN
+            ERROR(
+              Text1450023,
+              BASBusUnits."Document No.",
+              BASBusUnits."BAS Version",
+              BASBusUnits."Company Name");
+          GLSetupSubsid.CHANGECOMPANY(BASBusUnits."Company Name");
+          GLSetupSubsid.GET;
+          IF GLSetupSubsid."BAS GST Division Factor" <> GLSetup."BAS GST Division Factor" THEN
+            ERROR(
+              Text1450024,
+              BASBusUnits."Company Name",
+              COMPANYNAME);
+
+          T3 += BASCalcSheetSubsid.T3;
+          T8 += BASCalcSheetSubsid.T8;
+          T9 += BASCalcSheetSubsid.T9;
+          F2 += BASCalcSheetSubsid.F2;
+          G22 += BASCalcSheetSubsid.G22;
+          "1H" += BASCalcSheetSubsid."1H";
+          "1A" += BASCalcSheetSubsid."1A";
+          "1C" += BASCalcSheetSubsid."1C";
+          "1E" += BASCalcSheetSubsid."1E";
+          "4" += BASCalcSheetSubsid."4";
+          "1B" += BASCalcSheetSubsid."1B";
+          "1D" += BASCalcSheetSubsid."1D";
+          "1F" += BASCalcSheetSubsid."1F";
+          "1G" += BASCalcSheetSubsid."1G";
+          "5B" += BASCalcSheetSubsid."5B";
+          "6B" += BASCalcSheetSubsid."6B";
+          "7C" += BASCalcSheetSubsid."7C";
+          "7D" += BASCalcSheetSubsid."7D";
+          G1 += BASCalcSheetSubsid.G1;
+          G2 += BASCalcSheetSubsid.G2;
+          G3 += BASCalcSheetSubsid.G3;
+          G4 += BASCalcSheetSubsid.G4;
+          G7 += BASCalcSheetSubsid.G7;
+          W1 += BASCalcSheetSubsid.W1;
+          W2 += BASCalcSheetSubsid.W2;
+          T1 += BASCalcSheetSubsid.T1;
+          G10 += BASCalcSheetSubsid.G10;
+          G11 += BASCalcSheetSubsid.G11;
+          G13 += BASCalcSheetSubsid.G13;
+          G14 += BASCalcSheetSubsid.G14;
+          G15 += BASCalcSheetSubsid.G15;
+          G18 += BASCalcSheetSubsid.G18;
+          W3 += BASCalcSheetSubsid.W3;
+          W4 += BASCalcSheetSubsid.W4;
+
+          IF BASCalcSheetSubsid.Consolidated THEN
+            ERROR(Text1450011,BASBusUnits."Company Name");
+          BASCalcSheetSubsid.Consolidated := TRUE;
+          BASCalcSheetSubsid.MODIFY;
+
+          BASCalcEntry.RESET;
+          BASCalcEntry.SETRANGE("Company Name",BASBusUnits."Company Name");
+          BASCalcEntry.SETRANGE("BAS Document No.",BASCalcSheetSubsid.A1);
+          BASCalcEntry.SETRANGE("BAS Version",BASCalcSheetSubsid."BAS Version");
+          IF NOT BASCalcEntry.ISEMPTY THEN BEGIN
+            BASCalcEntry.MODIFYALL("Consol. BAS Doc. No.",A1);
+            BASCalcEntry.MODIFYALL("Consol. Version No.","BAS Version");
+          END;
+        UNTIL BASBusUnits.NEXT = 0;
+
+        BASCalcEntry.RESET;
+        BASCalcEntry.SETRANGE("Company Name",COMPANYNAME);
+        BASCalcEntry.SETRANGE("BAS Document No.",A1);
+        BASCalcEntry.SETRANGE("BAS Version","BAS Version");
+        IF NOT BASCalcEntry.ISEMPTY THEN BEGIN
+          BASCalcEntry.MODIFYALL("Consol. BAS Doc. No.",A1);
+          BASCalcEntry.MODIFYALL("Consol. Version No.","BAS Version");
+        END;
+
+        UpdateConsolBASCalculationSheet(TempBASCalcSheet,BASCalcSheetConsol);
+        MESSAGE(Text1450025,A1,"BAS Version");
+      END;
+    END;
+
+    LOCAL PROCEDURE UpdateXMLNodeValues@1450004(FieldNumber@1450000 : Integer;Amount@1450001 : Text[100]);
+    BEGIN
+      BASXMLFieldID.SETCURRENTKEY("Field No.");
+      BASXMLFieldID.SETRANGE("Field No.",FieldNumber);
+      IF BASXMLFieldID.FINDFIRST THEN
+        IF TempBASXMLFieldID.GET(BASXMLFieldID."XML Field ID") THEN BEGIN
+          Amount := DELCHR(Amount,'=',',');
+          XMLNode := XMLDocument.DocumentElement.SelectSingleNode(STRSUBSTNO('./%1',BASXMLFieldID."XML Field ID"));
+          XMLNode.InnerText := Amount;
+        END;
+    END;
+
+    LOCAL PROCEDURE ReadXMLNodeValues@1450005(FieldNumber@1450000 : Integer) : Text[1024];
+    BEGIN
+      BASXMLFieldID.SETCURRENTKEY("Field No.");
+      BASXMLFieldID.SETRANGE("Field No.",FieldNumber);
+      IF BASXMLFieldID.FINDFIRST THEN BEGIN
+        IF TempBASXMLFieldID.GET(BASXMLFieldID."XML Field ID") THEN BEGIN
+          XMLNode := XMLDocument.DocumentElement.SelectSingleNode(STRSUBSTNO('./%1',BASXMLFieldID."XML Field ID"));
+          EXIT(XMLNode.InnerText);
+        END;
+      END ELSE
+        IF NOT (FieldNumber IN [
+                                BASCalcSheet.FIELDNO(A1),
+                                BASCalcSheet.FIELDNO(A2),
+                                BASCalcSheet.FIELDNO(A2a)])
+        THEN
+          EXIT('0');
+
+      EXIT('');
+    END;
+
+    PROCEDURE LoadXMLNodesInTempTable@1450006();
+    VAR
+      FirstNode@1450000 : Boolean;
+    BEGIN
+      TempBASXMLFieldID.RESET;
+      TempBASXMLFieldID.DELETEALL;
+      IF XMLDocument.HasChildNodes THEN BEGIN
+        XMLNode := XMLDocument.DocumentElement.FirstChild;
+        XMLNodeLast := XMLDocument.DocumentElement.LastChild;
+        FirstNode := TRUE;
+        REPEAT
+          IF FirstNode THEN
+            FirstNode := FALSE
+          ELSE
+            XMLNode := XMLNode.NextSibling;
+          IF NOT TempBASXMLFieldID.GET(XMLNode.Name) THEN BEGIN
+            TempBASXMLFieldID.INIT;
+            TempBASXMLFieldID."XML Field ID" := XMLNode.Name;
+            TempBASXMLFieldID.INSERT;
+          END;
+        UNTIL XMLNode.Name = XMLNodeLast.Name;
+      END;
+    END;
+
+    PROCEDURE UpdateXMLFieldIDs@1450007(BASFileName@1450000 : Text[250]);
+    VAR
+      BASXMLFieldID@1450001 : Record 11602;
+      FirstNode@1450002 : Boolean;
+    BEGIN
+      LoadXMLFile(BASFileName);
+      IF XMLDocument.HasChildNodes THEN BEGIN
+        XMLNode := XMLDocument.DocumentElement.FirstChild;
+        XMLNodeLast := XMLDocument.DocumentElement.LastChild;
+        FirstNode := TRUE;
+        REPEAT
+          IF FirstNode THEN
+            FirstNode := FALSE
+          ELSE
+            XMLNode := XMLNode.NextSibling;
+          IF NOT BASXMLFieldID.GET(XMLNode.Name) THEN BEGIN
+            BASXMLFieldID.INIT;
+            BASXMLFieldID."XML Field ID" := XMLNode.Name;
+            BASXMLFieldID.INSERT;
+          END;
+        UNTIL XMLNode.Name = XMLNodeLast.Name;
+      END;
+    END;
+
+    PROCEDURE UpdateXMLFieldSetup@1260004(BASFileName@1450000 : Text[250];BASSetupName@1260000 : Code[20]);
+    VAR
+      BASXMLFieldIDSetup@1450001 : Record 11608;
+      FirstNode@1450002 : Boolean;
+    BEGIN
+      LoadXMLFile(BASFileName);
+      IF XMLDocument.HasChildNodes THEN BEGIN
+        XMLNode := XMLDocument.DocumentElement.FirstChild;
+        XMLNodeLast := XMLDocument.DocumentElement.LastChild;
+        FirstNode := TRUE;
+        IF LineNo = 0 THEN
+          LineNo := 10000;
+        REPEAT
+          IF FirstNode THEN
+            FirstNode := FALSE
+          ELSE
+            XMLNode := XMLNode.NextSibling;
+
+          BASXMLFieldIDSetup.RESET;
+          BASXMLFieldIDSetup.SETCURRENTKEY("XML Field ID");
+          BASXMLFieldIDSetup.SETRANGE("Setup Name",BASSetupName);
+          BASXMLFieldIDSetup.SETRANGE("XML Field ID",XMLNode.Name);
+          IF NOT BASXMLFieldIDSetup.FINDFIRST THEN BEGIN
+            BASXMLFieldIDSetup.INIT;
+            BASXMLFieldIDSetup."Setup Name" := BASSetupName;
+            BASXMLFieldIDSetup."XML Field ID" := XMLNode.Name;
+            BASXMLFieldIDSetup."Line No." := LineNo;
+            BASXMLFieldIDSetup.INSERT;
+          END;
+          LineNo := LineNo + 10000;
+        UNTIL XMLNode.Name = XMLNodeLast.Name;
+      END;
+    END;
+
+    PROCEDURE LoadXMLFile@1450008(BASFileName@1450000 : Text[250]);
+    VAR
+      FileMgt@1170000000 : Codeunit 419;
+      ServerFileName@1170000001 : Text[250];
+    BEGIN
+      CLEAR(XMLDocument);
+      XMLDocument := XMLDocument.XmlDocument;
+      ServerFileName := FileMgt.UploadFileSilent(BASFileName);
+      XMLDocument.Load(ServerFileName);
+    END;
+
+    PROCEDURE CheckBASPeriod@1450009(DocDate@1450000 : Date;InvDocDate@1450001 : Date) : Boolean;
+    VAR
+      CompanyInfo@1450002 : Record 79;
+      Date@1450003 : Record 2000000007;
+    BEGIN
+      CompanyInfo.GET;
+      IF InvDocDate < 070100D THEN
+        EXIT(FALSE);
+      CASE CompanyInfo."Tax Period" OF
+        CompanyInfo."Tax Period"::Monthly:
+          EXIT(InvDocDate < CALCDATE('<D1-1M>',DocDate));
+        CompanyInfo."Tax Period"::Quarterly:
+          BEGIN
+            Date.SETRANGE("Period Type",Date."Period Type"::Quarter);
+            Date.SETFILTER("Period Start",'..%1',DocDate);
+            Date.FINDLAST;
+            EXIT(InvDocDate < Date."Period Start");
+          END;
+      END;
+    END;
+
+    PROCEDURE GenJnlLineVendorSetAdjmt@1450010(VAR GenJnlLine@1450000 : Record 81;VAR VendLedgEntry@1450001 : Record 25);
+    VAR
+      PurchSetup@1450002 : Record 312;
+    BEGIN
+      WITH GenJnlLine DO BEGIN
+        GetGLSetup;
+        IF GLSetup.GSTEnabled("Document Date") THEN BEGIN
+          PurchSetup.GET;
+          IF NOT AdjmtSet THEN BEGIN
+            Adjustment := TRUE;
+            AdjmtSet := Adjustment;
+          END;
+          IF NOT BASAdjmtSet THEN BEGIN
+            "BAS Adjustment" := CheckBASPeriod("Document Date",VendLedgEntry."Document Date");
+            BASAdjmtSet := "BAS Adjustment";
+          END;
+          "Adjmt. Entry No." := VendLedgEntry."Entry No.";
+          IF NOT MODIFY THEN BEGIN
+            VendLedgEntry."Pre Adjmt. Reason Code" := VendLedgEntry."Reason Code";
+            VendLedgEntry."Reason Code" := PurchSetup."Payment Discount Reason Code";
+            VendLedgEntry.MODIFY;
+          END;
+        END;
+      END;
+    END;
+
+    PROCEDURE GenJnlLineCustomerSetAdjmt@1450011(VAR GenJnlLine@1450000 : Record 81;VAR CustLedgEntry@1450001 : Record 21);
+    VAR
+      SalesSetup@1450002 : Record 311;
+    BEGIN
+      WITH GenJnlLine DO BEGIN
+        GetGLSetup;
+        IF GLSetup.GSTEnabled("Document Date") THEN BEGIN
+          SalesSetup.GET;
+          SalesSetup.TESTFIELD("Payment Discount Reason Code");
+          IF NOT AdjmtSet THEN BEGIN
+            Adjustment := TRUE;
+            AdjmtSet := Adjustment;
+          END;
+          IF NOT BASAdjmtSet THEN BEGIN
+            "BAS Adjustment" := CheckBASPeriod("Document Date",CustLedgEntry."Document Date");
+            BASAdjmtSet := "BAS Adjustment";
+          END;
+          "Adjmt. Entry No." := CustLedgEntry."Entry No.";
+          IF NOT MODIFY THEN;
+          CustLedgEntry."Pre Adjmt. Reason Code" := CustLedgEntry."Reason Code";
+          CustLedgEntry."Reason Code" := SalesSetup."Payment Discount Reason Code";
+          CustLedgEntry.MODIFY;
+        END;
+      END;
+    END;
+
+    PROCEDURE VendLedgEntryReplReasonCodes@1450012(VAR VendLedgEntry@1450000 : Record 25);
+    BEGIN
+      GetGLSetup;
+      IF GLSetup.GSTEnabled(VendLedgEntry."Document Date") THEN BEGIN
+        VendLedgEntry."Reason Code" := VendLedgEntry."Pre Adjmt. Reason Code";
+        VendLedgEntry."Pre Adjmt. Reason Code" := '';
+        VendLedgEntry.MODIFY;
+      END;
+    END;
+
+    PROCEDURE CustLedgEntryReplReasonCodes@1450013(VAR CustLedgEntry@1450000 : Record 21);
+    BEGIN
+      GetGLSetup;
+      IF GLSetup.GSTEnabled(CustLedgEntry."Document Date") THEN BEGIN
+        CustLedgEntry."Reason Code" := CustLedgEntry."Pre Adjmt. Reason Code";
+        CustLedgEntry."Pre Adjmt. Reason Code" := '';
+        CustLedgEntry.MODIFY;
+      END;
+    END;
+
+    PROCEDURE VendorRegistered@1450014(VendorNo@1450000 : Code[20]) : Boolean;
+    VAR
+      Vendor@1450001 : Record 23;
+    BEGIN
+      GetGLSetup;
+      IF GLSetup.GSTEnabled(0D) THEN BEGIN
+        Vendor.GET(VendorNo);
+        EXIT(Vendor.Registered);
+      END;
+
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE GetUnregGSTProdPostGroup@1450015(GSTBusPostGroup@1450000 : Code[10];VendorNo@1450001 : Code[20]) : Code[10];
+    VAR
+      Vendor@1450002 : Record 23;
+      PurchSetup@1450003 : Record 312;
+      GSTPostingSetup@1450004 : Record 325;
+    BEGIN
+      PurchSetup.GET;
+      PurchSetup.TESTFIELD("GST Prod. Posting Group");
+      Vendor.GET(VendorNo);
+      GSTPostingSetup.GET(GSTBusPostGroup,PurchSetup."GST Prod. Posting Group");
+      IF NOT Vendor."Foreign Vend" THEN
+        GSTPostingSetup.TESTFIELD("VAT %",0);
+      EXIT(PurchSetup."GST Prod. Posting Group");
+    END;
+
+    PROCEDURE CheckBASFieldID@1450016(FieldID@1450000 : Integer;DisplayErrorMessage@1450001 : Boolean) : Boolean;
+    BEGIN
+      WITH BASCalcSheet DO BEGIN
+        IF NOT (FieldID IN [
+                            FIELDNO("1A")..FIELDNO("1E"),
+                            FIELDNO("4"),
+                            FIELDNO("1B")..FIELDNO("1G"),
+                            FIELDNO("5B"),
+                            FIELDNO("6B"),
+                            FIELDNO(G1)..FIELDNO(G4),
+                            FIELDNO(G7),
+                            FIELDNO(W1)..FIELDNO(T1),
+                            FIELDNO(G10)..FIELDNO(G11),
+                            FIELDNO(G13)..FIELDNO(G15),
+                            FIELDNO(G18),
+                            FIELDNO(W3)..FIELDNO(W4),
+                            FIELDNO("7C"),
+                            FIELDNO("7D")])
+        THEN
+          IF DisplayErrorMessage THEN
+            ERROR(Text1450026,FieldID);
+
+        EXIT(TRUE);
+      END;
+    END;
+
+    PROCEDURE OpenBASSetup@1450017(VAR CurrentBASSetupName@1450000 : Code[20];VAR BASSetup2@1450001 : Record 11600);
+    BEGIN
+      TestBASSetupName(CurrentBASSetupName);
+      BASSetup2.SETRANGE("Setup Name",CurrentBASSetupName);
+    END;
+
+    LOCAL PROCEDURE TestBASSetupName@1450018(VAR CurrentBASSetupName@1450000 : Code[20]);
+    VAR
+      BASSetupName@1450001 : Record 11606;
+    BEGIN
+      IF NOT BASSetupName.GET(CurrentBASSetupName) THEN
+        IF NOT BASSetupName.FINDFIRST THEN BEGIN
+          BASSetupName.INIT;
+          BASSetupName.Name := Text1450029;
+          BASSetupName.Description := Text1450028;
+          BASSetupName.INSERT;
+          COMMIT;
+        END;
+      CurrentBASSetupName := BASSetupName.Name;
+    END;
+
+    PROCEDURE CheckBASSetupName@1450019(CurrentBASSetupName@1450000 : Code[20]);
+    VAR
+      BASSetupName@1450001 : Record 11606;
+    BEGIN
+      BASSetupName.GET(CurrentBASSetupName);
+    END;
+
+    PROCEDURE SetBASSetupName@1450020(CurrentBASSetupName@1450000 : Code[20];VAR BASSetup@1450001 : Record 11600);
+    BEGIN
+      BASSetup.SETRANGE("Setup Name",CurrentBASSetupName);
+      IF BASSetup.FINDFIRST THEN;
+    END;
+
+    PROCEDURE LookupBASSetupName@1450021(VAR CurrentBASSetupName@1450000 : Code[20];VAR BASSetup@1450001 : Record 11600);
+    VAR
+      BASSetupName@1450002 : Record 11606;
+    BEGIN
+      COMMIT;
+      BASSetupName.Name := CurrentBASSetupName;
+      IF PAGE.RUNMODAL(0,BASSetupName) = ACTION::LookupOK THEN BEGIN
+        CurrentBASSetupName := BASSetupName.Name;
+        SetBASSetupName(CurrentBASSetupName,BASSetup);
+      END;
+    END;
+
+    LOCAL PROCEDURE GetGLSetup@1450022();
+    BEGIN
+      IF NOT HadGLSetup THEN BEGIN
+        GLSetup.GET;
+        HadGLSetup := TRUE;
+      END;
+    END;
+
+    PROCEDURE CheckBASXMLSetupName@1260002(CurrentBASSetupName@1450000 : Code[20]);
+    VAR
+      BASSetupName@1450001 : Record 11607;
+    BEGIN
+      BASSetupName.GET(CurrentBASSetupName);
+    END;
+
+    PROCEDURE SetBASXMLSetupName@1260001(CurrentBASSetupName@1450000 : Code[20];VAR BASXMLFieldIDSetup@1450001 : Record 11608);
+    BEGIN
+      BASXMLFieldIDSetup.SETRANGE("Setup Name",CurrentBASSetupName);
+      IF BASXMLFieldIDSetup.FINDFIRST THEN;
+    END;
+
+    PROCEDURE LookupBASXMLSetupName@1260000(VAR CurrentBASSetupName@1450000 : Code[20];VAR BASSetup4@1450001 : Record 11608);
+    VAR
+      BASSetupName@1450002 : Record 11607;
+    BEGIN
+      COMMIT;
+      BASSetupName.Name := CurrentBASSetupName;
+      IF PAGE.RUNMODAL(0,BASSetupName) = ACTION::LookupOK THEN BEGIN
+        CurrentBASSetupName := BASSetupName.Name;
+        SetBASXMLSetupName(CurrentBASSetupName,BASSetup4);
+      END;
+    END;
+
+    LOCAL PROCEDURE UpdateConsolBASCalculationSheet@1240000(SourceBASCalculationSheet@1240000 : Record 11601;VAR ConsolidatedBASCalculationSheet@1240001 : Record 11601);
+    BEGIN
+      ConsolidatedBASCalculationSheet.GET(SourceBASCalculationSheet.A1,SourceBASCalculationSheet."BAS Version");
+      WITH ConsolidatedBASCalculationSheet DO BEGIN
+        T3 := SourceBASCalculationSheet.T3;
+        T8 := SourceBASCalculationSheet.T8;
+        T9 := SourceBASCalculationSheet.T9;
+        F2 := SourceBASCalculationSheet.F2;
+        G22 := SourceBASCalculationSheet.G22;
+        "1H" := SourceBASCalculationSheet."1H";
+        "1A" := SourceBASCalculationSheet."1A";
+        "1C" := SourceBASCalculationSheet."1C";
+        "1E" := SourceBASCalculationSheet."1E";
+        "4" := SourceBASCalculationSheet."4";
+        "1B" := SourceBASCalculationSheet."1B";
+        "1D" := SourceBASCalculationSheet."1D";
+        "1F" := SourceBASCalculationSheet."1F";
+        "1G" := SourceBASCalculationSheet."1G";
+        "5B" := SourceBASCalculationSheet."5B";
+        "6B" := SourceBASCalculationSheet."6B";
+        "7C" := SourceBASCalculationSheet."7C";
+        "7D" := SourceBASCalculationSheet."7D";
+        G1 := SourceBASCalculationSheet.G1;
+        G2 := SourceBASCalculationSheet.G2;
+        G3 := SourceBASCalculationSheet.G3;
+        G4 := SourceBASCalculationSheet.G4;
+        G7 := SourceBASCalculationSheet.G7;
+        W1 := SourceBASCalculationSheet.W1;
+        W2 := SourceBASCalculationSheet.W2;
+        T1 := SourceBASCalculationSheet.T1;
+        G10 := SourceBASCalculationSheet.G10;
+        G11 := SourceBASCalculationSheet.G11;
+        G13 := SourceBASCalculationSheet.G13;
+        G14 := SourceBASCalculationSheet.G14;
+        G15 := SourceBASCalculationSheet.G15;
+        G18 := SourceBASCalculationSheet.G18;
+        W3 := SourceBASCalculationSheet.W3;
+        W4 := SourceBASCalculationSheet.W4;
+        Updated := TRUE;
+        Consolidated := TRUE;
+        "Group Consolidated" := TRUE;
+        MODIFY;
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

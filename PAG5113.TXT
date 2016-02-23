@@ -1,0 +1,36 @@
+OBJECT Page 5113 Segment Wizard
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Segment Wizard;
+               ENA=Segment Wizard];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    LinksAllowed=No;
+    SourceTable=Table5096;
+    DataCaptionExpr=SegmentHeader."No." + ' ' + SegmentHeader.Description;
+    PageType=NavigatePage;
+  }
+  CONTROLS
+  {
+  }
+  CODE
+  {
+    VAR
+      SegmentHeader@1006 : Record 5076;
+
+    PROCEDURE EnableFields@3();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

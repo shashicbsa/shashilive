@@ -1,0 +1,215 @@
+OBJECT Page 62045 TB Close 2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/08/15;
+    Time=[ 7:47:35];
+    Modified=Yes;
+    Version List=YIMM-CONSOL,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=ENU=TB Close;
+    SourceTable=Table50;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1000000000;  ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1000000001;1 ;ActionGroup;
+                      CaptionML=ENU=TB CLOSE }
+      { 1000000002;2 ;Action    ;
+                      CaptionML=ENU=Close;
+                      OnAction=VAR
+                                 AgingWJ@1000000004 : Codeunit 50069;
+                                 AgingKI@1000000003 : Codeunit 50070;
+                                 DateRAn@1000000002 : Record 60021;
+                                 Amt@1000000001 : Decimal;
+                               BEGIN
+
+                                 MasterSetup.GET;
+                                 Amt:=0;
+
+                                 IF (Rec.TBCLOSE) THEN
+                                   ERROR(Text001);
+
+                                 AccountingPeriod.RESET;
+                                 AccountingPeriod.SETFILTER("Starting Date",'<%1',"Starting Date");
+                                 AccountingPeriod.SETRANGE(AccountingPeriod.TBCLOSE,FALSE);
+                                 IF AccountingPeriod.FINDFIRST THEN
+                                   ERROR('The period cannot be TBCLOSE, while previous period is open.')
+                                 ELSE BEGIN
+                                   { //UPG13R2DEV.BEGIN
+                                    IF (COMPANYNAME=MasterSetup."Company Name YMKI") THEN
+                                         BEGIN
+                                         DateRAn.StartD:=0D;
+                                         DateRAn.EndD:=CALCDATE('CM',"Starting Date");
+
+                                         AgingData.RESET;
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+                                          IF (AgingData.FINDFIRST) THEN
+                                             AgingData.DELETEALL;
+
+                                         AgingKI.RUN(DateRAn);
+
+                                         AgingData.RESET;
+                                         AgingData.SETCURRENTKEY(AgingData.Sno);
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+
+                                         IF (AgingData.FINDFIRST) THEN
+                                           REPEAT
+
+                                           Amt:=Amt+AgingData.Amount;
+
+                                           MESSAGE('%1<=>  %2',AgingData.CompCode,AgingData.Amount);
+
+                                           UNTIL(AgingData.NEXT=0);
+
+                                         END;
+
+
+                                    IF (COMPANYNAME=MasterSetup."Company Name YMMWJ") THEN
+                                         BEGIN
+                                         DateRAn.StartD:=0D;
+                                         DateRAn.EndD:=CALCDATE('CM',"Starting Date");
+
+
+                                         AgingData.RESET;
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+                                          IF (AgingData.FINDFIRST) THEN
+                                             AgingData.DELETEALL;
+
+
+                                         AgingWJ.RUN(DateRAn);
+
+                                         AgingData.RESET;
+                                         AgingData.SETCURRENTKEY(AgingData.Sno);
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+
+                                         IF (AgingData.FINDFIRST) THEN
+                                           REPEAT
+
+                                           Amt:=Amt+AgingData.Amount;
+
+                                           MESSAGE('%1=>  %2',AgingData.CompCode,AgingData.Amount);
+
+                                           UNTIL(AgingData.NEXT=0);
+
+                                         END;
+                                   } //UPG13R2DEV.END
+
+                                    IF (COMPANYNAME=MasterSetup."Company Name YIMM") THEN
+                                         BEGIN
+                                         DateRAn.StartD:=0D;
+                                         DateRAn.EndD:=CALCDATE('CM',"Starting Date");
+
+                                         { //UPG13R2DEV.begin
+                                         AgingData.RESET;
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+                                          IF (AgingData.FINDFIRST) THEN
+                                             AgingData.DELETEALL;
+
+
+                                         //AgingWJ.RUN(DateRAn);  //UPG13R2DEV
+
+                                         //AgingKI.RUN(DateRAn);  //UPG13R2DEV
+
+                                         AgingData.RESET;
+                                         AgingData.SETCURRENTKEY(AgingData.Sno);
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+
+
+                                         IF (AgingData.FINDFIRST) THEN
+                                           REPEAT
+
+                                           Amt:=Amt+AgingData.Amount;
+
+                                           MESSAGE('%1=>  %2',AgingData.CompCode,AgingData.Amount);
+
+                                           UNTIL(AgingData.NEXT=0);
+
+                                         END;
+
+                                         MESSAGE('FINAL Amount=%1',Amt);
+
+                                         //REPORT.RUN(62029,TRUE,FALSE,AgingData);
+
+
+                                       IF (Amt<>0) THEN
+                                         ERROR(Text002);
+                                      } //UPG13R2DEV.end
+                                   END;
+
+                                   TBCLOSE := TRUE;
+
+                                   MODIFY;
+
+
+                                    UserSet.RESET;
+                                    UserSet.SETCURRENTKEY(UserSet."User ID");
+
+                                     IF (UserSet.FINDFIRST)  THEN
+
+                                      REPEAT
+                                         UserSet."Allow Posting From":=CALCDATE('CM+1D',"Starting Date");
+                                         UserSet."Allow Posting To":=CALCDATE('CM',UserSet."Allow Posting From");
+
+                                         UserSet.MODIFY(TRUE);
+
+                                         UNTIL(UserSet.NEXT=0);
+
+                                         {//UPG13R2DEV
+                                         AgingData.RESET;
+                                         AgingData.SETCURRENTKEY(AgingData.Sno);
+                                         AgingData.SETRANGE(AgingData.EnDate,DateRAn.EndD);
+                                         }
+
+                                 END;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Starting Date" }
+
+    { 1102159004;2;Field  ;
+                SourceExpr=Name }
+
+    { 1102159005;2;Field  ;
+                SourceExpr=TBCLOSE }
+
+  }
+  CODE
+  {
+    VAR
+      AccountingPeriod@1000000003 : Record 50;
+      MasterSetup@1000000002 : Record 50008;
+      AgingData@1000000001 : Record 60033;
+      UserSet@1000000000 : Record 91;
+      Text001@1000000005 : TextConst 'ENU=TB Already Closed';
+      Text002@1000000004 : TextConst 'ENU=Aging Not Equal';
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Console Code for YIMMWJ & YMKI Commented on Action TB Close.
+    }
+    END.
+  }
+}
+

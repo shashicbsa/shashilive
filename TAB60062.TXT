@@ -1,0 +1,42 @@
+OBJECT Table 60062 User Details Info
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/02/15;
+    Time=15:32:48;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;S.No                ;Integer        }
+    { 2   ;   ;User ID             ;Code50        ;TableRelation=User."User Name" }
+    { 3   ;   ;User Name           ;Text50         }
+    { 4   ;   ;Allow Posting From  ;Date           }
+    { 5   ;   ;Allow Posting To    ;Date           }
+    { 6   ;   ;Approver ID         ;Code30         }
+    { 7   ;   ;Profile ID          ;Code30         }
+    { 8   ;   ;Profile Name        ;Text50         }
+    { 9   ;   ;Profile Company Name;Text30         }
+    { 10  ;   ;Role ID             ;Code30         }
+    { 11  ;   ;Role Description    ;Text50         }
+    { 12  ;   ;Role-Company Name   ;Text30         }
+  }
+  KEYS
+  {
+    {    ;S.No                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

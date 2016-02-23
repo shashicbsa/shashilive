@@ -1,0 +1,209 @@
+OBJECT Page 1359 Mini Posted Purchase Invoices
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/13;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.35701;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Posted Purchase Invoices;
+               ENA=Posted Purchase Invoices];
+    SourceTable=Table122;
+    PageType=List;
+    CardPageID=Mini Posted Purchase Invoice;
+    PromotedActionCategoriesML=[ENU=New,Process,Report,Correct,Navigation;
+                                ENA=New,Process,Report,Correct,Navigation];
+    OnOpenPage=VAR
+                 FileManagement@1000 : Codeunit 419;
+               BEGIN
+                 SetSecurityFilterOnRespCenter;
+
+                 AllowDotNetAddIn := FileManagement.CanRunDotNetOnClient;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 21      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Navigation;
+                                 ENA=Navigation];
+                      Image=Invoice }
+      { 7       ;2   ;Action    ;
+                      Name=Vendor;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Vendor;
+                                 ENA=Vendor];
+                      ToolTipML=[ENU=View or edit detailed information about the vendor on the selected posted purchase document.;
+                                 ENA=View or edit detailed information about the vendor on the selected posted purchase document.];
+                      RunObject=Page 1330;
+                      RunPageLink=No.=FIELD(Buy-from Vendor No.);
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Vendor;
+                      PromotedCategory=Category5 }
+      { 9       ;2   ;Action    ;
+                      Name=ShowCreditMemo;
+                      CaptionML=[ENU=Show Corrective Credit Memo;
+                                 ENA=Show Corrective CR/Adj Note];
+                      RunObject=Page 1372;
+                      RunPageLink=No.=FIELD(Canceled By);
+                      Promoted=Yes;
+                      Enabled=Canceled;
+                      PromotedIsBig=Yes;
+                      Image=CreditMemo;
+                      PromotedCategory=Category5 }
+      { 27      ;2   ;Action    ;
+                      Name=Navigate;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      ToolTipML=[ENU=Find all entries and documents that exist for the document number and posting date on the selected posted purchase document.;
+                                 ENA=Find all entries and documents that exist for the document number and posting date on the selected posted purchase document.];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Category5;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+      { 10      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Correct;
+                                 ENA=Correct] }
+      { 14      ;2   ;Action    ;
+                      Name=CorrectInvoice;
+                      CaptionML=[ENU=Correct;
+                                 ENA=Correct];
+                      ToolTipML=[ENU=Create a new open version of this posted purchase invoice where you can make the correction. This posted purchase invoice will be canceled.;
+                                 ENA=Create a new open version of this posted purchase invoice where you can make the correction. This posted purchase invoice will be cancelled.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Undo;
+                      PromotedCategory=Category4;
+                      OnAction=BEGIN
+                                 CODEUNIT.RUN(CODEUNIT::"Correct PstdPurchInv (Yes/No)",Rec);
+                               END;
+                                }
+      { 12      ;2   ;Action    ;
+                      Name=CancelInvoice;
+                      CaptionML=[ENU=Cancel;
+                                 ENA=Cancel];
+                      ToolTipML=[ENU=Create and post a purchase credit memo that reverses this posted purchase invoice. This posted purchase invoice will be canceled.;
+                                 ENA=Create and post a purchase CR/Adj Note that reverses this posted purchase invoice. This posted purchase invoice will be cancelled.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Cancel;
+                      PromotedCategory=Category4;
+                      OnAction=BEGIN
+                                 CODEUNIT.RUN(CODEUNIT::"Cancel PstdPurchInv (Yes/No)",Rec);
+                               END;
+                                }
+      { 2       ;2   ;Action    ;
+                      Name=CreateCreditMemo;
+                      CaptionML=[ENU=Create Corrective Credit Memo;
+                                 ENA=Create Corrective Credit Memo];
+                      Promoted=Yes;
+                      Image=CreateCreditMemo;
+                      PromotedCategory=Category4;
+                      OnAction=VAR
+                                 PurchaseHeader@1001 : Record 38;
+                                 CorrectPostedPurchInvoice@1000 : Codeunit 1313;
+                               BEGIN
+                                 CorrectPostedPurchInvoice.CreateCreditMemoCopyDocument(Rec,PurchaseHeader);
+                                 PAGE.RUN(PAGE::"Mini Purchase Credit Memo",PurchaseHeader);
+                               END;
+                                }
+      { 8       ;1   ;ActionGroup;
+                      CaptionML=[ENU=Print;
+                                 ENA=Print] }
+      { 22      ;2   ;Action    ;
+                      Name=Print;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Report;
+                      OnAction=VAR
+                                 PurchInvHeader@1102 : Record 122;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(PurchInvHeader);
+                                 PurchInvHeader.PrintRecords(NOT AllowDotNetAddIn);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 11  ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the posted invoice number.;
+                           ENA=Specifies the posted invoice number.];
+                SourceExpr="No." }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=[ENU=Vendor Name;
+                           ENA=Vendor Name];
+                ToolTipML=[ENU=Specifies the name of the vendor who shipped the items.;
+                           ENA=Specifies the name of the vendor who shipped the items.];
+                SourceExpr="Buy-from Vendor Name" }
+
+    { 1102601005;2;Field  ;
+                ToolTipML=[ENU=Specifies when the invoice is due. The program calculates the date using the Payment Terms Code and Document Date fields on the purchase header.;
+                           ENA=Specifies when the invoice is due. The program calculates the date using the Payment Terms Code and Document Date fields on the purchase header.];
+                SourceExpr="Due Date";
+                Visible=FALSE }
+
+    { 13  ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the total, in the currency of the invoice, of the amounts on all the invoice lines.;
+                           ENA=Specifies the total, in the currency of the invoice, of the amounts on all the invoice lines.];
+                SourceExpr=Amount;
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Mini Posted Purchase Invoice",Rec)
+                            END;
+                             }
+
+    { 17  ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the total, in the currency of the invoice, of the amounts on all the invoice lines - including VAT.;
+                           ENA=Specifies the total, in the currency of the invoice, of the amounts on all the invoice lines - including GST.];
+                SourceExpr="Amount Including VAT";
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Mini Posted Purchase Invoice",Rec)
+                            END;
+                             }
+
+    { 4   ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies the amount that remains to be paid for the posted purchase invoice.;
+                           ENA=Specifies the amount that remains to be paid for the posted purchase invoice.];
+                SourceExpr="Remaining Amount" }
+
+    { 3   ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies if the posted purchase invoice is paid.;
+                           ENA=Specifies if the posted purchase invoice is paid.];
+                SourceExpr=Paid }
+
+    { 5   ;2   ;Field     ;
+                ToolTipML=[ENU=Specifies if the posted purchase invoice has been either corrected or canceled.;
+                           ENA=Specifies if the posted purchase invoice has been either corrected or cancelled.];
+                SourceExpr=Canceled }
+
+  }
+  CODE
+  {
+    VAR
+      AllowDotNetAddIn@1004 : Boolean INDATASET;
+
+    BEGIN
+    END.
+  }
+}
+

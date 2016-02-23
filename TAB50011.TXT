@@ -1,0 +1,48 @@
+OBJECT Table 50011 Collection Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/09/13;
+    Time=16:08:13;
+    Version List=IF1.0,CR#019;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer        }
+    { 2   ;   ;Line No.            ;Integer        }
+    { 3   ;   ;Document No.        ;Code20         }
+    { 4   ;   ;Account Type        ;Option        ;CaptionML=ENU=Account Type;
+                                                   OptionCaptionML=ENU=G/L Account,Customer,Vendor,Bank Account,Fixed Asset,IC Partner;
+                                                   OptionString=G/L Account,Customer,Vendor,Bank Account,Fixed Asset,IC Partner }
+    { 5   ;   ;Account No.         ;Code20         }
+    { 6   ;   ;Cheque Date         ;Date           }
+    { 7   ;   ;Cheque No.          ;Code20         }
+    { 8   ;   ;Currency Code       ;Code20        ;TableRelation=Currency.Code }
+    { 9   ;   ;Description         ;Text50         }
+    { 10  ;   ;Date Received       ;Date           }
+    { 11  ;   ;Amount              ;Decimal        }
+    { 12  ;   ;Bank Account        ;Code20        ;TableRelation="Bank Account".No. }
+    { 13  ;   ;Bank                ;Code20         }
+    { 15  ;   ;Interface Date      ;Date           }
+    { 16  ;   ;Batch Name          ;Code10        ;TableRelation="Gen. Journal Batch".Name WHERE (Journal Template Name=FILTER(COLLECTION)) }
+    { 17  ;   ;GL Account No.      ;Code20        ;Description=CR#19-Imacs IF Modification }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;Batch Name                               }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

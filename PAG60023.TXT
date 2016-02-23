@@ -1,0 +1,613 @@
+OBJECT Page 60023 Purch. Invoice Subform2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/18/14;
+    Time=16:14:44;
+    Modified=Yes;
+    Version List=MultiComp1.0,NAVW15.00.01,NAVAP4.00,NTT,NTAP,NNPWP,NWHTR,YIMM1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Lines;
+    MultipleNewLines=Yes;
+    SourceTable=Table39;
+    DelayedInsert=Yes;
+    SourceTableView=WHERE(Document Type=FILTER(Invoice));
+    PageType=ListPart;
+    AutoSplitKey=Yes;
+    OnInit=BEGIN
+             "FA Posting DateEnable" := TRUE;
+             Dim3Enable := TRUE;
+             "FA Posting DateVisible" := TRUE;
+             Dim3Visible := TRUE;
+           END;
+
+    OnOpenPage=BEGIN
+                 Enablefields_Sales;
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       ShowShortcutDimCode(ShortcutDimCode);
+                     END;
+
+    OnNewRecord=BEGIN
+                  InitType;
+                  CLEAR(ShortcutDimCode);
+                END;
+
+    OnDeleteRecord=VAR
+                     ReservePurchLine@1000 : Codeunit 99000834;
+                   BEGIN
+                     IF (Quantity <> 0) AND ItemExists("No.") THEN BEGIN
+                       COMMIT;
+                       IF NOT ReservePurchLine.DeleteLineConfirm(Rec) THEN
+                         EXIT(FALSE);
+                       ReservePurchLine.DeleteLine(Rec);
+                     END;
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;  ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1907935204;1 ;ActionGroup;
+                      CaptionML=ENU=&Line }
+      { 1904945204;2 ;ActionGroup;
+                      CaptionML=ENU=Item Availability by;
+                      Visible=FALSE }
+      { 1901092104;3 ;Action    ;
+                      CaptionML=ENU=Period;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ItemAvailFormsMgt.ShowItemAvailFromPurchLine(Rec,ItemAvailFormsMgt.ByPeriod)
+                               END;
+                                }
+      { 1905427604;3 ;Action    ;
+                      CaptionML=ENU=Variant;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ItemAvailFormsMgt.ShowItemAvailFromPurchLine(Rec,ItemAvailFormsMgt.ByVariant)
+                               END;
+                                }
+      { 1907075804;3 ;Action    ;
+                      CaptionML=ENU=Location;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ItemAvailFormsMgt.ShowItemAvailFromPurchLine(Rec,ItemAvailFormsMgt.ByLocation)
+                               END;
+                                }
+      { 1904974904;2 ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=ENU=Dimensions;
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 _ShowDimensions;
+                               END;
+                                }
+      { 1901431204;2 ;Action    ;
+                      CaptionML=ENU=Co&mments;
+                      Image=ViewComments;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 _ShowLineComments;
+                               END;
+                                }
+      { 1907184504;2 ;Action    ;
+                      CaptionML=ENU=Item Charge &Assignment;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 ItemChargeAssgnt;
+                               END;
+                                }
+      { 1905987604;2 ;Action    ;
+                      CaptionML=ENU=Item &Tracking Lines;
+                      Visible=FALSE;
+                      Image=ItemTrackingLines;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 _OpenItemTrackingLines;
+                               END;
+                                }
+      { 1906587504;1 ;ActionGroup;
+                      CaptionML=ENU=F&unctions }
+      { 1901313004;2 ;Action    ;
+                      CaptionML=ENU=Calculate &Invoice Discount;
+                      Visible=FALSE;
+                      Image=CalculateInvoiceDiscount;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 ApproveCalcInvDisc;
+                               END;
+                                }
+      { 1900205804;2 ;Action    ;
+                      CaptionML=ENU=E&xplode BOM;
+                      Visible=FALSE;
+                      Image=ExplodeBOM;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 ExplodeBOM;
+                               END;
+                                }
+      { 1903099004;2 ;Action    ;
+                      CaptionML=ENU=Insert &Ext. Texts;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 _InsertExtendedText(TRUE);
+                               END;
+                                }
+      { 1901652204;2 ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=&Get Receipt Lines;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 //This functionality was copied from page #60022. Unsupported part was commented. Please check it.
+                                 {CurrPage.PurchLines.FORM.}
+                                 GetReceipt;
+                               END;
+                                }
+      { 113     ;1   ;Action    ;
+                      CaptionML=ENU=Purchase Line &Discounts;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 ShowLineDisc;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 111     ;1   ;Action    ;
+                      CaptionML=ENU=Purcha&se Prices;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 ShowPrices;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 115     ;1   ;Action    ;
+                      CaptionML=ENU=Ite&m Card;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 PurchInfoPaneMgt.LookupItem(Rec);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Type }
+
+    { 1000000030;2;Field  ;
+                SourceExpr="Export Type";
+                OnLookup=VAR
+                           ExprtAccRange@1000000000 : Record 50013;
+                           PurHeadr@1000000001 : Record 38;
+                           VendPstSetp@1000000002 : Record 93;
+                         BEGIN
+                           ExprtAccRange.RESET;
+                           IF PurHeadr.GET("Document Type","Document No.") THEN
+                            BEGIN
+                               IF VendPstSetp.GET(PurHeadr."Vendor Posting Group") THEN
+                                BEGIN
+                                  ExprtAccRange.SETRANGE(ExprtAccRange."Vendor Type",VendPstSetp."Vendor Type");
+                                  ExprtAccRange.FINDFIRST;
+                                   IF PAGE.RUNMODAL(50074,ExprtAccRange) = ACTION::LookupOK THEN
+                                     BEGIN
+                                         VALIDATE("No.",ExprtAccRange."Account Range");
+                                         "Export Type":=ExprtAccRange."Export Type";
+                                     END;
+                                END;
+
+                              END;
+                         END;
+                          }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="No.";
+                Editable=FALSE;
+                OnValidate=BEGIN
+                             ShowShortcutDimCode(ShortcutDimCode);
+                               NoOnAfterValidate;
+                           END;
+                            }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="FA Posting Date";
+                Visible="FA Posting DateVisible";
+                Enabled="FA Posting DateEnable" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 62  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=TRUE }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Kwitansi No." }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Commercial Invoice No." }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Commercial Invoice Date" }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=Narration }
+
+    { 8   ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr=Quantity }
+
+    { 12  ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr="Direct Unit Cost" }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="VAT Prod. Posting Group";
+                Visible=TRUE }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Order Address Code";
+                Visible=TRUE }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="New NPWP" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Tax Invoice No." }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Tax Invoice Date" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Gen. Bus. Posting Group";
+                Visible=FALSE }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="Gen. Prod. Posting Group";
+                Visible=FALSE }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="VAT Bus. Posting Group";
+                Visible=FALSE }
+
+    { 1000000028;2;Field  ;
+                SourceExpr=AreaCode }
+
+    { 1500002;2;Field     ;
+                SourceExpr="WHT Business Posting Group";
+                Visible=FALSE }
+
+    { 1500004;2;Field     ;
+                SourceExpr="WHT Product Posting Group";
+                OnValidate=BEGIN
+                             //YIMMNWHTR
+
+                             IF (("WHT Business Posting Group" <> '')  AND ("WHT Product Posting Group" <> '') AND (AreaCode = '') )THEN
+                              ERROR ('The Area Code Should not be Blanked');
+                           END;
+                            }
+
+    { 1000000026;2;Field  ;
+                SourceExpr="Reason Code";
+                Visible=FALSE }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Tax Amount (Vat)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Unit of Measure Code";
+                Visible=FALSE }
+
+    { 56  ;2   ;Field     ;
+                SourceExpr="Unit Cost (LCY)";
+                Visible=FALSE }
+
+    { 66  ;2   ;Field     ;
+                SourceExpr="Unit Price (LCY)";
+                Visible=FALSE }
+
+    { 52  ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr="Line Amount";
+                Visible=FALSE }
+
+    { 16  ;2   ;Field     ;
+                BlankZero=Yes;
+                SourceExpr="Line Discount %";
+                Visible=FALSE }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Line Discount Amount";
+                Visible=FALSE }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Inv. Discount Amount";
+                Visible=FALSE }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Appl.-to Item Entry";
+                Visible=FALSE }
+
+    { 60  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=TRUE }
+
+    { 300 ;2   ;Field     ;
+                Name=Dim3;
+                SourceExpr=[ShortcutDimCode[3]]];
+                CaptionClass='1,2,3';
+                Visible=Dim3Visible;
+                Enabled=Dim3Enable;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(3,ShortcutDimCode[3]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(3,ShortcutDimCode[3]);
+                         END;
+                          }
+
+    { 302 ;2   ;Field     ;
+                SourceExpr=[ShortcutDimCode[4]]];
+                CaptionClass='1,2,4';
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(4,ShortcutDimCode[4]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(4,ShortcutDimCode[4]);
+                         END;
+                          }
+
+    { 304 ;2   ;Field     ;
+                SourceExpr=[ShortcutDimCode[5]]];
+                CaptionClass='1,2,5';
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(5,ShortcutDimCode[5]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(5,ShortcutDimCode[5]);
+                         END;
+                          }
+
+    { 306 ;2   ;Field     ;
+                SourceExpr=[ShortcutDimCode[6]]];
+                CaptionClass='1,2,6';
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(6,ShortcutDimCode[6]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(6,ShortcutDimCode[6]);
+                         END;
+                          }
+
+    { 308 ;2   ;Field     ;
+                SourceExpr=[ShortcutDimCode[7]]];
+                CaptionClass='1,2,7';
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(7,ShortcutDimCode[7]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(7,ShortcutDimCode[7]);
+                         END;
+                          }
+
+    { 310 ;2   ;Field     ;
+                SourceExpr=[ShortcutDimCode[8]]];
+                CaptionClass='1,2,8';
+                Visible=FALSE;
+                OnValidate=BEGIN
+                             ValidateShortcutDimCode(8,ShortcutDimCode[8]);
+                           END;
+
+                OnLookup=BEGIN
+                           LookupShortcutDimCode(8,ShortcutDimCode[8]);
+                         END;
+                          }
+
+    { 88  ;1   ;Group     ;
+                Name=ItemPanel;
+                CaptionML=ENU=Item Information;
+                Visible=FALSE }
+
+    { 110 ;2   ;Field     ;
+                SourceExpr=STRSUBSTNO('(%1)',PurchInfoPaneMgt.CalcAvailability(Rec));
+                Editable=FALSE }
+
+    { 112 ;2   ;Field     ;
+                SourceExpr=STRSUBSTNO('(%1)',PurchInfoPaneMgt.CalcNoOfPurchasePrices(Rec));
+                Editable=FALSE }
+
+    { 114 ;2   ;Field     ;
+                SourceExpr=STRSUBSTNO('(%1)',PurchInfoPaneMgt.CalcNoOfPurchLineDisc(Rec));
+                Editable=FALSE }
+
+  }
+  CODE
+  {
+    VAR
+      TransferExtendedText@1002 : Codeunit 378;
+      ShortcutDimCode@1003 : ARRAY [8] OF Code[20];
+      PurchInfoPaneMgt@1004 : Codeunit 7181;
+      PurchHeader@1001 : Record 38;
+      PurchPriceCalcMgt@1000 : Codeunit 7010;
+      Dim3Visible@19014263 : Boolean INDATASET;
+      "FA Posting DateVisible"@19034655 : Boolean INDATASET;
+      Dim3Enable@19013546 : Boolean INDATASET;
+      "FA Posting DateEnable"@19067377 : Boolean INDATASET;
+      ItemAvailFormsMgt@1102159001 : Codeunit 353;
+
+    PROCEDURE ApproveCalcInvDisc@7();
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Purch.-Disc. (Yes/No)",Rec);
+    END;
+
+    PROCEDURE CalcInvDisc@1();
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Purch.-Calc.Discount",Rec);
+    END;
+
+    PROCEDURE ExplodeBOM@3();
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Purch.-Explode BOM",Rec);
+    END;
+
+    PROCEDURE GetReceipt@4();
+    BEGIN
+      CODEUNIT.RUN(CODEUNIT::"Purch.-Get Receipt",Rec);
+    END;
+
+    PROCEDURE _InsertExtendedText@19065029(Unconditionally@1000 : Boolean);
+    BEGIN
+      IF TransferExtendedText.PurchCheckIfAnyExtText(Rec,Unconditionally) THEN BEGIN
+        CurrPage.SAVERECORD;
+        TransferExtendedText.InsertPurchExtText(Rec);
+      END;
+      IF TransferExtendedText.MakeUpdate THEN
+        UpdateForm(TRUE);
+    END;
+
+    PROCEDURE InsertExtendedText@6(Unconditionally@1000 : Boolean);
+    BEGIN
+      IF TransferExtendedText.PurchCheckIfAnyExtText(Rec,Unconditionally) THEN BEGIN
+        CurrPage.SAVERECORD;
+        TransferExtendedText.InsertPurchExtText(Rec);
+      END;
+      IF TransferExtendedText.MakeUpdate THEN
+        UpdateForm(TRUE);
+    END;
+
+    PROCEDURE _ShowDimensions@19020529();
+    BEGIN
+      Rec.ShowDimensions;
+    END;
+
+    PROCEDURE ShowDimensions@10();
+    BEGIN
+      Rec.ShowDimensions;
+    END;
+
+    PROCEDURE ItemChargeAssgnt@5800();
+    BEGIN
+      Rec.ShowItemChargeAssgnt;
+    END;
+
+    PROCEDURE _OpenItemTrackingLines@19054693();
+    BEGIN
+      Rec.OpenItemTrackingLines;
+    END;
+
+    PROCEDURE OpenItemTrackingLines@6500();
+    BEGIN
+      Rec.OpenItemTrackingLines;
+    END;
+
+    PROCEDURE UpdateForm@12(SetSaveRecord@1000 : Boolean);
+    BEGIN
+      CurrPage.UPDATE(SetSaveRecord);
+    END;
+
+    PROCEDURE ShowPrices@15();
+    BEGIN
+      PurchHeader.GET("Document Type","Document No.");
+      CLEAR(PurchPriceCalcMgt);
+      PurchPriceCalcMgt.GetPurchLinePrice(PurchHeader,Rec);
+    END;
+
+    PROCEDURE ShowLineDisc@16();
+    BEGIN
+      PurchHeader.GET("Document Type","Document No.");
+      CLEAR(PurchPriceCalcMgt);
+      PurchPriceCalcMgt.GetPurchLineLineDisc(PurchHeader,Rec);
+    END;
+
+    PROCEDURE _ShowLineComments@19074756();
+    BEGIN
+      Rec.ShowLineComments;
+    END;
+
+    PROCEDURE ShowLineComments@2();
+    BEGIN
+      Rec.ShowLineComments;
+    END;
+
+    PROCEDURE Enablefields_Sales@1000000001();
+    VAR
+      MasterSetup1@1000000000 : Record 50008;
+    BEGIN
+      MasterSetup1.GET;
+       IF ((COMPANYNAME = MasterSetup1."Company Name YMKI") OR (COMPANYNAME = MasterSetup1."Company Name YMMWJ")) THEN
+          BEGIN
+            Dim3Visible :=FALSE;
+            Dim3Enable :=FALSE;
+          END
+        ELSE
+          BEGIN
+            Dim3Visible :=TRUE;
+            "FA Posting DateVisible" :=FALSE;
+            "FA Posting DateEnable" :=FALSE;
+
+            Dim3Enable :=TRUE;
+          END;
+    END;
+
+    LOCAL PROCEDURE NoOnAfterValidate@19066594();
+    BEGIN
+      InsertExtendedText(FALSE);
+      IF (Type = Type::"Charge (Item)") AND ("No." <> xRec."No.") AND
+         (xRec."No." <> '')
+      THEN
+        CurrPage.SAVERECORD;
+    END;
+
+    BEGIN
+    {
+      //YIMMNTT
+
+       1) FIELDS ADDED FOR THE TENDA TERIMA PROCESS.
+
+      //YIMMNTAP
+
+       1) fIELD ADDED FOR DISPLAY THE VALUE OF TAX AMOUNT (VAT).
+      //YIMMNNPWP
+       fIELD ADDED FOR DISPLAY
+
+      //YIMMNWHTR
+      1) Field shows for the WHT Area Code.
+
+      //YIMM1.0 - CODE ADDED FOR THE FILTERATION ACCORDING TO THE EXPORT TYPE,WHEN LOOK UP IS PRESS FROM EXPORT TYPE FIELD.
+                  FORM IS NEWLY DESIGNED TO CAPTUR THE FUNCTIONALITY OF VENDOR SALES INVOICE FOR EXPORT ONLY.
+    }
+    END.
+  }
+}
+

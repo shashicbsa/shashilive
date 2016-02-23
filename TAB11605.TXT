@@ -1,0 +1,53 @@
+OBJECT Table 11605 BAS Comment Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS Comment Line;
+               ENA=BAS Comment Line];
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code11        ;TableRelation="BAS Calculation Sheet".A1;
+                                                   CaptionML=[ENU=No.;
+                                                              ENA=No.] }
+    { 2   ;   ;Version No.         ;Integer       ;TableRelation="BAS Calculation Sheet"."BAS Version" WHERE (A1=FIELD(No.));
+                                                   CaptionML=[ENU=Version No.;
+                                                              ENA=Version No.] }
+    { 3   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+    { 4   ;   ;Comment             ;Text80        ;CaptionML=[ENU=Comment;
+                                                              ENA=Comment] }
+    { 5   ;   ;Date                ;Date          ;CaptionML=[ENU=Date;
+                                                              ENA=Date] }
+  }
+  KEYS
+  {
+    {    ;No.,Version No.,Line No.                ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    PROCEDURE SetUpNewLine@1500000();
+    VAR
+      BASCommentLine@1500000 : Record 11605;
+    BEGIN
+      BASCommentLine.SETRANGE("No.","No.");
+      BASCommentLine.SETRANGE("Version No.","Version No.");
+      IF NOT BASCommentLine.FINDFIRST THEN
+        Date := WORKDATE;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

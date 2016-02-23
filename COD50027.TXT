@@ -1,0 +1,24 @@
+OBJECT Codeunit 50027 Run PROPAC Reports
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/14/09;
+    Time=13:56:15;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            REPORT.RUN(50062);
+            REPORT.RUN(50063);
+          END;
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

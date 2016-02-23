@@ -1,0 +1,386 @@
+OBJECT Page 104 Account Schedule
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/22/16;
+    Time=15:43:39;
+    Modified=Yes;
+    Version List=NAVW17.10,TBI1.0,UPG13,UPG13C,UPG13R2,CR005;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Account Schedule;
+               ENA=Account Schedule];
+    MultipleNewLines=Yes;
+    SourceTable=Table85;
+    DataCaptionFields=Schedule Name;
+    PageType=Worksheet;
+    AutoSplitKey=Yes;
+    OnInit=BEGIN
+             "Print TBI FormatVisible" := TRUE; // UPG13
+           END;
+
+    OnOpenPage=BEGIN
+                 AccSchedManagement.OpenSchedule(CurrentSchedName,Rec);
+                 AfterxRec := FALSE;
+                 // UPG13.begin
+                 //TBI-ST
+                 MasterSetup.GET;
+                 //IF MasterSetup."Company Name TBI" = COMPANYNAME THEN
+                   //CurrPage."Print TBI Format".VISIBLE(TRUE)
+                 //ELSE
+                   "Print TBI FormatVisible" := FALSE;
+                 //TBI-EN
+                 // UPG13.end
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       IF NOT DimCaptionsInitialized THEN
+                         DimCaptionsInitialized := TRUE;
+                     END;
+
+    OnNewRecord=BEGIN
+                  AfterxRec := BelowxRec;
+                END;
+
+    OnInsertRecord=BEGIN
+                     AfterxRec := BelowxRec;
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 26      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Acc. Sched.;
+                                 ENA=&Acc. Sched.];
+                      Image=ViewDetails }
+      { 29      ;2   ;Action    ;
+                      Name=Overview;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Overview;
+                                 ENA=Overview];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=ViewDetails;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 AccSchedOverview@1001 : Page 490;
+                               BEGIN
+                                 AccSchedOverview.SetAccSchedName(CurrentSchedName);
+                                 AccSchedOverview.RUN;
+                               END;
+                                }
+      { 1000000001;2 ;Action    ;
+                      Name=Export to Excel;
+                      Promoted=Yes;
+                      Image=ExportToExcel;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 //CR005-Start
+                                 ExcelBuff.DELETEALL();
+
+                                 ExcelBuff.AddColumn('Show Opp Sign Budget',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Row No.',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Description',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Totalling Type',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Totalling',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Row Type',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Amount Type',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Shop Code Totalling',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Model Code Totalling',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Dimension Code 3 Tracking',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Dimension Code 4 Tracking',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Show',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Bold',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Italic',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Underline',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('Show Opposite Sign',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.AddColumn('New Page',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                 ExcelBuff.NewRow();
+
+                                 IF FINDSET THEN
+                                   REPEAT
+                                     ExcelBuff.AddColumn("Show Opp Sign Budget",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Row No.",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Description,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Totaling Type",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Totaling,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Row Type",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Amount Type",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Dimension 1 Totaling",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Dimension 2 Totaling",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Dimension 3 Totaling",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Dimension 4 Totaling",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Show,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Bold,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Italic,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn(Underline,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("Show Opposite Sign",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.AddColumn("New Page",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuff."Cell Type"::Text);
+                                     ExcelBuff.NewRow();
+                                 UNTIL NEXT=0;
+
+                                 IF FINDFIRST THEN;
+
+                                 ExcelBuff.CreateBookAndOpenExcel("Schedule Name",'','','');
+                                 //CR005-Start
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000002;1 ;Action    ;
+                      Name=Print TBI Format;
+                      Ellipsis=Yes;
+                      Promoted=Yes;
+                      Visible="Print TBI FormatVisible";
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 AccSchedName@1001 : Record 84;
+                               BEGIN
+                                 {// UPG13C.begin
+                                 // UPG13.begin
+                                 AccSchedName.GET("Schedule Name");
+                                 AccSched.SetAccSchedName(AccSchedName.Name);
+                                 AccSched.SetColumnLayoutName(AccSchedName."Default Column Layout");
+                                 AccSched.RUN;
+                                 // UPG13.end
+                                 }// UPG13C.end
+                               END;
+                                }
+      { 15      ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 7       ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Insert G/L Accounts;
+                                 ENA=Insert G/L Accounts];
+                      Image=InsertAccount;
+                      OnAction=VAR
+                                 AccSchedLine@1001 : Record 85;
+                               BEGIN
+                                 CurrPage.UPDATE(TRUE);
+                                 SetupAccSchedLine(AccSchedLine);
+                                 AccSchedManagement.InsertGLAccounts(AccSchedLine);
+                               END;
+                                }
+      { 5       ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Insert CF Accounts;
+                                 ENA=Insert CF Accounts];
+                      Image=InsertAccount;
+                      OnAction=VAR
+                                 AccSchedLine@1001 : Record 85;
+                               BEGIN
+                                 CurrPage.UPDATE(TRUE);
+                                 SetupAccSchedLine(AccSchedLine);
+                                 AccSchedManagement.InsertCFAccounts(AccSchedLine);
+                               END;
+                                }
+      { 3       ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Insert Cost Types;
+                                 ENA=Insert Cost Types];
+                      Image=InsertAccount;
+                      OnAction=VAR
+                                 AccSchedLine@1001 : Record 85;
+                               BEGIN
+                                 CurrPage.UPDATE(TRUE);
+                                 SetupAccSchedLine(AccSchedLine);
+                                 AccSchedManagement.InsertCostTypes(AccSchedLine);
+                               END;
+                                }
+      { 24      ;2   ;Action    ;
+                      Name=EditColumnLayoutSetup;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Edit Column Layout Setup;
+                                 ENA=Edit Column Layout Setup];
+                      RunObject=Page 489;
+                      Image=SetupColumns }
+      { 22      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 AccSchedName@1001 : Record 84;
+                                 AccSched@1002 : Report 25;
+                               BEGIN
+                                 AccSchedName.GET("Schedule Name");
+                                 AccSched.SetAccSchedName(AccSchedName.Name);
+                                 AccSched.SetColumnLayoutName(AccSchedName."Default Column Layout");
+                                 AccSched.RUN;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 18  ;1   ;Field     ;
+                Lookup=Yes;
+                CaptionML=[ENU=Name;
+                           ENA=Name];
+                SourceExpr=CurrentSchedName;
+                OnValidate=BEGIN
+                             AccSchedManagement.CheckName(CurrentSchedName);
+                             CurrentSchedNameOnAfterValidat;
+                           END;
+
+                OnLookup=BEGIN
+                           EXIT(AccSchedManagement.LookupName(CurrentSchedName,Text));
+                         END;
+                          }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Row No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Totaling Type" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr=Totaling }
+
+    { 33  ;2   ;Field     ;
+                SourceExpr="Row Type" }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr="Amount Type" }
+
+    { 41  ;2   ;Field     ;
+                SourceExpr="Dimension 1 Totaling";
+                Visible=FALSE;
+                OnLookup=BEGIN
+                           EXIT(LookUpDimFilter(1,Text));
+                         END;
+                          }
+
+    { 43  ;2   ;Field     ;
+                SourceExpr="Dimension 2 Totaling";
+                Visible=FALSE;
+                OnLookup=BEGIN
+                           EXIT(LookUpDimFilter(2,Text));
+                         END;
+                          }
+
+    { 45  ;2   ;Field     ;
+                SourceExpr="Dimension 3 Totaling";
+                Visible=FALSE;
+                OnLookup=BEGIN
+                           EXIT(LookUpDimFilter(3,Text));
+                         END;
+                          }
+
+    { 47  ;2   ;Field     ;
+                SourceExpr="Dimension 4 Totaling";
+                Visible=FALSE;
+                OnLookup=BEGIN
+                           EXIT(LookUpDimFilter(4,Text));
+                         END;
+                          }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr=Show }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr=Bold;
+                Visible=FALSE }
+
+    { 25  ;2   ;Field     ;
+                SourceExpr=Italic;
+                Visible=FALSE }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr=Underline;
+                Visible=FALSE }
+
+    { 9   ;2   ;Field     ;
+                SourceExpr="Double Underline";
+                Visible=False }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Show Opp Sign Budget";
+                Visible=True }
+
+    { 31  ;2   ;Field     ;
+                SourceExpr="Show Opposite Sign";
+                Visible=TRUE }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="New Page" }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      AccSchedManagement@1000 : Codeunit 8;
+      CurrentSchedName@1001 : Code[10];
+      AfterxRec@1002 : Boolean;
+      DimCaptionsInitialized@1003 : Boolean;
+      MasterSetup@1000000000 : Record 50008;
+      "Print TBI FormatVisible"@19042437 : Boolean INDATASET;
+      ExcelBuff@1000000001 : Record 370;
+      AccLine@1000000002 : Record 85;
+
+    PROCEDURE SetAccSchedName@1(NewAccSchedName@1000 : Code[10]);
+    BEGIN
+      CurrentSchedName := NewAccSchedName;
+    END;
+
+    LOCAL PROCEDURE CurrentSchedNameOnAfterValidat@19053875();
+    BEGIN
+      CurrPage.SAVERECORD;
+      AccSchedManagement.SetName(CurrentSchedName,Rec);
+      CurrPage.UPDATE(FALSE);
+    END;
+
+    PROCEDURE SetupAccSchedLine@3(VAR AccSchedLine@1000 : Record 85);
+    BEGIN
+      AccSchedLine.COPY(Rec);
+      IF "Line No." = 0 THEN BEGIN
+        AccSchedLine := xRec;
+        IF AccSchedLine.NEXT = 0 THEN
+          AccSchedLine."Line No." := xRec."Line No." + 10000;
+      END;
+    END;
+
+    BEGIN
+    {
+      //TBI -CODE ADDED FOR VISBILITY OF FIELDS.
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13C
+      Code added or edited to solve compilation errors after migrating merged and customized objects to 2013 from 2009 R2
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+      //CR005
+      Code and Export to excel action added to export the account schedule data into excel.
+    }
+    END.
+  }
+}
+

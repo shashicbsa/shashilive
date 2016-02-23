@@ -1,0 +1,595 @@
+OBJECT Page 9004 Bookkeeper Role Center
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10,NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Role Center;
+               ENA=Role Centre];
+    PageType=RoleCenter;
+    ActionList=ACTIONS
+    {
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 34      ;1   ;Action    ;
+                      CaptionML=[ENU=A&ccount Schedule;
+                                 ENA=A&ccount Schedule];
+                      RunObject=Report 25;
+                      Image=Report }
+      { 9       ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Trial Balance;
+                                 ENA=&Trial Balance];
+                      Image=Balance }
+      { 32      ;2   ;Action    ;
+                      CaptionML=[ENU=&G/L Trial Balance;
+                                 ENA=&G/L Trial Balance];
+                      RunObject=Report 6;
+                      Image=Report }
+      { 33      ;2   ;Action    ;
+                      CaptionML=[ENU=Bank &Detail Trial Balance;
+                                 ENA=Bank &Detail Trial Balance];
+                      RunObject=Report 1404;
+                      Image=Report }
+      { 36      ;2   ;Action    ;
+                      CaptionML=[ENU=T&rial Balance/Budget;
+                                 ENA=T&rial Balance/Budget];
+                      RunObject=Report 9;
+                      Image=Report }
+      { 37      ;2   ;Action    ;
+                      CaptionML=[ENU=Trial Balance by &Period;
+                                 ENA=Trial Balance by &Period];
+                      RunObject=Report 38;
+                      Image=Report }
+      { 48      ;2   ;Action    ;
+                      CaptionML=[ENU=Closing Tria&l Balance;
+                                 ENA=Closing Tria&l Balance];
+                      RunObject=Report 10;
+                      Image=Report }
+      { 46      ;1   ;Action    ;
+                      CaptionML=[ENU=&Fiscal Year Balance;
+                                 ENA=&Fiscal Year Balance];
+                      RunObject=Report 36;
+                      Image=Report }
+      { 47      ;1   ;Action    ;
+                      CaptionML=[ENU=Balance C&omp. . Prev. Year;
+                                 ENA=Balance C&omp. . Prev. Year];
+                      RunObject=Report 37;
+                      Image=Report }
+      { 1500007 ;1   ;ActionGroup;
+                      CaptionML=[ENU=Financial Statements;
+                                 ENA=Financial Statements] }
+      { 1500008 ;2   ;Action    ;
+                      CaptionML=[ENU=Balance Sheet;
+                                 ENA=Balance Sheet];
+                      RunObject=Report 28024;
+                      Image=Report }
+      { 1500009 ;2   ;Action    ;
+                      CaptionML=[ENU=Income Statement;
+                                 ENA=Income Statement];
+                      RunObject=Report 28025;
+                      Image=Report }
+      { 1500010 ;2   ;Action    ;
+                      CaptionML=[ENU=Financial Analysis Report;
+                                 ENA=Financial Analysis Report];
+                      RunObject=Report 28026;
+                      Image=Report }
+      { 1500011 ;2   ;Action    ;
+                      CaptionML=[ENU=Transaction Detail;
+                                 ENA=Transaction Detail];
+                      RunObject=Report 17109;
+                      Image=Report }
+      { 49      ;1   ;Separator  }
+      { 50      ;1   ;Action    ;
+                      CaptionML=[ENU=&Aged Accounts Receivable;
+                                 ENA=&Aged Accounts Receivable];
+                      RunObject=Report 120;
+                      Image=Report }
+      { 51      ;1   ;Action    ;
+                      CaptionML=[ENU=Aged Accou&nts Payable;
+                                 ENA=Aged Accou&nts Payable];
+                      RunObject=Report 322;
+                      Image=Report }
+      { 52      ;1   ;Action    ;
+                      CaptionML=[ENU=Reconcile Cust. and &Vend. Accs;
+                                 ENA=Reconcile Cust. and &Vend. Accs];
+                      RunObject=Report 33;
+                      Image=Report }
+      { 1500012 ;1   ;Action    ;
+                      CaptionML=[ENU=Aged Acc. Rec. (BackDating);
+                                 ENA=Aged Acc. Rec. (BackDating)];
+                      RunObject=Report 17116;
+                      Image=Report }
+      { 1500013 ;1   ;Action    ;
+                      CaptionML=[ENU=Aged Acc. Pay. (BackDating);
+                                 ENA=Aged Acc. Pay. (BackDating)];
+                      RunObject=Report 17117;
+                      Image=Report }
+      { 1500014 ;1   ;Action    ;
+                      CaptionML=[ENU=AU/NZ Statement;
+                                 ENA=AU/NZ Statement];
+                      RunObject=Report 17110;
+                      Image=Report }
+      { 53      ;1   ;Separator  }
+      { 54      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT Reg&istration No. Check;
+                                 ENA=Exemption Cert&ificate No. Check];
+                      RunObject=Report 32;
+                      Image=Report }
+      { 55      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT E&xceptions;
+                                 ENA=GST E&xceptions];
+                      RunObject=Report 31;
+                      Image=Report }
+      { 56      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT State&ment;
+                                 ENA=GST State&ment];
+                      RunObject=Report 12;
+                      Image=Report }
+      { 1500015 ;1   ;Action    ;
+                      CaptionML=[ENU=VAT Report - Vendor;
+                                 ENA=GST Report - Vendor];
+                      RunObject=Report 28027;
+                      Image=Report }
+      { 1500016 ;1   ;Action    ;
+                      CaptionML=[ENU=VAT Report - Customer;
+                                 ENA=GST Report - Customer];
+                      RunObject=Report 28028;
+                      Image=Report }
+      { 1500017 ;1   ;Action    ;
+                      CaptionML=[ENU=Quaterly VAT Return;
+                                 ENA=Quarterly GST Return];
+                      RunObject=Report 16629;
+                      Image=Report }
+      { 1500018 ;1   ;Action    ;
+                      CaptionML=[ENU=Monthly VAT Declaration;
+                                 ENA=Monthly GST Declaration];
+                      RunObject=Report 16631;
+                      Image=Report }
+      { 57      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT - VI&ES Declaration Tax Auth;
+                                 ENA=VAT - VI&ES Declaration Tax Auth];
+                      RunObject=Report 19;
+                      Image=Report }
+      { 58      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT - VIES Declaration Dis&k;
+                                 ENA=VAT - VIES Declaration Dis&k];
+                      RunObject=Report 88;
+                      Image=Report }
+      { 59      ;1   ;Action    ;
+                      CaptionML=[ENU=EC &Sales List;
+                                 ENA=EC &Sales List];
+                      RunObject=Report 130;
+                      Image=Report }
+      { 1500019 ;1   ;Separator  }
+      { 1500020 ;1   ;Action    ;
+                      CaptionML=[ENU=WHT PND 1;
+                                 ENA=WHT PND 1];
+                      RunObject=Report 14307;
+                      Image=Report }
+      { 1500021 ;1   ;Action    ;
+                      CaptionML=[ENU=WHT PND 2;
+                                 ENA=WHT PND 2];
+                      RunObject=Report 14308;
+                      Image=Report }
+      { 1500022 ;1   ;Action    ;
+                      CaptionML=[ENU=WHT PND 3;
+                                 ENA=WHT PND 3];
+                      RunObject=Report 14309;
+                      Image=Report }
+      { 1500023 ;1   ;Action    ;
+                      CaptionML=[ENU=WHT PND 53;
+                                 ENA=WHT PND 53];
+                      RunObject=Report 14310;
+                      Image=Report }
+      { 1500025 ;1   ;Action    ;
+                      CaptionML=[ENU=Certificate of Creditable tax;
+                                 ENA=Certificate of Creditable Tax];
+                      RunObject=Report 16626;
+                      Image=Report }
+      { 1500026 ;1   ;Action    ;
+                      CaptionML=[ENU=Monthly Remittance Return WHT;
+                                 ENA=Monthly Remittance Return WHT];
+                      RunObject=Report 16627;
+                      Image=Report }
+      { 1500027 ;1   ;Action    ;
+                      CaptionML=[ENU=E-Filing;
+                                 ENA=E-Filing];
+                      RunObject=Report 16630;
+                      Image=Report }
+      { 1500024 ;1   ;Separator  }
+      { 1500028 ;1   ;Action    ;
+                      CaptionML=[ENU=Bank Account Reconcilation;
+                                 ENA=Bank Account Reconcilation];
+                      RunObject=Report 28021;
+                      Image=Report }
+      { 1900000011;0 ;ActionContainer;
+                      ActionContainerType=HomeItems }
+      { 2       ;1   ;Action    ;
+                      CaptionML=[ENU=Chart of Accounts;
+                                 ENA=Chart of Accounts];
+                      RunObject=Page 16 }
+      { 63      ;1   ;Action    ;
+                      CaptionML=[ENU=Bank Accounts;
+                                 ENA=Bank Accounts];
+                      RunObject=Page 371;
+                      Image=BankAccount }
+      { 12      ;1   ;Action    ;
+                      CaptionML=[ENU=Customers;
+                                 ENA=Customers];
+                      RunObject=Page 22;
+                      Image=Customer }
+      { 20      ;1   ;Action    ;
+                      CaptionML=[ENU=Balance;
+                                 ENA=Balance];
+                      RunObject=Page 22;
+                      RunPageView=WHERE(Balance (LCY)=FILTER(<>0));
+                      Image=Balance }
+      { 3       ;1   ;Action    ;
+                      CaptionML=[ENU=Vendors;
+                                 ENA=Vendors];
+                      RunObject=Page 27;
+                      Image=Vendor }
+      { 5       ;1   ;Action    ;
+                      CaptionML=[ENU=Balance;
+                                 ENA=Balance];
+                      RunObject=Page 27;
+                      RunPageView=WHERE(Balance (LCY)=FILTER(<>0));
+                      Image=Balance }
+      { 83      ;1   ;Action    ;
+                      CaptionML=[ENU=Payment on Hold;
+                                 ENA=Payment on Hold];
+                      RunObject=Page 27;
+                      RunPageView=WHERE(Blocked=FILTER(Payment)) }
+      { 10      ;1   ;Action    ;
+                      CaptionML=[ENU=VAT Statements;
+                                 ENA=GST Statements];
+                      RunObject=Page 320 }
+      { 91      ;1   ;Action    ;
+                      CaptionML=[ENU=Purchase Invoices;
+                                 ENA=Purchase Invoices];
+                      RunObject=Page 9308 }
+      { 6       ;1   ;Action    ;
+                      CaptionML=[ENU=Purchase Orders;
+                                 ENA=Purchase Orders];
+                      RunObject=Page 9307 }
+      { 92      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Invoices;
+                                 ENA=Sales Invoices];
+                      RunObject=Page 9301;
+                      Image=Invoice }
+      { 14      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Orders;
+                                 ENA=Sales Orders];
+                      RunObject=Page 9305;
+                      Image=Order }
+      { 95      ;1   ;Action    ;
+                      CaptionML=[ENU=Cash Receipt Journals;
+                                 ENA=Cash Receipt Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Cash Receipts),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 96      ;1   ;Action    ;
+                      CaptionML=[ENU=Payment Journals;
+                                 ENA=Payment Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Payments),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 97      ;1   ;Action    ;
+                      CaptionML=[ENU=General Journals;
+                                 ENA=General Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(General),
+                                        Recurring=CONST(No));
+                      Image=Journal }
+      { 98      ;1   ;Action    ;
+                      CaptionML=[ENU=Recurring General Journals;
+                                 ENA=Recurring General Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(General),
+                                        Recurring=CONST(Yes)) }
+      { 1500002 ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Tax Invoice Management;
+                                 ENA=Sales Tax Invoice Management];
+                      RunObject=Page 28070 }
+      { 1900000012;0 ;ActionContainer;
+                      ActionContainerType=ActivityButtons }
+      { 39      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Posted Documents;
+                                 ENA=Posted Documents];
+                      Image=FiledPosted }
+      { 11      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Shipments;
+                                 ENA=Posted Sales Shipments];
+                      RunObject=Page 142;
+                      Image=PostedShipment }
+      { 25      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Invoices;
+                                 ENA=Posted Sales Invoices];
+                      RunObject=Page 143;
+                      Image=PostedOrder }
+      { 13      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Return Receipts;
+                                 ENA=Posted Return Receipts];
+                      RunObject=Page 6662;
+                      Image=PostedReturnReceipt }
+      { 26      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Credit Memos;
+                                 ENA=Posted Sales CR/Adj Notes];
+                      RunObject=Page 144;
+                      Image=PostedOrder }
+      { 100     ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purchase Receipts;
+                                 ENA=Posted Purchase Receipts];
+                      RunObject=Page 145 }
+      { 27      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purchase Invoices;
+                                 ENA=Posted Purchase Invoices];
+                      RunObject=Page 146 }
+      { 101     ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Return Shipments;
+                                 ENA=Posted Return Shipments];
+                      RunObject=Page 6652 }
+      { 28      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purchase Credit Memos;
+                                 ENA=Posted Purchase CR/Adj Notes];
+                      RunObject=Page 147 }
+      { 1500003 ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Tax Invoices;
+                                 ENA=Posted Sales Tax Invoices];
+                      RunObject=Page 28081 }
+      { 1500004 ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Tax Credit Memos;
+                                 ENA=Posted Sales Tax CR/Adj Notes];
+                      RunObject=Page 28082 }
+      { 1500005 ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purch. Tax Invoices;
+                                 ENA=Posted Purch. Tax Invoices];
+                      RunObject=Page 28079 }
+      { 1500006 ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purch. Tax Credit Memos;
+                                 ENA=Posted Purch. Tax CR/Adj Notes];
+                      RunObject=Page 28080 }
+      { 29      ;2   ;Action    ;
+                      CaptionML=[ENU=Issued Reminders;
+                                 ENA=Issued Reminders];
+                      RunObject=Page 440;
+                      Image=OrderReminder }
+      { 30      ;2   ;Action    ;
+                      CaptionML=[ENU=Issued Fi. Charge Memos;
+                                 ENA=Issued Fi. Charge Memos];
+                      RunObject=Page 452 }
+      { 102     ;2   ;Action    ;
+                      CaptionML=[ENU=G/L Registers;
+                                 ENA=G/L Registers];
+                      RunObject=Page 116;
+                      Image=GLRegisters }
+      { 31      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Administration;
+                                 ENA=Administration];
+                      Image=Administration }
+      { 38      ;2   ;Action    ;
+                      CaptionML=[ENU=Currencies;
+                                 ENA=Currencies];
+                      RunObject=Page 5;
+                      Image=Currency }
+      { 40      ;2   ;Action    ;
+                      CaptionML=[ENU=Accounting Periods;
+                                 ENA=Accounting Periods];
+                      RunObject=Page 100;
+                      Image=AccountingPeriods }
+      { 41      ;2   ;Action    ;
+                      CaptionML=[ENU=Number Series;
+                                 ENA=Number Series];
+                      RunObject=Page 456 }
+      { 16      ;0   ;ActionContainer;
+                      ActionContainerType=NewDocumentItems }
+      { 15      ;1   ;Action    ;
+                      CaptionML=[ENU=C&ustomer;
+                                 ENA=C&ustomer];
+                      RunObject=Page 21;
+                      Promoted=No;
+                      Image=Customer;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 104     ;1   ;Action    ;
+                      CaptionML=[ENU=Sales &Invoice;
+                                 ENA=Sales &Invoice];
+                      RunObject=Page 43;
+                      Promoted=No;
+                      Image=Invoice;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 7       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Credit &Memo;
+                                 ENA=Sales CR/Adj &Note];
+                      RunObject=Page 44;
+                      Promoted=No;
+                      Image=CreditMemo;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 4       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales &Fin. Charge Memo;
+                                 ENA=Sales &Fin. Charge Memo];
+                      RunObject=Page 446;
+                      Promoted=No;
+                      Image=FinChargeMemo;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 1       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales &Reminder;
+                                 ENA=Sales &Reminder];
+                      RunObject=Page 434;
+                      Promoted=No;
+                      Image=Reminder;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 554     ;1   ;Separator  }
+      { 555     ;1   ;Action    ;
+                      CaptionML=[ENU=&Vendor;
+                                 ENA=&Vendor];
+                      RunObject=Page 26;
+                      Promoted=No;
+                      Image=Vendor;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 66      ;1   ;Action    ;
+                      CaptionML=[ENU=&Purchase Invoice;
+                                 ENA=&Purchase Invoice];
+                      RunObject=Page 51;
+                      Promoted=No;
+                      Image=Invoice;
+                      PromotedCategory=Process;
+                      RunPageMode=Create }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 67      ;1   ;Separator ;
+                      CaptionML=[ENU=Tasks;
+                                 ENA=Tasks];
+                      IsHeader=Yes }
+      { 74      ;1   ;Action    ;
+                      CaptionML=[ENU=Cash Re&ceipt Journal;
+                                 ENA=Cash Re&ceipt Journal];
+                      RunObject=Page 255;
+                      Image=CashReceiptJournal }
+      { 75      ;1   ;Action    ;
+                      CaptionML=[ENU=Payment &Journal;
+                                 ENA=Payment &Journal];
+                      RunObject=Page 256;
+                      Image=PaymentJournal }
+      { 19      ;1   ;Action    ;
+                      CaptionML=[ENU=Payment Registration;
+                                 ENA=Payment Registration];
+                      RunObject=Page 981;
+                      Image=Payment }
+      { 77      ;1   ;Separator  }
+      { 78      ;1   ;Action    ;
+                      CaptionML=[ENU=B&ank Account Reconciliations;
+                                 ENA=B&ank Account Reconciliations];
+                      RunObject=Page 379;
+                      Image=BankAccountRec }
+      { 110     ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Adjust E&xchange Rates;
+                                 ENA=Adjust E&xchange Rates];
+                      RunObject=Report 595;
+                      Image=AdjustExchangeRates }
+      { 112     ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Post Inventor&y Cost to G/L;
+                                 ENA=Post Inventor&y Cost to G/L];
+                      RunObject=Report 1002;
+                      Image=PostInventoryToGL }
+      { 113     ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Calc. and Pos&t VAT Settlement;
+                                 ENA=Calc. and Pos&t GST Settlement];
+                      RunObject=Report 20;
+                      Image=SettleOpenTransactions }
+      { 1500029 ;1   ;Action    ;
+                      CaptionML=[ENU=Calc. and Post WHT Settlement;
+                                 ENA=Calc. and Post WHT Settlement];
+                      RunObject=Report 28041;
+                      Image=Report }
+      { 1500030 ;1   ;Action    ;
+                      CaptionML=[ENU=Adjust Settlement Exch. Rates;
+                                 ENA=Adjust Settlement Exch. Rates];
+                      RunObject=Report 28140;
+                      Image=Report }
+      { 1500031 ;1   ;Action    ;
+                      CaptionML=[ENU=Calculate GST Settlement;
+                                 ENA=Calculate GST Settlement];
+                      RunObject=Report 11603;
+                      Image=CalculateSalesTax }
+      { 1500032 ;1   ;ActionGroup;
+                      CaptionML=[ENU=BAS;
+                                 ENA=BAS] }
+      { 1500033 ;2   ;Action    ;
+                      CaptionML=[ENU=BAS-Update;
+                                 ENA=BAS-Update];
+                      RunObject=Report 11604;
+                      Image=Report }
+      { 1500034 ;2   ;Action    ;
+                      CaptionML=[ENU=Print BAS Export File;
+                                 ENA=Print BAS Export File];
+                      RunObject=Report 11606;
+                      Image=Report }
+      { 1500035 ;2   ;Action    ;
+                      CaptionML=[ENU=BAS Calculation Sheet;
+                                 ENA=BAS Calculation Sheet];
+                      RunObject=Page 11601;
+                      Image=CalculateVAT }
+      { 1500036 ;2   ;Action    ;
+                      CaptionML=[ENU=BAS Setup Preview;
+                                 ENA=BAS Setup Preview];
+                      RunObject=Page 11609;
+                      Image=View }
+      { 84      ;1   ;Separator ;
+                      CaptionML=[ENU=Administration;
+                                 ENA=Administration];
+                      IsHeader=Yes }
+      { 86      ;1   ;Action    ;
+                      CaptionML=[ENU=Sa&les && Receivables Setup;
+                                 ENA=Sa&les && Receivables Setup];
+                      RunObject=Page 459;
+                      Image=Setup }
+      { 89      ;1   ;Separator ;
+                      CaptionML=[ENU=History;
+                                 ENA=History];
+                      IsHeader=Yes }
+      { 90      ;1   ;Action    ;
+                      CaptionML=[ENU=Navi&gate;
+                                 ENA=Navi&gate];
+                      RunObject=Page 344;
+                      Image=Navigate }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000008;0;Container;
+                ContainerType=RoleCenterArea }
+
+    { 1900724808;1;Group   }
+
+    { 1901197008;2;Part   ;
+                PagePartID=Page9036;
+                PartType=Page }
+
+    { 1900724708;1;Group   }
+
+    { 17  ;2   ;Part      ;
+                PagePartID=Page675;
+                Visible=false;
+                PartType=Page }
+
+    { 1907692008;2;Part   ;
+                PagePartID=Page9150;
+                PartType=Page }
+
+    { 1902476008;2;Part   ;
+                PagePartID=Page9151;
+                PartType=Page }
+
+    { 1903012608;2;Part   ;
+                PagePartID=Page9175;
+                Visible=FALSE;
+                PartType=Page }
+
+    { 1901377608;2;Part   ;
+                PartType=System;
+                SystemPartID=MyNotes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

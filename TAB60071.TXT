@@ -1,0 +1,31 @@
+OBJECT Table 60071 dimupdate
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/01/16;
+    Time=19:23:08;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;dimval              ;Code20         }
+  }
+  KEYS
+  {
+    {    ;dimval                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,33 @@
+OBJECT Table 50013 Export Account Range
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/06/10;
+    Time=[ 8:52:17];
+    Version List=YIMM1.0;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page50074;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Export Type         ;Code20         }
+    { 2   ;   ;Account Range       ;Code20        ;TableRelation="G/L Account" }
+    { 4   ;   ;Vendor Type         ;Code50         }
+  }
+  KEYS
+  {
+    {    ;Export Type                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

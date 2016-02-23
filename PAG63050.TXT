@@ -1,0 +1,235 @@
+OBJECT Page 63050 Customer Acc Payable List-ALL
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/16/16;
+    Time=20:06:11;
+    Modified=Yes;
+    Version List=SMDEV1.0,CR001;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Sales List;
+               ENA=Sales List];
+    SourceTable=Table36;
+    SourceTableView=WHERE(Document Type=FILTER(Credit Memo),
+                          Reason Code=FILTER(SALRT));
+    DataCaptionFields=Document Type;
+    PageType=List;
+    CardPageID=Incentive Invoice All;
+    OnOpenPage=BEGIN
+                 {
+                 EVALUATE(User_ID,USERID);
+                 SETRANGE(UID,User_ID);
+                 }
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 19      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Line;
+                                 ENA=&Line];
+                      Image=Line }
+      { 20      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Card;
+                                 ENA=Card];
+                      Promoted=Yes;
+                      Image=EditLines;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 PageID@1000 : Integer;
+                               BEGIN
+                                 CASE "Document Type" OF
+                                   "Document Type"::Quote:
+                                     PageID := PAGE::"Sales Quote";
+                                   "Document Type"::Order:
+                                     PageID := PAGE::"Sales Order";
+                                   "Document Type"::Invoice:
+                                     PageID := PAGE::"Sales Invoice";
+                                   "Document Type"::"Return Order":
+                                     PageID := PAGE::"Sales Return Order";
+                                   "Document Type"::"Credit Memo":
+                                     PageID := PAGE::"Sales Credit Memo";
+                                   "Document Type"::"Blanket Order":
+                                     PageID := PAGE::"Blanket Sales Order";
+                                 END;
+
+                                 PageID := GetPageId(PageID);
+
+                                 IF PageID <> 0 THEN
+                                   PAGE.RUN(PageID,Rec);
+                               END;
+                                }
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1904702706;1 ;Action    ;
+                      CaptionML=[ENU=Sales Reservation Avail.;
+                                 ENA=Sales Reservation Avail.];
+                      RunObject=Report 209;
+                      Promoted=No;
+                      Visible=FALSE;
+                      Image=Report;
+                      PromotedCategory=Report }
+      { 1102159001;1 ;Action    ;
+                      CaptionML=ENU=Tanda Terima Report(Batch Report Invoice);
+                      RunObject=Report 50034;
+                      Visible=FALSE;
+                      Image=Report }
+      { 1102159002;1 ;Action    ;
+                      CaptionML=ENU=Batch Post Incentive;
+                      RunObject=Report 298;
+                      Visible=TRUE;
+                      Image=Report }
+      { 1102159003;1 ;Action    ;
+                      CaptionML=ENU=Tanda Terima Report(Batch Report-Incentive);
+                      RunObject=Report 50033;
+                      Visible=FALSE;
+                      Image=Report }
+      { 1000000000;1 ;Action    ;
+                      CaptionML=ENU=Interest Deposit Propac Batch Posting;
+                      RunObject=Report 50041;
+                      Image=Report }
+      { 1000000001;1 ;Action    ;
+                      CaptionML=ENU=MKT Activities - Batch Posting;
+                      RunObject=Report 50045;
+                      Visible=TRUE;
+                      Image=Report }
+      { 1102159004;1 ;ActionGroup;
+                      CaptionML=ENU=GPORT }
+      { 1102159005;2 ;Action    ;
+                      CaptionML=ENU=Batch Post Purchase Invoices;
+                      RunObject=Report 60073;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                Width=23;
+                SourceExpr="No." }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="Posting Date";
+                Visible=TRUE }
+
+    { 1102159007;2;Field  ;
+                Width=20;
+                SourceExpr="Sell-to Customer No." }
+
+    { 1102159008;2;Field  ;
+                Width=50;
+                SourceExpr="Sell-to Customer Name" }
+
+    { 1102159010;2;Field  ;
+                SourceExpr="Slip Amount" }
+
+    { 1102159009;2;Field  ;
+                SourceExpr="Slip Amount (LCY)" }
+
+    { 1102159011;2;Field  ;
+                Width=20;
+                SourceExpr=UID }
+
+    { 1102159012;2;Field  ;
+                SourceExpr=Status }
+
+    { 1102159013;2;Field  ;
+                SourceExpr="New or Cancel" }
+
+    { 1102159014;2;Field  ;
+                SourceExpr=Interfaced }
+
+    { 1102159015;2;Field  ;
+                SourceExpr="G-Port Ref No." }
+
+    { 1102159016;2;Field  ;
+                SourceExpr="Type Of Transaction" }
+
+    { 1102159017;2;Field  ;
+                Width=35;
+                SourceExpr="External Document No." }
+
+    { 1102159019;2;Field  ;
+                SourceExpr="Document Date";
+                Visible=true }
+
+    { 1102159018;2;Field  ;
+                SourceExpr="Due Date";
+                Visible=true }
+
+    { 1102159020;2;Field  ;
+                Width=20;
+                SourceExpr="Ship-to Code";
+                Visible=true }
+
+    { 1102159021;2;Field  ;
+                Width=20;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=true }
+
+    { 1102159022;2;Field  ;
+                Width=20;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=true }
+
+    { 1000000010;2;Field  ;
+                Width=10;
+                SourceExpr="WHT Business Posting Group";
+                Visible=true }
+
+    { 1102159025;2;Field  ;
+                Width=10;
+                SourceExpr="Customer Posting Group" }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      User_ID@1102159001 : Code[50];
+
+    LOCAL PROCEDURE GetPageId@29(PageId@1000 : Integer) : Integer;
+    VAR
+      MiniPagesMapping@1001 : Record 1305;
+    BEGIN
+      IF MiniPagesMapping.READPERMISSION THEN
+        IF MiniPagesMapping.GET(PageId) THEN
+          EXIT(MiniPagesMapping.SubstitutePageID);
+
+      EXIT(PageId);
+    END;
+
+    BEGIN
+    {
+      // CAUYIMM
+      New List Page Created for YIMM
+      Code Commented on OnOpenPage because this List for SuperUser
+      //CR001
+      Interest Deposit Batch Post Report Added.
+    }
+    END.
+  }
+}
+

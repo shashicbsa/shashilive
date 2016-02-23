@@ -1,0 +1,88 @@
+OBJECT Table 50027 Temp Data Vendor
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/05/11;
+    Time=10:00:39;
+    Version List=NAVW15.00,NAVAP5.00,YIMMNNPWP;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    OnInsert=BEGIN
+               Vend.GET("Vendor No.");
+               "Name 2" := Vend.Name;
+             END;
+
+    OnModify=BEGIN
+               "Last Date Modified" := TODAY;
+             END;
+
+    OnDelete=BEGIN
+               PostCodeCheck.DeleteAllAddressID(DATABASE::"Order Address",Rec.GETPOSITION);
+             END;
+
+    OnRename=BEGIN
+               "Last Date Modified" := TODAY;
+               PostCodeCheck.MoveAllAddressID(
+                 DATABASE::"Order Address",xRec.GETPOSITION,DATABASE::"Order Address",Rec.GETPOSITION);
+             END;
+
+    CaptionML=ENU=Order Address;
+    LookupPageID=Page369;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Vendor No.          ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=ENU=Vendor No.;
+                                                   NotBlank=Yes }
+    { 2   ;   ;Code                ;Code20        ;CaptionML=ENU=Code;
+                                                   NotBlank=Yes;
+                                                   Description=YIMMNNPWP }
+    { 4   ;   ;Name 2              ;Text50        ;CaptionML=ENU=Name 2 }
+    { 5   ;   ;Last Date Modified  ;Date           }
+  }
+  KEYS
+  {
+    {    ;Vendor No.,Code                         ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=untitled';
+      Vend@1001 : Record 23;
+      PostCode@1002 : Record 225;
+      PostCodeCheck@1500000 : Codeunit 28000;
+
+    PROCEDURE Caption@1() : Text[130];
+    BEGIN
+      IF "Vendor No." = '' THEN
+        EXIT(Text000);
+      Vend.GET("Vendor No.");
+      EXIT(STRSUBSTNO('%1 %2 %3 %4',Vend."No.",Vend.Name,Code,"Name 2"));
+    END;
+
+    PROCEDURE DisplayMap@8();
+    VAR
+      MapPoint@1001 : Record 800;
+      MapMgt@1000 : Codeunit 802;
+    BEGIN
+      IF MapPoint.FIND('-') THEN
+        MapMgt.MakeSelection(DATABASE::"Order Address",GETPOSITION);
+    END;
+
+    BEGIN
+    {
+
+      //YIMMNNPWP
+       Length of the field is expanded.(ID-2)
+      //YIMMANPPKP
+        new field added
+    }
+    END.
+  }
+}
+

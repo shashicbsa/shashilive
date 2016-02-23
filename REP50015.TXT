@@ -1,0 +1,153 @@
+OBJECT Report 50015 Propac Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/19/14;
+    Time=11:55:14;
+    Modified=Yes;
+    Version List=Propac1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   LineNo := 10000;
+                   DocNo := '';
+                 END;
+
+    OnPreReport=BEGIN
+                  Imcas_Interface.RESET;
+                  Imcas_Interface.SETCURRENTKEY(Imcas_Interface."No.",Imcas_Interface."Dealer Code");
+                  Imcas_Interface.SETRANGE(Imcas_Interface."Sales Type",Imcas_Interface."Sales Type"::Propac);
+                  IF Imcas_Interface.FINDFIRST THEN REPEAT
+                    IF DocNo <> Imcas_Interface."No." THEN BEGIN
+                      Sales_Header.RESET;
+                      Sales_Header.INIT;
+                      Sales_Header."Document Type" := Sales_Header."Document Type"::Invoice;
+                      Sales_Header."No." := Imcas_Interface."No.";
+                      Sales_Header.INSERT(TRUE);
+                      Conversion_Cust.RESET;
+                      Conversion_Cust.SETRANGE(Conversion_Cust."Propac Code",Imcas_Interface."Dealer Code");
+                      IF Imcas_Interface."Npwp no." <> '' THEN BEGIN
+                        Conversion_Cust.SETRANGE(Conversion_Cust.NPWP,Imcas_Interface."Npwp no.");
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                          Sales_Header.VALIDATE(Sales_Header."Ship-to Code",Conversion_Cust.NPWP);
+                        END;
+                      END ELSE BEGIN
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                        END;
+                      END;
+                      Cust.GET(Conversion_Cust.NAV);
+                      Cust_Posting.GET;
+                      CASE Cust."Customer Type" OF
+                        Cust."Customer Type"::"Related Party":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local S/P Related Party");
+                        Cust."Customer Type"::"Third Party":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local S/P Third Party");
+                      END;
+                      Sales_Header."Type Of Transaction" := Sales_Header."Type Of Transaction"::Propac;
+                      Sales_Header."Order Date" := Imcas_Interface."Transaction Date";
+                      Sales_Header.VALIDATE(Sales_Header."Shipment Date",Imcas_Interface."Transaction Date");
+                      Sales_Header.VALIDATE(Sales_Header."Due Date",Imcas_Interface."Due Date");
+                      Sales_Header.VALIDATE(Sales_Header."Currency Code",Imcas_Interface.Currency);
+                      Sales_Header."Posting No." := Imcas_Interface."No.";
+                      Master_Setup.GET;
+                      IF FORMAT(Master_Setup."Propac Tax Period") <> '' THEN
+                        Sales_Header."Tax Invoice Date" := CALCDATE(Master_Setup."Propac Tax Period",Imcas_Interface."Invoice Date")
+                      ELSE
+                        Sales_Header."Tax Invoice Date" := Imcas_Interface."Invoice Date";
+                      Sales_Header."B/L Date" := Imcas_Interface."B/L Date";
+                      Sales_Header."External Document No." := Imcas_Interface."Ext.Doc.No.";
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      Sales_Header.Interfaced := TRUE;
+                      Sales_Header.MODIFY;
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      IF Imcas_Interface."VAT Required" THEN
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END ELSE BEGIN
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      IF Imcas_Interface."VAT Required" THEN BEGIN
+                        Master_Setup.GET;
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      END;
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END;
+                    Imcas_Interface.DELETE;
+                  UNTIL Imcas_Interface.NEXT = 0;
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Sales_Header@1000000000 : Record 36;
+      Sales_Line@1000000001 : Record 37;
+      Conversion_Cust@1000000002 : Record 50004;
+      LineNo@1000000003 : Integer;
+      Imcas_Interface@1000000004 : Record 50009;
+      DocNo@1000000005 : Code[20];
+      Master_Setup@1000000006 : Record 50008;
+      Exp@1000000007 : Text[30];
+      Cust@1000000008 : Record 18;
+      Cust_Posting@1000000009 : Record 50012;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

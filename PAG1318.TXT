@@ -1,0 +1,61 @@
+OBJECT Page 1318 Mini Sales Hist. Sell-to FactB
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Sell-to Customer Sales History;
+               ENA=Sell-to Customer Sales History];
+    SourceTable=Table18;
+    PageType=CardPart;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 9   ;1   ;Field     ;
+                CaptionML=[ENU=Open Sales Invoices;
+                           ENA=Open Sales Invoices];
+                ToolTipML=[ENU=Specifies the number of unposted sales invoices that have been registered for the customer.;
+                           ENA=Specifies the number of unposted sales invoices that have been registered for the customer.];
+                SourceExpr="No. of Invoices";
+                DrillDownPageID=Mini Sales Invoice List }
+
+    { 13  ;1   ;Field     ;
+                CaptionML=[ENU=Open Sales Credit Memos;
+                           ENA=Open Sales CR/Adj Notes];
+                ToolTipML=[ENU=Specifies the number of unposted sales credit memos that have been registered for the customer.;
+                           ENA=Specifies the number of unposted sales CR/Adj Notes that have been registered for the customer.];
+                SourceExpr="No. of Credit Memos";
+                DrillDownPageID=Mini Sales Credit Memos }
+
+    { 17  ;1   ;Field     ;
+                CaptionML=[ENU=Posted Sales Invoices;
+                           ENA=Posted Sales Invoices];
+                ToolTipML=[ENU=Specifies the number of posted sales invoices that have been registered for the customer.;
+                           ENA=Specifies the number of posted sales invoices that have been registered for the customer.];
+                SourceExpr="No. of Pstd. Invoices";
+                DrillDownPageID=Mini Posted Sales Invoices }
+
+    { 21  ;1   ;Field     ;
+                CaptionML=[ENU=Posted Sales Credit Memos;
+                           ENA=Posted Sales CR/Adj Notes];
+                ToolTipML=[ENU=Specifies the number of posted sales credit memos that have been registered for the customer.;
+                           ENA=Specifies the number of posted sales CR/Adj Notes that have been registered for the customer.];
+                SourceExpr="No. of Pstd. Credit Memos";
+                DrillDownPageID=Mini Posted Sales Credit Memos }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
