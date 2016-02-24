@@ -1,0 +1,244 @@
+OBJECT Report 50086 Batch Post PROPAC Memos
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/04/15;
+    Time=19:57:13;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    OnPreReport=BEGIN
+
+                  Dimcode := "Sales Header".GETFILTER("Sales Header"."Shortcut Dimension 1 Code");
+                  Tot :="Sales Header".GETFILTER("Sales Header"."Type Of Transaction");
+                  EVALUATE(V_DateFilter,"Sales Header".GETFILTER("Sales Header"."Posting Date")); //VK
+                  IF Tot <> 'Propac' THEN BEGIN  //UPG13R2DEV
+                    IF (Dimcode = '') OR (Tot = '') THEN
+                      ERROR(Text004);
+                    END;
+
+                  IF ((PostingDateReq=0D) AND (ReplacePostingDate=TRUE)) THEN
+                    ERROR(Text000);
+
+                  IF ((PostingDateReq<>0D) AND (ReplacePostingDate=FALSE)) THEN
+                   ERROR(Text005);
+                END;
+
+    OnPostReport=BEGIN
+
+                   Window.CLOSE;
+                   MESSAGE(Text002,CounterOK,CounterTotal);
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table36;
+               DataItemTableView=SORTING(Document Type,No.)
+                                 WHERE(Document Type=CONST(Credit Memo),
+                                       Type Of Transaction=FILTER(Propac));
+               OnPreDataItem=BEGIN
+
+                               IF ReplacePostingDate AND (PostingDateReq = 0D) THEN
+                                 ERROR(Text000);
+
+
+                               IF V_DateFilter <> 0D THEN BEGIN
+                                 "Sales Header".SETFILTER("Posting Date",'=%1',V_DateFilter);
+                                 IF FINDSET THEN;
+                               END;
+
+                               //YIMMA
+
+                               PropacCrMEmo.RESET;
+                               CounterTotal :=PropacCrMEmo.COUNT;
+
+                               Window.OPEN(Text001);
+
+
+                               //YIMMA
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  PropacCrMEmo.RESET;
+                                  PropacCrMEmo.SETRANGE(PropacCrMEmo.DocNo,"Sales Header"."No.");
+
+                                  IF NOT (PropacCrMEmo.FINDFIRST) THEN
+                                  CurrReport.SKIP;
+
+
+
+                                  IF CalcInvDisc THEN
+                                    CalculateInvoiceDiscount;
+
+                                  Window.UPDATE(1,"No.");
+                                  Window.UPDATE(2,ROUND(Counter / CounterTotal * 10000,1));
+
+
+                                  Counter := Counter + 1;
+                                  CLEAR(SalesPost);
+                                  SalesPost.SetPostingDate(ReplacePostingDate,ReplaceDocumentDate,PostingDateReq);
+                                  IF SalesPost.RUN("Sales Header") THEN
+                                    BEGIN
+                                    CounterOK := CounterOK + 1;
+                                    IF MARKEDONLY THEN
+                                      MARK(FALSE);
+                                  END;
+                                END;
+
+               ReqFilterFields=Type Of Transaction,Shortcut Dimension 1 Code }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1102159001;;Container;
+                  Name=CA;
+                  ContainerType=ContentArea }
+
+      { 1102159002;1;Group  ;
+                  Name=Options;
+                  GroupType=Group }
+
+      { 1102159003;2;Field  ;
+                  Name=Posting Date;
+                  SourceExpr=PostingDateReq }
+
+      { 1102159004;2;Field  ;
+                  Name=Replace Posting Date;
+                  SourceExpr=ReplacePostingDate }
+
+      { 1102159005;2;Field  ;
+                  Name=Replace Document Date;
+                  SourceExpr=ReplaceDocumentDate }
+
+      { 1102159006;2;Field  ;
+                  Name=Calc. Inv. Discount;
+                  SourceExpr=CalcInvDisc }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      SalesLine@1102159016 : Record 37;
+      SalesSetup@1102159015 : Record 311;
+      Approvaltemplate@1102159014 : Record 464;
+      SalesCalcDisc@1102159013 : Codeunit 60;
+      SalesPost@1102159012 : Codeunit 80;
+      Window@1102159011 : Dialog;
+      PostingDateReq@1102159010 : Date;
+      CounterTotal@1102159009 : Integer;
+      Counter@1102159008 : Integer;
+      CounterOK@1102159007 : Integer;
+      ReplacePostingDate@1102159006 : Boolean;
+      ReplaceDocumentDate@1102159005 : Boolean;
+      CalcInvDisc@1102159004 : Boolean;
+      Dimcode@1102159003 : Code[10];
+      Tot@1102159002 : Text[30];
+      PropacCrMEmo@1102159001 : Record 50041;
+      Text000@1102159022 : TextConst 'ENU=Please enter the posting date.';
+      Text001@1102159021 : TextConst 'ENU=Posting credit memos  #1########## @2@@@@@@@@@@@@@';
+      Text002@1102159020 : TextConst 'ENU=%1 credit memos out of a total of %2 have now been posted.';
+      Text003@1102159019 : TextConst 'ENU=The exchange rate associated with the new posting date on the sales header will not apply to the sales lines.';
+      Text004@1102159018 : TextConst 'ENU=Plz Specify The Shop Code and Transaction Type';
+      Text005@1102159017 : TextConst 'ENU=Please check mark for posting date.';
+      V_DateFilter@1000000000 : Date;
+
+    PROCEDURE CalculateInvoiceDiscount@1();
+    BEGIN
+      SalesLine.RESET;
+      SalesLine.SETRANGE("Document Type","Sales Header"."Document Type");
+      SalesLine.SETRANGE("Document No.","Sales Header"."No.");
+      IF SalesLine.FIND('-') THEN
+        IF SalesCalcDisc.RUN(SalesLine) THEN BEGIN
+          "Sales Header".GET("Sales Header"."Document Type","Sales Header"."No.");
+          COMMIT;
+        END;
+    END;
+
+    BEGIN
+    {
+      //UPG13R2DEV
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

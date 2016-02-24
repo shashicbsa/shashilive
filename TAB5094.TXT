@@ -1,0 +1,49 @@
+OBJECT Table 5094 Close Opportunity Code
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Code,Description;
+    CaptionML=[ENU=Close Opportunity Code;
+               ENA=Close Opportunity Code];
+    LookupPageID=Page5133;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 3   ;   ;No. of Opportunities;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Opportunity Entry" WHERE (Close Opportunity Code=FIELD(Code)));
+                                                   CaptionML=[ENU=No. of Opportunities;
+                                                              ENA=No. of Opportunities];
+                                                   Editable=No }
+    { 4   ;   ;Type                ;Option        ;CaptionML=[ENU=Type;
+                                                              ENA=Type];
+                                                   OptionCaptionML=[ENU=Won,Lost;
+                                                                    ENA=Won,Lost];
+                                                   OptionString=Won,Lost }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;Code,Description,Type                    }
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

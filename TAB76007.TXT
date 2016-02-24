@@ -1,0 +1,122 @@
+OBJECT Table 76007 Vendor Bank Account-1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/14/11;
+    Time=17:19:38;
+    Version List=NAVW15.00,NAVAP5.00;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    DataCaptionFields=Vendor No.,Code,Name;
+    OnDelete=BEGIN
+               PostCodeCheck.DeleteAllAddressID(DATABASE::"Vendor Bank Account",Rec.GETPOSITION);
+             END;
+
+    OnRename=BEGIN
+               PostCodeCheck.MoveAllAddressID(
+                 DATABASE::"Vendor Bank Account",xRec.GETPOSITION,
+                 DATABASE::"Vendor Bank Account",Rec.GETPOSITION);
+             END;
+
+    CaptionML=ENU=Vendor Bank Account;
+    LookupPageID=Page426;
+    DrillDownPageID=Page426;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Vendor No.          ;Code20        ;CaptionML=ENU=Vendor No.;
+                                                   NotBlank=Yes }
+    { 2   ;   ;Code                ;Code10        ;CaptionML=ENU=Code;
+                                                   NotBlank=Yes }
+    { 3   ;   ;Name                ;Text50        ;CaptionML=ENU=Name }
+    { 5   ;   ;Name 2              ;Text50        ;CaptionML=ENU=Name 2 }
+    { 6   ;   ;Address             ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Address }
+    { 7   ;   ;Address 2           ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Address 2 }
+    { 8   ;   ;City                ;Text30        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateCity(
+                                                                  CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   OnLookup=BEGIN
+                                                              PostCodeCheck.LookUpCity(
+                                                                CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code",TRUE);
+                                                            END;
+
+                                                   CaptionML=ENU=City }
+    { 9   ;   ;Post Code           ;Code20        ;TableRelation="Post Code";
+                                                   OnValidate=BEGIN
+                                                                PostCodeCheck.ValidatePostCode(
+                                                                  CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   OnLookup=BEGIN
+                                                              PostCodeCheck.LookUpPostCode(
+                                                                CurrFieldNo,DATABASE::"Vendor Bank Account",Rec.GETPOSITION,0,
+                                                                Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code",TRUE);
+                                                            END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=Post Code }
+    { 10  ;   ;Contact             ;Text50        ;CaptionML=ENU=Contact }
+    { 11  ;   ;Phone No.           ;Text30        ;CaptionML=ENU=Phone No. }
+    { 12  ;   ;Telex No.           ;Text20        ;CaptionML=ENU=Telex No. }
+    { 13  ;   ;Bank Branch No.     ;Text20        ;CaptionML=ENU=Bank Branch No. }
+    { 14  ;   ;Bank Account No.    ;Text50        ;CaptionML=ENU=Bank Account No.;
+                                                   Description=YIMM BANk Acc No }
+    { 15  ;   ;Transit No.         ;Text20        ;CaptionML=ENU=Transit No. }
+    { 16  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=ENU=Currency Code }
+    { 17  ;   ;Country/Region Code ;Code10        ;TableRelation=Country/Region;
+                                                   CaptionML=ENU=Country/Region Code }
+    { 18  ;   ;County              ;Text30        ;CaptionML=ENU=County }
+    { 19  ;   ;Fax No.             ;Text30        ;CaptionML=ENU=Fax No. }
+    { 20  ;   ;Telex Answer Back   ;Text20        ;CaptionML=ENU=Telex Answer Back }
+    { 21  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=ENU=Language Code }
+    { 22  ;   ;E-Mail              ;Text80        ;CaptionML=ENU=E-Mail }
+    { 23  ;   ;Home Page           ;Text80        ;CaptionML=ENU=Home Page }
+    { 24  ;   ;IBAN                ;Code50        ;OnValidate=VAR
+                                                                CompanyInfo@1000 : Record 79;
+                                                              BEGIN
+                                                                CompanyInfo.CheckIBAN(IBAN);
+                                                              END;
+
+                                                   CaptionML=ENU=IBAN }
+    { 25  ;   ;SWIFT Code          ;Code20        ;CaptionML=ENU=SWIFT Code }
+  }
+  KEYS
+  {
+    {    ;Vendor No.,Code                         ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      PostCode@1000 : Record 225;
+      PostCodeCheck@1500000 : Codeunit 28000;
+
+    BEGIN
+    END.
+  }
+}
+

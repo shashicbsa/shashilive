@@ -1,0 +1,256 @@
+OBJECT Table 380 Detailed Vendor Ledg. Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10,NAVAPAC7.10,NTT,NPWP,NTCH,Mel1.0,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 380=m;
+    DataCaptionFields=Vendor No.;
+    CaptionML=[ENU=Detailed Vendor Ledg. Entry;
+               ENA=Detailed Vendor Ledg. Entry];
+    LookupPageID=Page574;
+    DrillDownPageID=Page574;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer       ;CaptionML=[ENU=Entry No.;
+                                                              ENA=Entry No.] }
+    { 2   ;   ;Vendor Ledger Entry No.;Integer    ;TableRelation="Vendor Ledger Entry";
+                                                   CaptionML=[ENU=Vendor Ledger Entry No.;
+                                                              ENA=Vendor Ledger Entry No.] }
+    { 3   ;   ;Entry Type          ;Option        ;CaptionML=[ENU=Entry Type;
+                                                              ENA=Entry Type];
+                                                   OptionCaptionML=[ENU=,Initial Entry,Application,Unrealized Loss,Unrealized Gain,Realized Loss,Realized Gain,Payment Discount,Payment Discount (VAT Excl.),Payment Discount (VAT Adjustment),Appln. Rounding,Correction of Remaining Amount,Payment Tolerance,Payment Discount Tolerance,Payment Tolerance (VAT Excl.),Payment Tolerance (VAT Adjustment),Payment Discount Tolerance (VAT Excl.),Payment Discount Tolerance (VAT Adjustment);
+                                                                    ENA=,Initial Entry,Application,Unrealised Loss,Unrealised Gain,Realised Loss,Realised Gain,Payment Discount,Payment Discount (GST Excl.),Payment Discount (GST Adjustment),Appln. Rounding,Correction of Remaining Amount,Payment Tolerance,Payment Discount Tolerance,Payment Tolerance (GST Excl.),Payment Tolerance (GST Adjustment),Payment Discount Tolerance (GST Excl.),Payment Discount Tolerance (GST Adjustment)];
+                                                   OptionString=,Initial Entry,Application,Unrealized Loss,Unrealized Gain,Realized Loss,Realized Gain,Payment Discount,Payment Discount (VAT Excl.),Payment Discount (VAT Adjustment),Appln. Rounding,Correction of Remaining Amount,Payment Tolerance,Payment Discount Tolerance,Payment Tolerance (VAT Excl.),Payment Tolerance (VAT Adjustment),Payment Discount Tolerance (VAT Excl.),Payment Discount Tolerance (VAT Adjustment) }
+    { 4   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 5   ;   ;Document Type       ;Option        ;CaptionML=[ENU=Document Type;
+                                                              ENA=Document Type];
+                                                   OptionCaptionML=[ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                                    ENA=" ,Payment,Invoice,CR/Adj Note,Finance Charge Memo,Reminder,Refund"];
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 6   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+    { 7   ;   ;Amount              ;Decimal       ;CaptionML=[ENU=Amount;
+                                                              ENA=Amount];
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 8   ;   ;Amount (LCY)        ;Decimal       ;CaptionML=[ENU=Amount (LCY);
+                                                              ENA=Amount (LCY)];
+                                                   AutoFormatType=1 }
+    { 9   ;   ;Vendor No.          ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=[ENU=Vendor No.;
+                                                              ENA=Vendor No.] }
+    { 10  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code] }
+    { 11  ;   ;User ID             ;Code50        ;TableRelation=User."User Name";
+                                                   OnLookup=VAR
+                                                              UserMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              UserMgt.LookupUserID("User ID");
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              ENA=User ID] }
+    { 12  ;   ;Source Code         ;Code10        ;TableRelation="Source Code";
+                                                   CaptionML=[ENU=Source Code;
+                                                              ENA=Source Code] }
+    { 13  ;   ;Transaction No.     ;Integer       ;CaptionML=[ENU=Transaction No.;
+                                                              ENA=Transaction No.] }
+    { 14  ;   ;Journal Batch Name  ;Code10        ;TestTableRelation=No;
+                                                   CaptionML=[ENU=Journal Batch Name;
+                                                              ENA=Journal Batch Name] }
+    { 15  ;   ;Reason Code         ;Code10        ;TableRelation="Reason Code";
+                                                   CaptionML=[ENU=Reason Code;
+                                                              ENA=Reason Code] }
+    { 16  ;   ;Debit Amount        ;Decimal       ;CaptionML=[ENU=Debit Amount;
+                                                              ENA=Debit Amount];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 17  ;   ;Credit Amount       ;Decimal       ;CaptionML=[ENU=Credit Amount;
+                                                              ENA=Credit Amount];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 18  ;   ;Debit Amount (LCY)  ;Decimal       ;CaptionML=[ENU=Debit Amount (LCY);
+                                                              ENA=Debit Amount (LCY)];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1 }
+    { 19  ;   ;Credit Amount (LCY) ;Decimal       ;CaptionML=[ENU=Credit Amount (LCY);
+                                                              ENA=Credit Amount (LCY)];
+                                                   BlankZero=Yes;
+                                                   AutoFormatType=1 }
+    { 20  ;   ;Initial Entry Due Date;Date        ;CaptionML=[ENU=Initial Entry Due Date;
+                                                              ENA=Initial Entry Due Date] }
+    { 21  ;   ;Initial Entry Global Dim. 1;Code20 ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Initial Entry Global Dim. 1;
+                                                              ENA=Initial Entry Global Dim. 1] }
+    { 22  ;   ;Initial Entry Global Dim. 2;Code20 ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Initial Entry Global Dim. 2;
+                                                              ENA=Initial Entry Global Dim. 2] }
+    { 24  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              ENA=Gen. Bus. Posting Group] }
+    { 25  ;   ;Gen. Prod. Posting Group;Code10    ;TableRelation="Gen. Product Posting Group";
+                                                   CaptionML=[ENU=Gen. Prod. Posting Group;
+                                                              ENA=Gen. Prod. Posting Group] }
+    { 29  ;   ;Use Tax             ;Boolean       ;CaptionML=[ENU=Use Tax;
+                                                              ENA=Use US Tax] }
+    { 30  ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=[ENU=VAT Bus. Posting Group;
+                                                              ENA=GST Bus. Posting Group] }
+    { 31  ;   ;VAT Prod. Posting Group;Code10     ;TableRelation="VAT Product Posting Group";
+                                                   CaptionML=[ENU=VAT Prod. Posting Group;
+                                                              ENA=GST Prod. Posting Group] }
+    { 35  ;   ;Initial Document Type;Option       ;CaptionML=[ENU=Initial Document Type;
+                                                              ENA=Initial Document Type];
+                                                   OptionCaptionML=[ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                                    ENA=" ,Payment,Invoice,CR/Adj Note,Finance Charge Memo,Reminder,Refund"];
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 36  ;   ;Applied Vend. Ledger Entry No.;Integer;
+                                                   CaptionML=[ENU=Applied Vend. Ledger Entry No.;
+                                                              ENA=Applied Vend. Ledger Entry No.] }
+    { 37  ;   ;Unapplied           ;Boolean       ;CaptionML=[ENU=Unapplied;
+                                                              ENA=Unapplied] }
+    { 38  ;   ;Unapplied by Entry No.;Integer     ;TableRelation="Detailed Vendor Ledg. Entry";
+                                                   CaptionML=[ENU=Unapplied by Entry No.;
+                                                              ENA=Unapplied by Entry No.] }
+    { 39  ;   ;Remaining Pmt. Disc. Possible;Decimal;
+                                                   CaptionML=[ENU=Remaining Pmt. Disc. Possible;
+                                                              ENA=Remaining Pmt. Disc. Possible];
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 40  ;   ;Max. Payment Tolerance;Decimal     ;CaptionML=[ENU=Max. Payment Tolerance;
+                                                              ENA=Max. Payment Tolerance];
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 41  ;   ;Tax Jurisdiction Code;Code10       ;TableRelation="Tax Jurisdiction";
+                                                   CaptionML=[ENU=Tax Jurisdiction Code;
+                                                              ENA=US Tax Jurisdiction Code];
+                                                   Editable=No }
+    { 42  ;   ;Application No.     ;Integer       ;CaptionML=[ENU=Application No.;
+                                                              ENA=Application No.];
+                                                   Editable=No }
+    { 17130;  ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              ENA=Document Date] }
+    { 50001;  ;Kwitansi No.        ;Code20        ;Description=YIMMNTT }
+    { 50002;  ;Commercial Invoice No.;Code20      ;Description=YIMMNTT }
+    { 50003;  ;Commercial Invoice Date;Date       ;Description=YIMMNTT }
+    { 50004;  ;Tax Invoice No.     ;Code30        ;Description=YIMMNTT,YIMMNTCH }
+    { 50005;  ;Tax Invoice Date    ;Date          ;Description=YIMMNTT }
+    { 50006;  ;Narration           ;Text250       ;Description=YIMMNTT }
+    { 50007;  ;Order Address Code  ;Code20        ;CaptionML=ENU=Ship-to Code;
+                                                   Description=YIMMNNPWP }
+    { 52000;  ;Quote No ( Project No.);Code20     ;Description=For Melco to Capture the Quote No. }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;SumIndexFields=Amount,Amount (LCY),Debit Amount (LCY),Credit Amount (LCY);
+                                                   Clustered=Yes }
+    {    ;Vendor Ledger Entry No.,Posting Date     }
+    {    ;Vendor Ledger Entry No.,Entry Type,Posting Date;
+                                                   SumIndexFields=Amount,Amount (LCY),Debit Amount,Credit Amount,Debit Amount (LCY),Credit Amount (LCY);
+                                                   MaintainSQLIndex=No;
+                                                   MaintainSIFTIndex=No }
+    {    ;Vendor No.,Initial Entry Due Date,Posting Date,Currency Code;
+                                                   SumIndexFields=Amount,Amount (LCY),Debit Amount,Credit Amount,Debit Amount (LCY),Credit Amount (LCY);
+                                                   MaintainSIFTIndex=No }
+    {    ;Vendor No.,Initial Entry Due Date,Posting Date;
+                                                   SumIndexFields=Amount,Amount (LCY);
+                                                   KeyGroups=Vend(Age);
+                                                   MaintainSQLIndex=No }
+    {    ;Vendor No.,Posting Date,Entry Type,Currency Code;
+                                                   SumIndexFields=Amount,Amount (LCY),Debit Amount,Debit Amount (LCY),Credit Amount,Credit Amount (LCY) }
+    {    ;Document No.,Document Type,Posting Date  }
+    {    ;Vendor No.,Initial Document Type,Document Type,Entry Type,Posting Date;
+                                                   SumIndexFields=Amount,Amount (LCY);
+                                                   SIFTLevelsToMaintain= }
+    { No ;Vendor No.,Initial Entry Due Date,Posting Date,Initial Entry Global Dim. 1,Initial Entry Global Dim. 2,Currency Code;
+                                                   SumIndexFields=Amount,Amount (LCY),Debit Amount,Credit Amount,Debit Amount (LCY),Credit Amount (LCY);
+                                                   KeyGroups=Vend(Dim) }
+    { No ;Vendor No.,Posting Date,Entry Type,Initial Entry Global Dim. 1,Initial Entry Global Dim. 2,Currency Code;
+                                                   SumIndexFields=Amount,Amount (LCY);
+                                                   KeyGroups=Vend(Dim) }
+    { No ;Vendor No.,Initial Document Type,Document Type,Entry Type,Initial Entry Global Dim. 1,Initial Entry Global Dim. 2;
+                                                   SumIndexFields=Amount,Amount (LCY);
+                                                   KeyGroups=Vend(Dim) }
+    {    ;Applied Vend. Ledger Entry No.,Entry Type }
+    {    ;Transaction No.,Vendor No.,Entry Type    }
+    {    ;Application No.,Vendor No.,Entry Type    }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;Entry No.,Vendor Ledger Entry No.,Vendor No.,Posting Date,Document Type,Document No. }
+  }
+  CODE
+  {
+
+    PROCEDURE UpdateDebitCredit@47(Correction@1000 : Boolean);
+    BEGIN
+      IF ((Amount > 0) OR ("Amount (LCY)" > 0)) AND NOT Correction OR
+         ((Amount < 0) OR ("Amount (LCY)" < 0)) AND Correction
+      THEN BEGIN
+        "Debit Amount" := Amount;
+        "Credit Amount" := 0;
+        "Debit Amount (LCY)" := "Amount (LCY)";
+        "Credit Amount (LCY)" := 0;
+      END ELSE BEGIN
+        "Debit Amount" := 0;
+        "Credit Amount" := -Amount;
+        "Debit Amount (LCY)" := 0;
+        "Credit Amount (LCY)" := -"Amount (LCY)";
+      END;
+    END;
+
+    PROCEDURE SetZeroTransNo@3(TransactionNo@1000 : Integer);
+    VAR
+      DtldVendLedgEntry@1001 : Record 380;
+      ApplicationNo@1002 : Integer;
+    BEGIN
+      DtldVendLedgEntry.SETCURRENTKEY("Transaction No.");
+      DtldVendLedgEntry.SETRANGE("Transaction No.",TransactionNo);
+      IF DtldVendLedgEntry.FINDSET(TRUE) THEN BEGIN
+        ApplicationNo := DtldVendLedgEntry."Entry No.";
+        REPEAT
+          DtldVendLedgEntry."Transaction No." := 0;
+          DtldVendLedgEntry."Application No." := ApplicationNo;
+          DtldVendLedgEntry.MODIFY;
+        UNTIL DtldVendLedgEntry.NEXT = 0;
+      END;
+    END;
+
+    BEGIN
+    {
+      //YIMMNTT
+         1) Fields added in the standard table for maintaining the information related to Tender Terima.
+          a) Kwitansi No.
+          b) Commercial Invoice No.
+          c) Commercial Invoice Date
+          d) Tax Invoice No.
+          e) Tax Invoice Date
+          f) Narration
+
+      //YIMMNNPWP
+      Field added for Multiple NPWP No.(ID-50007)
+
+      //YIMMNTCH
+       1) CHANGE THE LENGTH OF TAX INVOICE NO. FROM 20 TO 30 DIGITS
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

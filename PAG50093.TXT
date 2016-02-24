@@ -1,0 +1,39 @@
+OBJECT Page 50093 Posting Group
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/09;
+    Time=16:13:21;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50045;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr=Code }
+
+    { 1000000003;2;Field  ;
+                SourceExpr=AccCode }
+
+    { 1000000005;2;Field  ;
+                SourceExpr=Desc }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

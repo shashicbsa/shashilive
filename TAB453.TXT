@@ -1,0 +1,54 @@
+OBJECT Table 453 Approval Code
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Approval Code;
+               ENA=Approval Code];
+    LookupPageID=Page657;
+    DrillDownPageID=Page657;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code20        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text100       ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 3   ;   ;Linked To Table Name;Text50        ;CaptionML=[ENU=Linked To Table Name;
+                                                              ENA=Linked To Table Name] }
+    { 4   ;   ;Linked To Table No. ;Integer       ;TableRelation=Object.ID WHERE (Type=CONST(Table));
+                                                   OnValidate=BEGIN
+                                                                Objects.SETRANGE(Type,Objects.Type::Table);
+                                                                Objects.SETRANGE(ID,"Linked To Table No.");
+                                                                IF Objects.FINDFIRST THEN
+                                                                  "Linked To Table Name" := Objects.Name
+                                                                ELSE
+                                                                  "Linked To Table Name" := '';
+                                                              END;
+
+                                                   CaptionML=[ENU=Linked To Table No.;
+                                                              ENA=Linked To Table No.] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Objects@1000 : Record 2000000001;
+
+    BEGIN
+    END.
+  }
+}
+

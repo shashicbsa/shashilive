@@ -1,0 +1,83 @@
+OBJECT Codeunit 50076 Sales Invoice YIMM
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/03/14;
+    Time=23:49:59;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            LineNo := 0;
+
+            SH.RESET;
+            SH.INIT;
+            SH."Document Type" := SH."Document Type"::Invoice;
+            SH."No." := FORMAT(TIME);;
+            SH."Reason Code" := 'NORMAL';
+
+            SH.INSERT(TRUE);;
+            SH.VALIDATE(SH."Posting Date",TODAY);
+            SH.VALIDATE(SH."Document Date",TODAY);
+            SH.VALIDATE(SH."Sell-to Customer No.",'FD0601');
+            SH.VALIDATE(SH."Ship-to Code",'01.452.928.3-123.000');
+            SH.VALIDATE(SH."Customer Posting Group",'LOC MC MD');
+
+
+            SH."Type Of Transaction" := SH."Type Of Transaction"::Imacs;
+            SH."Order Date" := TODAY;
+            SH.VALIDATE(SH."Shipment Date",TODAY);
+            SH.VALIDATE(SH."Due Date",TODAY);
+            SH."Posting No." := SH."No.";
+            SH."Tax Invoice Date" := TODAY;
+            SH."B/L Date" := TODAY;
+            SH."External Document No." := SH."No." + '-' + '1';
+            SH.VALIDATE(SH."Shortcut Dimension 1 Code", '410220');
+            SH.VALIDATE(SH."Shortcut Dimension 2 Code" ,'100020');
+            SH.Interfaced := TRUE;
+            SH.UID := 'PVC013\svradmin';
+            SH.MODIFY;
+            FOR i := 1 TO 7500 DO BEGIN
+
+            SL.RESET;
+            SL.INIT;
+            LineNo += 10000;
+            SL."Document Type" := SL."Document Type"::Invoice;
+            SL."Document No." := SH."No.";
+            SL."Line No." := LineNo;
+            SL.INSERT(TRUE);
+
+            SL.Type := SL.Type::"G/L Account";
+            SL.VALIDATE(SL."No.",'4111000001');
+            SL.VALIDATE(SL."Gen. Prod. Posting Group",'Default');
+            SL.VALIDATE(SL."VAT Prod. Posting Group",'VAT 10');
+
+            SL.VALIDATE(SL.Quantity,1);
+            SL.VALIDATE(SL."Unit Price",1000);
+            SL.VALIDATE(SL."Shortcut Dimension 1 Code", SH."Shortcut Dimension 1 Code");
+            SL.VALIDATE(SL."Shortcut Dimension 2 Code" ,SH."Shortcut Dimension 2 Code");
+            SL.Interfaced := TRUE;
+
+            SL.MODIFY;
+
+            END;
+            MESSAGE('Invoice Created with Document No.- %1', SH."No.");
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      SH@1102159004 : Record 36;
+      SL@1102159003 : Record 37;
+      LineNo@1102159002 : Integer;
+      i@1102159001 : Integer;
+      t001@1102159005 : TextConst 'ENU=Invoice Successfully %1 Created.';
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,712 @@
+OBJECT Report 60092 CustomerAging-Update1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/29/14;
+    Time=11:07:10;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    OnInitReport=BEGIN
+                   Print2exl:=TRUE;
+                 END;
+
+    OnPreReport=BEGIN
+
+                  IF (AgingDate=0D) THEN
+                   ERROR('please specify date');
+                   ExcelBuf.DELETEALL;
+                   MakeExcelInfo;
+                  CompanyInformation.GET;
+                END;
+
+    OnPostReport=BEGIN
+                   CreateExcelbook;
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table18;
+               DataItemTableView=SORTING(No.)
+                                 ORDER(Ascending);
+               ReqFilterFields=Area Code DDS }
+
+    { 1102159002;1;DataItem;                 ;
+               DataItemTable=Table21;
+               DataItemTableView=SORTING(Customer Posting Group,Customer No.,Type Of Transaction,Posting Date,Currency Code)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               SETRANGE("Cust. Ledger Entry"."Posting Date",0D,AgingDate);
+                               SETRANGE("Cust. Ledger Entry"."Date Filter",0D,AgingDate);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+
+                                  // code for filteration of Vendor Aging with AP accounts and AR Accounts--start
+                                  IF ("AP/AR" = "AP/AR"::AP) THEN
+                                    BEGIN
+                                      AccountType:=' AP ACCOUNTS ONLY';
+                                      CustPostingSetup.GET("Cust. Ledger Entry"."Customer Posting Group");
+                                       IF (CustPostingSetup."Reason Code" <> 'SALRT') THEN
+                                        CurrReport.SKIP;
+                                    END
+                                   ELSE IF ("AP/AR" = "AP/AR"::AR) THEN
+                                     BEGIN
+                                      AccountType:=' AR ACCOUNTS ONLY';
+                                      CustPostingSetup.GET("Cust. Ledger Entry"."Customer Posting Group");
+                                       IF (CustPostingSetup."Reason Code" <> 'NORMAL') THEN
+                                        CurrReport.SKIP;
+                                     END
+                                   ELSE IF ("AP/AR" = "AP/AR"::Both) THEN
+                                   AccountType:=' BOTH ACCOUNTS ';
+
+                                  // code for filteration of Vendor Aging with AP accounts and AR Accounts--end
+
+
+                                  CALCFIELDS("Original Amt. (LCY)","Original Amount","Remaining Amount","Remaining Amt. (LCY)");
+
+
+                                  CLE.RESET;
+                                  CLE.SETRANGE(CLE."Entry No.","Cust. Ledger Entry"."Entry No.");
+                                  CLE.SETRANGE(CLE."Date Filter",0D,AgingDate);
+                                  IF CLE.FIND('-') THEN
+                                  CLE.CALCFIELDS("Original Amt. (LCY)","Original Amount","Remaining Amount","Remaining Amt. (LCY)");
+
+
+                                  IF (CLE."Remaining Amount"=0) THEN
+                                  CurrReport.SKIP;
+
+                                  SIH.RESET;
+                                  IF SIH.GET("Cust. Ledger Entry"."Document No.") THEN;
+
+
+                                  Counter:=Counter+1;
+                                  Interval:=0;
+
+                                  Interval:=(AgingDate-("Cust. Ledger Entry"."Due Date"));
+
+                                  ///////////////////Cust Ledger ENtry, Body (1) - OnPreSection()////////////
+
+                                  IF (Summary <> TRUE ) THEN
+                                  BEGIN
+
+                                  IF (FORMAT("Cust. Ledger Entry"."Type Of Transaction")<>TransactType) THEN
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn('Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Type Of Transaction"),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.NewRow;
+                                  No:=1;
+
+                                  END;
+
+                                  END;
+
+                                  IF ( CustNumber<>"Cust. Ledger Entry"."Customer No.") THEN
+                                       flagforgrup:=TRUE;
+
+
+
+
+                                  /////////////////////body 2//////////////////////////////////////////////
+
+
+
+                                  NotDueAmt:=0;
+                                  "1to30Amt":=0;
+                                  "31to60Amt":=0;
+                                  "61to90Amt":=0;
+                                  "91to180Amt":=0;
+                                  "181to360Amt":=0;
+
+
+
+
+
+                                  IF  (Summary <> TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+
+                                  CustRec.RESET;
+                                  CustRec.GET("Cust. Ledger Entry"."Customer No.");
+
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Posting Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  IF (DocType<>'') THEN
+                                  BEGIN
+                                   ExcelBuf.AddColumn("Cust. Ledger Entry".DocType,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   DocumenType:="Cust. Ledger Entry".DocType;
+                                  END
+                                  ELSE
+                                  BEGIN
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Type"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  DocumenType:=FORMAT("Cust. Ledger Entry"."Document Type");
+                                  END;
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CustRec.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer Posting Group"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry".Narration,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Document Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 1 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Global Dimension 2 Code"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."External Document No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+                                  IF GLentry.GET("Cust. Ledger Entry"."Entry No.") THEN
+                                   ExcelBuf.AddColumn(GLentry."Slip No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(SIH."Pre-Assigned No.",FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Due Date"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Currency Code",FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  IF ("Cust. Ledger Entry"."Original Currency Factor"<>0) THEN
+                                  ExcelBuf.AddColumn(FORMAT(1/"Cust. Ledger Entry"."Original Currency Factor"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text)
+                                  ELSE
+                                  ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Original Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amount"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  IF ("Cust. Ledger Entry"."Currency Code" <> '' ) THEN
+                                    ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"/"Cust. Ledger Entry"."Remaining Amount")
+                                        ,FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text)
+                                   ELSE
+                                    ExcelBuf.AddColumn(FORMAT('1'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+                                  ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  NotDueAmt:=(CLE."Remaining Amt. (LCY)");
+                                  NotDue+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "1to30Amt":=CLE."Remaining Amt. (LCY)";
+                                  "1to30"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "31to60Amt":=CLE."Remaining Amt. (LCY)";
+                                  "31to60"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "61to90Amt":=CLE."Remaining Amt. (LCY)";
+                                  "61to90"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "91to180Amt":=CLE."Remaining Amt. (LCY)";
+                                  "91to180"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(FORMAT(CLE."Remaining Amt. (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                  "181to360Amt":=CLE."Remaining Amt. (LCY)";
+                                  "181to360"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END
+
+                                  ELSE
+                                  IF  (Summary = TRUE) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                  IF (Interval <= 0) THEN
+                                  BEGIN
+                                  NotDue+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 0) AND (Interval<=30)) THEN
+                                  BEGIN
+                                  "1to30"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+
+                                  IF ((Interval > 30) AND (Interval<=60)) THEN
+                                  BEGIN
+                                  "31to60"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 60) AND (Interval<=90)) THEN
+                                  BEGIN
+                                  "61to90"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  IF ((Interval > 90) AND (Interval<=180)) THEN
+                                  BEGIN
+                                  "91to180"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+
+                                  IF (Interval > 180 ) THEN
+                                  BEGIN
+                                  "181to360"+=CLE."Remaining Amt. (LCY)";
+                                  END;
+
+                                  END;
+
+
+                                  ///////////////////////////group Footer///////////////////////////////////
+                                  IF (Summary <>  TRUE) THEN
+                                   BEGIN
+
+                                  //IF ((No=1) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0)) THEN AND (CustNumber<>"Cust. Ledger Entry"."Customer No.")) THEN
+                                  IF ((No=1) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0)
+                                                 AND (NotDue<>0) OR ("1to30" <> 0) OR ("31to60"<> 0) OR ("61to90"<>0) OR ("91to180" <> 0) OR ("181to360"<>0 ))  THEN
+
+
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('Total for Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  //ExcelBuf.AddColumn(TransactType,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);                                  // UPG13R2DEV
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Type Of Transaction",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);    // UPG13R2DEV
+                                  ExcelBuf.AddColumn('for Customer No.',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(CustRec."No.",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Original Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("1to30",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("31to60",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("61to90",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("91to180",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("181to360",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.NewRow;
+
+                                  END
+
+                                  ELSE
+                                  IF ((No=1) AND ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) AND (flagforgrup=TRUE)
+                                                 AND (NotDue<>0) OR ("1to30" <> 0) OR ("31to60"<> 0) OR ("61to90"<>0) OR ("91to180" <> 0) OR ("181to360"<>0 ))  THEN
+                                  BEGIN
+                                  ExcelBuf.NewRow;
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('Total for Transaction Type :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('for Customer No.',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(CustRec."No.",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(TransactType,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Original Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn(NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("1to30",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("31to60",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("61to90",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("91to180",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.AddColumn("181to360",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                  ExcelBuf.NewRow;
+                                  flagforgrup:=FALSE;
+                                  END
+
+                                  END;
+
+                                  Tot_NotDue+=NotDue;
+                                  Tot_181to360+="181to360";
+                                  Tot_91to180+="91to180";
+                                  Tot_61to90+="61to90";
+                                  Tot_31to60+="31to60";
+                                  Tot_1to30+="1to30";
+
+                                  NotDue:=0;
+                                  "1to30":=0;
+                                  "31to60":=0;
+                                  "61to90":=0;
+                                  "91to180":=0;
+                                  "181to360":=0;
+
+                                  //Cust. Ledger Entry, Footer (4) - OnPreSection()
+
+                                  IF (Summary <> TRUE) THEN
+                                   BEGIN
+                                   IF ("Cust. Ledger Entry"."Remaining Amt. (LCY)"<>0) THEN
+                                  BEGIN
+                                   ExcelBuf.NewRow;
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                   ExcelBuf.NewRow;
+
+                                  END;
+
+                                  END
+
+                                  ELSE
+
+
+
+                                  BEGIN
+                                   ExcelBuf.NewRow;
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(AccountType,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(FORMAT(CustRec.Name),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(FORMAT("Cust. Ledger Entry"."Customer No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('Total Remaining Amount LCY  :',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn("Cust. Ledger Entry"."Remaining Amt. (LCY)",FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_NotDue,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_1to30,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_31to60,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_61to90,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_91to180,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+                                   ExcelBuf.AddColumn(Tot_181to360,FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+
+                                   ExcelBuf.NewRow;
+
+                                  END;
+                                END;
+
+               OnPostDataItem=BEGIN
+
+                                TransactType:=FORMAT("Cust. Ledger Entry"."Type Of Transaction");
+                                CustNumber:="Cust. Ledger Entry"."Customer No.";
+                              END;
+
+               ReqFilterFields=Customer No.,Customer Posting Group;
+               CalcFields=Original Amt. (LCY),Remaining Amt. (LCY);
+               DataItemLink=Customer No.=FIELD(No.) }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1102159001;;Container;
+                  ContainerType=ContentArea }
+
+      { 1102159002;1;Field  ;
+                  SourceExpr=AgingDate }
+
+      { 1102159003;1;Field  ;
+                  Name=ONLY A/P Accounts;
+                  SourceExpr="AP/AR" }
+
+      { 1102159006;1;Field  ;
+                  Name=Customer Aging by Summary;
+                  SourceExpr=Summary }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ExcelBuf@1102159038 : TEMPORARY Record 370;
+      AgingDate@1102159037 : Date;
+      Interval@1102159036 : Integer;
+      Counter@1102159035 : Integer;
+      CLE@1102159034 : Record 21;
+      TransactType@1102159033 : Text[50];
+      No@1102159032 : Integer;
+      TotLcY@1102159031 : Decimal;
+      SIH@1102159030 : Record 112;
+      "AP/AR"@1102159029 : 'AP,AR,Both';
+      CustPostingSetup@1102159028 : Record 92;
+      Summary@1102159027 : Boolean;
+      AccountType@1102159026 : Text[150];
+      GLentry@1102159025 : Record 17;
+      NotDue@1102159024 : Decimal;
+      NotDueAmt@1102159023 : Decimal;
+      "1to30"@1102159022 : Decimal;
+      "1to30Amt"@1102159021 : Decimal;
+      Tot_1to30@1102159020 : Decimal;
+      "31to60"@1102159019 : Decimal;
+      "31to60Amt"@1102159018 : Decimal;
+      Tot_31to60@1102159017 : Decimal;
+      "61to90"@1102159016 : Decimal;
+      "61to90Amt"@1102159015 : Decimal;
+      Tot_61to90@1102159014 : Decimal;
+      "91to180"@1102159013 : Decimal;
+      "91to180Amt"@1102159012 : Decimal;
+      Tot_91to180@1102159011 : Decimal;
+      "181to360"@1102159010 : Decimal;
+      "181to360Amt"@1102159009 : Decimal;
+      Tot_181to360@1102159008 : Decimal;
+      Tot_NotDue@1102159007 : Decimal;
+      CustNumber@1102159006 : Code[50];
+      DocumenType@1102159005 : Code[50];
+      Print2exl@1102159004 : Boolean;
+      CompanyInformation@1102159003 : Record 79;
+      flagforgrup@1102159002 : Boolean;
+      CustRec@1102159001 : Record 18;
+      Text000@1102159051 : TextConst 'ENU=Balance On : %1';
+      Text001@1102159050 : TextConst 'ENU=CustomerAging-Update';
+      Text002@1102159049 : TextConst 'ENU=Data';
+      Text003@1102159048 : TextConst 'ENU=Debit';
+      Text004@1102159047 : TextConst 'ENU=Credit';
+      Text005@1102159046 : TextConst 'ENU=Company Name';
+      Text006@1102159045 : TextConst 'ENU=Report No.';
+      Text007@1102159044 : TextConst 'ENU=Report Name';
+      Text008@1102159043 : TextConst 'ENU=User ID';
+      Text009@1102159042 : TextConst 'ENU=Date';
+      Text010@1102159041 : TextConst 'ENU=Date Filter';
+      Text011@1102159040 : TextConst 'ENU=Period End Date';
+      Text012@1102159039 : TextConst 'ENU=Please Specify Date Range';
+
+    PROCEDURE MakeExcelInfo@3();
+    BEGIN
+      ExcelBuf.SetUseInfoSheet;
+      ExcelBuf.AddInfoColumn(FORMAT(Text005),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(COMPANYNAME,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text007),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(FORMAT(Text001),FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text006),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(REPORT::"CustomerAging-Update",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text008),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(USERID,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text009),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(AgingDate,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text010),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddInfoColumn(Customer.GETFILTER("Date Filter"),FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+
+      ExcelBuf.ClearNewRow;
+      MakeExcelDataHeader;
+    END;
+
+    LOCAL PROCEDURE MakeExcelDataHeader@2();
+    BEGIN
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('Posting  Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Customer Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Customer Group',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Customer Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Narration',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Document Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Shop Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Model Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('P/O Number',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Slip Number',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Due Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Currency Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Original Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Starting Conversion Rate',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Original Amount LCY',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Remaining Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Current Conversion Rate',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Remaining Amount LCY',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Not Due',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('01 to 30',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('31 to 60',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('61 to 90',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('91 to 180',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('180 to 360',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.NewRow;
+    END;
+
+    PROCEDURE MakeExcelDataBody@4();
+    VAR
+      BlankFiller@1000 : Text[250];
+    BEGIN
+    END;
+
+    PROCEDURE CreateExcelbook@1();
+    BEGIN
+
+      ExcelBuf.CreateBookAndOpenExcel(Text002,Text001,COMPANYNAME,USERID);
+      ExcelBuf.GiveUserControl;
+      ERROR('');
+    END;
+
+    BEGIN
+    {
+       // UPG13R2DEV
+       // Transact type not get printed first time in excel, Variable changed with origional value
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

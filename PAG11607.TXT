@@ -1,0 +1,46 @@
+OBJECT Page 11607 BAS Comment Lines
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/05/03;
+    Time=12:00:00;
+    Version List=NAVAU3.70;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS Comment Lines;
+               ENA=BAS Comment Lines];
+    MultipleNewLines=Yes;
+    SourceTable=Table11605;
+    DelayedInsert=Yes;
+    DataCaptionFields=No.;
+    PageType=List;
+    AutoSplitKey=Yes;
+    OnNewRecord=BEGIN
+                  SetUpNewLine;
+                END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Date }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Comment }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

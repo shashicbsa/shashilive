@@ -1,0 +1,163 @@
+OBJECT Report 60053 TMS Collection Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/06/15;
+    Time=17:11:16;
+    Modified=Yes;
+    Version List=CR#003,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+
+                  SalesSetup.GET;
+                  MasterCustPosting.GET;
+
+                  PDC_Line.RESET;
+                  PDC_Line.SETCURRENTKEY(PDC_Line."Line Number");
+                  //>> SV CR#003
+                  IF (PDC_Line."Account Type" = PDC_Line."Account Type"::Customer) THEN
+                  PDC_Line.SETRANGE(PDC_Line."Account Type",PDC_Line."Account Type"::Customer);
+
+                  IF (PDC_Line."Account Type" = PDC_Line."Account Type"::"G/L Account") THEN
+                  PDC_Line.SETRANGE(PDC_Line."Account Type",PDC_Line."Account Type"::"G/L Account");
+                  //<<SV CR#003
+                  IF PDC_Line.FINDLAST THEN
+                    LineNo := PDC_Line."Line Number" + 10000
+                  ELSE
+                    LineNo := 10000;
+
+                  PDC_Line.RESET;
+                  CLEAR(PDC_Line);
+
+                  Coll_Interface.RESET;
+                  Coll_Interface.SETRANGE(Coll_Interface."Batch Name",SalesSetup."Post Dated Check TMS Batch");
+                  IF  Coll_Interface.FINDFIRST THEN
+
+                  REPEAT
+                    CustomerConv.RESET;
+                    CustomerConv.SETRANGE(CustomerConv."Tms Code",Coll_Interface."Account No.");
+                    IF CustomerConv.FINDFIRST THEN BEGIN
+                      Cust.RESET;
+                      Cust.GET(CustomerConv.NAV);
+                    END;
+
+                    PDC_Line.INIT;
+                    //>> SV  CR#003  25112014          Collection giro concept
+                    MasterSetup2.GET;
+                   CustLedgerEntry.RESET;
+                   SalesHeader.RESET;
+                   SalesHeader.SETRANGE(SalesHeader."External Document No.",Coll_Interface."Document No.");
+                   CustLedgerEntry.SETRANGE(CustLedgerEntry."External Document No.",Coll_Interface."Document No.");
+                   IF CustLedgerEntry.FINDSET THEN BEGIN
+                      PDC_Line."Account Type" := Coll_Interface."Account Type";
+                      PDC_Line.VALIDATE(PDC_Line."Account No.",Cust."No.");
+                      PDC_Line."Line Number" := LineNo;
+                    END ELSE IF SalesHeader.FINDSET THEN BEGIN
+                      PDC_Line."Account Type" := PDC_Line."Account Type"::"G/L Account";
+                      PDC_Line.VALIDATE(PDC_Line."Account No.",MasterSetup2."TMS Collection Deposit A/C");
+                      PDC_Line."Line Number" := LineNo;
+                    END ELSE BEGIN
+                      PDC_Line."Account Type" := PDC_Line."Account Type"::"G/L Account";
+                      PDC_Line.VALIDATE(PDC_Line."Account No.",MasterSetup2."TMS Collection Deposit A/C");
+                      PDC_Line."Line Number" := LineNo;
+                    END;
+                    //<< SV CR#003   25112014  Collection giro concept
+                    PDC_Line."Template Name":='COLLECTION';  //Hard codded for testing no such filed in interface table to upload
+                    PDC_Line."Batch Name" := Coll_Interface."Batch Name";
+                    PDC_Line.INSERT;
+                    PDC_Line."Document No." := Coll_Interface."Document No.";
+                    PDC_Line.VALIDATE(PDC_Line.Amount,-Coll_Interface.Amount);
+                    PDC_Line.VALIDATE(PDC_Line."Check Date",Coll_Interface."Cheque Date");
+                    PDC_Line."Check No." := Coll_Interface."Cheque No.";
+                    PDC_Line.VALIDATE(PDC_Line."Currency Code",Coll_Interface."Currency Code");
+                    PDC_Line."Date Received" := Coll_Interface."Date Received";
+                    PDC_Line.VALIDATE(PDC_Line."Bank Account",Cust."Bank Account");//YIMMCOLL
+                    PDC_Line."Bank Name" := Coll_Interface."Bank Account"; //YIMMCOLL
+                    PDC_Line.Narration := Coll_Interface.Description; //YIMMCOLL
+                  { //YIMM Not Require Default Bank for the customer Only Name require//
+                    IF Coll_Interface.Bank <> '' THEN
+                      PDC_Line.Bank := Coll_Interface.Bank;
+
+                    ELSE BEGIN
+                      CUSTBANK.RESET;
+                      CUSTBANK.SETRANGE(CUSTBANK."Customer No.",Cust."No.");
+                      CUSTBANK.SETFILTER(CUSTBANK."Default Account",'%1',TRUE);
+                      IF CUSTBANK.FINDFIRST THEN
+                        PDC_Line.Bank := CUSTBANK.Code;
+                    END;
+                  }
+
+                    PDC_Line."Posting Group" := MasterCustPosting."Local Others Third Party"; // SV CR#003
+
+                    PDC_Line."Interface Date" := WORKDATE;
+                    PDC_Line.Interfaced := TRUE;
+                    PDC_Line."Type of Collection":=PDC_Line."Type of Collection"::TMS; //SV CR#003  12112014    filed for filtering in form
+                    PDC_Line.MODIFY;
+                    LineNo += 10000;
+                    Coll_Interface.DELETE;
+                    IF PDC_Line."Bank Account"='BANK101' THEN
+                     BEGIN
+                      PDC_Line."Send To Bank":=TRUE;
+                      PDC_Line."Bank Receipt":=TRUE;
+                      PDC_Line.MODIFY;
+                     END;
+                    IF PDC_Line."Bank Account"='BANK020'  THEN
+                     BEGIN
+                      PDC_Line."Send To Bank":=TRUE;
+                      PDC_Line."Bank Receipt":=TRUE;
+                      PDC_Line.MODIFY;
+                     END;
+                   UNTIL Coll_Interface.NEXT = 0;
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Coll_Interface@1102159010 : Record 50011;
+      LineNo@1102159009 : Integer;
+      SalesSetup@1102159008 : Record 311;
+      PDC_Line@1102159007 : Record 28090;
+      CustomerConv@1102159006 : Record 50004;
+      Cust@1102159005 : Record 18;
+      MasterCustPosting@1102159004 : Record 50012;
+      CustLedgerEntry@1102159003 : Record 21;
+      MasterSetup2@1102159002 : Record 60053;
+      SalesHeader@1102159001 : Record 36;
+
+    BEGIN
+    {
+
+      Date               Sign               Ref_ID                             Description
+      09092014           VK                 MIMPIND002/001/140806/003          Interface created for TMS AR Collection.
+      12112014           SV                 CR#003                             filed for filtering in form /collection giro concept
+
+      UPG13R2DEV   SV 15122014
+      Newly created in 2013R2
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

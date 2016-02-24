@@ -1,0 +1,111 @@
+OBJECT Table 50028 Human Hr.Header
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/28/14;
+    Time=12:08:38;
+    Modified=Yes;
+    Version List=Mel1.0,Mel1.1,CAUYIMM;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=NPK,Name;
+    OnInsert=BEGIN
+               //Date:=TODAY;
+               Status:=Status::Open;
+               //Mel1.1-st
+               IF GenJnlCheckLine.DateNotAllowed(Date) THEN
+                FIELDERROR(Date,Text045);
+               //Mel1.1-en
+             END;
+
+    OnModify=BEGIN
+               Rec.CALCFIELDS(TotalHrsLine);
+               IF ("Total Hours" < TotalHrsLine) THEN
+                ERROR('NOT PERMITTED...!!!');
+               IF Status=Status::Approved THEN
+                  ERROR('%1',Text1);
+               IF GenJnlCheckLine.DateNotAllowed(Date) THEN
+                FIELDERROR(Date,Text045);
+             END;
+
+    OnDelete=BEGIN
+               IF Status=Status::Approved THEN
+                  ERROR('%1',Text2)
+               ELSE            //Mel1.1-St
+                   BEGIN
+                    HumanHrLine.RESET;
+                    HumanHrLine.SETRANGE(HumanHrLine.NPK,Rec.NPK);
+                    HumanHrLine.SETRANGE(HumanHrLine.Date,Rec.Date);
+                    IF HumanHrLine.FINDFIRST THEN
+                     HumanHrLine.DELETEALL(TRUE);
+
+                   END
+                               //Mel1.1-En
+             END;
+
+    OnRename=BEGIN
+               IF Status=Status::Approved THEN
+                  ERROR('%1',Text1);
+
+               IF GenJnlCheckLine.DateNotAllowed(Date) THEN
+                FIELDERROR(Date,Text045);
+             END;
+
+    LookupPageID=Page62057;
+  }
+  FIELDS
+  {
+    { 1   ;   ;NPK                 ;Code20        ;TableRelation=Resource;
+                                                   OnValidate=BEGIN
+                                                                IF (Res.GET(NPK)) THEN
+                                                                 BEGIN
+                                                                   Name:=Res.Name;
+                                                                   "Shop Code":=Res."Global Dimension 1 Code";
+
+                                                                 END
+                                                              END;
+
+                                                   NotBlank=Yes }
+    { 2   ;   ;Name                ;Text50         }
+    { 3   ;   ;Date                ;Date          ;NotBlank=Yes }
+    { 4   ;   ;Status              ;Option        ;OptionString=[ ,Open,Approved] }
+    { 5   ;   ;UID                 ;Code50        ;TableRelation=User;
+                                                   Description=CAUYIMM }
+    { 6   ;   ;Total Hours         ;Decimal       ;NotBlank=Yes }
+    { 7   ;   ;Shop Code           ;Code10        ;TableRelation="Dimension Value".Code;
+                                                   NotBlank=Yes }
+    { 8   ;   ;TotalHrsLine        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Human Hr.Line".Hour WHERE (NPK=FIELD(NPK),
+                                                                                               Date=FIELD(Date))) }
+  }
+  KEYS
+  {
+    {    ;NPK,Date                                ;Clustered=Yes }
+    {    ;Shop Code,NPK,Date                       }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Res@1000000000 : Record 156;
+      Text1@1000000001 : TextConst 'ENU=Approved Documents Can not be modified.';
+      Text2@1000000002 : TextConst 'ENU=Approved Documents Can not be deleted.';
+      Text045@1102159001 : TextConst 'ENU=is not within your range of allowed posting dates.';
+      GenJnlCheckLine@1102159002 : Codeunit 11;
+      HumanHrLine@1102159003 : Record 50042;
+
+    BEGIN
+    {
+      //Mel1.1
+
+      --Process improvement: Entry should be synchronized with allowed to posting date for users.
+      -- Human Hr Line should be deleted if the hdr. is deleted for any open entry.
+      //CAUYIMM - Changed UID Length from 10 to 50.
+    }
+    END.
+  }
+}
+

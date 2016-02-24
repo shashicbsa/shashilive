@@ -1,0 +1,1613 @@
+OBJECT Report 50084 WHT ESPT REPORT
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/15;
+    Time=17:25:01;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=No;
+    OnInitReport=BEGIN
+                   CompanyInfo.GET;
+                 END;
+
+    OnPreReport=BEGIN
+
+                  {
+                  WHTBuffer.RESET;
+                  WHTBuffer.DELETEALL;
+                   }
+                END;
+
+    OnPostReport=BEGIN
+                   {
+                   WHTBuffer.RESET;
+                   WHTBuffer.DELETEALL;
+                    }
+
+                   ExcelBuf.GiveUserControl;
+                   ERROR('');
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table50017;
+               OnPreDataItem=BEGIN
+
+
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn(CompanyInfo.Name,FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.NewRow;
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn('WHT REPORT SUMMARY:',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn(AreaCode,FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.NewRow;
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn('',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn('PERIOD : ',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                               ExcelBuf.AddColumn(TODAY,FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  AreaCode:="AREA CODE".No;
+
+                                  Var_j:=0;
+
+                                  //ExcelBuf.AddColumn("WHT Revenue Types".Description,FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                END;
+
+               ReqFilterFields=No }
+
+    { 1102159002;1;DataItem;                 ;
+               DataItemTable=Table28042;
+               DataItemTableView=SORTING(GroupCode,Sequence,Code)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               LastRevNo:=1;
+
+                               FOR Int:=1 TO 10 DO
+                               HeaderValues[Int]:='';
+
+
+                               WHTPOSTINGSETUP.RESET;
+                               WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                               WHTPOSTINGSETUP.ASCENDING(FALSE);
+                               WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,FORMAT(LastRevNo));
+
+                               IF WHTPOSTINGSETUP.FINDFIRST THEN
+                               MAXSEQVALUE:=WHTPOSTINGSETUP.Sequence;
+
+
+
+                               FOR Int:=1 TO MAXSEQVALUE DO
+                                 BEGIN
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,FORMAT(LastRevNo));
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.Sequence,Int);
+
+                                  IF WHTPOSTINGSETUP.FINDSET THEN
+                                    BEGIN
+                                     WHTPOSTINGSETUP.CALCFIELDS(WHTPOSTINGSETUP.Description);
+                                     HeaderValues[Int]:=WHTPOSTINGSETUP.Description;
+                                    END;
+
+
+
+                                 END;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  IF ("WHT Revenue Types".Sequence=0) THEN
+                                     PPH22FLAG:=TRUE;
+
+                                  EVALUATE(CurrRevNo,"WHT Revenue Types".GroupCode);
+
+                                  IF (CurrRevNo<>LastRevNo) THEN
+                                  BEGIN
+                                  SNO:=0;
+
+
+                                  FOR Int:=1 TO 10 DO
+                                  HeaderValues[Int]:='';
+
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                  WHTPOSTINGSETUP.ASCENDING(FALSE);
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,"WHT Revenue Types".GroupCode);
+
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                  MAXSEQVALUE:=WHTPOSTINGSETUP.Sequence;
+
+
+                                  FOR Int:=1 TO MAXSEQVALUE DO
+                                    BEGIN
+                                     WHTPOSTINGSETUP.RESET;
+                                     WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                     WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,"WHT Revenue Types".GroupCode);
+                                     WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.Sequence,Int);
+
+                                     IF WHTPOSTINGSETUP.FINDSET THEN
+                                       BEGIN
+                                        WHTPOSTINGSETUP.CALCFIELDS(WHTPOSTINGSETUP.Description);
+                                        HeaderValues[Int]:=WHTPOSTINGSETUP.Description;
+                                       // MESSAGE('second value ...>> %1',WHTPOSTINGSETUP.Description);
+                                       END;
+
+
+
+                                    END;
+
+
+
+                                   //db UPG13R2DEV
+                                  //MakeExcelDataHeader;
+
+
+
+                                  END; // End of Curr and Last Value Comp Condition
+
+                                  EVALUATE(LastRevNo,"WHT Revenue Types".GroupCode);
+                                END;
+
+               ReqFilterFields=Code }
+
+    { 1102159003;2;DataItem;                 ;
+               DataItemTable=Table28043;
+               DataItemTableView=SORTING(GroupCode,Sequence,Revenue Type)
+                                 ORDER(Ascending)
+                                 WHERE(Reason Code=FILTER(SALRT),
+                                       GroupCode=FILTER(>0));
+               OnPreDataItem=BEGIN
+                               //MakeExcelDataHeader; //UPG13R2DEV
+
+                               Var_i:=0;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  "WHT Posting Setup".CALCFIELDS("WHT Posting Setup".Description);
+                                END;
+
+               DataItemLink=Revenue Type=FIELD(Code) }
+
+    { 1102159004;3;DataItem;                 ;
+               DataItemTable=Table113;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Sell-to Customer No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+
+                               Var_TotalAmt:=0;
+                               Var_TotalWhtAbsorbBase:=0;
+                               "Sales Invoice Line".SETRANGE("Sales Invoice Line"."Area Code",AreaCode);
+
+                               IF ("Sales Invoice Line".FINDSET) AND (Var_j=0)THEN BEGIN
+                               MakeAreaCodeHeader;
+                               Var_j:=1;
+                               END;
+
+
+
+                               IF ("Sales Invoice Line".FINDSET) AND (Var_i=0) THEN BEGIN
+                               MakeExcelDataHeader;
+                               Var_i:=1;
+                               END;
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  whtentry1@1102159003 : Record 28044;
+                                  TXRATE1@1102159002 : Decimal;
+                                  BKRATE1@1102159001 : Decimal;
+                                BEGIN
+
+
+
+                                           //   Message('SIL..');
+
+
+                                  //UPG13R2DEV.begin
+                                  //deepa
+                                  Var_TotalAmt+="Sales Invoice Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Sales Invoice Line"."WHT Absorb Base";
+
+                                  Rec_SalesInvoiceLine.RESET;
+                                  Rec_SalesInvoiceLine.SETFILTER("WHT Business Posting Group",'=%1',"Sales Invoice Line"."WHT Business Posting Group");
+                                  Rec_SalesInvoiceLine.SETFILTER("WHT Product Posting Group",'=%1',"Sales Invoice Line"."WHT Product Posting Group");
+                                  Rec_SalesInvoiceLine.SETFILTER("Document No.",'=%1',"Sales Invoice Line"."Document No.");
+                                  Rec_SalesInvoiceLine.SETRANGE("Area Code",AreaCode);
+                                  //Rec_SalesInvoiceLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_SalesInvoiceLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Sell-to Customer No.","Document No.");
+
+
+                                  IF (Rec_SalesInvoiceLine.FINDLAST) THEN
+                                   IF(Rec_SalesInvoiceLine."Document No."="Sales Invoice Line"."Document No.") AND (Rec_SalesInvoiceLine."Line No."="Sales Invoice Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+
+                                     SalesInvHeader.RESET;
+                                     IF SalesInvHeader.GET("Sales Invoice Line"."Document No.") THEN;
+                                       Narr:=SalesInvHeader."No.";
+                                       "Vend/Cust_Slip No.":=SalesInvHeader."Pre-Assigned No.";
+
+                                      "vEND/cUST NO.":="Sales Invoice Line"."Sell-to Customer No.";
+                                      "vEND/cUST dOCMENT NO.":="Sales Invoice Line"."Document No.";
+
+                                      ShipTo.RESET;
+                                      IF ShipTo.GET("Sales Invoice Line"."Sell-to Customer No.","Sales Invoice Line"."New NPWP.") THEN
+                                                 NPWP:=ShipTo.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            "Dummy Customer_Sales"(); // >>20130521/PC/CR#017
+                                            NPWPName:=SalesInvHeader."Ship-to Name 2";
+                                            Address:=SalesInvHeader."Ship-to Address";
+                                            END;
+
+                                        IF (NPWPName='') THEN
+                                        NPWPName:=SalesInvHeader."Sell-to Customer Name";
+
+
+                                  IF ( SalesInvHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     whtentry1.RESET;
+                                     whtentry1.SETRANGE(whtentry1."Document No.",SalesInvHeader."No.");
+                                      IF whtentry1.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE1:=(whtentry1."Amount (LCY)"/whtentry1.Amount);
+                                         BKRATE1:=(whtentry1."Base (LCY)" / whtentry1.Base);
+                                        END;
+
+                                   // TotAmt:=(("Sales Invoice Line".Amount) * TXRATE1);
+                                    TotAmt:=(Var_TotalAmt * TXRATE1);
+
+                                    END ELSE BEGIN
+                                     //TotAmt:="Sales Invoice Line".Amount;
+                                     TotAmt:=Var_TotalAmt;
+
+
+                                  END;
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Sales Invoice Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Sales Invoice Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+                                  //UPG13R2DEV.begin
+                                  {
+                                  IF ("Sales Invoice Line"."WHT Absorb Base" = 0 ) THEN
+                                    BEGIN
+                                      IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt *  "Sales Invoice Line".Amount) *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  "Sales Invoice Line".Amount) /100);
+
+                                     END
+                                  ELSE
+                                     BEGIN
+                                       IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt *  "Sales Invoice Line"."WHT Absorb Base") *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  "Sales Invoice Line"."WHT Absorb Base") /100);
+
+                                     END;
+                                     }
+
+                                  IF (Var_TotalWhtAbsorbBase= 0 ) THEN
+                                    BEGIN
+                                      IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt * Var_TotalAmt) *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+
+                                     END
+                                  ELSE
+                                     BEGIN
+                                       IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt * Var_TotalWhtAbsorbBase) *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+
+                                     END;
+
+
+                                  //UPG13R2DEV.end
+                                  //MESSAGE('%1',WHTAmt);
+
+                                    IF (SalesInvHeader."Reason Code" = 'SALRT') THEN
+                                     BEGIN
+                                        WHTAmt:=- WHTAmt;
+                                        TotAmt:= -TotAmt;
+                                     END;
+
+                                  MakeExcelDataBody;
+
+
+                                  //deepa
+                                  //WHTBuffer.RESET;
+                                  {
+                                  WHTBuffer.INIT;
+                                  WHTBuffer."Serial No.":=WHTBuffer."Serial No."+1;
+                                  WHTBuffer."Wht Description":= FORMAT("WHT Revenue Types".Description);
+                                  WHTBuffer."No.":= SNO;
+                                  WHTBuffer.Map:=FORMAT("WHT Posting Setup".MAPCode);
+                                  WHTBuffer.Code:=  FORMAT("vEND/cUST NO.");
+                                  WHTBuffer.NPWP:=FORMAT(NPWP);
+                                  WHTBuffer.Address:=Address;
+                                  WHTBuffer.DPP:=Var_TotalAmt;
+                                  WHTBuffer.PPH:=Var_TotalWhtAbsorbBase;
+                                  WHTBuffer.Slip:=FORMAT("Vend/Cust_Slip No.");
+                                  WHTBuffer.Document:=FORMAT("vEND/cUST dOCMENT NO.");
+                                  WHTBuffer.Area:=FORMAT(AreaCode);
+                                  WHTBuffer.Jasa:=FORMAT("WHT Posting Setup".Description);
+                                  WHTBuffer.INSERT;
+
+                                  }
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+
+
+
+                                  END;
+                                END;
+
+               ReqFilterFields=Posting Date;
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159005;3;DataItem;                 ;
+               DataItemTable=Table115;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Sell-to Customer No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+                               Var_TotalAmt:=0;
+                               Var_TotalWhtAbsorbBase:=0;
+
+
+                               "Sales Cr.Memo Line".SETRANGE("Sales Cr.Memo Line"."Area Code",AreaCode);
+                               "Sales Cr.Memo Line".SETFILTER("Sales Cr.Memo Line"."Posting Date",
+                                         "Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+
+
+
+
+                               IF ("Sales Cr.Memo Line".FINDSET) AND (Var_j=0) THEN BEGIN
+                               MakeAreaCodeHeader;
+                               Var_j:=1;
+                               END;
+
+                               IF ("Sales Cr.Memo Line".FINDSET) AND (Var_i=0) THEN BEGIN
+                               MakeExcelDataHeader;
+                               Var_i:=1;
+                               END;
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  wHTENTRY2@1102159003 : Record 28044;
+                                  TXRATE2@1102159002 : Decimal;
+                                  BKRATE2@1102159001 : Decimal;
+                                BEGIN
+
+
+                                   //deepa
+                                   Var_i:=1;
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Sales Cr.Memo Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Sales Cr.Memo Line"."WHT Absorb Base";
+
+                                  //deepa
+                                  Rec_SalesCrMemoLine.RESET;
+                                  Rec_SalesCrMemoLine.SETFILTER("WHT Business Posting Group",'=%1',"Sales Cr.Memo Line"."WHT Business Posting Group");
+                                  Rec_SalesCrMemoLine.SETFILTER("WHT Product Posting Group",'=%1',"Sales Cr.Memo Line"."WHT Product Posting Group");
+                                  Rec_SalesCrMemoLine.SETFILTER("Document No.",'=%1',"Sales Cr.Memo Line"."Document No.");
+                                  Rec_SalesCrMemoLine.SETRANGE("Area Code",AreaCode);
+                                  Rec_SalesCrMemoLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_SalesCrMemoLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Sell-to Customer No.","Document No.");
+
+
+                                  IF (Rec_SalesCrMemoLine.FINDLAST) THEN
+                                   IF(Rec_SalesCrMemoLine."Document No."="Sales Cr.Memo Line"."Document No.") AND (Rec_SalesCrMemoLine."Line No."="Sales Cr.Memo Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+                                  //=======Group Footer - 1
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+                                     SalesCrMemoHeader.RESET;
+                                     SalesCrMemoHeader.GET("Sales Cr.Memo Line"."Document No.");
+                                         Narr:=SalesCrMemoHeader."No.";
+                                          "Vend/Cust_Slip No.":=SalesCrMemoHeader."Pre-Assigned No.";
+                                      "vEND/cUST NO.":="Sales Cr.Memo Line"."Sell-to Customer No.";
+                                      "vEND/cUST dOCMENT NO.":="Sales Cr.Memo Line"."Document No.";
+
+
+
+                                      ShipTo.RESET;
+                                      IF ShipTo.GET("Sales Cr.Memo Line"."Sell-to Customer No.","Sales Cr.Memo Line"."New NPWP.") THEN
+                                                 NPWP:=ShipTo.Code;
+
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            "Dummy Customer_Sales Cr. Memo"(); // >>20130521/PC/CR#017
+                                            NPWPName:=SalesCrMemoHeader."Ship-to Name 2";
+                                            Address:=SalesCrMemoHeader."Ship-to Address";
+
+                                            END;
+
+                                        IF (NPWPName='') THEN
+                                        NPWPName:=SalesCrMemoHeader."Sell-to Customer Name";
+
+                                  IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     wHTENTRY2.RESET;
+                                     wHTENTRY2.SETRANGE(wHTENTRY2."Document No.",SalesCrMemoHeader."No.");
+                                      IF wHTENTRY2.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE2:=(wHTENTRY2."Amount (LCY)"/wHTENTRY2.Amount);
+                                         BKRATE2:=(wHTENTRY2."Base (LCY)" / wHTENTRY2.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE2);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+
+
+
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Sales Cr.Memo Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Sales Cr.Memo Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+                                   //UPG13R2DEV.begin
+                                   {
+                                  IF ("Sales Cr.Memo Line"."WHT Absorb Base" = 0 ) THEN
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt *  "Sales Cr.Memo Line".Amount) * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  "Sales Cr.Memo Line".Amount) /100);
+                                    END
+                                  ELSE
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt *  "Sales Cr.Memo Line"."WHT Absorb Base") * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  "Sales Cr.Memo Line"."WHT Absorb Base") /100);
+                                    END;
+
+                                  }
+
+
+                                  IF (Var_TotalWhtAbsorbBase = 0 ) THEN
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+                                    END
+                                  ELSE
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt * Var_TotalWhtAbsorbBase) * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+                                    END;
+
+                                   //UPG13R2DEV.end
+                                  //MESSAGE('%1',WHTAmt);
+
+                                  MakeExcelDataBody;
+
+                                  //deepa
+                                  //WHTBuffer.RESET;
+                                  {
+                                  WHTBuffer.INIT;
+                                  WHTBuffer."Serial No.":=WHTBuffer."Serial No."+1;
+                                  WHTBuffer."Wht Description":= FORMAT("WHT Revenue Types".Description);
+                                  WHTBuffer."No.":=SNO;
+                                  WHTBuffer.Map:=FORMAT("WHT Posting Setup".MAPCode);
+                                  WHTBuffer.Code:=  FORMAT("vEND/cUST NO.");
+                                  WHTBuffer.NPWP:=FORMAT(NPWP);
+                                  WHTBuffer.Address:=Address;
+                                  WHTBuffer.DPP:=Var_TotalAmt;
+                                  WHTBuffer.PPH:=Var_TotalWhtAbsorbBase;
+                                  WHTBuffer.Slip:=FORMAT("Vend/Cust_Slip No.");
+                                  WHTBuffer.Document:=FORMAT("vEND/cUST dOCMENT NO.");
+                                  WHTBuffer.Area:=FORMAT(AreaCode);
+                                  WHTBuffer.Jasa:=FORMAT("WHT Posting Setup".Description);
+                                  WHTBuffer.INSERT;
+
+                                  }
+
+                                  //WHTBuffer.deleteall;
+
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                  END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159006;3;DataItem;                 ;
+               DataItemTable=Table123;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Buy-from Vendor No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               Var_TotalAmt:=0;
+                               Var_TotalWhtAbsorbBase:=0;
+
+                               "Purch. Inv. Line".SETRANGE("Purch. Inv. Line"."Area Code",AreaCode);
+                               "Purch. Inv. Line".SETFILTER("Purch. Inv. Line"."Posting Date"
+                                     ,"Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+
+
+
+                               IF ("Purch. Inv. Line".FINDSET) AND (Var_j=0) THEN BEGIN
+                               MakeAreaCodeHeader;
+                               Var_j:=1;
+                               END;
+
+
+                               IF ("Purch. Inv. Line".FINDSET) AND (Var_i=0) THEN BEGIN
+                               MakeExcelDataHeader;
+                               Var_i:=1;
+                               END;
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  WHTEntry3@1102159003 : Record 28044;
+                                  TXRATE3@1102159002 : Decimal;
+                                  BKRATE3@1102159001 : Decimal;
+                                BEGIN
+
+                                            //  Message('P Inv L..');
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Purch. Inv. Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Purch. Inv. Line"."WHT Absorb Base";
+
+
+
+                                  //deepa
+                                  Rec_PurchInvLine.RESET;
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."WHT Business Posting Group",'=%1',"Purch. Inv. Line"."WHT Business Posting Group");
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."WHT Product Posting Group",'=%1',"Purch. Inv. Line"."WHT Product Posting Group");
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."Document No.",'=%1',"Purch. Inv. Line"."Document No.");
+                                  Rec_PurchInvLine.SETRANGE(Rec_PurchInvLine."Area Code",AreaCode);
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_PurchInvLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Buy-from Vendor No.","Document No.");
+
+
+                                  IF (Rec_PurchInvLine.FINDLAST) THEN
+                                   IF(Rec_PurchInvLine."Document No."="Purch. Inv. Line"."Document No.") AND (Rec_PurchInvLine."Line No."="Purch. Inv. Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+
+                                  //======================Group Footer 1 - OnPreSection
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+                                  PurchInvHeader.RESET;
+                                   IF PurchInvHeader.GET("Purch. Inv. Line"."Document No.") THEN;
+                                      Narr:=PurchInvHeader."Vendor Invoice No.";
+                                      "Vend/Cust_Slip No.":=PurchInvHeader."Pre-Assigned No.";
+                                  "vEND/cUST NO.":="Purch. Inv. Line"."Buy-from Vendor No.";
+                                  "vEND/cUST dOCMENT NO.":="Purch. Inv. Line"."Document No.";
+
+                                  OrderAddress.RESET;
+                                   IF OrderAddress.GET("Purch. Inv. Line"."Buy-from Vendor No.","Purch. Inv. Line"."New NPWP") THEN
+                                    NPWP:=OrderAddress.Code;
+
+                                  IF (NPWP<>'') THEN
+                                    BEGIN
+                                      NPWPName:=OrderAddress."Name 2";
+                                      Address:= OrderAddress.Address;
+                                    END
+                                   ELSE
+                                    BEGIN
+                                      "Dummy Vendor_Purchase"(); // >>20130521/PC/CR#017
+                                      IF (PurchInvHeader."Ship-to Name"='') THEN
+                                             NPWPName:=PurchInvHeader."Ship-to Name 2"
+                                      ELSE
+                                             NPWPName:=PurchInvHeader."Ship-to Name";
+
+                                      Address:=PurchInvHeader."Ship-to Address";
+                                    END;
+
+                                  IF (NPWPName='') THEN
+                                    NPWPName:=PurchInvHeader."Buy-from Vendor Name";
+
+
+                                  IF ( PurchInvHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     WHTEntry3.RESET;
+                                     WHTEntry3.SETRANGE(WHTEntry3."Document No.",PurchInvHeader."No.");
+                                      IF WHTEntry3.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE3:=(WHTEntry3."Amount (LCY)"/WHTEntry3.Amount);
+                                         BKRATE3:=(WHTEntry3."Base (LCY)" / WHTEntry3.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE3);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+                                  //MESSAGE("Purch. Inv. Line"."Document No.");
+                                  //MESSAGE('%1',"Purch. Inv. Line".Amount);
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Purch. Inv. Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Purch. Inv. Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+                                  //UPG13R2DEV.begin
+                                  {
+                                  IF ( "Purch. Inv. Line"."WHT Absorb Base" = 0 ) THEN
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                        BEGIN
+                                        WHTAmt:=(((WHTPercnt *  "Purch. Inv. Line".Amount) * TXRATE3) /100)
+                                       END ELSE
+                                       BEGIN
+                                        WHTAmt:=((WHTPercnt *  "Purch. Inv. Line".Amount) /100);
+
+                                        END ;
+                                    END
+                                  ELSE
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                         // WHTAmt:=(((WHTPercnt *  "Purch. Inv. Line"."WHT Absorb Base") * TXRATE3) /100)
+                                          WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE3) /100)
+
+                                        ELSE BEGIN
+
+                                        //  WHTAmt:=((WHTPercnt *  "Purch. Inv. Line"."WHT Absorb Base") /100);
+                                          WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+                                          END;
+
+                                    END;
+
+                                  }
+                                  IF (Var_TotalWhtAbsorbBase = 0 ) THEN
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                        BEGIN
+                                         // WHTAmt:=(((WHTPercnt *  "Purch. Inv. Line".Amount) * TXRATE3) /100)
+                                          WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE3) /100)
+                                       END ELSE
+                                       BEGIN
+                                         // WHTAmt:=((WHTPercnt *  "Purch. Inv. Line".Amount) /100);
+                                          WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+
+                                          END ;
+                                    END
+                                  ELSE
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                         // WHTAmt:=(((WHTPercnt *  "Purch. Inv. Line"."WHT Absorb Base") * TXRATE3) /100)
+                                          WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE3) /100)
+
+                                        ELSE BEGIN
+
+                                        //  WHTAmt:=((WHTPercnt *  "Purch. Inv. Line"."WHT Absorb Base") /100);
+                                          WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+                                          END;
+
+                                    END;
+
+
+
+                                  //UPG13R2DEV.end
+                                  //MESSAGE('%1',WHTAmt);
+
+                                  MakeExcelDataBody;
+
+                                  //deepa
+                                  //WHTBuffer.RESET;
+
+                                  {
+                                  WHTBuffer.INIT;
+                                  WHTBuffer."Serial No.":=WHTBuffer."Serial No."+1;
+                                  WHTBuffer."Wht Description":= FORMAT("WHT Revenue Types".Description);
+                                  WHTBuffer."No.":=SNO;
+                                  WHTBuffer.Map:=FORMAT("WHT Posting Setup".MAPCode);
+                                  WHTBuffer.Code:=  FORMAT("vEND/cUST NO.");
+                                  WHTBuffer.NPWP:=FORMAT(NPWP);
+                                  WHTBuffer.Address:=Address;
+                                  WHTBuffer.DPP:=Var_TotalAmt;
+                                  WHTBuffer.PPH:=Var_TotalWhtAbsorbBase;
+                                  WHTBuffer.Slip:=FORMAT("Vend/Cust_Slip No.");
+                                  WHTBuffer.Document:=FORMAT("vEND/cUST dOCMENT NO.");
+                                  WHTBuffer.Area:=FORMAT(AreaCode);
+                                  WHTBuffer.Jasa:=FORMAT("WHT Posting Setup".Description);
+                                  WHTBuffer.INSERT;
+
+                                  }
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                    END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159007;3;DataItem;                 ;
+               DataItemTable=Table125;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Buy-from Vendor No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               Var_TotalAmt:=0;
+                               Var_TotalWhtAbsorbBase:=0;
+
+                               "Purch. Cr. Memo Line".SETRANGE("Purch. Cr. Memo Line"."Area Code",AreaCode);
+                               "Purch. Cr. Memo Line".SETFILTER("Purch. Cr. Memo Line"."Posting Date",
+                                    "Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+
+
+
+                               IF ("Purch. Cr. Memo Line".FINDSET) AND (Var_j=0) THEN BEGIN
+                               MakeAreaCodeHeader;
+                               Var_j:=1;
+                               END;
+
+                               IF ("Purch. Cr. Memo Line".FINDSET) AND (Var_i=0) THEN BEGIN
+                               MakeExcelDataHeader;
+                               Var_i:=1;
+                               END;
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  WHTENTRY4@1102159003 : Record 28044;
+                                  TXRATE4@1102159002 : Decimal;
+                                  BKRATE4@1102159001 : Decimal;
+                                BEGIN
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Purch. Cr. Memo Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Purch. Cr. Memo Line"."WHT Absorb Base";
+
+                                  //deepa
+                                  Rec_PurchCrMemoLine.RESET;
+                                  Rec_PurchCrMemoLine.SETFILTER("WHT Business Posting Group",'=%1',"Purch. Cr. Memo Line"."WHT Business Posting Group");
+                                  Rec_PurchCrMemoLine.SETFILTER("WHT Product Posting Group",'=%1',"Purch. Cr. Memo Line"."WHT Product Posting Group");
+                                  Rec_PurchCrMemoLine.SETFILTER("Document No.",'=%1',"Purch. Cr. Memo Line"."Document No.");
+                                  Rec_PurchCrMemoLine.SETRANGE("Area Code",AreaCode);
+                                  Rec_PurchCrMemoLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_PurchCrMemoLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Buy-from Vendor No.","Document No.");
+
+
+                                  IF (Rec_PurchCrMemoLine.FINDLAST) THEN
+                                   IF(Rec_PurchCrMemoLine."Document No."="Purch. Cr. Memo Line"."Document No.") AND (Rec_PurchCrMemoLine."Line No."="Purch. Cr. Memo Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+                                  //=======Group Footer - 1
+
+
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+
+                                     PurchCrMemoHeader.RESET;
+                                     IF PurchCrMemoHeader.GET("Purch. Cr. Memo Line"."Document No.") THEN;
+                                        Narr:=PurchCrMemoHeader."No.";
+                                        "Vend/Cust_Slip No.":=PurchCrMemoHeader."Pre-Assigned No.";
+                                     "vEND/cUST NO.":="Purch. Cr. Memo Line"."Buy-from Vendor No.";
+                                     "vEND/cUST dOCMENT NO.":="Purch. Cr. Memo Line"."Document No.";
+
+
+                                         OrderAddress.RESET;
+                                         IF OrderAddress.GET("Purch. Cr. Memo Line"."Buy-from Vendor No.","Purch. Cr. Memo Line"."New NPWP") THEN
+                                            NPWP:=OrderAddress.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=OrderAddress."Name 2";
+                                            Address:=OrderAddress.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            "Dummy Vendor_Purchase Cr. Memo"(); // >>20130521/PC/CR#017
+                                            NPWPName:=PurchCrMemoHeader."Ship-to Name 2";
+                                            Address:=PurchCrMemoHeader."Ship-to Address";
+                                            END;
+
+                                         IF (NPWPName='') THEN
+                                          NPWPName:=PurchCrMemoHeader."Buy-from Vendor Name";
+
+
+                                  IF ( PurchCrMemoHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     WHTENTRY4.RESET;
+                                     WHTENTRY4.SETRANGE(WHTENTRY4."Document No.",PurchCrMemoHeader."No.");
+                                      IF WHTENTRY4.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE4:=(WHTENTRY4."Amount (LCY)"/WHTENTRY4.Amount);
+                                         BKRATE4:=(WHTENTRY4."Base (LCY)" / WHTENTRY4.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE4);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Purch. Cr. Memo Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Purch. Cr. Memo Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+                                  //UPG13R2DEV.begin
+                                  {
+                                  IF ("Purch. Cr. Memo Line"."WHT Absorb Base" = 0 ) THEN
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  "Purch. Cr. Memo Line".Amount) * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt *  "Purch. Cr. Memo Line".Amount) /100);
+                                   END
+                                  ELSE
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  "Purch. Cr. Memo Line"."WHT Absorb Base") * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt *  "Purch. Cr. Memo Line"."WHT Absorb Base") /100);
+
+                                   END;
+
+                                  }
+
+                                  IF (Var_TotalWhtAbsorbBase = 0 ) THEN
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt * Var_TotalAmt) /100);
+                                   END
+                                  ELSE
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+
+                                   END;
+
+
+                                  //UPG13R2DEV.end
+
+                                  //MESSAGE('%1',WHTAmt);
+
+                                    IF (PurchCrMemoHeader."Reason Code" = 'NORMAL') THEN
+                                     BEGIN
+                                        WHTAmt:=- WHTAmt;
+                                        TotAmt:= -TotAmt;
+                                     END;
+
+                                  MakeExcelDataBody;
+
+
+                                  //deepa
+                                  //WHTBuffer.RESET;
+
+                                  {
+                                  WHTBuffer.INIT;
+                                  WHTBuffer."Serial No.":=WHTBuffer."Serial No."+1;
+                                  WHTBuffer."Wht Description":= FORMAT("WHT Revenue Types".Description);
+                                  WHTBuffer."No.":=SNO;
+                                  WHTBuffer.Map:=FORMAT("WHT Posting Setup".MAPCode);
+                                  WHTBuffer.Code:=  FORMAT("vEND/cUST NO.");
+                                  WHTBuffer.NPWP:=FORMAT(NPWP);
+                                  WHTBuffer.Address:=Address;
+                                  WHTBuffer.DPP:=Var_TotalAmt;
+                                  WHTBuffer.PPH:=Var_TotalWhtAbsorbBase;
+                                  WHTBuffer.Slip:=FORMAT("Vend/Cust_Slip No.");
+                                  WHTBuffer.Document:=FORMAT("vEND/cUST dOCMENT NO.");
+                                  WHTBuffer.Area:=FORMAT(AreaCode);
+                                  WHTBuffer.Jasa:=FORMAT("WHT Posting Setup".Description);
+                                  WHTBuffer.INSERT;
+                                  }
+
+                                  //WHTBuffer.deleteall;
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                  END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159008;;DataItem;                  ;
+               DataItemTable=Table17;
+               DataItemTableView=SORTING(G/L Account No.,Posting Date,Entry Type)
+                                 ORDER(Ascending)
+                                 WHERE(G/L Account No.=CONST(2231000030),
+                                       Gen. Posting Type=FILTER(Sale|Purchase));
+               OnPreDataItem=BEGIN
+
+                               MakeExcelDataHeaderPPH22;
+                               SNO:=0;
+
+                               "G/L Entry".SETFILTER("G/L Entry"."Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  IF (AreaCode<>'YIMM') THEN
+                                  CurrReport.BREAK;
+
+                                  IF NOT (PPH22FLAG) THEN
+                                  CurrReport.BREAK;
+
+
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+
+
+                                  //////////////////////////////////////Sales Section Start////////////////////////////////////
+
+                                  IF ("G/L Entry"."Gen. Posting Type"="G/L Entry"."Gen. Posting Type"::Sale) THEN
+                                   BEGIN
+
+
+
+                                  /////////////////////////////////////////////sales Invoice///////////////////////////////////
+
+                                   IF ("G/L Entry"."Document Type"="G/L Entry"."Document Type"::Invoice) THEN
+                                    BEGIN
+                                     SalesInvHeader.RESET;
+                                     IF SalesInvHeader.GET("G/L Entry"."Document No.") THEN;
+
+                                     SalesInvLine.RESET;
+                                     SalesInvLine.SETRANGE(SalesInvLine."Document No.","G/L Entry"."Document No.");
+                                     SalesInvLine.SETRANGE(SalesInvLine.Amount,ABS("G/L Entry".Amount));
+
+
+                                      IF SalesInvLine.FINDSET THEN
+                                         BEGIN
+                                         ShipTo.RESET;
+                                         IF ShipTo.GET("G/L Entry"."Source No.",SalesInvLine."New NPWP.") THEN
+                                                 NPWP:=ShipTo.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            NPWPName:=SalesInvHeader."Ship-to Name 2";
+                                            Address:=SalesInvHeader."Ship-to Address";
+
+                                            // >>20130521/PC/CR#017
+                                            Cust2.RESET;
+                                            Cust2.GET("G/L Entry"."Source No.");
+                                            IF Cust2.Name = '' THEN
+                                              NPWP := SalesInvLine."New NPWP.";
+                                            // <<20130521/PC/CR#017
+                                            END;
+
+
+
+                                         END;
+
+
+                                    END; //End OF Invoice Condition
+
+
+
+
+
+                                  ////////////////////////////////////////////////Sales Invoice-end/////////////////////////////////
+
+                                  /////////////////////////////////////Sales Cr MEmo Header-start///////////////////////////////////////
+
+                                   IF ("G/L Entry"."Document Type"="G/L Entry"."Document Type"::"Credit Memo") THEN
+                                    BEGIN
+                                     SalesCrMemoHeader.RESET;
+                                     IF SalesCrMemoHeader.GET("G/L Entry"."Document No.") THEN;
+
+                                     SalesCrMemoLine.RESET;
+                                     SalesCrMemoLine.SETRANGE(SalesCrMemoLine."Document No.","G/L Entry"."Document No.");
+                                     SalesCrMemoLine.SETRANGE(SalesCrMemoLine.Amount,ABS("G/L Entry".Amount));
+
+
+                                      IF SalesCrMemoLine.FINDSET THEN
+                                         BEGIN
+                                         ShipTo.RESET;
+                                         IF ShipTo.GET("G/L Entry"."Source No.",SalesCrMemoLine."New NPWP.") THEN
+                                            NPWP:=ShipTo.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                              NPWPName:=SalesCrMemoHeader."Ship-to Name 2";
+                                              Address:=SalesCrMemoHeader."Ship-to Address";
+
+                                              // >>20130521/PC/CR#017
+                                              Cust2.RESET;
+                                              Cust2.GET("G/L Entry"."Source No.");
+                                              IF Cust2.Name = '' THEN
+                                                NPWP := SalesCrMemoLine."New NPWP.";
+                                              // <<20130521/PC/CR#017
+
+
+                                            END;
+
+                                         END;
+
+
+                                    END; //End OF Invoice Condition
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                  /////////////////////////////////////sales Cr MEMO Header-end///////////////////////////////////
+
+
+
+                                   END;     //End OF Transaction Type IF
+
+
+
+                                  ///////////////////////////////////Sales Section End//////////////////////////////////////////
+
+
+
+                                  ///////////////////////////////////////////Purchase Section Start///////////////////////////
+
+
+
+
+
+                                  IF ("G/L Entry"."Gen. Posting Type"="G/L Entry"."Gen. Posting Type"::Purchase) THEN
+                                    BEGIN
+
+                                  ///////////////////////////////////////////Invoice Start/////////////////////////////////////
+
+                                   IF ("G/L Entry"."Document Type"="G/L Entry"."Document Type"::Invoice) THEN
+                                    BEGIN
+                                     PurchInvHeader.RESET;
+                                     IF PurchInvHeader.GET("G/L Entry"."Document No.") THEN;
+
+                                     PurchInvLine.RESET;
+                                     PurchInvLine.SETRANGE(PurchInvLine."Document No.","G/L Entry"."Document No.");
+                                     PurchInvLine.SETRANGE(PurchInvLine.Amount,ABS("G/L Entry".Amount));
+
+
+                                      IF PurchInvLine.FINDSET THEN
+                                         BEGIN
+                                         OrderAddress.RESET;
+                                         IF OrderAddress.GET("G/L Entry"."Source No.",PurchInvLine."New NPWP") THEN
+                                                 NPWP:=OrderAddress.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=OrderAddress."Name 2";
+                                            Address:= OrderAddress.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                              NPWPName:=PurchInvHeader."Ship-to Name 2";
+                                              Address:=PurchInvHeader."Ship-to Address";
+
+                                              // >>20130521/PC/CR#017
+                                              Vend2.RESET;
+                                              Vend2.GET("G/L Entry"."Source No.");
+                                              IF Vend2.Name = '' THEN
+                                                  NPWP := PurchInvLine."New NPWP";
+                                              // <<20130521/PC/CR#017
+                                            END;
+
+
+
+                                         END;
+
+
+                                    END; //End OF Invoice Condition
+
+                                  /////////////////////////////////////////////Invoice end/////////////////////////////
+
+
+                                  /////////////////////////////CR MEMEO-Start/////////////////////////////////////////////////////////
+
+                                   IF ("G/L Entry"."Document Type"="G/L Entry"."Document Type"::"Credit Memo") THEN
+                                    BEGIN
+                                     PurchCrMemoHeader.RESET;
+                                     IF PurchCrMemoHeader.GET("G/L Entry"."Document No.") THEN;
+
+                                     PurchCrMemoLine.RESET;
+                                     PurchCrMemoLine.SETRANGE(PurchCrMemoLine."Document No.","G/L Entry"."Document No.");
+                                     PurchCrMemoLine.SETRANGE(PurchCrMemoLine.Amount,ABS("G/L Entry".Amount));
+
+
+                                      IF PurchCrMemoLine.FINDSET THEN
+                                         BEGIN
+                                         OrderAddress.RESET;
+                                         IF OrderAddress.GET("G/L Entry"."Source No.",PurchCrMemoLine."New NPWP") THEN
+                                            NPWP:=OrderAddress.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=OrderAddress."Name 2";
+                                            Address:=OrderAddress.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            NPWPName:=PurchCrMemoHeader."Ship-to Name 2";
+                                            Address:=PurchCrMemoHeader."Ship-to Address";
+
+                                            // >>20130521/PC/CR#017
+                                            Vend2.RESET;
+                                            Vend2.GET("G/L Entry"."Source No.");
+                                            IF Vend2.Name = '' THEN
+                                                NPWP := PurchCrMemoLine."New NPWP";
+                                            // >>20130521/PC/CR#017
+
+                                            END;
+
+
+                                         END;
+
+
+                                    END; //End OF Invoice Condition
+
+
+
+                                  ////////////////////////CR MEMO-end//////////////////////////////////////////////////////////////
+
+
+                                     END;   //End OF Transaction Type IF
+
+
+
+                                  MakeExcelDataBodePPH22;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                  CreateExcelbook;
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ExcelBuf@1102159040 : TEMPORARY Record 370;
+      AreaCode@1102159039 : Code[20];
+      RevenueType@1102159038 : Integer;
+      SNO@1102159037 : Integer;
+      CustVendNAme@1102159036 : Text[50];
+      Cust@1102159035 : Record 18;
+      Vend@1102159034 : Record 23;
+      PurchInvLine@1102159033 : Record 123;
+      PurchCrMemoLine@1102159032 : Record 125;
+      SalesInvLine@1102159031 : Record 113;
+      SalesCrMemoLine@1102159030 : Record 115;
+      PurchInvHeader@1102159029 : Record 122;
+      PurchCrMemoHeader@1102159028 : Record 124;
+      SalesInvHeader@1102159027 : Record 112;
+      SalesCrMemoHeader@1102159026 : Record 114;
+      OrderAddress@1102159025 : Record 224;
+      ShipTo@1102159024 : Record 222;
+      NPWP@1102159023 : Code[20];
+      NPWPName@1102159022 : Text[50];
+      Address@1102159021 : Text[50];
+      LastRevNo@1102159020 : Integer;
+      CurrRevNo@1102159019 : Integer;
+      WHTPOSTINGSETUP@1102159018 : Record 28043;
+      MAXSEQVALUE@1102159017 : Integer;
+      Int@1102159016 : Integer;
+      HeaderValues@1102159015 : ARRAY [10] OF Text[50];
+      Narr@1102159014 : Text[50];
+      TotAmt@1102159013 : Decimal;
+      WHTAmt@1102159012 : Decimal;
+      WHTPercnt@1102159011 : Decimal;
+      Whtentry@1102159010 : Record 28044;
+      "vEND/cUST NO."@1102159009 : Code[50];
+      "vEND/cUST dOCMENT NO."@1102159008 : Code[50];
+      "Vend/Cust_Slip No."@1102159007 : Code[50];
+      DateFil@1102159006 : Text[250];
+      PPH22FLAG@1102159005 : Boolean;
+      "//>>20130521/PC/CR#017"@1102159004 : Integer;
+      Cust2@1102159003 : Record 18;
+      Vend2@1102159002 : Record 23;
+      "//<<20130521/PC/CR#017"@1102159001 : Integer;
+      Text005@1102159041 : TextConst 'ENU=COMPANY NAME';
+      CompanyInfo@1102159042 : Record 79;
+      Rec_PurchInvLine@1102159043 : Record 123;
+      Var_TotalAmt@1102159044 : Decimal;
+      Var_TotalWhtAbsorbBase@1102159045 : Decimal;
+      WHTBuffer@1102159046 : Record 60060;
+      Rec_SalesInvoiceLine@1102159047 : Record 113;
+      Rec_SalesCrMemoLine@1102159048 : Record 115;
+      Rec_PurchCrMemoLine@1102159049 : Record 125;
+      Var_i@1102159050 : Integer;
+      Var_j@1102159051 : Integer;
+
+    LOCAL PROCEDURE MakeExcelDataHeader@2();
+    VAR
+      Cnt@1000000000 : Integer;
+      LoopValue@1000000001 : Integer;
+    BEGIN
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+
+      ExcelBuf.AddColumn("WHT Revenue Types".Description,FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+    END;
+
+    PROCEDURE MakeExcelDataBody@4();
+    VAR
+      BlankFiller@1000 : Text[250];
+      I@1000000000 : Integer;
+      SpaceValue@1000000001 : Integer;
+      SpaceValueNarration@1000000002 : Integer;
+    BEGIN
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn(FORMAT(SNO),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT("WHT Posting Setup".MAPCode),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT("vEND/cUST NO."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(NPWP),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(NPWPName),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);  //UPG13R2DEV
+      ExcelBuf.AddColumn(FORMAT(Address),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+      //SpaceValue:=2*("WHT Posting Setup".Sequence-1);
+
+      //FOR I:=0 TO  (SpaceValue-1) DO
+      // ExcelBuf.AddColumn(FORMAT(''),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      //UPG13R2DEV.begin
+      {
+      ExcelBuf.AddColumn(FORMAT(TotAmt),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+      ExcelBuf.AddColumn(FORMAT(WHTAmt),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+      }
+
+      ExcelBuf.AddColumn(FORMAT(TotAmt),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+      ExcelBuf.AddColumn(FORMAT(WHTAmt),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+      //UPG13R2DEV.end
+        //$db
+
+
+      //SpaceValueNarration:=2*(MAXSEQVALUE-"WHT Posting Setup".Sequence);
+
+
+
+      //FOR I:=0 TO  (SpaceValueNarration-1) DO
+       //ExcelBuf.AddColumn(FORMAT(''),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+      //IF ("WHT Posting Setup".Sequence=7) THEN
+         //  ExcelBuf.AddColumn(FORMAT(''),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+      ExcelBuf.AddColumn(FORMAT("Vend/Cust_Slip No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn("vEND/cUST dOCMENT NO.",FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(AreaCode),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT("WHT Posting Setup".Description),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+    END;
+
+    PROCEDURE CreateExcelbook@1();
+    BEGIN
+      //ExcelBuf.CreateBook;
+      //ExcelBuf.CreateSheet("AREA CODE".Name,"AREA CODE".Name,COMPANYNAME,USERID);
+        ExcelBuf.CreateBookAndOpenExcel('Data','TAX SUMMARY','Summary Data',USERID);
+    END;
+
+    PROCEDURE MakeExcelDataHeaderPPH22@1000000003();
+    BEGIN
+
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('PPH 22 MotorCycle',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+                                               //ashish
+      {
+      ExcelBuf.AddColumn('No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('MAP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Vednor/Customer',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('NAME',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('NPWP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('ADDRESS',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('PPH 22-DPP ',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('PPH 22-PPH',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.AddColumn('Narration',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+        }
+    END;
+
+    PROCEDURE MakeExcelDataBodePPH22@1000000000();
+    VAR
+      DPP@1000000000 : Decimal;
+    BEGIN
+
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn(FORMAT(SNO),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT('100'),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT("G/L Entry"."Source No."),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(NPWP),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(NPWPName),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);  //UPG13R2DEV
+      ExcelBuf.AddColumn(FORMAT(Address),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+
+
+      IF ("G/L Entry"."Ship-to Code"<>'') THEN
+      DPP:=("G/L Entry".Amount*100)/(0.45)
+      ELSE
+      DPP:=("G/L Entry".Amount*100)/(0.9);
+
+      ExcelBuf.AddColumn(FORMAT(ABS(DPP)),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+
+      ExcelBuf.AddColumn(FORMAT(ABS("G/L Entry".Amount)),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Number);
+      ExcelBuf.AddColumn('',FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn(FORMAT(("G/L Entry"."Document No.")),FALSE,'',FALSE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+    END;
+
+    PROCEDURE "// >>20130521/PC/CR#017"@1102159002();
+    BEGIN
+    END;
+
+    PROCEDURE "Dummy Vendor_Purchase"@1102159001();
+    BEGIN
+      Vend2.RESET;
+      Vend2.GET("Purch. Inv. Line"."Buy-from Vendor No.");
+      IF Vend2.Name = '' THEN
+        NPWP := "Purch. Inv. Line"."New NPWP";
+    END;
+
+    PROCEDURE "Dummy Vendor_Purchase Cr. Memo"@1102159003();
+    BEGIN
+      Vend2.RESET;
+      Vend2.GET("Purch. Cr. Memo Line"."Buy-from Vendor No.");
+      IF Vend2.Name = '' THEN
+        NPWP := "Purch. Cr. Memo Line"."New NPWP";
+    END;
+
+    PROCEDURE "Dummy Customer_Sales"@1102159004();
+    BEGIN
+      Cust2.RESET;
+      Cust2.GET("Sales Invoice Line"."Sell-to Customer No.");
+      IF Cust2.Name = '' THEN
+        NPWP := "Sales Invoice Line"."New NPWP.";
+    END;
+
+    PROCEDURE "Dummy Customer_Sales Cr. Memo"@1102159005();
+    BEGIN
+      Cust2.RESET;
+      Cust2.GET("Sales Cr.Memo Line"."Sell-to Customer No.");
+      IF Cust2.Name = '' THEN
+        NPWP := "Sales Cr.Memo Line"."New NPWP.";
+    END;
+
+    PROCEDURE "// <<20130521/PC/CR#017"@1102159006();
+    BEGIN
+    END;
+
+    PROCEDURE MakeAreaCodeHeader@1102159026();
+    BEGIN
+
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('MAP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('CODE',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('NPWP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('NAME',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);   //UPG13R2DEV
+      ExcelBuf.AddColumn('ADDRESS',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('DPP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('PPH',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('SLIP',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('DOKUMEN',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('AREA',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('JASA',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      //ExcelBuf.NewRow;
+    END;
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Some code is added for creating group footer in NAV 2013 R2.
+    }
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <Height>2in</Height>
+        <Style />
+      </Body>
+      <Width>6.5in</Width>
+      <Page>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

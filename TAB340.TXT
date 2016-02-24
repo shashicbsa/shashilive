@@ -1,0 +1,54 @@
+OBJECT Table 340 Customer Discount Group
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    OnDelete=VAR
+               SalesLineDiscount@1000 : Record 7004;
+             BEGIN
+               SalesLineDiscount.SETCURRENTKEY("Sales Type","Sales Code");
+               SalesLineDiscount.SETRANGE("Sales Type",SalesLineDiscount."Sales Type"::"Customer Disc. Group");
+               SalesLineDiscount.SETRANGE("Sales Code",Code);
+               SalesLineDiscount.DELETEALL(TRUE);
+             END;
+
+    CaptionML=[ENU=Customer Group;
+               ENA=Customer Discount Group];
+    LookupPageID=Page512;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code20        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,84 @@
+OBJECT Page 28164 GST Purchase Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVAU6.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=GST Purchase Entries;
+               ENA=GST Purchase Entries];
+    SourceTable=Table28160;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500000;1;Group     ;
+                GroupType=Repeater }
+
+    { 1500001;2;Field     ;
+                SourceExpr="Entry No." }
+
+    { 1500003;2;Field     ;
+                SourceExpr="GST Entry No." }
+
+    { 1500005;2;Field     ;
+                SourceExpr="Posting Date" }
+
+    { 1500007;2;Field     ;
+                SourceExpr="Document No." }
+
+    { 1500009;2;Field     ;
+                SourceExpr="Document Type" }
+
+    { 1500011;2;Field     ;
+                SourceExpr="Document Line No." }
+
+    { 1500013;2;Field     ;
+                SourceExpr="Document Line Type" }
+
+    { 1500015;2;Field     ;
+                SourceExpr="Document Line Code" }
+
+    { 1500017;2;Field     ;
+                SourceExpr="Vendor No." }
+
+    { 1500019;2;Field     ;
+                SourceExpr="Vendor Name" }
+
+    { 1500021;2;Field     ;
+                SourceExpr="Document Line Description" }
+
+    { 1500023;2;Field     ;
+                SourceExpr="GST Entry Type" }
+
+    { 1500025;2;Field     ;
+                SourceExpr="GST Base" }
+
+    { 1500027;2;Field     ;
+                SourceExpr=Amount }
+
+    { 1500029;2;Field     ;
+                SourceExpr="VAT Calculation Type" }
+
+    { 1500031;2;Field     ;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 1500033;2;Field     ;
+                SourceExpr="VAT Prod. Posting Group" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,33 @@
+OBJECT Table 60008 ExpansesCode
+{
+  OBJECT-PROPERTIES
+  {
+    Date=05/06/11;
+    Time=10:44:31;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page62079;
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNO                 ;Integer        }
+    { 2   ;   ;ExpanseCode         ;Code20         }
+    { 3   ;   ;Description         ;Code20         }
+  }
+  KEYS
+  {
+    {    ;SNO,ExpanseCode                         ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

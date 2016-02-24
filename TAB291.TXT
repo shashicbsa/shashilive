@@ -1,0 +1,44 @@
+OBJECT Table 291 Shipping Agent
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Code,Name;
+    CaptionML=[ENU=Shipping Agent;
+               ENA=Shipping Agent];
+    LookupPageID=Page428;
+    DrillDownPageID=Page428;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Name                ;Text50        ;CaptionML=[ENU=Name;
+                                                              ENA=Name] }
+    { 3   ;   ;Internet Address    ;Text250       ;ExtendedDatatype=URL;
+                                                   CaptionML=[ENU=Internet Address;
+                                                              ENA=Internet Address] }
+    { 4   ;   ;Account No.         ;Text30        ;CaptionML=[ENU=Account No.;
+                                                              ENA=Account No.] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

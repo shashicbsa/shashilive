@@ -1,0 +1,117 @@
+OBJECT Page 50017 Master Customer Posting Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/15/14;
+    Time=12:20:00;
+    Version List=IF1.0,CR#023;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table50012;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                CaptionML=ENU=EXPORT }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Export M/C Related Party" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Export M/C Third Party" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Export S/P Related Party" }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Export S/P Third Party" }
+
+    { 1901888101;1;Group  ;
+                CaptionML=ENU=LOCAL }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Local M/C DDS" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Local M/C MD" }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="Local S/P Related Party" }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Local S/P Third Party" }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Local Others Related Party" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Local Others Third Party" }
+
+    { 1000000036;2;Field  ;
+                SourceExpr="Vndr Pstng Grp(Vndr As Dlr) TP" }
+
+    { 1000000042;2;Field  ;
+                SourceExpr="Vndr Pstng Grp(Vndr As Dlr) RP" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Local M/C CBU DDS" }
+
+    { 1102159009;2;Field  ;
+                SourceExpr="Local M/C CBU MD" }
+
+    { 1901717501;1;Group  ;
+                CaptionML=ENU=OTHERS }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Accured Incentive" }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Advanced Payment Third Party" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Advanced Payment Related Party" }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Short Term Recv. Third Party" }
+
+    { 1000000029;2;Field  ;
+                SourceExpr="Short Term Recv. Related Party" }
+
+    { 1000000031;2;Field  ;
+                SourceExpr="Others Related Party" }
+
+    { 1000000033;2;Field  ;
+                SourceExpr="Others Third Party" }
+
+    { 1000000038;2;Field  ;
+                SourceExpr="Freight+Insurance Account" }
+
+    { 1000000040;2;Field  ;
+                SourceExpr="Stamp Duty Account" }
+
+    { 1000000044;2;Field  ;
+                SourceExpr="Other Charges Account" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="YMNI Sales Discount" }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="YMNI Installation" }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="YMNI Travelling" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

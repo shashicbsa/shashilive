@@ -1,0 +1,32 @@
+OBJECT Table 88888 OpeningDirectPost
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/26/15;
+    Time=18:19:59;
+    Modified=Yes;
+    Version List=OPENINGUPG;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Account No          ;Code20         }
+    { 2   ;   ;Diff                ;Boolean        }
+  }
+  KEYS
+  {
+    {    ;Account No                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

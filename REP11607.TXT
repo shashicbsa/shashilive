@@ -1,0 +1,147 @@
+OBJECT Report 11607 Transfer EFT Register
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=From EFT Journal;
+               ENA=From EFT Journal];
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 4114;    ;DataItem;                    ;
+               DataItemTable=Table25;
+               DataItemTableView=SORTING(Open,Due Date);
+               OnPreDataItem=BEGIN
+                               IF DueDate = 0D THEN
+                                 ERROR(Text11002);
+
+                               IF PostingDate = 0D THEN
+                                 ERROR(Text11001);
+
+                               GenJnlLine.SETRANGE("Journal Template Name",GenJnlLine."Journal Template Name");
+                               GenJnlLine.SETRANGE("Journal Batch Name",GenJnlLine."Journal Batch Name");
+                               IF GenJnlLine.FINDFIRST THEN
+                                 GenJnlLine.INIT
+                               ELSE
+                                 CLEAR(GenJnlLine."Line No.");
+
+                               SETRANGE(Open,TRUE);
+                               SETFILTER("Due Date",'..%1',DueDate);
+
+                               IF EFTNo <> 0 THEN
+                                 SETFILTER("EFT Register No.",'=%1',EFTNo)
+                               ELSE
+                                 SETFILTER("EFT Register No.",'<>0');
+
+                               ProcessWindow.OPEN('@1@@@@@@@@@@@@@@@@@@@@@@@@@');
+                               NoOfRec := COUNT;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  CALCFIELDS("Remaining Amount");
+                                  IF EFTRegister.GET("EFT Register No.") AND EFTRegister."EFT Payment" THEN BEGIN
+                                    I += 1;
+                                    ProcessWindow.UPDATE(1,ROUND(I / NoOfRec * 10000,1.0));
+                                    GenJnlLine1 := GenJnlLine;
+                                    GenJnlLine.INIT;
+                                    GenJnlLine."Line No." += 10000;
+                                    GenJnlLine.SetUpNewLine(GenJnlLine1,0,TRUE);
+                                    GenJnlLine.VALIDATE("Posting Date",PostingDate);
+                                    GenJnlLine.VALIDATE("Account Type",GenJnlLine."Account Type"::Vendor);
+                                    GenJnlLine.VALIDATE("Account No.","Vendor No.");
+                                    GenJnlLine.VALIDATE("Document Type","Document Type"::Payment);
+                                    GenJnlLine.VALIDATE("EFT Bank Account No.","EFT Bank Account No.");
+                                    IF Positive THEN
+                                      GenJnlLine.Description := STRSUBSTNO(Text11003,"Document Type","Document No.")
+                                    ELSE
+                                      GenJnlLine.Description := STRSUBSTNO(Text11004,"Document Type","Document No.");
+                                    GenJnlLine.VALIDATE("Currency Code","Currency Code");
+                                    GenJnlLine.VALIDATE(Amount,"EFT Amount Transferred");
+                                    GenJnlLine.VALIDATE("Applies-to Doc. Type","Document Type");
+                                    GenJnlLine.VALIDATE("Applies-to Doc. No.","Document No.");
+                                    GenJnlLine.INSERT;
+                                  END;
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnOpenPage=BEGIN
+                   CLEAR(EFTNo);
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 1500000;2;Field     ;
+                  Name=EFTNo;
+                  CaptionML=[ENU=EFT No.;
+                             ENA=EFT No.];
+                  BlankZero=Yes;
+                  SourceExpr=EFTNo;
+                  TableRelation="EFT Register" }
+
+      { 1500002;2;Field     ;
+                  Name=DueDate;
+                  CaptionML=[ENU=Due Date;
+                             ENA=Due Date];
+                  SourceExpr=DueDate }
+
+      { 1500004;2;Field     ;
+                  Name=PostingDate;
+                  CaptionML=[ENU=Posting Date;
+                             ENA=Posting Date];
+                  SourceExpr=PostingDate }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      GenJnlLine@150002 : Record 81;
+      GenJnlLine1@150001 : Record 81;
+      EFTRegister@150000 : Record 11609;
+      ProcessWindow@1500003 : Dialog;
+      NoOfRec@150005 : Integer;
+      EFTNo@150004 : Integer;
+      I@150003 : Integer;
+      PostingDate@150006 : Date;
+      DueDate@1500001 : Date;
+      Text11001@1500010 : TextConst 'ENU=Enter the posting date;ENA=Enter the posting date';
+      Text11002@1500011 : TextConst 'ENU=Enter the due date;ENA=Enter the due date';
+      Text11003@1500012 : TextConst 'ENU=Deduction for %1 %2;ENA=Deduction for %1 %2';
+      Text11004@1500013 : TextConst 'ENU=Payment for %1 %2;ENA=Payment for %1 %2';
+
+    PROCEDURE SetGenJnlLine@1500000(NewGLJnlLine@1500000 : Record 81);
+    BEGIN
+      GenJnlLine := NewGLJnlLine;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

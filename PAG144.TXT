@@ -1,0 +1,308 @@
+OBJECT Page 144 Posted Sales Credit Memos
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/15/15;
+    Time=13:54:44;
+    Modified=Yes;
+    Version List=NAVW17.10,TBI1.0,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Posted Sales Credit Memos;
+               ENA=Posted Sales CR/Adj Notes];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table114;
+    SourceTableView=WHERE(Reason Code=FILTER(NORMAL));
+    PageType=List;
+    CardPageID=Posted Sales Credit Memo;
+    OnInit=BEGIN
+             // UPG13.begin
+             ShortcutDimension2CodeEnable := TRUE;
+             "Type Of TransactionEnable" := TRUE;
+             // UPG13.end
+           END;
+
+    OnOpenPage=BEGIN
+                 SetSecurityFilterOnRespCenter;
+                 //TBI
+                 Enablefields_Pur; // UPG13
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 19      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Cr. Memo;
+                                 ENA=&CR/Adj Note];
+                      Image=CreditMemo }
+      { 26      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Card;
+                                 ENA=Card];
+                      Image=EditLines;
+                      OnAction=BEGIN
+                                 PAGE.RUN(PAGE::"Posted Sales Credit Memo",Rec)
+                               END;
+                                }
+      { 31      ;2   ;Action    ;
+                      Name=Statistics;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      RunObject=Page 398;
+                      RunPageLink=No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 32      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 67;
+                      RunPageLink=Document Type=CONST(Posted Credit Memo),
+                                  No.=FIELD(No.);
+                      Image=ViewComments }
+      { 1102601000;2 ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 20      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=No;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 SalesCrMemoHeader@1102 : Record 114;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(SalesCrMemoHeader);
+                                 SalesCrMemoHeader.PrintRecords(TRUE);
+                               END;
+                                }
+      { 25      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=No;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                Width=22;
+                SourceExpr="No." }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Posting Date";
+                Visible=TRUE }
+
+    { 1102159001;2;Field  ;
+                Width=22;
+                SourceExpr="Pre-Assigned No.";
+                Visible=TRUE }
+
+    { 4   ;2   ;Field     ;
+                Width=17;
+                CaptionML=[ENU=Entity No.;
+                           ENA=Sell-to Customer No.];
+                SourceExpr="Sell-to Customer No." }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Document Date" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr=UID }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=[ENU=Entity Name;
+                           ENA=Sell-to Customer Name];
+                SourceExpr="Sell-to Customer Name" }
+
+    { 37  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr=Amount;
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Posted Sales Credit Memo",Rec)
+                            END;
+                             }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Type Of Transaction";
+                Visible="Type Of TransactionVisible";
+                Enabled="Type Of TransactionEnable" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Amount Including VAT";
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Posted Sales Credit Memo",Rec)
+                            END;
+                             }
+
+    { 27  ;2   ;Field     ;
+                SourceExpr="Sell-to Post Code";
+                Visible=FALSE }
+
+    { 23  ;2   ;Field     ;
+                SourceExpr="Sell-to Country/Region Code";
+                Visible=FALSE }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr="Sell-to Contact";
+                Visible=FALSE }
+
+    { 127 ;2   ;Field     ;
+                SourceExpr="Bill-to Customer No.";
+                Visible=FALSE }
+
+    { 125 ;2   ;Field     ;
+                SourceExpr="Bill-to Name";
+                Visible=FALSE }
+
+    { 33  ;2   ;Field     ;
+                SourceExpr="Bill-to Post Code";
+                Visible=FALSE }
+
+    { 29  ;2   ;Field     ;
+                SourceExpr="Bill-to Country/Region Code";
+                Visible=FALSE }
+
+    { 115 ;2   ;Field     ;
+                SourceExpr="Bill-to Contact";
+                Visible=FALSE }
+
+    { 111 ;2   ;Field     ;
+                SourceExpr="Ship-to Code";
+                Visible=FALSE }
+
+    { 109 ;2   ;Field     ;
+                SourceExpr="Ship-to Name";
+                Visible=FALSE }
+
+    { 21  ;2   ;Field     ;
+                SourceExpr="Ship-to Post Code";
+                Visible=FALSE }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Ship-to Country/Region Code";
+                Visible=FALSE }
+
+    { 99  ;2   ;Field     ;
+                SourceExpr="Ship-to Contact";
+                Visible=FALSE }
+
+    { 65  ;2   ;Field     ;
+                SourceExpr="Salesperson Code";
+                Visible=FALSE }
+
+    { 89  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=FALSE }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=ShortcutDimension2CodeVisible;
+                Enabled=ShortcutDimension2CodeEnable }
+
+    { 91  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Visible=TRUE }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="No. Printed" }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="External Document No." }
+
+    { 1102601005;2;Field  ;
+                SourceExpr="Applies-to Doc. Type";
+                Visible=FALSE }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      SalesCrMemoHeader@1000 : Record 114;
+      "Type Of TransactionVisible"@19059961 : Boolean INDATASET;
+      ShortcutDimension2CodeVisible@19058851 : Boolean INDATASET;
+      "Type Of TransactionEnable"@19049369 : Boolean INDATASET;
+      ShortcutDimension2CodeEnable@19057030 : Boolean INDATASET;
+
+    PROCEDURE Enablefields_Pur@1000000000();
+    VAR
+      MasterSetup1@1000000000 : Record 50008;
+    BEGIN
+      // UPG13.begin
+      MasterSetup1.GET;
+       IF (COMPANYNAME = MasterSetup1."Company Name YMKI") THEN
+          BEGIN
+            "Type Of TransactionEnable" := FALSE;
+            "Type Of TransactionVisible" := FALSE;
+          END
+        ELSE
+            BEGIN
+             "Type Of TransactionEnable" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+
+            END;
+       IF (COMPANYNAME = MasterSetup1."Company Name TBI") THEN
+        BEGIN
+          ShortcutDimension2CodeEnable :=FALSE;
+          ShortcutDimension2CodeVisible :=FALSE;
+        END;
+      // UPG13.end
+    END;
+
+    BEGIN
+    {
+      //TBI -CODE ADDED FOR VISBILITY OF FIELDS.
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

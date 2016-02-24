@@ -1,0 +1,33 @@
+OBJECT Table 90007 Permission set test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/06/15;
+    Time=14:40:58;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;ROLEID              ;Code10         }
+    { 2   ;   ;Actual Name         ;Code50         }
+    { 3   ;   ;Description         ;Text250        }
+  }
+  KEYS
+  {
+    {    ;ROLEID                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,309 @@
+OBJECT MenuSuite 1080 Dept - Partner
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/26/14;
+    Time=16:33:53;
+    Modified=Yes;
+    Version List=CAUYIMM;
+  }
+  PROPERTIES
+  {
+  }
+  MENUNODES
+  {
+    {                ;[{19A352FE-D90D-424E-B85F-CF3B8E98CF0E}] ;NextNodeID=[{839B2A84-7419-4318-9888-11ECFF0341E7}] }
+    { Menu           ;[{839B2A84-7419-4318-9888-11ECFF0341E7}] ;Name=SETUP;
+                                                                CaptionML=ENU=SETUP;
+                                                                MemberOfMenu=[{839B2A84-7419-4318-9888-11ECFF0341E7}];
+                                                                ParentNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                Image=0;
+                                                                IsShortcut=No;
+                                                                Visible=Yes;
+                                                                Enabled=Yes;
+                                                                NextNodeID=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                FirstChild=[{EAB8CBDC-FCF7-4411-9643-F9B0E3F54B48}] }
+    { MenuItem       ;[{EAB8CBDC-FCF7-4411-9643-F9B0E3F54B48}] ;Name=Master Setup Form;
+                                                                CaptionML=ENU=Master Setup Form;
+                                                                MemberOfMenu=[{839B2A84-7419-4318-9888-11ECFF0341E7}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50016;
+                                                                ParentNodeID=[{839B2A84-7419-4318-9888-11ECFF0341E7}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    {                ;[{3896982A-5EC8-44B1-B367-9455E0296ED8}] ;NextNodeID=[{7B8433B2-4806-476D-8704-10CAE43811C4}] }
+    { MenuItem       ;[{7B8433B2-4806-476D-8704-10CAE43811C4}] ;Name=Payment Registration;
+                                                                CaptionML=[ENU=Payment Registration;
+                                                                           ENA=Payment Registration];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=981;
+                                                                Visible=Yes;
+                                                                NextNodeID=[{AF222F2C-32C2-487A-9F38-0BCBBAE64250}];
+                                                                DepartmentCategory=Tasks }
+    {                ;[{65DE99B6-47E7-4063-8D07-59F5810F5594}] ;NextNodeID=[{22092D04-C871-4F89-9A91-28A7B1DC4641}] }
+    { MenuItem       ;[{22092D04-C871-4F89-9A91-28A7B1DC4641}] ;Name=Payment Registration Setup;
+                                                                CaptionML=[ENU=Payment Registration Setup;
+                                                                           ENA=Payment Registration Setup];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=982;
+                                                                Visible=Yes;
+                                                                DepartmentCategory=Administration }
+    {                ;[{4B1524B9-9D54-48CB-833D-3829862B17F7}] ;NextNodeID=[{2E227E0E-35D4-4D69-BC93-61DD446CA900}] }
+    { MenuItem       ;[{2E227E0E-35D4-4D69-BC93-61DD446CA900}] ;Name=Credit Transfer Registers;
+                                                                CaptionML=[ENU=Credit Transfer Registers;
+                                                                           ENA=Credit Transfer Registers];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=1205;
+                                                                Visible=Yes;
+                                                                DepartmentCategory=History }
+    {                ;[{FFA5A70C-3D43-45D8-8349-1D1E7337840D}] ;NextNodeID=[{C0C64A67-50E5-45F0-AAC6-4C01D083C46E}] }
+    { MenuItem       ;[{C0C64A67-50E5-45F0-AAC6-4C01D083C46E}] ;Name=Direct Debit Collections;
+                                                                CaptionML=[ENU=Direct Debit Collections;
+                                                                           ENA=Direct Debit Collections];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=1207;
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Lists }
+    { Menu           ;[{E744EBFC-2E25-4B92-8B17-97146C376A9D}] ;Name=YIMM;
+                                                                CaptionML=ENU=YIMM;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                Image=0;
+                                                                IsShortcut=No;
+                                                                Visible=Yes;
+                                                                Enabled=Yes;
+                                                                NextNodeID=[{F8D2429D-034B-4C58-9B5E-81BE962DB1BC}];
+                                                                FirstChild=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}] }
+    {                ;[{8D5D65D8-68A2-4A84-9BCE-3742CEDA47BF}] ;NextNodeID=[{03134937-C76A-4D80-A8B2-FF6458E180EB}] }
+    {                ;[{2DC8C4FE-7346-4124-8C20-383346384C03}] ;NextNodeID=[{8D5D65D8-68A2-4A84-9BCE-3742CEDA47BF}] }
+    {                ;[{03134937-C76A-4D80-A8B2-FF6458E180EB}] ;NextNodeID=[{4444D15F-6F71-4058-A823-C35BD171B04A}] }
+    {                ;[{00000000-0000-0000-0000-000000000000}] ;FirstChild=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}] }
+    { MenuGroup      ;[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}] ;Name=Setup;
+                                                                CaptionML=ENU=Setup;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{CD79CD6A-5FE3-4F78-97DF-A31E68846BE4}];
+                                                                FirstChild=[{92D7A63D-1FFD-4972-BDDE-E3C4A8017A22}] }
+    { MenuGroup      ;[{CD79CD6A-5FE3-4F78-97DF-A31E68846BE4}] ;Name=General Ledger;
+                                                                CaptionML=ENU=General Ledger;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{67D40FB8-56B2-4837-A72C-8B720BE4729D}];
+                                                                FirstChild=[{4DB28789-F643-4D20-8898-BFD20B3DCCA7}] }
+    { MenuGroup      ;[{67D40FB8-56B2-4837-A72C-8B720BE4729D}] ;Name=Cash Management;
+                                                                CaptionML=ENU=Cash Management;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{185DC95C-4941-4E4B-8E1F-3C0784F9C7DB}];
+                                                                FirstChild=[{CEEC6CA4-C7A8-4EA8-AAD9-7C77D50F23DB}] }
+    { MenuItem       ;[{4DB28789-F643-4D20-8898-BFD20B3DCCA7}] ;Name=General Journal GL;
+                                                                CaptionML=ENU=General Journal GL;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=39;
+                                                                ParentNodeID=[{CD79CD6A-5FE3-4F78-97DF-A31E68846BE4}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{DC622B87-A866-4A19-89EA-89FA15A5C9BC}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{DC622B87-A866-4A19-89EA-89FA15A5C9BC}] ;Name=Cash & Bank General Journal;
+                                                                CaptionML=ENU=Cash & Bank General Journal;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50055;
+                                                                ParentNodeID=[{CD79CD6A-5FE3-4F78-97DF-A31E68846BE4}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{CEEC6CA4-C7A8-4EA8-AAD9-7C77D50F23DB}] ;Name=Cash Receipt Journal;
+                                                                CaptionML=ENU=Cash Receipt Journal;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=255;
+                                                                ParentNodeID=[{67D40FB8-56B2-4837-A72C-8B720BE4729D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{4796AA46-7164-4216-9E0E-6209713EE77A}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{4796AA46-7164-4216-9E0E-6209713EE77A}] ;Name=Payment Journal;
+                                                                CaptionML=ENU=Payment Journal;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=256;
+                                                                ParentNodeID=[{67D40FB8-56B2-4837-A72C-8B720BE4729D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{92D7A63D-1FFD-4972-BDDE-E3C4A8017A22}] ;Name=Master Setupµ!;
+                                                                CaptionML=ENU=Master Setup;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50016;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{AAF32B81-8C1D-45C3-B88E-9D19E539836A}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{AAF32B81-8C1D-45C3-B88E-9D19E539836A}] ;Name=Master Setup-2;
+                                                                CaptionML=ENU=Master Setup-2;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=62068;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{85F4FCAC-A6EC-44BE-B342-8708B94BE172}];
+                                                                DepartmentCategory=Tasks }
+    { MenuGroup      ;[{185DC95C-4941-4E4B-8E1F-3C0784F9C7DB}] ;Name=VAT OUT;
+                                                                CaptionML=ENU=VAT OUT;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{11C56F23-C0F5-407F-9AEE-62CB7EEAABF8}];
+                                                                FirstChild=[{B6D2D39B-F50D-4658-A2C8-1D4F25C96ACC}] }
+    { MenuItem       ;[{B6D2D39B-F50D-4658-A2C8-1D4F25C96ACC}] ;Name=Tax Invoice Generation;
+                                                                CaptionML=ENU=Tax Invoice Generation;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50052;
+                                                                ParentNodeID=[{185DC95C-4941-4E4B-8E1F-3C0784F9C7DB}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{85F4FCAC-A6EC-44BE-B342-8708B94BE172}] ;Name=Customer Card Assignment;
+                                                                CaptionML=ENU=Entity Card Assignment;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=60020;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{2B14C4A2-E005-448A-9571-B0ABA97C9A34}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{2B14C4A2-E005-448A-9571-B0ABA97C9A34}] ;Name=Vendor Card Assignment;
+                                                                CaptionML=ENU=Vendor Card Assignment;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=60002;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{ECA9BAD2-7D71-4F87-9AB4-E85C9F739564}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{ECA9BAD2-7D71-4F87-9AB4-E85C9F739564}] ;Name=Conversion Master Customer;
+                                                                CaptionML=ENU=Conversion Master Entity;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50009;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{1AEE1293-61ED-40D4-895C-64E835CC077B}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{1AEE1293-61ED-40D4-895C-64E835CC077B}] ;Name=Conversion Master Vendor;
+                                                                CaptionML=ENU=Conversion Master Vendor;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50007;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{B7DB8308-0718-4D3A-A231-74076DD7F181}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{B7DB8308-0718-4D3A-A231-74076DD7F181}] ;Name=Master Customer Posting Setup;
+                                                                CaptionML=ENU=Master Entity Posting Setup;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50017;
+                                                                ParentNodeID=[{4AFA46F7-F9A5-49FA-B815-F09478762C3C}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { Menu           ;[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}] ;Name=Entity Salesµ!;
+                                                                CaptionML=ENU=Entity Sales;
+                                                                MemberOfMenu=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                ParentNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                Image=0;
+                                                                IsShortcut=No;
+                                                                Visible=Yes;
+                                                                Enabled=Yes;
+                                                                NextNodeID=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                FirstChild=[{ABA25794-0392-432B-BC4B-49F38B7DEADC}] }
+    { MenuItem       ;[{ABA25794-0392-432B-BC4B-49F38B7DEADC}] ;Name=[Entity Sales Invoiceµ! ];
+                                                                CaptionML=ENU=Entity Sales Invoice;
+                                                                MemberOfMenu=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=43;
+                                                                ParentNodeID=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{C0CDF787-85D1-48A6-A9C8-AA0C3585B34F}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{C0CDF787-85D1-48A6-A9C8-AA0C3585B34F}] ;Name=Entity Sales Invoice Return;
+                                                                CaptionML=ENU=Entity Sales Invoice Return;
+                                                                MemberOfMenu=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=44;
+                                                                ParentNodeID=[{3532CA61-70FB-467E-B25F-AFEB26DEDE24}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { Menu           ;[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}] ;Name=Entity Purchase;
+                                                                CaptionML=ENU=Entity Purchase;
+                                                                MemberOfMenu=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                ParentNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                Image=0;
+                                                                IsShortcut=No;
+                                                                Visible=Yes;
+                                                                Enabled=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                FirstChild=[{D772DFA0-2ABE-4580-B495-0452C8AF3206}] }
+    { MenuItem       ;[{D772DFA0-2ABE-4580-B495-0452C8AF3206}] ;Name=Entity Acc Payable;
+                                                                CaptionML=ENU=Entity Acc Payable;
+                                                                MemberOfMenu=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50005;
+                                                                ParentNodeID=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{1AC18994-82A8-43F2-BB1D-6689D430B8CF}];
+                                                                DepartmentCategory=Tasks }
+    { MenuItem       ;[{1AC18994-82A8-43F2-BB1D-6689D430B8CF}] ;Name=Entity Acc Payable Return;
+                                                                CaptionML=ENU=Entity Acc Payable Return;
+                                                                MemberOfMenu=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                RunObjectType=Page;
+                                                                RunObjectID=50039;
+                                                                ParentNodeID=[{57B87A7A-8CEA-4D86-A9A6-C8C7063D2921}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+    { MenuGroup      ;[{11C56F23-C0F5-407F-9AEE-62CB7EEAABF8}] ;Name=WHT;
+                                                                CaptionML=ENU=WHT;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{4FD0AAC0-522C-4D56-8B46-02021BD1F9C7}];
+                                                                FirstChild=[{42FDCCEF-AF34-4951-90D9-E4E53D438A1F}] }
+    { MenuGroup      ;[{4FD0AAC0-522C-4D56-8B46-02021BD1F9C7}] ;Name=Interfaces;
+                                                                CaptionML=ENU=Interfaces;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                ParentNodeID=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                FirstChild=[{23C1F72D-1F80-4E12-9DFF-EA8C0F688409}] }
+    { MenuItem       ;[{42FDCCEF-AF34-4951-90D9-E4E53D438A1F}] ;Name=WHT Budget Entity;
+                                                                CaptionML=ENU=WHT Budget Entity;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Report;
+                                                                RunObjectID=50012;
+                                                                ParentNodeID=[{11C56F23-C0F5-407F-9AEE-62CB7EEAABF8}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Reports and Analysis }
+    { MenuItem       ;[{23C1F72D-1F80-4E12-9DFF-EA8C0F688409}] ;Name=Imacs Collection Batch;
+                                                                CaptionML=ENU=Imacs Collection Batch;
+                                                                MemberOfMenu=[{E744EBFC-2E25-4B92-8B17-97146C376A9D}];
+                                                                RunObjectType=Codeunit;
+                                                                RunObjectID=50015;
+                                                                ParentNodeID=[{4FD0AAC0-522C-4D56-8B46-02021BD1F9C7}];
+                                                                Visible=Yes;
+                                                                NextNodeID=[{00000000-0000-0000-0000-000000000000}];
+                                                                DepartmentCategory=Tasks }
+  }
+}
+

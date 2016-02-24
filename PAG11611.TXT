@@ -1,0 +1,140 @@
+OBJECT Page 11611 BAS - XML Field IDs
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/28/14;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10.00.37221;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS - XML Field IDs;
+               ENA=BAS - XML Field IDs];
+    SourceTable=Table11602;
+    PageType=List;
+    OnInit=VAR
+             GLSetup@1450000 : Record 98;
+           BEGIN
+             GLSetup.GET;
+             GLSetup.TESTFIELD("Enable GST (Australia)",TRUE);
+           END;
+
+    OnAfterGetRecord=BEGIN
+                       AfterGetCurrentRecord;
+                     END;
+
+    OnNewRecord=BEGIN
+                  AfterGetCurrentRecord;
+                END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1500000 ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 1500001 ;2   ;Action    ;
+                      CaptionML=[ENU=Update Using XML File;
+                                 ENA=Update Using XML File];
+                      Promoted=Yes;
+                      Image=UpdateXML;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 BASImportExport.SetDirection(2);
+                                 BASImportExport.RUNMODAL;
+                                 CLEAR(BASImportExport);
+                               END;
+                                }
+      { 1500002 ;2   ;Action    ;
+                      CaptionML=[ENU=Copy from Setup;
+                                 ENA=Copy from Setup];
+                      Promoted=Yes;
+                      Image=copy;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 IF PAGE.RUNMODAL(0,BASSetupName) = ACTION::LookupOK THEN BEGIN
+                                   BasXMLFieldIDSetup.SETRANGE("Setup Name",BASSetupName.Name);
+                                   IF BasXMLFieldIDSetup.FIND('-') THEN BEGIN
+                                     BasXMLFieldID.DELETEALL;
+                                     REPEAT
+                                       BasXMLFieldID.INIT;
+                                       BasXMLFieldID.TRANSFERFIELDS(BasXMLFieldIDSetup);
+                                       BasXMLFieldID.INSERT;
+                                     UNTIL BasXMLFieldIDSetup.NEXT = 0;
+                                   END;
+                                 END;
+                               END;
+                                }
+      { 1500003 ;2   ;Action    ;
+                      CaptionML=[ENU=Copy to Setup;
+                                 ENA=Copy to Setup];
+                      Promoted=Yes;
+                      Image=copy;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 IF PAGE.RUNMODAL(0,BASSetupName) = ACTION::LookupOK THEN BEGIN
+                                   BasXMLFieldIDSetup.SETRANGE("Setup Name",BASSetupName.Name);
+                                   IF BasXMLFieldID.FIND('-') AND BasXMLFieldIDSetup.FIND('-') THEN
+                                     BasXMLFieldIDSetup.DELETEALL;
+                                   REPEAT
+                                     IF LineNo = 0 THEN
+                                       LineNo := 10000;
+                                     BasXMLFieldIDSetup.INIT;
+                                     BasXMLFieldIDSetup.TRANSFERFIELDS(BasXMLFieldID);
+                                     BasXMLFieldIDSetup."Setup Name" := BASSetupName.Name;
+                                     BasXMLFieldIDSetup."Line No." := LineNo;
+                                     BasXMLFieldIDSetup.INSERT;
+                                     LineNo := LineNo + 10000;
+                                   UNTIL BasXMLFieldID.NEXT = 0;
+                                 END;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="XML Field ID" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Field No.";
+                LookupPageID=BAS Calc. Schedule Fields }
+
+    { 6   ;2   ;Field     ;
+                DrillDown=No;
+                SourceExpr="Field Label No." }
+
+    { 8   ;2   ;Field     ;
+                DrillDown=No;
+                SourceExpr="Field Description" }
+
+  }
+  CODE
+  {
+    VAR
+      CurrentBASSetupName@1260000 : Code[20];
+      BASSetupName@1500002 : Record 11607;
+      BasXMLFieldID@1500001 : Record 11602;
+      BasXMLFieldIDSetup@1500000 : Record 11608;
+      LineNo@1500003 : Integer;
+      BASImportExport@1000 : Report 28166;
+
+    LOCAL PROCEDURE AfterGetCurrentRecord@19077479();
+    BEGIN
+      xRec := Rec;
+      CurrentBASSetupName := "Setup Name";
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

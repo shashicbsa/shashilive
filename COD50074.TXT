@@ -1,0 +1,53 @@
+OBJECT Codeunit 50074 UPDATE SLIP NO.
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/17/11;
+    Time=13:56:09;
+    Version List=Duplicate Data;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            Master.GET;
+            IF RecGnl.FINDFIRST THEN
+             REPEAT
+                IF NOT TemGnl.GET(RecGnl."Slip No.") THEN BEGIN
+                  TemGnl.INIT;
+                  TemGnl."Slip No." := RecGnl."Slip No.";
+                  TemGnl.INSERT;
+                END;
+              RecGnl."Old Slip No." := RecGnl."Slip No.";
+              RecGnl.MODIFY;
+             UNTIL RecGnl.NEXT=0;
+
+            MESSAGE('%1',TemGnl.COUNT);
+
+
+            IF TemGnl.FINDFIRST THEN
+            REPEAT
+              SeriesNo := Noseries.GetNextNo(Master."Slip Nos. Payment",TODAY,TRUE);
+              RecGnl.SETRANGE("Slip No.",TemGnl."Slip No.");
+              IF RecGnl.FINDSET THEN
+                REPEAT
+                  RecGnl."Slip No." := SeriesNo;
+                  RecGnl.MODIFY;
+                UNTIL RecGnl.NEXT=0;
+            UNTIL TemGnl.NEXT=0;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      TemGnl@1000000000 : TEMPORARY Record 50038;
+      RecGnl@1000000001 : Record 50029;
+      SeriesNo@1000000002 : Code[40];
+      Noseries@1000000003 : Codeunit 396;
+      Master@1000000004 : Record 50008;
+
+    BEGIN
+    END.
+  }
+}
+

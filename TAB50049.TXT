@@ -1,0 +1,1192 @@
+OBJECT Table 50049 Customer Registration
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/28/14;
+    Time=12:09:48;
+    Modified=Yes;
+    Version List=MASTER-REG,CAUYIMM;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    Permissions=TableData 21=r;
+    DataCaptionFields=No.,Name;
+    OnInsert=BEGIN
+               IF "No." = '' THEN BEGIN
+                 SalesSetup.GET;
+                 SalesSetup.TESTFIELD("Customer Nos.");
+                 NoSeriesMgt.InitSeries(SalesSetup."Customer Nos.",xRec."No. Series",0D,"No.","No. Series");
+               END;
+               IF "Invoice Disc. Code" = '' THEN
+                 "Invoice Disc. Code" := "No.";
+
+               IF NOT InsertFromContact THEN
+               //  UpdateContFromCust.OnInsert(Rec);
+
+               DimMgt.UpdateDefaultDim(
+                 DATABASE::Customer,"No.",
+                 "Global Dimension 1 Code","Global Dimension 2 Code");
+             END;
+
+    OnModify=BEGIN
+               "Last Date Modified" := TODAY;
+
+               IF (Name <> xRec.Name) OR
+                  ("Search Name" <> xRec."Search Name") OR
+                  ("Name 2" <> xRec."Name 2") OR
+                  (Address <> xRec.Address) OR
+                  ("Address 2" <> xRec."Address 2") OR
+                  (City <> xRec.City) OR
+                  ("Phone No." <> xRec."Phone No.") OR
+                  ("Telex No." <> xRec."Telex No.") OR
+                  ("Territory Code" <> xRec."Territory Code") OR
+                  ("Currency Code" <> xRec."Currency Code") OR
+                  ("Language Code" <> xRec."Language Code") OR
+                  ("Salesperson Code" <> xRec."Salesperson Code") OR
+                  ("Country/Region Code" <> xRec."Country/Region Code") OR
+                  ("Fax No." <> xRec."Fax No.") OR
+                  ("Telex Answer Back" <> xRec."Telex Answer Back") OR
+                  ("VAT Registration No." <> xRec."VAT Registration No.") OR
+                  ("Post Code" <> xRec."Post Code") OR
+                  (County <> xRec.County) OR
+                  ("E-Mail" <> xRec."E-Mail") OR
+                  ("Home Page" <> xRec."Home Page") OR
+                  (Contact <> xRec.Contact) OR
+                  ("IRD No." <> xRec."IRD No.") OR
+                  (ABN <> xRec.ABN) OR
+                  ("ABN Division Part No." <> xRec."ABN Division Part No.") OR
+                  (Registered <> xRec.Registered)
+               THEN BEGIN
+                 MODIFY;
+                // UpdateContFromCust.OnModify(Rec);
+               END;
+             END;
+
+    OnDelete=VAR
+               CampaignTargetGr@1000 : Record 7030;
+               ContactBusRel@1001 : Record 5054;
+               CampaignTargetGrMgmt@1002 : Codeunit 7030;
+               StdCustSalesCode@1003 : Record 172;
+             BEGIN
+               ServiceItem.SETRANGE("Customer No.","No.");
+               IF ServiceItem.FIND('-') THEN
+                 IF CONFIRM(
+                      Text008,
+                      FALSE,
+                      TABLECAPTION,
+                      "No.",
+                      ServiceItem.FIELDCAPTION("Customer No."))
+                 THEN
+                   ServiceItem.MODIFYALL("Customer No.",'')
+                 ELSE
+                   ERROR(Text009);
+
+               //MoveEntries.MoveCustEntries(Rec);
+
+               CommentLine.SETRANGE("Table Name",CommentLine."Table Name"::Customer);
+               CommentLine.SETRANGE("No.","No.");
+               CommentLine.DELETEALL;
+
+               CustBankAcc.SETRANGE("Customer No.","No.");
+               CustBankAcc.DELETEALL;
+
+               ShipToAddr.SETRANGE("Customer No.","No.");
+               ShipToAddr.DELETEALL;
+
+               SalesPrice.SETRANGE("Sales Type",SalesPrice."Sales Type"::Customer);
+               SalesPrice.SETRANGE("Sales Code","No.");
+               SalesPrice.DELETEALL;
+
+               SalesLineDisc.SETRANGE("Sales Type",SalesLineDisc."Sales Type"::Customer);
+               SalesLineDisc.SETRANGE("Sales Code","No.");
+               SalesLineDisc.DELETEALL;
+
+               SalesPrepmtPct.SETCURRENTKEY("Sales Type","Sales Code");
+               SalesPrepmtPct.SETRANGE("Sales Type",SalesPrepmtPct."Sales Type"::Customer);
+               SalesPrepmtPct.SETRANGE("Sales Code","No.");
+               SalesPrepmtPct.DELETEALL;
+
+               StdCustSalesCode.SETRANGE("Customer No.","No.");
+               StdCustSalesCode.DELETEALL(TRUE);
+
+               ItemCrossReference.SETCURRENTKEY("Cross-Reference Type","Cross-Reference Type No.");
+               ItemCrossReference.SETRANGE("Cross-Reference Type",ItemCrossReference."Cross-Reference Type"::Customer);
+               ItemCrossReference.SETRANGE("Cross-Reference Type No.","No.");
+               ItemCrossReference.DELETEALL;
+
+               SalesOrderLine.SETCURRENTKEY("Document Type","Bill-to Customer No.");
+               SalesOrderLine.SETFILTER(
+                 "Document Type",'%1|%2',
+                 SalesOrderLine."Document Type"::Order,
+                 SalesOrderLine."Document Type"::"Return Order");
+               SalesOrderLine.SETRANGE("Bill-to Customer No.","No.");
+               IF SalesOrderLine.FIND('-') THEN
+                 ERROR(
+                   Text000,
+                   TABLECAPTION,"No.",SalesOrderLine."Document Type");
+
+               SalesOrderLine.SETRANGE("Bill-to Customer No.");
+               SalesOrderLine.SETRANGE("Sell-to Customer No.","No.");
+               IF SalesOrderLine.FIND('-') THEN
+                 ERROR(
+                   Text000,
+                   TABLECAPTION,"No.",SalesOrderLine."Document Type");
+
+               CampaignTargetGr.SETRANGE("No.",Rec."No.");
+               CampaignTargetGr.SETRANGE(Type,CampaignTargetGr.Type::Customer);
+               IF CampaignTargetGr.FIND('-') THEN BEGIN
+                 ContactBusRel.SETRANGE("Link to Table",ContactBusRel."Link to Table"::Customer);
+                 ContactBusRel.SETRANGE("No.",Rec."No.");
+                 ContactBusRel.FIND('-');
+                // REPEAT
+                //   CampaignTargetGrMgmt.ConverttoContact(
+               //    Rec,ContactBusRel."Contact No.");
+               //  UNTIL CampaignTargetGr.NEXT = 0;
+               END;
+
+               ServContract.SETFILTER(Status,'<>%1',ServContract.Status::Canceled);
+               ServContract.SETRANGE("Customer No.","No.");
+               IF ServContract.FIND('-') THEN
+                 ERROR(
+                   Text007,
+                   TABLECAPTION,"No.");
+
+               ServContract.SETRANGE(Status);
+               ServContract.MODIFYALL("Customer No.",'');
+
+               ServContract.SETFILTER(Status,'<>%1',ServContract.Status::Canceled);
+               ServContract.SETRANGE("Bill-to Customer No.","No.");
+               IF ServContract.FIND('-') THEN
+                 ERROR(
+                   Text007,
+                   TABLECAPTION,"No.");
+
+               ServContract.SETRANGE(Status);
+               ServContract.MODIFYALL("Bill-to Customer No.",'');
+
+               ServHeader.SETCURRENTKEY("Customer No.","Order Date");
+               ServHeader.SETRANGE("Customer No.","No.");
+               IF ServHeader.FIND('-') THEN
+                 ERROR(
+                   Text013,
+                   TABLECAPTION,"No.",ServHeader."Document Type");
+
+               ServHeader.SETRANGE("Bill-to Customer No.");
+               IF ServHeader.FIND('-') THEN
+                 ERROR(
+                   Text013,
+                   TABLECAPTION,"No.",ServHeader."Document Type");
+
+               //UpdateContFromCust.OnDelete(Rec);
+
+               DimMgt.DeleteDefaultDim(DATABASE::Customer,"No.");
+               PostCodeCheck.DeleteAddressID(DATABASE::Customer,Rec.GETPOSITION,0);
+
+               //MobSalesMgt.CustOnDelete(Rec);
+             END;
+
+    OnRename=BEGIN
+               "Last Date Modified" := TODAY;
+               PostCodeCheck.MoveAddressID(
+                 DATABASE::Customer,xRec.GETPOSITION,0,DATABASE::Customer,Rec.GETPOSITION,0);
+             END;
+
+    CaptionML=ENU=Customer;
+    LookupPageID=Page60008;
+    DrillDownPageID=Page22;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;AltSearchField=Search Name;
+                                                   OnValidate=BEGIN
+                                                                IF "No." <> xRec."No." THEN BEGIN
+                                                                  SalesSetup.GET;
+                                                                  NoSeriesMgt.TestManual(SalesSetup."Customer Nos.");
+                                                                  "No. Series" := '';
+                                                                END;
+                                                                IF "Invoice Disc. Code" = '' THEN
+                                                                  "Invoice Disc. Code" := "No.";
+                                                              END;
+
+                                                   CaptionML=ENU=No. }
+    { 2   ;   ;Name                ;Text50        ;OnValidate=BEGIN
+                                                                IF ("Search Name" = UPPERCASE(xRec.Name)) OR ("Search Name" = '') THEN
+                                                                  "Search Name" := Name;
+                                                              END;
+
+                                                   CaptionML=ENU=Name }
+    { 3   ;   ;Search Name         ;Code50        ;CaptionML=ENU=Search Name }
+    { 4   ;   ;Name 2              ;Text50        ;CaptionML=ENU=Name 2 }
+    { 5   ;   ;Address             ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Address }
+    { 6   ;   ;Address 2           ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Address 2 }
+    { 7   ;   ;City                ;Text30        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateCity(
+                                                                  CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   OnLookup=BEGIN
+                                                              PostCodeCheck.LookUpCity(
+                                                                CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code",TRUE);
+                                                            END;
+
+                                                   CaptionML=ENU=City }
+    { 8   ;   ;Contact             ;Text50        ;OnValidate=BEGIN
+                                                                IF RMSetup.GET THEN
+                                                                  IF RMSetup."Bus. Rel. Code for Customers" <> '' THEN
+                                                                    IF (xRec.Contact = '') AND (xRec."Primary Contact No." = '') THEN BEGIN
+                                                                      MODIFY;
+                                                                //      UpdateContFromCust.OnModify(Rec);
+                                                                 //     UpdateContFromCust.InsertNewContactPerson(Rec,FALSE);
+                                                                      MODIFY(TRUE);
+                                                                    END
+                                                              END;
+
+                                                   CaptionML=ENU=Contact }
+    { 9   ;   ;Phone No.           ;Text30        ;CaptionML=ENU=Phone No. }
+    { 10  ;   ;Telex No.           ;Text20        ;CaptionML=ENU=Telex No. }
+    { 14  ;   ;Our Account No.     ;Text20        ;CaptionML=ENU=Our Account No. }
+    { 15  ;   ;Territory Code      ;Code10        ;TableRelation=Territory;
+                                                   CaptionML=ENU=Territory Code }
+    { 16  ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   OnValidate=BEGIN
+                                                                ValidateShortcutDimCode(1,"Global Dimension 1 Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Global Dimension 1 Code;
+                                                   CaptionClass='1,1,1' }
+    { 17  ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   OnValidate=BEGIN
+                                                                ValidateShortcutDimCode(2,"Global Dimension 2 Code");
+                                                              END;
+
+                                                   CaptionML=ENU=Global Dimension 2 Code;
+                                                   CaptionClass='1,1,2' }
+    { 18  ;   ;Chain Name          ;Code10        ;CaptionML=ENU=Chain Name }
+    { 19  ;   ;Budgeted Amount     ;Decimal       ;CaptionML=ENU=Budgeted Amount;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 20  ;   ;Credit Limit (LCY)  ;Decimal       ;CaptionML=ENU=Credit Limit (LCY);
+                                                   AutoFormatType=1 }
+    { 21  ;   ;Customer Posting Group;Code10      ;TableRelation="Customer Posting Group";
+                                                   CaptionML=ENU=Customer Posting Group }
+    { 22  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=ENU=Currency Code }
+    { 23  ;   ;Customer Price Group;Code10        ;TableRelation="Customer Price Group";
+                                                   CaptionML=ENU=Customer Price Group }
+    { 24  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=ENU=Language Code }
+    { 26  ;   ;Statistics Group    ;Integer       ;CaptionML=ENU=Statistics Group }
+    { 27  ;   ;Payment Terms Code  ;Code10        ;TableRelation="Payment Terms";
+                                                   CaptionML=ENU=Payment Terms Code }
+    { 28  ;   ;Fin. Charge Terms Code;Code10      ;TableRelation="Finance Charge Terms";
+                                                   CaptionML=ENU=Fin. Charge Terms Code }
+    { 29  ;   ;Salesperson Code    ;Code10        ;TableRelation=Salesperson/Purchaser;
+                                                   CaptionML=ENU=Salesperson Code }
+    { 30  ;   ;Shipment Method Code;Code10        ;TableRelation="Shipment Method";
+                                                   CaptionML=ENU=Shipment Method Code }
+    { 31  ;   ;Shipping Agent Code ;Code10        ;TableRelation="Shipping Agent";
+                                                   OnValidate=BEGIN
+                                                                IF "Shipping Agent Code" <> xRec."Shipping Agent Code" THEN
+                                                                  VALIDATE("Shipping Agent Service Code",'');
+                                                              END;
+
+                                                   CaptionML=ENU=Shipping Agent Code }
+    { 32  ;   ;Place of Export     ;Code20        ;CaptionML=ENU=Place of Export }
+    { 33  ;   ;Invoice Disc. Code  ;Code20        ;TableRelation=Customer;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=Invoice Disc. Code }
+    { 34  ;   ;Customer Disc. Group;Code10        ;TableRelation="Customer Discount Group";
+                                                   CaptionML=ENU=Customer Group Code }
+    { 35  ;   ;Country/Region Code ;Code10        ;TableRelation=Country/Region;
+                                                   CaptionML=ENU=Country/Region Code }
+    { 36  ;   ;Collection Method   ;Code20        ;CaptionML=ENU=Collection Method }
+    { 37  ;   ;Amount              ;Decimal       ;CaptionML=ENU=Amount;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 38  ;   ;Comment             ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("Comment Line" WHERE (Table Name=CONST(Customer),
+                                                                                           No.=FIELD(No.)));
+                                                   CaptionML=ENU=Comment;
+                                                   Editable=No }
+    { 39  ;   ;Blocked             ;Option        ;CaptionML=ENU=Blocked;
+                                                   OptionCaptionML=ENU=" ,Ship,Invoice,All";
+                                                   OptionString=[ ,Ship,Invoice,All] }
+    { 40  ;   ;Invoice Copies      ;Integer       ;CaptionML=ENU=Invoice Copies }
+    { 41  ;   ;Last Statement No.  ;Integer       ;CaptionML=ENU=Last Statement No. }
+    { 42  ;   ;Print Statements    ;Boolean       ;CaptionML=ENU=Print Statements }
+    { 45  ;   ;Bill-to Customer No.;Code20        ;TableRelation=Customer;
+                                                   CaptionML=ENU=Bill-to Customer No. }
+    { 46  ;   ;Priority            ;Integer       ;CaptionML=ENU=Priority }
+    { 47  ;   ;Payment Method Code ;Code10        ;TableRelation="Payment Method";
+                                                   CaptionML=ENU=Payment Method Code }
+    { 54  ;   ;Last Date Modified  ;Date          ;CaptionML=ENU=Last Date Modified;
+                                                   Editable=No }
+    { 55  ;   ;Date Filter         ;Date          ;FieldClass=FlowFilter;
+                                                   CaptionML=ENU=Date Filter }
+    { 56  ;   ;Global Dimension 1 Filter;Code20   ;FieldClass=FlowFilter;
+                                                   TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Global Dimension 1 Filter;
+                                                   CaptionClass='1,3,1' }
+    { 57  ;   ;Global Dimension 2 Filter;Code20   ;FieldClass=FlowFilter;
+                                                   TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Global Dimension 2 Filter;
+                                                   CaptionClass='1,3,2' }
+    { 58  ;   ;Balance             ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Balance;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 59  ;   ;Balance (LCY)       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter)));
+                                                   CaptionML=ENU=Balance (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 60  ;   ;Net Change          ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Net Change;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 61  ;   ;Net Change (LCY)    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Net Change (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 62  ;   ;Sales (LCY)         ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Cust. Ledger Entry"."Sales (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                             Global Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                             Global Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                             Posting Date=FIELD(Date Filter),
+                                                                                                             Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Sales (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 63  ;   ;Profit (LCY)        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Cust. Ledger Entry"."Profit (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                              Global Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                              Global Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Profit (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 64  ;   ;Inv. Discounts (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Cust. Ledger Entry"."Inv. Discount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                     Global Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                     Global Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                     Posting Date=FIELD(Date Filter),
+                                                                                                                     Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Inv. Discounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 65  ;   ;Pmt. Discounts (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Discount..'Payment Discount (VAT Adjustment)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Pmt. Discounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 66  ;   ;Balance Due         ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Customer No.=FIELD(No.),
+                                                                                                              Posting Date=FIELD(UPPERLIMIT(Date Filter)),
+                                                                                                              Initial Entry Due Date=FIELD(Date Filter),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Balance Due;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 67  ;   ;Balance Due (LCY)   ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                      Posting Date=FIELD(UPPERLIMIT(Date Filter)),
+                                                                                                                      Initial Entry Due Date=FIELD(Date Filter),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Balance Due (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 69  ;   ;Payments            ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Payment),
+                                                                                                               Entry Type=CONST(Initial Entry),
+                                                                                                               Customer No.=FIELD(No.),
+                                                                                                               Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                               Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                               Posting Date=FIELD(Date Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Payments;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 70  ;   ;Invoice Amounts     ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Invoice),
+                                                                                                              Entry Type=CONST(Initial Entry),
+                                                                                                              Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Invoice Amounts;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 71  ;   ;Cr. Memo Amounts    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Credit Memo),
+                                                                                                               Entry Type=CONST(Initial Entry),
+                                                                                                               Customer No.=FIELD(No.),
+                                                                                                               Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                               Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                               Posting Date=FIELD(Date Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Cr. Memo Amounts;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 72  ;   ;Finance Charge Memo Amounts;Decimal;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Finance Charge Memo),
+                                                                                                              Entry Type=CONST(Initial Entry),
+                                                                                                              Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Finance Charge Memo Amounts;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 74  ;   ;Payments (LCY)      ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Payment),
+                                                                                                                       Entry Type=CONST(Initial Entry),
+                                                                                                                       Customer No.=FIELD(No.),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Payments (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 75  ;   ;Inv. Amounts (LCY)  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Invoice),
+                                                                                                                      Entry Type=CONST(Initial Entry),
+                                                                                                                      Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Inv. Amounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 76  ;   ;Cr. Memo Amounts (LCY);Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Credit Memo),
+                                                                                                                       Entry Type=CONST(Initial Entry),
+                                                                                                                       Customer No.=FIELD(No.),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Cr. Memo Amounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 77  ;   ;Fin. Charge Memo Amounts (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Finance Charge Memo),
+                                                                                                                      Entry Type=CONST(Initial Entry),
+                                                                                                                      Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Fin. Charge Memo Amounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 78  ;   ;Outstanding Orders  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Outstanding Amount" WHERE (Document Type=CONST(Order),
+                                                                                                            Bill-to Customer No.=FIELD(No.),
+                                                                                                            Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                            Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                            Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Outstanding Orders;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 79  ;   ;Shipped Not Invoiced;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Shipped Not Invoiced" WHERE (Document Type=CONST(Order),
+                                                                                                              Bill-to Customer No.=FIELD(No.),
+                                                                                                              Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                              Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Shipped Not Invoiced;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 80  ;   ;Application Method  ;Option        ;CaptionML=ENU=Application Method;
+                                                   OptionCaptionML=ENU=Manual,Apply to Oldest;
+                                                   OptionString=Manual,Apply to Oldest }
+    { 82  ;   ;Prices Including VAT;Boolean       ;CaptionML=ENU=Prices Including VAT }
+    { 83  ;   ;Location Code       ;Code10        ;TableRelation=Location WHERE (Use As In-Transit=CONST(No));
+                                                   CaptionML=ENU=Location Code }
+    { 84  ;   ;Fax No.             ;Text30        ;CaptionML=ENU=Fax No. }
+    { 85  ;   ;Telex Answer Back   ;Text20        ;CaptionML=ENU=Telex Answer Back }
+    { 86  ;   ;VAT Registration No.;Text20        ;OnValidate=VAR
+                                                                VATRegNoFormat@1000 : Record 381;
+                                                              BEGIN
+                                                                VATRegNoFormat.Test("VAT Registration No.","Country/Region Code","No.",DATABASE::Customer);
+                                                              END;
+
+                                                   CaptionML=ENU=VAT Registration No. }
+    { 87  ;   ;Combine Shipments   ;Boolean       ;CaptionML=ENU=Combine Shipments }
+    { 88  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   OnValidate=BEGIN
+                                                                IF xRec."Gen. Bus. Posting Group" <> "Gen. Bus. Posting Group" THEN
+                                                                  IF GenBusPostingGrp.ValidateVatBusPostingGroup(GenBusPostingGrp,"Gen. Bus. Posting Group") THEN
+                                                                    VALIDATE("VAT Bus. Posting Group",GenBusPostingGrp."Def. VAT Bus. Posting Group");
+                                                              END;
+
+                                                   CaptionML=ENU=Gen. Bus. Posting Group }
+    { 89  ;   ;Picture             ;BLOB          ;CaptionML=ENU=Picture;
+                                                   SubType=Bitmap }
+    { 91  ;   ;Post Code           ;Code20        ;TableRelation="Post Code";
+                                                   OnValidate=BEGIN
+                                                                PostCodeCheck.ValidatePostCode(
+                                                                  CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   OnLookup=BEGIN
+                                                              PostCodeCheck.LookUpPostCode(
+                                                                CurrFieldNo,DATABASE::Customer,Rec.GETPOSITION,0,
+                                                                Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code",TRUE);
+                                                            END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=Post Code }
+    { 92  ;   ;County              ;Text30        ;CaptionML=ENU=County }
+    { 97  ;   ;Debit Amount        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Debit Amount" WHERE (Customer No.=FIELD(No.),
+                                                                                                                      Entry Type=FILTER(<>Application),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Debit Amount;
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 98  ;   ;Credit Amount       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Credit Amount" WHERE (Customer No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(<>Application),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Credit Amount;
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 99  ;   ;Debit Amount (LCY)  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Debit Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                            Entry Type=FILTER(<>Application),
+                                                                                                                            Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                            Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                            Posting Date=FIELD(Date Filter),
+                                                                                                                            Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Debit Amount (LCY);
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 100 ;   ;Credit Amount (LCY) ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Credit Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                             Entry Type=FILTER(<>Application),
+                                                                                                                             Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                             Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                             Posting Date=FIELD(Date Filter),
+                                                                                                                             Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Credit Amount (LCY);
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 102 ;   ;E-Mail              ;Text80        ;CaptionML=ENU=E-Mail }
+    { 103 ;   ;Home Page           ;Text80        ;CaptionML=ENU=Home Page }
+    { 104 ;   ;Reminder Terms Code ;Code10        ;TableRelation="Reminder Terms";
+                                                   CaptionML=ENU=Reminder Terms Code }
+    { 105 ;   ;Reminder Amounts    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Reminder),
+                                                                                                              Entry Type=CONST(Initial Entry),
+                                                                                                              Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Reminder Amounts;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 106 ;   ;Reminder Amounts (LCY);Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Reminder),
+                                                                                                                      Entry Type=CONST(Initial Entry),
+                                                                                                                      Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Reminder Amounts (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 107 ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=ENU=No. Series;
+                                                   Editable=No }
+    { 108 ;   ;Tax Area Code       ;Code20        ;TableRelation="Tax Area";
+                                                   CaptionML=ENU=Tax Area Code }
+    { 109 ;   ;Tax Liable          ;Boolean       ;CaptionML=ENU=Tax Liable }
+    { 110 ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=ENU=VAT Bus. Posting Group }
+    { 111 ;   ;Currency Filter     ;Code10        ;FieldClass=FlowFilter;
+                                                   TableRelation=Currency;
+                                                   CaptionML=ENU=Currency Filter }
+    { 113 ;   ;Outstanding Orders (LCY);Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Outstanding Amount (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                  Bill-to Customer No.=FIELD(No.),
+                                                                                                                  Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                  Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                  Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Outstanding Orders (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 114 ;   ;Shipped Not Invoiced (LCY);Decimal ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Shipped Not Invoiced (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                    Bill-to Customer No.=FIELD(No.),
+                                                                                                                    Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                    Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                    Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Shipped Not Invoiced (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 115 ;   ;Reserve             ;Option        ;InitValue=Optional;
+                                                   CaptionML=ENU=Reserve;
+                                                   OptionCaptionML=ENU=Never,Optional,Always;
+                                                   OptionString=Never,Optional,Always }
+    { 116 ;   ;Block Payment Tolerance;Boolean    ;CaptionML=ENU=Block Payment Tolerance }
+    { 117 ;   ;Pmt. Disc. Tolerance (LCY);Decimal ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Discount Tolerance|'Payment Discount Tolerance (VAT Adjustment)'|'Payment Discount Tolerance (VAT Excl.)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Pmt. Disc. Tolerance (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 118 ;   ;Pmt. Tolerance (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Customer No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Tolerance|'Payment Tolerance (VAT Adjustment)'|'Payment Tolerance (VAT Excl.)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Pmt. Tolerance (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 119 ;   ;IC Partner Code     ;Code20        ;TableRelation="IC Partner";
+                                                   OnValidate=VAR
+                                                                CustLedgEntry@1001 : Record 21;
+                                                                AccountingPeriod@1000 : Record 50;
+                                                                ICPartner@1002 : Record 413;
+                                                              BEGIN
+                                                                IF xRec."IC Partner Code" <> "IC Partner Code" THEN BEGIN
+                                                                  CustLedgEntry.SETCURRENTKEY("Customer No.","Posting Date");
+                                                                  CustLedgEntry.SETRANGE("Customer No.","No.");
+                                                                  AccountingPeriod.SETRANGE(Closed,FALSE);
+                                                                  IF AccountingPeriod.FIND('-') THEN
+                                                                    CustLedgEntry.SETFILTER("Posting Date",'>=%1',AccountingPeriod."Starting Date");
+                                                                  IF CustLedgEntry.FIND('-') THEN
+                                                                    IF NOT CONFIRM(Text011,FALSE,TABLECAPTION) THEN
+                                                                      "IC Partner Code" := xRec."IC Partner Code";
+
+                                                                  CustLedgEntry.RESET;
+                                                                  IF NOT CustLedgEntry.SETCURRENTKEY("Customer No.",Open) THEN
+                                                                    CustLedgEntry.SETCURRENTKEY("Customer No.");
+                                                                  CustLedgEntry.SETRANGE("Customer No.","No.");
+                                                                  CustLedgEntry.SETRANGE(Open,TRUE);
+                                                                  IF CustLedgEntry.FIND('+') THEN
+                                                                    ERROR(Text012,FIELDCAPTION("IC Partner Code"),TABLECAPTION);
+                                                                END;
+
+                                                                IF "IC Partner Code" <> '' THEN BEGIN
+                                                                  ICPartner.GET("IC Partner Code");
+                                                                  IF (ICPartner."Customer No." <> '') AND (ICPartner."Customer No." <> "No.") THEN
+                                                                    ERROR(Text010,FIELDCAPTION("IC Partner Code"),"IC Partner Code",TABLECAPTION,ICPartner."Customer No.");
+                                                                  ICPartner."Customer No." := "No.";
+                                                                  ICPartner.MODIFY;
+                                                                END;
+
+                                                                IF (xRec."IC Partner Code" <> "IC Partner Code") AND ICPartner.GET(xRec."IC Partner Code") THEN BEGIN
+                                                                  ICPartner."Customer No." := '';
+                                                                  ICPartner.MODIFY;
+                                                                END;
+                                                              END;
+
+                                                   CaptionML=ENU=IC Partner Code }
+    { 120 ;   ;Refunds             ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Refund),
+                                                                                                              Entry Type=CONST(Initial Entry),
+                                                                                                              Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Refunds }
+    { 121 ;   ;Refunds (LCY)       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Refund),
+                                                                                                                      Entry Type=CONST(Initial Entry),
+                                                                                                                      Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Refunds (LCY) }
+    { 122 ;   ;Other Amounts       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry".Amount WHERE (Initial Document Type=CONST(" "),
+                                                                                                              Entry Type=CONST(Initial Entry),
+                                                                                                              Customer No.=FIELD(No.),
+                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Other Amounts }
+    { 123 ;   ;Other Amounts (LCY) ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Cust. Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(" "),
+                                                                                                                      Entry Type=CONST(Initial Entry),
+                                                                                                                      Customer No.=FIELD(No.),
+                                                                                                                      Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Posting Date=FIELD(Date Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Other Amounts (LCY) }
+    { 124 ;   ;Prepayment %        ;Decimal       ;CaptionML=ENU=Prepayment %;
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   MaxValue=100 }
+    { 125 ;   ;Outstanding Invoices (LCY);Decimal ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Outstanding Amount (LCY)" WHERE (Document Type=CONST(Invoice),
+                                                                                                                  Bill-to Customer No.=FIELD(No.),
+                                                                                                                  Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                  Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                  Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Outstanding Invoices (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 126 ;   ;Outstanding Invoices;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Sales Line"."Outstanding Amount" WHERE (Document Type=CONST(Invoice),
+                                                                                                            Bill-to Customer No.=FIELD(No.),
+                                                                                                            Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                            Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                            Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Outstanding Invoices;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 130 ;   ;Bill-to No. Of Archived Doc.;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header Archive" WHERE (Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-to No. Of Archived Doc. }
+    { 131 ;   ;Sell-to No. Of Archived Doc.;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header Archive" WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Sell-to No. Of Archived Doc. }
+    { 5049;   ;Primary Contact No. ;Code20        ;TableRelation=Contact;
+                                                   OnValidate=VAR
+                                                                Cont@1000 : Record 5050;
+                                                                ContBusRel@1001 : Record 5054;
+                                                              BEGIN
+                                                                Contact := '';
+                                                                IF "Primary Contact No." <> '' THEN BEGIN
+                                                                  Cont.GET("Primary Contact No.");
+
+                                                                  ContBusRel.SETCURRENTKEY("Link to Table","No.");
+                                                                  ContBusRel.SETRANGE("Link to Table",ContBusRel."Link to Table"::Customer);
+                                                                  ContBusRel.SETRANGE("No.","No.");
+                                                                  ContBusRel.FIND('-');
+
+                                                                  IF Cont."Company No." <> ContBusRel."Contact No." THEN
+                                                                    ERROR(Text003,Cont."No.",Cont.Name,"No.",Name);
+
+                                                                  IF Cont.Type = Cont.Type::Person THEN
+                                                                    Contact := Cont.Name
+                                                                END;
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              Cont@1000 : Record 5050;
+                                                              ContBusRel@1001 : Record 5054;
+                                                            BEGIN
+                                                              ContBusRel.SETCURRENTKEY("Link to Table","No.");
+                                                              ContBusRel.SETRANGE("Link to Table",ContBusRel."Link to Table"::Customer);
+                                                              ContBusRel.SETRANGE("No.","No.");
+                                                              IF ContBusRel.FIND('-') THEN
+                                                                Cont.SETRANGE("Company No.",ContBusRel."Contact No.");
+
+                                                              IF "Primary Contact No." <> '' THEN
+                                                                IF Cont.GET("Primary Contact No.") THEN ;
+                                                              IF PAGE.RUNMODAL(0,Cont) = ACTION::LookupOK THEN
+                                                                VALIDATE("Primary Contact No.",Cont."No.");
+                                                            END;
+
+                                                   CaptionML=ENU=Primary Contact No. }
+    { 5700;   ;Responsibility Center;Code10       ;TableRelation="Responsibility Center";
+                                                   CaptionML=ENU=Responsibility Center }
+    { 5750;   ;Shipping Advice     ;Option        ;CaptionML=ENU=Shipping Advice;
+                                                   OptionCaptionML=ENU=Partial,Complete;
+                                                   OptionString=Partial,Complete }
+    { 5790;   ;Shipping Time       ;DateFormula   ;CaptionML=ENU=Shipping Time }
+    { 5792;   ;Shipping Agent Service Code;Code10 ;TableRelation="Shipping Agent Services".Code WHERE (Shipping Agent Code=FIELD(Shipping Agent Code));
+                                                   OnValidate=BEGIN
+                                                                IF ("Shipping Agent Code" <> '') AND
+                                                                   ("Shipping Agent Service Code" <> '')
+                                                                THEN
+                                                                  IF ShippingAgentService.GET("Shipping Agent Code","Shipping Agent Service Code") THEN
+                                                                    "Shipping Time" := ShippingAgentService."Shipping Time"
+                                                                  ELSE
+                                                                    EVALUATE("Shipping Time",'<>');
+                                                              END;
+
+                                                   CaptionML=ENU=Shipping Agent Service Code }
+    { 5900;   ;Service Zone Code   ;Code10        ;TableRelation="Service Zone";
+                                                   CaptionML=ENU=Service Zone Code }
+    { 5902;   ;Contract Gain/Loss Amount;Decimal  ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Contract Gain/Loss Entry".Amount WHERE (Customer No.=FIELD(No.),
+                                                                                                            Ship-to Code=FIELD(Ship-to Filter),
+                                                                                                            Change Date=FIELD(Date Filter)));
+                                                   CaptionML=ENU=Contract Gain/Loss Amount;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 5903;   ;Ship-to Filter      ;Code10        ;FieldClass=FlowFilter;
+                                                   TableRelation="Ship-to Address".Code WHERE (Customer No.=FIELD(No.));
+                                                   CaptionML=ENU=Ship-to Filter }
+    { 5910;   ;Outstanding Serv. Orders (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("Service Line"."Outstanding Amount (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                    Bill-to Customer No.=FIELD(No.),
+                                                                                                                    Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                    Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                    Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Outstanding Serv. Orders (LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 5911;   ;Serv Shipped Not Invoiced(LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("Service Line"."Shipped Not Invoiced (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                      Bill-to Customer No.=FIELD(No.),
+                                                                                                                      Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                      Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                      Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=ENU=Serv Shipped Not Invoiced(LCY);
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 7001;   ;Allow Line Disc.    ;Boolean       ;InitValue=Yes;
+                                                   CaptionML=ENU=Allow Line Disc. }
+    { 7171;   ;No. of Quotes       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Quote),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Quotes;
+                                                   Editable=No }
+    { 7172;   ;No. of Blanket Orders;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Blanket Order),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Blanket Orders;
+                                                   Editable=No }
+    { 7173;   ;No. of Orders       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Order),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Orders;
+                                                   Editable=No }
+    { 7174;   ;No. of Invoices     ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Invoice),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Invoices;
+                                                   Editable=No }
+    { 7175;   ;No. of Return Orders;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Return Order),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Return Orders;
+                                                   Editable=No }
+    { 7176;   ;No. of Credit Memos ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Credit Memo),
+                                                                                           Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Credit Memos;
+                                                   Editable=No }
+    { 7177;   ;No. of Pstd. Shipments;Integer     ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Shipment Header" WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Pstd. Shipments;
+                                                   Editable=No }
+    { 7178;   ;No. of Pstd. Invoices;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Invoice Header" WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Pstd. Invoices;
+                                                   Editable=No }
+    { 7179;   ;No. of Pstd. Return Receipts;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Return Receipt Header" WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Pstd. Return Receipts;
+                                                   Editable=No }
+    { 7180;   ;No. of Pstd. Credit Memos;Integer  ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Cr.Memo Header" WHERE (Sell-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Pstd. Credit Memos;
+                                                   Editable=No }
+    { 7181;   ;No. of Ship-to Addresses;Integer   ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Ship-to Address" WHERE (Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=No. of Ship-to Addresses;
+                                                   Editable=No }
+    { 7182;   ;Bill-To No. of Quotes;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Quote),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Quotes;
+                                                   Editable=No }
+    { 7183;   ;Bill-To No. of Blanket Orders;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Blanket Order),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Blanket Orders;
+                                                   Editable=No }
+    { 7184;   ;Bill-To No. of Orders;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Order),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Orders;
+                                                   Editable=No }
+    { 7185;   ;Bill-To No. of Invoices;Integer    ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Invoice),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Invoices;
+                                                   Editable=No }
+    { 7186;   ;Bill-To No. of Return Orders;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Return Order),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Return Orders;
+                                                   Editable=No }
+    { 7187;   ;Bill-To No. of Credit Memos;Integer;FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Header" WHERE (Document Type=CONST(Credit Memo),
+                                                                                           Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Credit Memos;
+                                                   Editable=No }
+    { 7188;   ;Bill-To No. of Pstd. Shipments;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Shipment Header" WHERE (Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Pstd. Shipments;
+                                                   Editable=No }
+    { 7189;   ;Bill-To No. of Pstd. Invoices;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Invoice Header" WHERE (Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Pstd. Invoices;
+                                                   Editable=No }
+    { 7190;   ;Bill-To No. of Pstd. Return R.;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Return Receipt Header" WHERE (Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Pstd. Return R.;
+                                                   Editable=No }
+    { 7191;   ;Bill-To No. of Pstd. Cr. Memos;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Sales Cr.Memo Header" WHERE (Bill-to Customer No.=FIELD(No.)));
+                                                   CaptionML=ENU=Bill-To No. of Pstd. Cr. Memos;
+                                                   Editable=No }
+    { 7600;   ;Base Calendar Code  ;Code10        ;TableRelation="Base Calendar";
+                                                   CaptionML=ENU=Base Calendar Code }
+    { 7601;   ;Copy Sell-to Addr. to Qte From;Option;
+                                                   CaptionML=ENU=Copy Sell-to Addr. to Qte From;
+                                                   OptionCaptionML=ENU=Company,Person;
+                                                   OptionString=Company,Person }
+    { 11620;  ;ABN                 ;Text11        ;OnValidate=BEGIN
+                                                                ABNManagement.CheckABN(ABN,0);
+                                                                IF ABN = '' THEN
+                                                                  Registered := FALSE;
+                                                              END;
+
+                                                   CaptionML=ENU=ABN;
+                                                   Numeric=Yes }
+    { 11621;  ;Registered          ;Boolean       ;OnValidate=BEGIN
+                                                                IF Registered THEN
+                                                                  TESTFIELD(ABN);
+                                                              END;
+
+                                                   CaptionML=ENU=Registered }
+    { 11622;  ;ABN Division Part No.;Text3        ;CaptionML=ENU=ABN Division Part No.;
+                                                   Numeric=Yes }
+    { 17100;  ;IRD No.             ;Text30        ;CaptionML=ENU=IRD No. }
+    { 17110;  ;S/T Type            ;Option        ;CaptionML=ENU=S/T Type;
+                                                   OptionCaptionML=ENU=" ,Annual,Confirmation";
+                                                   OptionString=[ ,Annual,Confirmation] }
+    { 17111;  ;S/T Expiry Date     ;Date          ;CaptionML=ENU=S/T Expiry Date }
+    { 25003;  ;Components on Sales Orders;Option  ;InitValue=Show;
+                                                   CaptionML=ENU=Components on Sales Orders;
+                                                   OptionCaptionML=ENU=" ,Show,Do Not Show";
+                                                   OptionString=[ ,Show,Do Not Show] }
+    { 25004;  ;Components on Shipments;Option     ;InitValue=Show;
+                                                   CaptionML=ENU=Components on Shipments;
+                                                   OptionCaptionML=ENU=" ,Show,Do Not Show";
+                                                   OptionString=[ ,Show,Do Not Show] }
+    { 25005;  ;Components on Invoices;Option      ;InitValue=Show;
+                                                   CaptionML=ENU=Components on Invoices;
+                                                   OptionCaptionML=ENU=" ,Show,Do Not Show";
+                                                   OptionString=[ ,Show,Do Not Show] }
+    { 28040;  ;WHT Business Posting Group;Code10  ;TableRelation="WHT Business Posting Group";
+                                                   CaptionML=ENU=WHT Business Posting Group }
+    { 28041;  ;WHT Payable Amount (LCY);Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("WHT Entry"."Rem Unrealized Amount (LCY)" WHERE (Bill-to/Pay-to No.=FIELD(No.),
+                                                                                                                    Transaction Type=CONST(Sale)));
+                                                   CaptionML=ENU=WHT Payable Amount (LCY) }
+    { 28070;  ;Tax Document Type   ;Option        ;CaptionML=ENU=Tax Document Type;
+                                                   OptionCaptionML=ENU=" ,Document Post,Group Batch,Prompt";
+                                                   OptionString=[ ,Document Post,Group Batch,Prompt];
+                                                   Editable=Yes }
+    { 28090;  ;Post Dated Checks (LCY);Decimal    ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Post Dated Check Line"."Amount (LCY)" WHERE (Account Type=CONST(Customer),
+                                                                                                                 Account No.=FIELD(No.)));
+                                                   CaptionML=ENU=Post Dated Checks (LCY);
+                                                   Editable=No }
+    { 50001;  ;Customer Type       ;Option        ;OptionCaptionML=ENU=" ,Third Party,Related Party,Others";
+                                                   OptionString=[ ,Third Party,Related Party,Others] }
+    { 50002;  ;Type of Dealer      ;Option        ;OptionCaptionML=ENU=" ,DDS,Main Dealer,Others";
+                                                   OptionString=[ ,DDS,Main Dealer,Others] }
+    { 50003;  ;Dealer Classification;Code10        }
+    { 50004;  ;Bank Account        ;Code20        ;TableRelation="Bank Account".No.;
+                                                   Description=YIMMCOLL }
+    { 50005;  ;Area Code DDS       ;Code10        ;TableRelation="Area Code DDS" }
+    { 50006;  ;TaxExampted         ;Boolean        }
+    { 50007;  ;YIMM                ;Boolean       ;Description=For The Merged DB Concept }
+    { 50008;  ;YMKI                ;Boolean       ;Description=For The Merged DB Concept }
+    { 50009;  ;YMMWJ               ;Boolean       ;Description=For The Merged DB Concept }
+    { 50010;  ;TBI                 ;Boolean       ;Description=For The Merged DB Concept }
+    { 50011;  ;YEID                ;Boolean       ;Description=For The Merged DB Concept }
+    { 50012;  ;UID                 ;Code50        ;Description=CAUYIMM }
+    { 50013;  ;CompName            ;Code20         }
+    { 50014;  ;Checked             ;Boolean        }
+    { 50015;  ;Submit              ;Boolean        }
+    { 5055250;;Liq. Payment Terms Code;Code10     ;TableRelation="Payment Terms";
+                                                   CaptionML=ENU=Liq. Payment Terms Code }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+    {    ;Search Name                              }
+    {    ;Customer Posting Group                   }
+    {    ;Currency Code                            }
+    {    ;Country/Region Code                      }
+    {    ;Gen. Bus. Posting Group                  }
+    {    ;Name,Address,City                        }
+    {    ;VAT Registration No.                     }
+    {    ;ABN                                      }
+    {    ;Customer Disc. Group                     }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=You cannot delete %1 %2 because there is at least one outstanding Sales %3 for this customer.';
+      Text002@1001 : TextConst 'ENU=Do you wish to create a contact for %1 %2?';
+      SalesSetup@1002 : Record 311;
+      CommentLine@1004 : Record 97;
+      SalesOrderLine@1005 : Record 37;
+      CustBankAcc@1006 : Record 287;
+      ShipToAddr@1007 : Record 222;
+      PostCode@1008 : Record 225;
+      GenBusPostingGrp@1009 : Record 250;
+      ShippingAgentService@1010 : Record 5790;
+      ItemCrossReference@1016 : Record 5717;
+      RMSetup@1018 : Record 5079;
+      SalesPrice@1021 : Record 7002;
+      SalesLineDisc@1022 : Record 7004;
+      SalesPrepmtPct@1003 : Record 459;
+      ServContract@1026 : Record 5965;
+      ServHeader@1034 : Record 5900;
+      ServiceItem@1027 : Record 5940;
+      NoSeriesMgt@1011 : Codeunit 396;
+      MoveEntries@1012 : Codeunit 361;
+      UpdateContFromCust@1013 : Codeunit 5056;
+      DimMgt@1014 : Codeunit 408;
+      PostCodeCheck@1500001 : Codeunit 28000;
+      ABNManagement@1500000 : Codeunit 11600;
+      InsertFromContact@1015 : Boolean;
+      Text003@1020 : TextConst 'ENU=Contact %1 %2 is not related to customer %3 %4.';
+      Text004@1023 : TextConst 'ENU=post';
+      Text005@1024 : TextConst 'ENU=create';
+      Text006@1025 : TextConst 'ENU=You cannot %1 this type of document when Customer %2 is blocked with type %3';
+      Text007@1028 : TextConst 'ENU=You cannot delete %1 %2 because there is at least one not cancelled Service Contract for this customer.';
+      Text008@1029 : TextConst 'ENU=Deleting the %1 %2 will cause the %3 to be deleted for the associated Service Items. Do you want to continue?';
+      Text009@1030 : TextConst 'ENU=Cannot delete customer.';
+      Text010@1031 : TextConst 'ENU=The %1 %2 has been assigned to %3 %4.\The same %1 cannot be entered on more than one %3. Enter another code.';
+      Text011@1033 : TextConst 'ENU=Reconciling IC transactions may be difficult if you change IC Partner Code because this %1 has ledger entries in a fiscal year that has not yet been closed.\ Do you still want to change the IC Partner Code?';
+      Text012@1032 : TextConst 'ENU=You cannot change the contents of the %1 field because this %2 has one or more open ledger entries.';
+      Text013@1035 : TextConst 'ENU=You cannot delete %1 %2 because there is at least one outstanding Service %3 for this customer.';
+
+    PROCEDURE AssistEdit@2(OldCust@1000 : Record 50049) : Boolean;
+    VAR
+      Cust@1001 : Record 18;
+    BEGIN
+      WITH Cust DO BEGIN
+        //Cust := Rec;
+        SalesSetup.GET;
+        SalesSetup.TESTFIELD("Customer Nos.");
+        IF NoSeriesMgt.SelectSeries(SalesSetup."Customer Nos.",OldCust."No. Series","No. Series") THEN BEGIN
+          NoSeriesMgt.SetSeries("No.");
+         // Rec := Cust;
+          EXIT(TRUE);
+        END;
+      END;
+    END;
+
+    PROCEDURE ValidateShortcutDimCode@29(FieldNumber@1000 : Integer;VAR ShortcutDimCode@1001 : Code[20]);
+    BEGIN
+      DimMgt.ValidateDimValueCode(FieldNumber,ShortcutDimCode);
+      DimMgt.SaveDefaultDim(DATABASE::Customer,"No.",FieldNumber,ShortcutDimCode);
+      MODIFY;
+    END;
+
+    BEGIN
+    {
+      //YIMMCOLL
+      1) New Field is added to provide the YIMM's Bank on Customer Card
+      //CAUYIMM - Changed UID Length from 10 to 50.
+    }
+    END.
+  }
+}
+

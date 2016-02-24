@@ -1,0 +1,74 @@
+OBJECT Table 366 Analysis View Budget Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Analysis View Budget Entry;
+               ENA=Analysis View Budget Entry];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Analysis View Code  ;Code10        ;TableRelation="Analysis View";
+                                                   CaptionML=[ENU=Analysis View Code;
+                                                              ENA=Analysis View Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Budget Name         ;Code10        ;TableRelation="G/L Budget Name";
+                                                   CaptionML=[ENU=Budget Name;
+                                                              ENA=Budget Name] }
+    { 3   ;   ;Business Unit Code  ;Code10        ;TableRelation="Business Unit";
+                                                   CaptionML=[ENU=Business Unit Code;
+                                                              ENA=Business Unit Code] }
+    { 4   ;   ;G/L Account No.     ;Code20        ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=G/L Account No.;
+                                                              ENA=G/L Account No.] }
+    { 5   ;   ;Dimension 1 Value Code;Code20      ;CaptionML=[ENU=Dimension 1 Value Code;
+                                                              ENA=Dimension 1 Value Code];
+                                                   CaptionClass=GetCaptionClass(1) }
+    { 6   ;   ;Dimension 2 Value Code;Code20      ;CaptionML=[ENU=Dimension 2 Value Code;
+                                                              ENA=Dimension 2 Value Code];
+                                                   CaptionClass=GetCaptionClass(2) }
+    { 7   ;   ;Dimension 3 Value Code;Code20      ;CaptionML=[ENU=Dimension 3 Value Code;
+                                                              ENA=Dimension 3 Value Code];
+                                                   CaptionClass=GetCaptionClass(3) }
+    { 8   ;   ;Dimension 4 Value Code;Code20      ;CaptionML=[ENU=Dimension 4 Value Code;
+                                                              ENA=Dimension 4 Value Code];
+                                                   CaptionClass=GetCaptionClass(4) }
+    { 9   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 10  ;   ;Entry No.           ;Integer       ;CaptionML=[ENU=Entry No.;
+                                                              ENA=Entry No.] }
+    { 11  ;   ;Amount              ;Decimal       ;CaptionML=[ENU=Amount;
+                                                              ENA=Amount];
+                                                   AutoFormatType=1 }
+  }
+  KEYS
+  {
+    {    ;Analysis View Code,Budget Name,G/L Account No.,Dimension 1 Value Code,Dimension 2 Value Code,Dimension 3 Value Code,Dimension 4 Value Code,Business Unit Code,Posting Date,Entry No.;
+                                                   SumIndexFields=Amount;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    PROCEDURE GetCaptionClass@7(AnalysisViewDimType@1000 : Integer) : Text[250];
+    VAR
+      AnalysisViewEntry@1001 : Record 365;
+    BEGIN
+      AnalysisViewEntry.INIT;
+      AnalysisViewEntry."Analysis View Code" := "Analysis View Code";
+      EXIT(AnalysisViewEntry.GetCaptionClass(AnalysisViewDimType));
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

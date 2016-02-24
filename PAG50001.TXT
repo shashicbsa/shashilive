@@ -1,0 +1,183 @@
+OBJECT Page 50001 Approve Payment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/30/14;
+    Time=11:30:45;
+    Modified=Yes;
+    Version List=MultiComp1.0,YIMMAPA;
+  }
+  PROPERTIES
+  {
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table50001;
+    PageType=List;
+    OnInit=BEGIN
+             "Type Of TransactionEnable" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+           END;
+
+    OnOpenPage=BEGIN
+                 Enablefields_Pur;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000062;1 ;Action    ;
+                      CaptionML=ENU=Approve;
+                      Promoted=Yes;
+                      Image=Approve;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 //YIMMAPAST
+                                   Gen_Line_Temp.RESET;
+                                   Gen_Line_Temp.SETCURRENTKEY(Approve);
+                                   Gen_Line_Temp.SETRANGE(Approve,TRUE);
+                                   IF Gen_Line_Temp.FINDFIRST THEN REPEAT
+                                     Gen_Line.SETCURRENTKEY(Gen_Line."Journal Template Name",Gen_Line."Journal Batch Name",Gen_Line."Line No.");
+                                     Gen_Line.SETRANGE(Gen_Line."Journal Template Name",Gen_Line_Temp."Journal Template Name");
+                                     Gen_Line.SETRANGE(Gen_Line."Journal Batch Name",Gen_Line_Temp."Journal Batch Name");
+                                     Gen_Line.SETRANGE(Gen_Line."Line No.",Gen_Line_Temp."Actual Line No.");
+                                     IF Gen_Line.FINDFIRST THEN BEGIN
+                                       Gen_Line.Approve := TRUE;
+                                       Gen_Line.MODIFY;
+                                     END;
+                                     Gen_Line_Temp.DELETE(TRUE);
+                                   UNTIL Gen_Line_Temp.NEXT = 0;
+
+
+
+                                 //YIMMAPAEN
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Journal Template Name";
+                Editable=FALSE }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Account Type";
+                Editable=FALSE }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Account No.";
+                Editable=FALSE }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Posting Date";
+                Editable=FALSE }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Document Type";
+                Editable=FALSE }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Document No.";
+                Editable=FALSE }
+
+    { 1000000013;2;Field  ;
+                SourceExpr=Description }
+
+    { 1000000053;2;Field  ;
+                SourceExpr=Approve }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Debit Amount";
+                Editable=FALSE }
+
+    { 1000000017;2;Field  ;
+                SourceExpr="Credit Amount";
+                Editable=FALSE }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Editable=FALSE }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Editable=FALSE }
+
+    { 1000000027;2;Field  ;
+                SourceExpr="Applies-to Doc. Type";
+                Editable=FALSE }
+
+    { 1000000029;2;Field  ;
+                SourceExpr="Applies-to Doc. No.";
+                Editable=FALSE }
+
+    { 1000000031;2;Field  ;
+                SourceExpr="External Document No.";
+                Editable=FALSE }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Approval Date";
+                Editable=FALSE }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Actual Line No.";
+                Editable=FALSE }
+
+    { 1000000055;2;Field  ;
+                SourceExpr="Type Of Transaction";
+                Visible="Type Of TransactionVisible";
+                Enabled="Type Of TransactionEnable";
+                Editable=FALSE }
+
+    { 1000000057;2;Field  ;
+                SourceExpr="Created By";
+                Editable=FALSE }
+
+  }
+  CODE
+  {
+    VAR
+      Gen_Line_Temp@1000000000 : Record 50001;
+      Gen_Batch@1000000001 : Record 232;
+      Text000@1000000002 : TextConst 'ENU=Specify No. Series In %1 Template and %2 Batch';
+      Doc_No@1000000003 : Code[20];
+      Nos@1000000004 : Codeunit 396;
+      Gen_Line@1000000005 : Record 81;
+      Flag@1000000006 : Integer;
+      "Type Of TransactionVisible"@19059961 : Boolean INDATASET;
+      "Type Of TransactionEnable"@19049369 : Boolean INDATASET;
+
+    PROCEDURE Enablefields_Pur@1000000000();
+    VAR
+      MasterSetup1@1000000000 : Record 50008;
+    BEGIN
+      MasterSetup1.GET;
+       IF (COMPANYNAME = MasterSetup1."Company Name YMKI") THEN
+          BEGIN
+            "Type Of TransactionEnable" := FALSE;
+            "Type Of TransactionVisible" := FALSE;
+          END
+        ELSE
+            BEGIN
+             "Type Of TransactionEnable" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+
+            END;
+    END;
+
+    BEGIN
+    {
+      //YIMMAPA
+        New form is created for approval process.
+        DELETE ALLOWED AND INSERT ALLOWED PROPERTIES IS CHANGED TO NO
+    }
+    END.
+  }
+}
+

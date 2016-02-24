@@ -1,0 +1,643 @@
+OBJECT Report 60075 G/L Budget Entry Import
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/02/15;
+    Time=10:54:17;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=G/L Budget Entry Import;
+               ENA=Import Gen from Excel];
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+
+                   GLSetup.GET;
+                   MasterSetup.GET;
+                 END;
+
+    OnPreReport=VAR
+                  BusUnit@1000 : Record 220;
+                BEGIN
+                  ExcelBuf.LOCKTABLE;
+
+                  ExcelBuf.OpenBook(ServerFileName,SheetName);
+                  ExcelBuf.ReadSheet;
+                END;
+
+    OnPostReport=BEGIN
+                   ExcelBuf.DELETEALL;
+
+                   MESSAGE(Text107);
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table95;
+               OnPreDataItem=BEGIN
+                                 IF "G/L Budget Name".Blocked THEN
+                                   ERROR(Text103,"G/L Budget Name".Name)
+                                 ELSE
+                                   GLBudgetBuffer.DELETEALL;
+                             END;
+
+               OnPostDataItem=BEGIN
+                                AnalyzeData2;
+                              END;
+
+               ReqFilterFields=Name }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnOpenPage=BEGIN
+                   Description := Text005 + FORMAT(WORKDATE);
+                 END;
+
+      OnQueryClosePage=VAR
+                         FileMgt@1001 : Codeunit 419;
+                       BEGIN
+                         IF CloseAction = ACTION::OK THEN BEGIN
+                           ServerFileName := FileMgt.UploadFile(Text006,ExcelFileExtensionTok);
+                           IF ServerFileName = '' THEN
+                             EXIT(FALSE);
+
+                           SheetName := ExcelBuf.SelectSheetsName(ServerFileName);
+                           IF SheetName = '' THEN
+                             EXIT(FALSE);
+                         END;
+                       END;
+
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=You must specify a budget name to import to.;ENA=You must specify a budget name to import to.';
+      Text001@1001 : TextConst 'ENU=Do you want to create a %1 with the name %2?;ENA=Do you want to create a %1 with the name %2?';
+      Text002@1002 : TextConst 'ENU=%1 %2 is blocked. You cannot import entries.;ENA=%1 %2 is blocked. You cannot import entries.';
+      Text003@1003 : TextConst 'ENU=Are you sure that you want to %1 for the budget name %2?;ENA=Are you sure that you want to %1 for the budget name %2?';
+      Text004@1004 : TextConst 'ENU=%1 table has been successfully updated with %2 entries.;ENA=%1 table has been successfully updated with %2 entries.';
+      Text005@1005 : TextConst 'ENU="Imported from Excel ";ENA="Imported from Excel "';
+      Text006@1006 : TextConst 'ENU=Import Excel File;ENA=Import Excel File';
+      Text007@1007 : TextConst 'ENU=Analyzing Data...\\;ENA=Analysing Data...\\';
+      Text008@1008 : TextConst 'ENU=You cannot specify more than 8 dimensions in your Excel worksheet.;ENA=You cannot specify more than 8 dimensions in your Excel worksheet.';
+      Text009@1009 : TextConst 'ENU=G/L ACCOUNT NO;ENA=G/L ACCOUNT NO';
+      Text010@1010 : TextConst 'ENU=G/L Account No.;ENA=G/L Account No.';
+      Text011@1011 : TextConst 'ENU=The text G/L Account No. can only be specified once in the Excel worksheet.;ENA=The text G/L Account No. can only be specified once in the Excel worksheet.';
+      Text012@1012 : TextConst 'ENU=The dimensions specified by worksheet must be placed in the lines before the table.;ENA=The dimensions specified by worksheet must be placed in the lines before the table.';
+      Text013@1013 : TextConst 'ENU="Dimension ";ENA="Dimension "';
+      Text014@1014 : TextConst 'ENU=Date;ENA=Date';
+      Text015@1015 : TextConst 'ENU=Dimension 1;ENA=Dimension 1';
+      Text016@1016 : TextConst 'ENU=Dimension 2;ENA=Dimension 2';
+      Text017@1017 : TextConst 'ENU=Dimension 3;ENA=Dimension 3';
+      Text018@1018 : TextConst 'ENU=Dimension 4;ENA=Dimension 4';
+      Text019@1019 : TextConst 'ENU=Dimension 5;ENA=Dimension 5';
+      Text020@1020 : TextConst 'ENU=Dimension 6;ENA=Dimension 6';
+      Text021@1021 : TextConst 'ENU=Dimension 7;ENA=Dimension 7';
+      Text022@1022 : TextConst 'ENU=Dimension 8;ENA=Dimension 8';
+      Text023@1023 : TextConst 'ENU=You cannot import the same information twice.\;ENA=You cannot import the same information twice.\';
+      Text024@1024 : TextConst 'ENU=The combination G/L Account No. - Dimensions - Date must be unique.;ENA=The combination G/L Account No. - Dimensions - Date must be unique.';
+      Text025@1025 : TextConst 'ENU=G/L Accounts have not been found in the Excel worksheet.;ENA=G/L Accounts have not been found in the Excel worksheet.';
+      Text026@1026 : TextConst 'ENU=Dates have not been recognized in the Excel worksheet.;ENA=Dates have not been recognised in the Excel worksheet.';
+      ExcelBuf@1027 : Record 370;
+      ServerFileName@1033 : Text;
+      SheetName@1038 : Text[250];
+      TotalRecNo@1044 : Integer;
+      RecNo@1045 : Integer;
+      Window@1046 : Dialog;
+      Description@1047 : Text[50];
+      ImportOption@1054 : 'Replace entries,Add entries';
+      Text027@1055 : TextConst 'ENU=Replace entries,Add entries;ENA=Replace entries,Add entries';
+      Text028@1056 : TextConst 'ENU=A filter has been used on the %1 when the budget was exported. When a filter on a dimension has been used, a column with the same dimension must be present in the worksheet imported. The column in the worksheet must specify the dimension value codes the program should use when importing the budget.;ENA=A filter has been used on the %1 when the budget was exported. When a filter on a dimension has been used, a column with the same dimension must be present in the worksheet imported. The column in the worksheet must specify the dimension value codes the program should use when importing the budget.';
+      ExcelFileExtensionTok@1037 : TextConst '@@@={Locked};ENU=.xlsx;ENA=.xlsx';
+      TextUP001@1102159001 : TextConst 'ENU=Template';
+      TextUP002@1102159002 : TextConst 'ENU=Batch';
+      TextUP003@1102159003 : TextConst 'ENU=Line';
+      TextUP004@1102159004 : TextConst 'ENU=Description';
+      ReadyToPostCrMEMO@1102159008 : Record 50041;
+      GLSetup@1102159029 : Record 98;
+      DimVal@1102159028 : Record 349;
+      MasterSetup@1102159027 : Record 50008;
+      BudgetFilePath@1102159026 : Code[250];
+      GLBudgetName@1102159025 : Record 95;
+      GLBudgetBuffer@1102159024 : Record 50023;
+      CurrBudgetName@1102159023 : Code[10];
+      CYear@1102159022 : Integer;
+      I@1102159021 : Integer;
+      StartDate@1102159020 : Date;
+      BSPL@1102159019 : Text[30];
+      EntryNo@1102159018 : Integer;
+      GLAccCode@1102159017 : Code[20];
+      GLAccName@1102159016 : Text[50];
+      GlobalDim1Value@1102159015 : Text[50];
+      GlobalDim2Value@1102159014 : Text[50];
+      BudgetDim1Value@1102159013 : Text[50];
+      SourceType@1102159012 : ' ,Customer,Vendor,Entity';
+      SourceNo@1102159011 : Code[20];
+      InputAmount@1102159010 : ARRAY [24] OF Decimal;
+      AmountTemp@1102159009 : Decimal;
+      J@1102159007 : Decimal;
+      GLBudgetEntryNo@1102159006 : Decimal;
+      Text101@1102159040 : TextConst 'ENU=Dimension Name %1 in Entry No %2 not found';
+      Text102@1102159039 : TextConst 'ENU=Budget Name %1 does not exist';
+      Text103@1102159038 : TextConst 'ENU=Budget Name %1 is Blocked';
+      Text104@1102159037 : TextConst 'ENU="GLAccount No %1 on Entry No %2 does not exist "';
+      Text105@1102159036 : TextConst 'ENU=Date %1 in Budget Entry No %2 in Budget %3 is not in the range defined in the Budget Name Master';
+      Text106@1102159035 : TextConst 'ENU=The Budget %1 mentioned is not set as any of the currently used budget in Master Setup';
+      Text107@1102159034 : TextConst 'ENU=The Budget entries has been successfully imported into the database';
+      Text112@1102159033 : TextConst 'ENU=Date Cannot be less than %1 defined in Budget %2.';
+      Text113@1102159032 : TextConst 'ENU=Date Cannot be Greater than %1 defined in Budget %2.';
+      Text114@1102159031 : TextConst 'ENU=Shop Code cannot be Blank for %1';
+      Text115@1102159030 : TextConst 'ENU=Model Code cannot be Blank for %1';
+      Text110@1102159005 : TextConst 'ENU=Import Text File';
+      InputAmount1@1102159042 : Decimal;
+      InputAmount2@1102159043 : Decimal;
+      InputAmount3@1102159044 : Decimal;
+      InputAmount4@1102159045 : Decimal;
+      InputAmount5@1102159046 : Decimal;
+      InputAmount6@1102159047 : Decimal;
+      InputAmount7@1102159048 : Decimal;
+      InputAmount8@1102159049 : Decimal;
+      InputAmount9@1102159050 : Decimal;
+      InputAmount10@1102159051 : Decimal;
+      InputAmount11@1102159052 : Decimal;
+      InputAmount12@1102159053 : Decimal;
+      InputAmount13@1102159054 : Decimal;
+      InputAmount14@1102159055 : Decimal;
+      InputAmount15@1102159056 : Decimal;
+      InputAmount16@1102159057 : Decimal;
+      InputAmount17@1102159058 : Decimal;
+      InputAmount18@1102159059 : Decimal;
+      InputAmount19@1102159060 : Decimal;
+      InputAmount20@1102159061 : Decimal;
+      InputAmount21@1102159062 : Decimal;
+      InputAmount22@1102159063 : Decimal;
+      InputAmount23@1102159064 : Decimal;
+      InputAmount24@1102159065 : Decimal;
+      AmountTemp1@1102159041 : Decimal;
+      AmountTemp2@1102159066 : Decimal;
+      AmountTemp3@1102159067 : Decimal;
+      AmountTemp4@1102159068 : Decimal;
+      AmountTemp5@1102159069 : Decimal;
+      AmountTemp6@1102159070 : Decimal;
+      AmountTemp7@1102159071 : Decimal;
+      AmountTemp8@1102159072 : Decimal;
+      AmountTemp9@1102159073 : Decimal;
+      AmountTemp10@1102159074 : Decimal;
+      AmountTemp11@1102159075 : Decimal;
+      AmountTemp12@1102159076 : Decimal;
+      RowNo@1102159077 : Integer;
+      Text111@1102159078 : TextConst 'ENU=Source Type must be Entity';
+
+    LOCAL PROCEDURE FormatData@8(TextToFormat@1000 : Text[250]) : Text[250];
+    VAR
+      FormatInteger@1001 : Integer;
+      FormatDecimal@1002 : Decimal;
+      FormatDate@1003 : Date;
+    BEGIN
+      CASE TRUE OF
+        EVALUATE(FormatInteger,TextToFormat):
+          EXIT(FORMAT(FormatInteger));
+        EVALUATE(FormatDecimal,TextToFormat):
+          EXIT(FORMAT(FormatDecimal));
+        EVALUATE(FormatDate,TextToFormat):
+          EXIT(FORMAT(FormatDate));
+        ELSE
+          EXIT(TextToFormat);
+      END;
+    END;
+
+    LOCAL PROCEDURE AnalyzeData2@1102159005();
+    VAR
+      TempExcelBuf@1000 : Record 370;
+      BudgetBuf@1001 : Record 371;
+      TempBudgetBuf@1002 : TEMPORARY Record 371;
+      HeaderRowNo@1003 : Integer;
+      CountDim@1004 : Integer;
+      TestDateTime@1005 : DateTime;
+      OldRowNo@1006 : Integer;
+      DimRowNo@1007 : Integer;
+      DimCode3@1008 : Code[20];
+      GenJnlLine@1102159001 : Record 81;
+      GenJnlLineLoc@1102159002 : Record 81;
+      LineNo@1102159004 : Integer;
+      GenJournalBatch@1102159003 : Record 232;
+      NoSeries@1102159005 : Record 308;
+      NoSeriesLine@1102159006 : Record 309;
+      DocNo@1102159007 : Code[20];
+      TempExcelBuf2@1102159008 : Record 370;
+    BEGIN
+      Window.OPEN(
+        Text007 +
+        '@1@@@@@@@@@@@@@@@@@@@@@@@@@\');
+      Window.UPDATE(1,0);
+      TotalRecNo := ExcelBuf.COUNT;
+      RecNo := 0;
+        ExcelBuf.RESET;
+
+       HeaderRowNo := 0;
+      IF ExcelBuf.FIND('-') THEN BEGIN
+        REPEAT
+
+        IF (HeaderRowNo = 0) OR (HeaderRowNo <> ExcelBuf."Row No.") THEN BEGIN
+          ReadyToPostCrMEMO.INIT;
+
+          RecNo := RecNo + 1;
+          Window.UPDATE(1,ROUND(RecNo / TotalRecNo * 10000,1));
+
+          RowNo := 0;
+          TempExcelBuf.RESET;
+          TempExcelBuf.SETRANGE("Row No.",ExcelBuf."Row No.");
+          IF TempExcelBuf.FINDSET THEN
+          REPEAT
+              IF TempExcelBuf."Column No." = 2 THEN BEGIN
+                EVALUATE(EntryNo,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 3 THEN BEGIN
+                GLAccCode := TempExcelBuf."Cell Value as Text";
+              END;
+
+              IF TempExcelBuf."Column No." = 4 THEN BEGIN
+                GLAccName :=  TempExcelBuf."Cell Value as Text";
+              END;
+
+              IF TempExcelBuf."Column No." = 5 THEN BEGIN
+                IF TempExcelBuf."Cell Value as Text" <> '' THEN  BEGIN
+                  DimVal.RESET;
+                  DimVal.SETRANGE("Dimension Code",GLSetup."Global Dimension 1 Code");
+                  DimVal.SETRANGE(Name,TempExcelBuf."Cell Value as Text");
+                  IF NOT DimVal.FINDFIRST THEN
+                    ERROR(Text101,TempExcelBuf."Cell Value as Text",EntryNo);
+                END;
+
+                GlobalDim1Value :=  TempExcelBuf."Cell Value as Text";
+              END;
+
+              IF TempExcelBuf."Column No." = 6 THEN BEGIN
+                IF TempExcelBuf."Cell Value as Text" <> '' THEN BEGIN
+                  DimVal.RESET;
+                  DimVal.SETRANGE("Dimension Code",GLSetup."Global Dimension 2 Code");
+                  DimVal.SETRANGE(Name,TempExcelBuf."Cell Value as Text");
+                  IF NOT DimVal.FINDFIRST THEN
+                    ERROR(Text101,TempExcelBuf."Cell Value as Text",EntryNo);
+                END;
+
+                GlobalDim2Value :=  TempExcelBuf."Cell Value as Text";
+              END;
+
+              IF TempExcelBuf."Column No." = 7 THEN BEGIN
+                IF TempExcelBuf."Cell Value as Text" <> '' THEN BEGIN
+                  DimVal.RESET;
+                  DimVal.SETRANGE("Dimension Code",GLSetup."Shortcut Dimension 3 Code");
+                  DimVal.SETRANGE(Name,TempExcelBuf."Cell Value as Text");
+                  IF NOT DimVal.FINDFIRST THEN
+                    ERROR(Text101,TempExcelBuf."Cell Value as Text",EntryNo);
+                END;
+
+                BudgetDim1Value :=  TempExcelBuf."Cell Value as Text";
+              END;
+
+              IF TempExcelBuf."Column No." = 8 THEN BEGIN
+                EVALUATE(InputAmount1,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 9 THEN BEGIN
+                EVALUATE(InputAmount2,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 10 THEN BEGIN
+                EVALUATE(InputAmount3,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." =11 THEN BEGIN
+                EVALUATE(InputAmount4,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 12 THEN BEGIN
+                EVALUATE(InputAmount5,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 13 THEN BEGIN
+                EVALUATE(InputAmount6,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 14 THEN BEGIN
+                EVALUATE(InputAmount7,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 15 THEN BEGIN
+                EVALUATE(InputAmount8,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 16 THEN BEGIN
+                EVALUATE(InputAmount9,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 17 THEN BEGIN
+                EVALUATE(InputAmount10,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 18 THEN BEGIN
+                EVALUATE(InputAmount11,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 19 THEN BEGIN
+                EVALUATE(InputAmount12,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 20 THEN BEGIN
+                EVALUATE(InputAmount13,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 21 THEN BEGIN
+                EVALUATE(InputAmount14,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 22 THEN BEGIN
+                EVALUATE(InputAmount15,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 23 THEN BEGIN
+                EVALUATE(InputAmount16,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 24 THEN BEGIN
+                EVALUATE(InputAmount17,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 25 THEN BEGIN
+                EVALUATE(InputAmount18,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 26 THEN BEGIN
+                EVALUATE(InputAmount19,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 27 THEN BEGIN
+                EVALUATE(InputAmount20,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 28 THEN BEGIN
+                EVALUATE(InputAmount21,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 29 THEN BEGIN
+                EVALUATE(InputAmount22,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 30 THEN BEGIN
+                EVALUATE(InputAmount23,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 31 THEN BEGIN
+                EVALUATE(InputAmount24,TempExcelBuf."Cell Value as Text");
+              END;
+
+              IF TempExcelBuf."Column No." = 32 THEN BEGIN
+                EVALUATE(SourceType,TempExcelBuf."Cell Value as Text");
+                IF SourceType = SourceType::Entity THEN
+                  SourceType := SourceType::Customer  //NK.TBD
+                ELSE IF SourceType = SourceType::Customer THEN
+                   ERROR(Text111)    //NK.TBD
+                ELSE IF SourceType = SourceType::Vendor THEN
+                  ERROR(Text111);  //NK.TBD
+
+              END;
+
+              IF TempExcelBuf."Column No." = 33 THEN BEGIN
+                SourceNo :=  TempExcelBuf."Cell Value as Text";
+              END;
+
+
+          UNTIL TempExcelBuf.NEXT =0;
+
+              FOR I := 1 TO 12 DO BEGIN
+                CYear := DATE2DMY("G/L Budget Name"."Actual Data Start Date",3);
+                //StartDate := DMY2DATE(1,I,CYear);
+                //IF StartDate < "G/L Budget Name"."Upload Data Start Date" THEN
+                //  ERROR(Text112,"G/L Budget Name"."Upload Data Start Date","G/L Budget Name".Name)
+                //ELSE IF StartDate > "G/L Budget Name"."Upload Data End Date" THEN
+                //  ERROR(Text113,"G/L Budget Name"."Upload Data End Date","G/L Budget Name".Name);
+
+                IF I = 1 THEN BEGIN
+                  AmountTemp1 := 0;
+                  AmountTemp1 := InputAmount1 - InputAmount2;
+                  IF AmountTemp1 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp1);
+                  END;
+                END;
+
+
+                IF I = 2 THEN BEGIN
+                  AmountTemp2 := 0;
+                  AmountTemp2 := InputAmount3 - InputAmount4;
+                  IF AmountTemp2 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp2);
+                  END;
+                END;
+
+
+                IF I = 3 THEN BEGIN
+                  AmountTemp3 := 0;
+                  AmountTemp3 := InputAmount5 - InputAmount6;
+                  IF AmountTemp3 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp3);
+                  END;
+                END;
+
+
+                IF I = 4 THEN BEGIN
+                  AmountTemp4 := 0;
+                  AmountTemp4 := InputAmount7 - InputAmount8;
+                  IF AmountTemp4 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp4);
+                  END;
+                END;
+
+
+                IF I = 5 THEN BEGIN
+                  AmountTemp5 := 0;
+                  AmountTemp5 := InputAmount9 - InputAmount10;
+                  IF AmountTemp5 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp5);
+                  END;
+                END;
+
+
+                IF I = 6 THEN BEGIN
+                  AmountTemp6 := 0;
+                  AmountTemp6 := InputAmount11 - InputAmount12;
+                  IF AmountTemp6 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp6);
+                  END;
+                END;
+
+
+                IF I = 7 THEN BEGIN
+                  AmountTemp7 := 0;
+                  AmountTemp7 := InputAmount13 - InputAmount14;
+                  IF AmountTemp7 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp7);
+                  END;
+                END;
+
+
+                IF I = 8 THEN BEGIN
+                  AmountTemp8 := 0;
+                  AmountTemp8 := InputAmount15 - InputAmount16;
+                  IF AmountTemp8 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp8);
+                  END;
+                END;
+
+
+                IF I = 9 THEN BEGIN
+                  AmountTemp9 := 0;
+                  AmountTemp9 := InputAmount17 - InputAmount18;
+                  IF AmountTemp9 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp9);
+                  END;
+                END;
+
+
+                IF I = 10 THEN BEGIN
+                  AmountTemp10 := 0;
+                  AmountTemp10 := InputAmount19 - InputAmount20;
+                  IF AmountTemp10 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp10);
+                  END;
+                END;
+
+
+                IF I = 11 THEN BEGIN
+                  AmountTemp11 := 0;
+                  AmountTemp11 := InputAmount21 - InputAmount22;
+                  IF AmountTemp11 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp11);
+                  END;
+                END;
+
+
+                IF I = 12 THEN BEGIN
+                  AmountTemp12 := 0;
+                  AmountTemp12 := InputAmount23 - InputAmount24;
+                  IF AmountTemp12 <> 0 THEN BEGIN
+                    StartDate := DMY2DATE(1,I,CYear);
+                    CheckDate;
+                    CreateBudgetBufferLine(AmountTemp12);
+                  END;
+                END;
+              END;
+              InitVal;
+          HeaderRowNo := ExcelBuf."Row No.";
+        END;
+        UNTIL ExcelBuf.NEXT = 0;
+      END;
+
+      Window.CLOSE;
+      TempExcelBuf.RESET;
+    END;
+
+    PROCEDURE CreateBudgetBufferLine@1102159003(Amt@1102159001 : Decimal);
+    BEGIN
+      GLBudgetEntryNo += 1;
+      GLBudgetBuffer.INIT;
+      GLBudgetBuffer."Entry No." := GLBudgetEntryNo;
+      GLBudgetBuffer.VALIDATE("Budget Name","G/L Budget Name".Name);
+      GLBudgetBuffer.VALIDATE("G/L Account No.",GLAccCode);
+      GLBudgetBuffer.Date := StartDate;
+      GLBudgetBuffer."Global Dimension 1 Name" := GlobalDim1Value;
+      GLBudgetBuffer."Global Dimension 2 Name" := GlobalDim2Value;
+      GLBudgetBuffer.Amount := Amt;
+      GLBudgetBuffer.Description := GLAccName;
+      GLBudgetBuffer."Budget Dimension 1 Name" := BudgetDim1Value;
+      GLBudgetBuffer.VALIDATE("Source Type",SourceType);
+      GLBudgetBuffer.VALIDATE("Source No.",SourceNo);
+      GLBudgetBuffer.INSERT;
+    END;
+
+    PROCEDURE InitVal@1102159001();
+    BEGIN
+      InputAmount1 := 0;
+      InputAmount2 := 0;
+      InputAmount3 := 0;
+      InputAmount4 := 0;
+      InputAmount5 := 0;
+      InputAmount6 := 0;
+      InputAmount7 := 0;
+      InputAmount8 := 0;
+      InputAmount9 := 0;
+      InputAmount10 := 0;
+      InputAmount11 := 0;
+      InputAmount12 := 0;
+      InputAmount13 := 0;
+      InputAmount14 := 0;
+      InputAmount15 := 0;
+      InputAmount16 := 0;
+      InputAmount17 := 0;
+      InputAmount18 := 0;
+      InputAmount19 := 0;
+      InputAmount20 := 0;
+      InputAmount21 := 0;
+      InputAmount22 := 0;
+      InputAmount23 := 0;
+      InputAmount24 := 0;
+    END;
+
+    PROCEDURE CheckDate@1000000000();
+    BEGIN
+      IF StartDate < "G/L Budget Name"."Upload Data Start Date" THEN
+        ERROR(Text112,"G/L Budget Name"."Upload Data Start Date","G/L Budget Name".Name)
+      ELSE IF StartDate > "G/L Budget Name"."Upload Data End Date" THEN
+        ERROR(Text113,"G/L Budget Name"."Upload Data End Date","G/L Budget Name".Name);
+    END;
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Dataport "50024" is converted into this Report to import Budget Data.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

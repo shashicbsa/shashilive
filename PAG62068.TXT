@@ -1,0 +1,289 @@
+OBJECT Page 62068 Master Setup-2
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/17/16;
+    Time=18:24:37;
+    Modified=Yes;
+    Version List=CR#022,EPROCII,EprocGRN,CR#003,UPG13R2DEV,E-FAKTUR1.0,CR001,ZZ;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table60053;
+    PageType=Card;
+    ActionList=ACTIONS
+    {
+      { 1102159024;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1102159025;1 ;ActionGroup;
+                      CaptionML=ENU=Funtions }
+      { 1102159026;2 ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=Generate Currency Exchange;
+                      Promoted=No;
+                      PromotedIsBig=No;
+                      Image=CurrencyExchangeRates;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+
+                                 //TMS_Curr_exch.RUN
+                                 TMS_Curr_exch.Manual_Run("Currency Exch. Date");
+                               END;
+                                }
+      { 1102159016;2 ;Action    ;
+                      CaptionML=ENU=Browse folder }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159001;1;Group  ;
+                CaptionML=ENU=General }
+
+    { 1102159002;2;Field  ;
+                SourceExpr="YIMM Sales Discount" }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="YIMM Campaign Discount" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr="YIMM Instancy Discount" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="YIMM Selling In Discount" }
+
+    { 1102159011;2;Field  ;
+                SourceExpr="YIMM Selling Out Discount" }
+
+    { 1102159013;2;Field  ;
+                SourceExpr="YIMM Others" }
+
+    { 1102159018;2;Field  ;
+                SourceExpr="Purch Inv Eproc No Series" }
+
+    { 1102159017;2;Field  ;
+                SourceExpr="GRN Template" }
+
+    { 1102159019;2;Field  ;
+                SourceExpr="GRN Batch" }
+
+    { 1102159020;2;Field  ;
+                SourceExpr="GRN Slip No." }
+
+    { 1102159021;2;Field  ;
+                SourceExpr="GRN Credit Posting Group" }
+
+    { 1102159022;2;Field  ;
+                SourceExpr="YEID PurchInv IF UID" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Interface file path Export" }
+
+    { 1000000007;1;Group  ;
+                CaptionML=ENU=TMS;
+                GroupType=Group }
+
+    { 1102159015;2;Field  ;
+                SourceExpr="TMS Currency Exchange" }
+
+    { 1102159023;2;Field  ;
+                SourceExpr="Currency Exch. Date" }
+
+    { 1102159010;2;Field  ;
+                SourceExpr="TMS Purchase Invoice" }
+
+    { 1102159012;2;Field  ;
+                SourceExpr="TMS Collection" }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="TMS Type of Transaction" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="TMS Vendor Posting Group" }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="TMS Purch Inv No Series" }
+
+    { 1102159009;2;Field  ;
+                SourceExpr="TMS Interface UID" }
+
+    { 1102159014;2;Field  ;
+                SourceExpr="TMS Collection Deposit A/C" }
+
+    { 1000000006;1;Group  ;
+                CaptionML=ENU=E-FAKTUR;
+                GroupType=Group }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="E-FAKTUR Interface File Path" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="E-FAKTUR VAT - OUT" }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="E-FAKTUR VAT - OUT Return" }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="E-FAKTUR VAT - IN" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="E-FAKTUR VAT - IN Return" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="E-FAKTUR INVOICE DETAILS" }
+
+    { 1000000009;1;Group  ;
+                CaptionML=ENU=Interest Deposit S/P;
+                GroupType=Group }
+
+    { 1000000032;2;Field  ;
+                CaptionML=ENU=File Name;
+                SourceExpr=ID_SP_IF_FILE_Name }
+
+    { 1000000010;2;Field  ;
+                CaptionML=ENU=Slip No.;
+                SourceExpr="ID_SP_Slip No." }
+
+    { 1000000011;2;Field  ;
+                CaptionML=ENU=Type Of Transaction;
+                SourceExpr=ID_SP_TypeOfTran }
+
+    { 1000000012;2;Field  ;
+                CaptionML=ENU=Entity Posting Group;
+                SourceExpr=ID_SP_EntityPostGrp }
+
+    { 1000000013;2;Field  ;
+                CaptionML=ENU=WHT Product Posting Group;
+                SourceExpr=ID_SP_WHTProdPostGrp }
+
+    { 1000000014;2;Field  ;
+                CaptionML=ENU=User ID;
+                SourceExpr=ID_SP_IF_UID }
+
+    { 1000000015;1;Group  ;
+                CaptionML=ENU=MKT Actitvities;
+                GroupType=Group }
+
+    { 1000000033;2;Field  ;
+                CaptionML=ENU=File Name;
+                SourceExpr=OY_MC_IF_FILE_Name }
+
+    { 1000000016;2;Field  ;
+                CaptionML=ENU=Slip No.;
+                SourceExpr="OY_MC_Slip No." }
+
+    { 1000000017;2;Field  ;
+                CaptionML=ENU=Type Of Transaction;
+                SourceExpr=OY_MC_TypeOfTran;
+                Visible=FALSE }
+
+    { 1000000018;2;Field  ;
+                CaptionML=ENU=Entity Posting Group;
+                SourceExpr=OY_MC_EntityPostGrp }
+
+    { 1000000019;2;Field  ;
+                CaptionML=ENU=User ID;
+                SourceExpr=OY_MC_IF_UID }
+
+    { 1000000020;1;Group  ;
+                CaptionML=ENU=HR WJ;
+                GroupType=Group }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="HR Salary WJ" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="HR Over Time WJ" }
+
+    { 1000000030;2;Field  ;
+                SourceExpr="HR Medical WJ" }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="HR Astek WJ" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="HR Bonus WJ" }
+
+    { 1000000025;2;Field  ;
+                CaptionML=ENU=HR Template Name WJ;
+                SourceExpr="HR Template Name WJ" }
+
+    { 1000000026;2;Field  ;
+                CaptionML=ENU=HR Batch Salary WJ;
+                SourceExpr="HR Batch Salary WJ" }
+
+    { 1000000027;2;Field  ;
+                CaptionML=ENU=HR Batch Bonus WJ;
+                SourceExpr="HR Batch Bonus WJ" }
+
+    { 1000000028;2;Field  ;
+                CaptionML=ENU=HR Batch Astek WJ;
+                SourceExpr="HR Batch Astek WJ" }
+
+    { 1000000029;2;Field  ;
+                CaptionML=ENU=HR Batch Otm WJ;
+                SourceExpr="HR Batch Otm WJ" }
+
+    { 1000000034;2;Field  ;
+                SourceExpr="HR Batch Medical WJ" }
+
+    { 1000000036;1;Group  ;
+                CaptionML=ENU=HR  HO;
+                GroupType=Group }
+
+    { 1000000037;2;Field  ;
+                SourceExpr="HR Medical YIMM" }
+
+    { 1000000035;2;Field  ;
+                SourceExpr="HR Batch Medical YIMM" }
+
+  }
+  CODE
+  {
+    VAR
+      TMS_Curr_exch@1102159001 : Codeunit 50033;
+
+    BEGIN
+    {
+      Date               Sign                 Ref_ID                          Description
+                          VK                  CR#022                          Form created for Imacs Discount Modification.
+                          VK                  EPROCII                         Field Added for YIMM EprocII Purch Inv Interface
+      15042014            VK                  EprocGRN                        YEID UnInvoiced GRN Modification-New Tab Added
+      01102014            SV                  MIMPIND002/001/140806/003       Fields added for TMS Interfaces.
+
+
+      UPG13R2 DEV SV 15122014
+      Modified for TMS
+
+      //E-FAKTUR1.0 SV
+      Form modified for showin field related to efaktur in master setup table
+
+      [REF] : UPG13R2DEV CR001
+      [SIGN]: SV
+      [DESC]: Interest Deposit s/p and mkt activities tab and fields added
+
+      [Ref]       CR001
+      [SIGN]      SV
+      [DESC]      Interface HR Medical YIMM WJ file fileds added
+                  Name
+                  "HR Salary WJ"
+                  "HR Over Time WJ"
+                  "HR Medical WJ"
+                  "HR Astek WJ"
+                  "HR Bonus WJ"
+                  "HR Medical YIMM"
+                  "HR Template Name WJ"
+                  "HR Batch Salary WJ"
+                  "HR Batch Bonus WJ"
+                  "HR Batch Astek WJ"
+                  "HR Batch Otm WJ"
+                  "HR Batch Medical WJ"
+                  "HR Batch Medical YIMM"
+
+    }
+    END.
+  }
+}
+

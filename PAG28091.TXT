@@ -1,0 +1,101 @@
+OBJECT Page 28091 Post Dated Checks List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/02/15;
+    Time=19:25:54;
+    Modified=Yes;
+    Version List=NAVAPAC7.00,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Post Dated Checks List;
+               ENA=Post Dated Cheques List];
+    DeleteAllowed=No;
+    SourceTable=Table28090;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1500003 ;1   ;ActionGroup;
+                      CaptionML=[ENU=Check;
+                                 ENA=Cheque];
+                      Image=Check }
+      { 1500019 ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=[ENU=Card;
+                                 ENA=Card];
+                      Image=EditLines;
+                      OnAction=BEGIN
+                                 PAGE.RUNMODAL(PAGE::"Post Dated Checks",Rec);
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1901817804;1 ;Action    ;
+                      CaptionML=[ENU=Customer Card;
+                                 ENA=Customer Card];
+                      RunObject=Page 21;
+                      Promoted=No;
+                      Image=Customer;
+                      PromotedCategory=Process }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500004;1;Group     ;
+                Editable=FALSE;
+                GroupType=Repeater }
+
+    { 1500005;2;Field     ;
+                SourceExpr="Check Date" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Document No." }
+
+    { 1500007;2;Field     ;
+                SourceExpr="Check No." }
+
+    { 1500009;2;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 1500011;2;Field     ;
+                SourceExpr=Amount }
+
+    { 1500013;2;Field     ;
+                SourceExpr="Amount (LCY)" }
+
+    { 1500015;2;Field     ;
+                SourceExpr="Date Received" }
+
+    { 1500017;2;Field     ;
+                SourceExpr=Comment }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1905532107;1;Part   ;
+                PagePartID=Page9083;
+                Visible=FALSE;
+                Editable=FALSE;
+                PartType=Page }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

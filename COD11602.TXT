@@ -1,0 +1,26 @@
+OBJECT Codeunit 11602 Import Subsidary
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/04;
+    Time=12:00:00;
+    Version List=NAVAU4.00;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+            BASMngmt.ImportSubsidiaries;
+            CLEAR(BASMngmt);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      BASMngmt@1450000 : Codeunit 11601;
+
+    BEGIN
+    END.
+  }
+}
+

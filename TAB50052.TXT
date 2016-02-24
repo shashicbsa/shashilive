@@ -1,0 +1,32 @@
+OBJECT Table 50052 TempFA_ACQ_DEP
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/03/10;
+    Time=13:03:47;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;FACode              ;Code20         }
+    { 2   ;   ;Acq                 ;Decimal        }
+    { 3   ;   ;Dep                 ;Decimal        }
+  }
+  KEYS
+  {
+    {    ;FACode                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

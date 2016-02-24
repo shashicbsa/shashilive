@@ -1,0 +1,61 @@
+OBJECT Table 204 Unit of Measure
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Code,Description;
+    OnDelete=BEGIN
+               UnitOfMeasureTranslation.SETRANGE(Code,Code);
+               UnitOfMeasureTranslation.DELETEALL;
+             END;
+
+    OnRename=BEGIN
+               UpdateItemBaseUnitOfMeasure;
+             END;
+
+    CaptionML=[ENU=Unit of Measure;
+               ENA=Unit of Measure];
+    LookupPageID=Page209;
+    DrillDownPageID=Page209;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text10        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+    {    ;Description                             ;KeyGroups=SearchCol }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      UnitOfMeasureTranslation@1000 : Record 5402;
+
+    LOCAL PROCEDURE UpdateItemBaseUnitOfMeasure@1();
+    VAR
+      Item@1000 : Record 27;
+    BEGIN
+      Item.SETCURRENTKEY("Base Unit of Measure");
+      Item.SETRANGE("Base Unit of Measure",xRec.Code);
+      IF NOT Item.ISEMPTY THEN
+        Item.MODIFYALL("Base Unit of Measure",Code,TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

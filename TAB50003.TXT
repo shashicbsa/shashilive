@@ -1,0 +1,57 @@
+OBJECT Table 50003 Conversion Table Vendor
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/08/11;
+    Time=[ 9:45:25];
+    Version List=YIMMACON;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    LookupPageID=Page50008;
+    DrillDownPageID=Page50008;
+  }
+  FIELDS
+  {
+    { 1   ;   ;S.No                ;Integer       ;AutoIncrement=Yes;
+                                                   Description=YIMMACON }
+    { 2   ;   ;Propac Code         ;Code20        ;Description=YIMMACON }
+    { 3   ;   ;Eproc Code          ;Code20        ;Description=YIMMACON }
+    { 4   ;   ;Pymac               ;Code20        ;Description=YIMMACON }
+    { 5   ;   ;FA                  ;Code20        ;Description=YIMMACON }
+    { 6   ;   ;GL                  ;Code20        ;Description=YIMMACON }
+    { 7   ;   ;NAV                 ;Code20        ;TableRelation=Vendor.No.;
+                                                   Description=YIMMACON }
+    { 8   ;   ;NPWP                ;Code20        ;TableRelation="Order Address".Code WHERE (Vendor No.=FIELD(NAV));
+                                                   Description=YIMMACON }
+    { 9   ;   ;Address             ;Text50        ;Description=YIMMACON }
+    { 10  ;   ;Currency            ;Code10        ;Description=YIMMACON }
+    { 11  ;   ;Bank Code           ;Code20        ;TableRelation="Vendor Bank Account".Code WHERE (Vendor No.=FIELD(NAV));
+                                                   Description=YIMMACON }
+    { 12  ;   ;Bank Name           ;Text50        ;Description=YIMMACON }
+    { 13  ;   ;Gport Code          ;Code20        ;Description=YIMMACON }
+    { 14  ;   ;Name                ;Text50        ;Description=YIMMACON }
+    { 15  ;   ;COMP                ;Code50        ;TableRelation=Company.Name;
+                                                   Description=For Company Name In Conversion Table }
+    { 16  ;   ;DIAS CODE           ;Code20        ;Description=For Company YEID }
+  }
+  KEYS
+  {
+    {    ;S.No                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //YIMMACON
+        TABLE IS USED FOR CONVERSION TABLE FOR VENDOR
+    }
+    END.
+  }
+}
+

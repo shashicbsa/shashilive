@@ -1,0 +1,32 @@
+OBJECT Table 60011 ShareYMKI
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/09/10;
+    Time=12:03:14;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10         }
+    { 2   ;   ;A                   ;Decimal        }
+    { 3   ;   ;B                   ;Decimal        }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

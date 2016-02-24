@@ -1,0 +1,41 @@
+OBJECT Table 28080 Tax Document Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/04;
+    Time=12:00:00;
+    Version List=NAVAP4.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Tax Document Buffer;
+               ENA=Tax Document Buffer];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Bill-to Customer No.;Code20        ;CaptionML=[ENU=Bill-to Customer No.;
+                                                              ENA=Bill-to Customer No.];
+                                                   Editable=No }
+    { 2   ;   ;Currency Code       ;Code10        ;CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code];
+                                                   Editable=No }
+    { 3   ;   ;Payment Discount %  ;Integer       ;CaptionML=[ENU=Payment Discount %;
+                                                              ENA=Payment Discount %];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Bill-to Customer No.,Currency Code,Payment Discount %;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

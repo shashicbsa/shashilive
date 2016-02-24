@@ -1,0 +1,139 @@
+OBJECT Page 425 Vendor Bank Account Card
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,NAVAPAC7.00,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Vendor Bank Account Card;
+               ENA=Vendor Bank Account Card];
+    SourceTable=Table288;
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Code }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Address }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Address 2" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Post Code" }
+
+    { 1500000;2;Field     ;
+                SourceExpr=County }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Phone No." }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 12  ;2   ;Field     ;
+                CaptionML=[ENU=County/Country Code;
+                           ENA=State/Country Code];
+                SourceExpr="Country/Region Code" }
+
+    { 18  ;2   ;Field     ;
+                CaptionML=ENU=Beneficiary Name;
+                SourceExpr=Contact }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Bank Branch No." }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Bank Account No." }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Transit No." }
+
+    { 1902768601;1;Group  ;
+                CaptionML=[ENU=Communication;
+                           ENA=Communication] }
+
+    { 24  ;2   ;Field     ;
+                Name=Phone No.2;
+                SourceExpr="Phone No." }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Fax No." }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="E-Mail" }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Home Page" }
+
+    { 1905090301;1;Group  ;
+                CaptionML=[ENU=Transfer;
+                           ENA=Transfer] }
+
+    { 32  ;2   ;Field     ;
+                Name=Bank Branch No.2;
+                SourceExpr="Bank Branch No." }
+
+    { 31  ;2   ;Field     ;
+                Name=Bank Account No.2;
+                SourceExpr="Bank Account No." }
+
+    { 33  ;2   ;Field     ;
+                Name=Transit No.2;
+                SourceExpr="Transit No." }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="SWIFT Code" }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr=IBAN }
+
+    { 150000;2 ;Field     ;
+                SourceExpr="EFT BSB No." }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

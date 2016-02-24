@@ -1,0 +1,51 @@
+OBJECT Table 329 Currency for Reminder Level
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Reminder Terms Code,No.;
+    CaptionML=[ENU=Currency for Reminder Level;
+               ENA=Currency for Reminder Level];
+    LookupPageID=Page478;
+    DrillDownPageID=Page478;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Reminder Terms Code ;Code10        ;TableRelation="Reminder Terms";
+                                                   CaptionML=[ENU=Reminder Terms Code;
+                                                              ENA=Reminder Terms Code];
+                                                   NotBlank=Yes;
+                                                   Editable=No }
+    { 2   ;   ;No.                 ;Integer       ;CaptionML=[ENU=No.;
+                                                              ENA=No.];
+                                                   Editable=No }
+    { 3   ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code];
+                                                   NotBlank=Yes }
+    { 4   ;   ;Additional Fee      ;Decimal       ;CaptionML=[ENU=Additional Fee;
+                                                              ENA=Additional Fee];
+                                                   MinValue=0;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+  }
+  KEYS
+  {
+    {    ;Reminder Terms Code,No.,Currency Code   ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,339 @@
+OBJECT Page 146 Posted Purchase Invoices
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,TBI1.0,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Posted Purchase Invoices;
+               ENA=Posted Purchase Invoices];
+    SourceTable=Table122;
+    PageType=List;
+    CardPageID=Posted Purchase Invoice;
+    OnInit=BEGIN
+             // UPG13.begin
+             ShortcutDimension2CodeEnable := TRUE;
+             "G-Port Ref No.Enable" := TRUE;
+             "Type Of TransactionEnable" := TRUE;
+             "G-Port Ref No.Visible" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+             // UPG13.end
+           END;
+
+    OnOpenPage=BEGIN
+                 SetSecurityFilterOnRespCenter;
+                 //TBI
+                 Enablefields_Pur; // UPG13
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 21      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Invoice;
+                                 ENA=&Invoice];
+                      Image=Invoice }
+      { 28      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      RunObject=Page 138;
+                      RunPageLink=No.=FIELD(No.);
+                      Image=EditLines }
+      { 29      ;2   ;Action    ;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      RunObject=Page 400;
+                      RunPageLink=No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 30      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 66;
+                      RunPageLink=Document Type=CONST(Posted Invoice),
+                                  No.=FIELD(No.);
+                      Image=ViewComments }
+      { 1102601000;2 ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 22      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 PurchInvHeader@1102 : Record 122;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(PurchInvHeader);
+                                 PurchInvHeader.PrintRecords(TRUE);
+                               END;
+                                }
+      { 27      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Type Of Transaction";
+                Visible="Type Of TransactionVisible";
+                Enabled="Type Of TransactionEnable" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="No." }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Document Date" }
+
+    { 1000000014;2;Field  ;
+                SourceExpr=UID }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Pre-Assigned No." }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Vendor Invoice No." }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="G-Port Ref No.";
+                Visible="G-Port Ref No.Visible";
+                Enabled="G-Port Ref No.Enable" }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor No." }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Order Address Code";
+                Visible=FALSE }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Buy-from Vendor Name" }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr=Amount;
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Posted Purchase Invoice",Rec)
+                            END;
+                             }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Amount Including VAT";
+                OnDrillDown=BEGIN
+                              SETRANGE("No.");
+                              PAGE.RUNMODAL(PAGE::"Posted Purchase Invoice",Rec)
+                            END;
+                             }
+
+    { 31  ;2   ;Field     ;
+                SourceExpr="Buy-from Post Code";
+                Visible=FALSE }
+
+    { 25  ;2   ;Field     ;
+                SourceExpr="Buy-from Country/Region Code";
+                Visible=FALSE }
+
+    { 39  ;2   ;Field     ;
+                SourceExpr="Buy-from Contact";
+                Visible=FALSE }
+
+    { 137 ;2   ;Field     ;
+                SourceExpr="Pay-to Vendor No.";
+                Visible=FALSE }
+
+    { 135 ;2   ;Field     ;
+                SourceExpr="Pay-to Name";
+                Visible=FALSE }
+
+    { 37  ;2   ;Field     ;
+                SourceExpr="Pay-to Post Code";
+                Visible=FALSE }
+
+    { 33  ;2   ;Field     ;
+                SourceExpr="Pay-to Country/Region Code";
+                Visible=FALSE }
+
+    { 125 ;2   ;Field     ;
+                SourceExpr="Pay-to Contact";
+                Visible=FALSE }
+
+    { 121 ;2   ;Field     ;
+                SourceExpr="Ship-to Code";
+                Visible=FALSE }
+
+    { 119 ;2   ;Field     ;
+                SourceExpr="Ship-to Name";
+                Visible=FALSE }
+
+    { 23  ;2   ;Field     ;
+                SourceExpr="Ship-to Post Code";
+                Visible=FALSE }
+
+    { 19  ;2   ;Field     ;
+                SourceExpr="Ship-to Country/Region Code";
+                Visible=FALSE }
+
+    { 109 ;2   ;Field     ;
+                SourceExpr="Ship-to Contact";
+                Visible=FALSE }
+
+    { 105 ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Visible=FALSE }
+
+    { 73  ;2   ;Field     ;
+                SourceExpr="Purchaser Code";
+                Visible=FALSE }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Visible=FALSE }
+
+    { 85  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Visible=ShortcutDimension2CodeVisible;
+                Enabled=ShortcutDimension2CodeEnable }
+
+    { 89  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Visible=TRUE }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="No. Printed" }
+
+    { 1102601003;2;Field  ;
+                SourceExpr="Payment Terms Code";
+                Visible=FALSE }
+
+    { 1102601005;2;Field  ;
+                SourceExpr="Due Date";
+                Visible=FALSE }
+
+    { 1102601007;2;Field  ;
+                SourceExpr="Payment Discount %";
+                Visible=FALSE }
+
+    { 1102601009;2;Field  ;
+                SourceExpr="Payment Method Code";
+                Visible=FALSE }
+
+    { 1102601011;2;Field  ;
+                SourceExpr="Shipment Method Code";
+                Visible=FALSE }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      PurchInvHeader@1000 : Record 122;
+      "Type Of TransactionVisible"@19059961 : Boolean INDATASET;
+      "G-Port Ref No.Visible"@19065418 : Boolean INDATASET;
+      ShortcutDimension2CodeVisible@19058851 : Boolean INDATASET;
+      "Type Of TransactionEnable"@19049369 : Boolean INDATASET;
+      "G-Port Ref No.Enable"@19062231 : Boolean INDATASET;
+      ShortcutDimension2CodeEnable@19057030 : Boolean INDATASET;
+
+    PROCEDURE Enablefields_Pur@1000000000();
+    VAR
+      MasterSetup1@1000000000 : Record 50008;
+    BEGIN
+      // UPG13.begin
+      MasterSetup1.GET;
+       IF (COMPANYNAME = MasterSetup1."Company Name YMKI") THEN
+          BEGIN
+            "Type Of TransactionEnable" := FALSE;
+            "Type Of TransactionVisible" := FALSE;
+          END
+        ELSE
+            BEGIN
+             "Type Of TransactionEnable" := TRUE;
+             "Type Of TransactionVisible" := TRUE;
+
+            END;
+
+
+        IF ((COMPANYNAME = MasterSetup1."Company Name YMMWJ") OR (COMPANYNAME = MasterSetup1."Company Name YMKI")) THEN
+         BEGIN
+            "G-Port Ref No.Visible" :=FALSE ;
+            "G-Port Ref No.Enable" :=FALSE;
+         END
+
+        ELSE
+         BEGIN
+            "G-Port Ref No.Visible" :=TRUE;
+            "G-Port Ref No.Enable" :=TRUE;
+         END;
+
+        IF ((COMPANYNAME = MasterSetup1."Company Name TBI")) THEN
+         BEGIN
+            "G-Port Ref No.Visible" :=FALSE ;
+            "G-Port Ref No.Enable" :=FALSE;
+            ShortcutDimension2CodeVisible :=FALSE;
+
+            ShortcutDimension2CodeEnable :=FALSE;
+         END;
+      // UPG13.end
+    END;
+
+    BEGIN
+    {
+      //TBI -CODE ADDED FOR VISBILITY OF FIELDS.
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

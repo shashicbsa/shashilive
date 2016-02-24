@@ -1,0 +1,153 @@
+OBJECT XMLport 90000 GL Opening-Final
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/11/15;
+    Time=23:42:41;
+    Modified=Yes;
+    Version List=OPENINGUPG;
+  }
+  PROPERTIES
+  {
+    OnPreXMLport=BEGIN
+                   Counter := 0;
+                 END;
+
+    OnPostXMLport=BEGIN
+                    MESSAGE('Done');
+                    MESSAGE (FORMAT(Counter));
+                  END;
+
+    Format=Variable Text;
+  }
+  ELEMENTS
+  {
+    { [{D19785BE-D9AF-4BFC-A86A-6404032AA346}];  ;GL                  ;Element ;Text     }
+
+    { [{88413C7D-AD73-4085-9FE0-A167D3F7F2FC}];1 ;Table               ;Element ;Table   ;
+                                                  SourceTable=Table81;
+                                                  SourceTableView=SORTING(Field1,Field51,Field2)
+                                                                  ORDER(Ascending);
+                                                  Import::OnBeforeInsertRecord=BEGIN
+
+                                                                                 "Gen. Journal Line".VALIDATE("Reason Code",'GENERAL');
+                                                                                 "Gen. Journal Line".VALIDATE("Source Code",'GENJNL');
+                                                                                 //"Gen. Journal Line".VALIDATE(Narration,'Opening Balance Sept 2015');
+                                                                                 "Gen. Journal Line".VALIDATE("Posting Date",083115D);
+                                                                               END;
+
+                                                  Import::OnAfterInsertRecord=BEGIN
+                                                                                Counter := Counter + 1;
+                                                                              END;
+                                                                               }
+
+    { [{2C92C756-63CB-4028-B30A-FF35040CB446}];2 ;JnlTemplateNameVar  ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Journal Template Name }
+
+    { [{62ED4B55-87C2-42D7-9104-5C20A62B93DB}];2 ;JnlBatchNameVar     ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Journal Batch Name;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               //"Gen. Journal Line".VALIDATE("Journal Batch Name");
+                                                                             END;
+                                                                              }
+
+    { [{96A497DE-24E6-466F-8D60-E1FF5DA036B2}];2 ;LineNoVar           ;Element ;Field   ;
+                                                  DataType=Integer;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Line No. }
+
+    { [{EDB405D1-D573-4343-B192-1A51AB1A0204}];2 ;DocumentNoVar       ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Document No. }
+
+    { [{A0180069-F6A5-4560-8D94-606ABFCAC7ED}];2 ;AccTypeVar          ;Element ;Field   ;
+                                                  DataType=Option;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Account Type }
+
+    { [{64292F11-BFC1-40F4-BC8D-E0A27E47142C}];2 ;AccNoVar            ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Account No. }
+
+    { [{B01D55F8-C997-44BC-B801-9AFB0324A8F5}];2 ;DebitAmtVar         ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  FieldValidate=No;
+                                                  SourceField=Gen. Journal Line::Debit Amount;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               IF "Gen. Journal Line"."Debit Amount" <>  0 THEN
+                                                                               "Gen. Journal Line".VALIDATE("Debit Amount");
+                                                                             END;
+                                                                              }
+
+    { [{DA4979FA-0BBF-4C05-86A6-052130C8701A}];2 ;CreditAmtVar        ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  FieldValidate=No;
+                                                  SourceField=Gen. Journal Line::Credit Amount;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               IF "Gen. Journal Line"."Credit Amount" <>  0 THEN
+                                                                               "Gen. Journal Line".VALIDATE("Credit Amount");
+                                                                             END;
+                                                                              }
+
+    { [{2482283D-1F2D-4590-A3E6-CB2F6BED5E9E}];2 ;ShopCodeVar         ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Shortcut Dimension 1 Code;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               "Gen. Journal Line".VALIDATE("Shortcut Dimension 1 Code");
+                                                                             END;
+                                                                              }
+
+    { [{AAD798A4-E4E5-4AA8-BE5B-97B19D285E43}];2 ;SellingExpCodeVar   ;Element ;Text    ;
+                                                  Import::OnAfterAssignVariable=VAR
+                                                                                  Dim3@1000000000 : Code[20];
+                                                                                BEGIN
+                                                                                  IF SellingExpCodeVar <>'' THEN BEGIN
+                                                                                  EVALUATE(Dim3,SellingExpCodeVar);
+                                                                                  "Gen. Journal Line".ValidateShortcutDimCode(3,Dim3);
+                                                                                  END;
+                                                                                END;
+                                                                                 }
+
+    { [{805C3359-41E3-4A3D-924B-F143CB73399B}];2 ;ModelCodeVar        ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  FieldValidate=Yes;
+                                                  SourceField=Gen. Journal Line::Shortcut Dimension 2 Code;
+                                                  Import::OnAfterAssignField=BEGIN
+                                                                               "Gen. Journal Line".VALIDATE("Shortcut Dimension 2 Code");
+                                                                             END;
+                                                                              }
+
+    { [{069EDACA-28A0-4AE3-97E4-5AD9B7A166DA}];2 ;Narration           ;Element ;Field   ;
+                                                  DataType=Text;
+                                                  SourceField=Gen. Journal Line::Narration }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      Counter@1000000000 : Integer;
+
+    BEGIN
+    END.
+  }
+}
+

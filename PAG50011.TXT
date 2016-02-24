@@ -1,0 +1,588 @@
+OBJECT Page 50011 Post Dated Checks - Propac
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/10/15;
+    Time=13:44:22;
+    Modified=Yes;
+    Version List=NAVAP4.00.01,YIMMACOLL,UPG13C,UPG13R2C,SMDEV1.0,CR#003;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Post Dated Checks - Propac;
+    SaveValues=Yes;
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table28090;
+    DelayedInsert=Yes;
+    SourceTableView=SORTING(Line Number)
+                    WHERE(Account Type=FILTER(' '|Customer));
+    PageType=List;
+    AutoSplitKey=Yes;
+    OnInit=BEGIN
+             "Currency CodeEditable" := TRUE;
+             "Amount (LCY)Editable" := TRUE;
+             AmountEditable := TRUE;
+             "Document No.Editable" := TRUE;
+             "Account No.Editable" := TRUE;
+             "Account TypeEditable" := TRUE;
+           END;
+
+    OnOpenPage=BEGIN
+                 CustomerNo := GETFILTER("Account No.");
+
+                 //YIMMACOLLST
+                   SalesSetup.GET;
+                   FILTERGROUP(2);
+                   SETRANGE("Batch Name",SalesSetup."Post Dated Check Propac Batch");
+                   FILTERGROUP(0);
+                 //YIMMACOLLEN
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       UpdateBalance;
+                       SETFILTER("Account Type",'%1|%2',"Account Type"::Customer,"Account Type"::"G/L Account");
+                       OnAfterGetCurrRecord;
+                     END;
+
+    OnNewRecord=BEGIN
+                  //YIMMACOLL
+                  SalesSetup.GET;
+                  "Batch Name" := SalesSetup."Post Dated Check Propac Batch";
+                  OnAfterGetCurrRecord;
+                END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1500057 ;1   ;ActionGroup;
+                      CaptionML=ENU=&Line }
+      { 1500058 ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=ENU=Dimensions;
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions; // UPG13C
+                               END;
+                                }
+      { 1500002 ;1   ;ActionGroup;
+                      CaptionML=ENU=&Account }
+      { 1500044 ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      Image=EditLines;
+                      OnAction=BEGIN
+                                 CASE "Account Type" OF
+                                   "Account Type"::"G/L Account":
+                                     BEGIN
+                                       GLAccount.GET("Account No.");
+                                      PAGE.RUNMODAL(PAGE::"G/L Account Card",GLAccount);
+                                     END;
+                                   "Account Type"::Customer:
+                                      BEGIN
+                                        Customer.GET("Account No.");
+                                        PAGE.RUNMODAL(PAGE::"Customer Card",Customer);
+                                      END;
+                                   "Account Type"::Vendor:
+                                      BEGIN
+                                        Vendor.GET("Account No.");
+                                        PAGE.RUNMODAL(PAGE::"Vendor Card",Vendor);
+                                      END;
+                                 END;
+                               END;
+                                }
+      { 1500006 ;1   ;ActionGroup;
+                      CaptionML=ENU=F&unction }
+      { 1500046 ;2   ;Action    ;
+                      CaptionML=ENU=&Suggest Checks to Bank;
+                      Visible=FALSE;
+                      Image=FilterLines;
+                      OnAction=BEGIN
+                                 CustomerNo := '';
+                                 DateFilter := '';
+                                 SETVIEW('SORTING(Line Number) WHERE(Account Type=FILTER(Customer|G/L Account))');
+
+                                 BankDate := '..' + FORMAT(WORKDATE);
+                                 SETFILTER("Date Filter",BankDate);
+                                 SETFILTER("Check Date",GETFILTER("Date Filter"));
+                                 CurrPage.UPDATE(FALSE);
+                                 CountCheck := COUNT;
+                                 MESSAGE(Text002,CountCheck);
+                               END;
+                                }
+      { 1500047 ;2   ;Action    ;
+                      CaptionML=ENU=Show &All;
+                      Image=RemoveFilterLines;
+                      OnAction=BEGIN
+                                 CustomerNo := '';
+                                 DateFilter := '';
+                                 SETVIEW('SORTING(Line Number) WHERE(Account Type=FILTER(Customer|G/L Account))');
+                               END;
+                                }
+      { 1500048 ;2   ;Action    ;
+                      ShortCutKey=Shift+F11;
+                      CaptionML=ENU=Apply &Entries;
+                      Visible=FALSE;
+                      Image=ApplyEntries;
+                      OnAction=BEGIN
+                                 PostDatedCheckMgt.ApplyEntries(Rec);
+                               END;
+                                }
+      { 1000000013;2 ;Action    ;
+                      CaptionML=ENU=Generate &Collection;
+                      Visible=TRUE;
+                      OnAction=BEGIN
+                                 REPORT.RUNMODAL(50064);
+                                 CustomerNo := '';
+                                 DateFilter := '';
+                                 SETVIEW('SORTING(Line Number) WHERE(Account Type=FILTER(Customer|G/L Account))');
+                                 CurrPage.UPDATE(TRUE);
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1500003 ;1   ;ActionGroup;
+                      CaptionML=ENU=P&osting }
+      { 1500045 ;2   ;Action    ;
+                      CaptionML=ENU=&Create Cash Journal;
+                      Image=CheckJournal;
+                      OnAction=BEGIN
+                                 IF CONFIRM(Text001,FALSE) THEN BEGIN
+                                 //YIMMACOL
+
+                                 //Code to check the Clear Bank Entries
+
+                                 PostDatedCheckLine:=Rec;
+                                 PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Bank Receipt",TRUE);
+                                 IF NOT PostDatedCheckLine.FIND('-') THEN
+                                 BEGIN
+                                 MESSAGE(Text003);
+                                 EXIT;
+                                 END;
+
+                                 //Code to check the Clear Bank Entries
+
+
+
+
+                                 SETRANGE("Bank Receipt",TRUE);
+
+                                 //YIMMACOL
+                                   PostDatedCheckMgt.Post(Rec);
+                                   CustomerNo := '';
+                                   DateFilter := '';
+                                   RESET;
+                                 END;
+                                 SETFILTER("Account Type",'Customer|G/L Account');
+                                 SETRANGE("Batch Name",SalesSetup."Post Dated Check Propac Batch");  //CR#003 SV
+                               END;
+                                }
+      { 1500004 ;1   ;ActionGroup;
+                      CaptionML=ENU=&Print }
+      { 1500059 ;2   ;Action    ;
+                      CaptionML=ENU=Print Report;
+                      OnAction=BEGIN
+                                 PDC.RESET;
+                                 PDC.COPYFILTERS(Rec);
+                                 PDC.SETFILTER(PDC."Account Type",'%1',PDC."Account Type"::Customer);
+                                 PDC.SETFILTER(PDC."Send To Bank",'%1',TRUE);
+                                 REPORT.RUNMODAL(REPORT::"Cheque Details-Customer",TRUE,TRUE,PDC);  // UPG13R2C
+                               END;
+                                }
+      { 1500060 ;2   ;Action    ;
+                      CaptionML=ENU=Print Acknowledgement Receipt;
+                      OnAction=BEGIN
+                                 PostDatedCheck.COPYFILTERS(Rec);
+                                 PostDatedCheck.SETRANGE("Account Type","Account Type");
+                                 PostDatedCheck.SETRANGE("Account No.","Account No.");
+                                 IF PostDatedCheck.FIND('-') THEN
+                                   REPORT.RUNMODAL(REPORT::"PDC Acknowledgement Receipt",TRUE,TRUE,PostDatedCheck);
+                               END;
+                                }
+      { 1000000006;2 ;Action    ;
+                      CaptionML=ENU=Print Bank Report;
+                      OnAction=BEGIN
+                                 PostDatedCheck.SETRANGE("Account Type","Account Type"::Customer);
+                                 PostDatedCheck.SETRANGE("Bank Account",BankNo);
+                                 IF PostDatedCheck.FIND('-') THEN
+                                   REPORT.RUNMODAL(REPORT::"PDC Bank Information",TRUE,TRUE,PostDatedCheck);
+                               END;
+                                }
+      { 1102159001;2 ;Action    ;
+                      CaptionML=ENU=Export To Excel;
+                      OnAction=BEGIN
+                                 //deepa
+                                 ExcelBuf.DELETEALL;
+                                 ExcelBuf.RESET;
+
+                                 //deepa
+
+                                 MakeExcelDataHeader;
+
+                                 R_PostDatedCheckLine.COPYFILTERS(Rec);
+
+                                 IF R_PostDatedCheckLine.FINDSET THEN
+                                  REPEAT
+
+
+                                     ExcelBuf.NewRow;
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Account Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Account No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //2
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Document No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);               //4
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine.Description),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+
+
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Check Date"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Check No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Currency Code"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //7
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Date Received"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Number);              //7
+
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine.Amount),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Number);              //7
+
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Amount (LCY)"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Number);               //4
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Applies-to Doc. Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Applies-to Doc. No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //7
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Send To Bank"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Bank Receipt"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+                                     ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Bank Account"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Number);              //7
+
+                                       ExcelBuf.AddColumn(FORMAT(R_PostDatedCheckLine."Bank Name"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+                                 UNTIL R_PostDatedCheckLine.NEXT=0;
+
+
+                                 CreateExcelbook;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500005;1;Group     ;
+                CaptionML=ENU=Options }
+
+    { 1500016;2;Field     ;
+                CaptionML=ENU=Date Filter;
+                SourceExpr=DateFilter;
+                OnValidate=BEGIN
+                             DateFilterOnAfterValidate;
+                           END;
+                            }
+
+    { 1500018;2;Field     ;
+                Lookup=Yes;
+                CaptionML=ENU=Entity;
+                SourceExpr=CustomerNo;
+                OnValidate=BEGIN
+                             CustomerNoOnAfterValidate;
+                           END;
+
+                OnLookup=BEGIN
+                           IF PAGE.RUNMODAL(PAGE::"Customer List",Customer) = ACTION::LookupOK THEN
+                             CustomerNo := Customer."No.";
+                           UpdateCustomer;
+                         END;
+                          }
+
+    { 1000000000;2;Field  ;
+                Lookup=Yes;
+                CaptionML=ENU=Bank;
+                SourceExpr=BankNo;
+                OnValidate=BEGIN
+                             BankNoOnAfterValidate;
+                           END;
+
+                OnLookup=BEGIN
+                           //YIMMACOLLST
+                           IF PAGE.RUNMODAL(PAGE::"Bank Account List",BankRec) = ACTION::LookupOK THEN
+                             BankNo := BankRec."No.";
+                           UpdateBank;
+                           //YIMMACOLLEN
+                         END;
+                          }
+
+    { 1500007;1;Group     ;
+                GroupType=Repeater }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Line Number";
+                Visible=FALSE }
+
+    { 1500020;2;Field     ;
+                SourceExpr="Account Type";
+                Editable="Account TypeEditable" }
+
+    { 1500022;2;Field     ;
+                Width=20;
+                SourceExpr="Account No.";
+                Editable="Account No.Editable" }
+
+    { 1500053;2;Field     ;
+                Width=25;
+                SourceExpr="Document No.";
+                Editable="Document No.Editable" }
+
+    { 1500024;2;Field     ;
+                Width=50;
+                SourceExpr=Description }
+
+    { 1500028;2;Field     ;
+                SourceExpr="Check Date" }
+
+    { 1500030;2;Field     ;
+                Width=20;
+                SourceExpr="Check No." }
+
+    { 1500032;2;Field     ;
+                Width=20;
+                SourceExpr="Currency Code";
+                Editable="Currency CodeEditable" }
+
+    { 1500038;2;Field     ;
+                SourceExpr="Date Received" }
+
+    { 1500034;2;Field     ;
+                Width=20;
+                SourceExpr=Amount;
+                Editable=AmountEditable }
+
+    { 1500036;2;Field     ;
+                Width=20;
+                SourceExpr="Amount (LCY)";
+                Visible=TRUE;
+                Editable="Amount (LCY)Editable" }
+
+    { 1500049;2;Field     ;
+                SourceExpr="Applies-to Doc. Type" }
+
+    { 1500051;2;Field     ;
+                Width=20;
+                SourceExpr="Applies-to Doc. No." }
+
+    { 1500042;2;Field     ;
+                Width=90;
+                SourceExpr=Comment;
+                Visible=FALSE }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Send To Bank" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Bank Receipt" }
+
+    { 1000000002;2;Field  ;
+                Width=20;
+                SourceExpr=Bank;
+                Visible=FALSE }
+
+    { 1500026;2;Field     ;
+                Width=20;
+                SourceExpr="Bank Account" }
+
+    { 1000000011;2;Field  ;
+                Width=20;
+                SourceExpr="Bank Name" }
+
+    { 1500055;2;Field     ;
+                Width=10;
+                SourceExpr="Batch Name";
+                Visible=FALSE }
+
+    { 1500001;1;Group      }
+
+    { 1500014;2;Field     ;
+                Name=<Description2>;
+                SourceExpr=Description;
+                Editable=FALSE }
+
+    { 1500012;2;Field     ;
+                CaptionML=ENU=Balance (LCY);
+                SourceExpr=CustomerBalance;
+                Editable=FALSE }
+
+    { 1500010;2;Field     ;
+                CaptionML=ENU=Count;
+                SourceExpr=LineCount;
+                Editable=FALSE }
+
+    { 1500008;2;Field     ;
+                CaptionML=ENU=Amount;
+                SourceExpr=LineAmount;
+                Editable=FALSE }
+
+  }
+  CODE
+  {
+    VAR
+      CustomerNo@1500010 : Code[20];
+      Customer@1500009 : Record 18;
+      Vendor@1500018 : Record 23;
+      PostDatedCheck@1500008 : Record 28090;
+      GLAccount@1500007 : Record 15;
+      PostDatedCheckMgt@1500006 : Codeunit 28090;
+      CountCheck@1500005 : Integer;
+      LineCount@1500004 : Integer;
+      CustomerBalance@1500003 : Decimal;
+      LineAmount@1500002 : Decimal;
+      DateFilter@1500001 : Text;
+      BankDate@1500000 : Text[30];
+      Text001@1500012 : TextConst 'ENU=Are you sure you want to create Cash Journal Lines?';
+      Text002@1500011 : TextConst 'ENU=There are %1 check(s) to bank.';
+      ok@1500016 : Boolean;
+      "//YIMMACOLL"@1000000002 : Integer;
+      BankRec@1000000000 : Record 270;
+      BankNo@1000000001 : Code[20];
+      SalesSetup@1000000003 : Record 311;
+      PostDatedCheckLine@1000000004 : Record 28090;
+      Text003@1000000005 : TextConst 'ENU=There is no clear receipt.';
+      PDC@1000000006 : Record 28090;
+      "Account TypeEditable"@19025853 : Boolean INDATASET;
+      "Account No.Editable"@19019907 : Boolean INDATASET;
+      "Document No.Editable"@19064841 : Boolean INDATASET;
+      AmountEditable@19000309 : Boolean INDATASET;
+      "Amount (LCY)Editable"@19037920 : Boolean INDATASET;
+      "Currency CodeEditable"@19053147 : Boolean INDATASET;
+      ExcelBuf@1102159002 : Record 370;
+      R_PostDatedCheckLine@1102159001 : Record 28090;
+      Text004@1102159003 : TextConst 'ENU=Post Dated Checks - Propac';
+      ApplicationManagement@1102159004 : Codeunit 1;
+
+    PROCEDURE UpdateBalance@1500000();
+    BEGIN
+      IF Customer.GET("Account No.") THEN BEGIN
+        Customer.CALCFIELDS(Customer."Balance (LCY)");
+        CustomerBalance := Customer."Balance (LCY)";
+      END ELSE
+        CustomerBalance := 0;
+      PostDatedCheck.COPYFILTERS(Rec);
+      IF PostDatedCheck.FIND('-') THEN BEGIN
+        LineCount := PostDatedCheck.COUNT;
+        ok:=PostDatedCheck.CALCSUMS("Amount (LCY)");
+        LineAmount := PostDatedCheck."Amount (LCY)";
+      END;
+    END;
+
+    PROCEDURE UpdateCustomer@1500001();
+    BEGIN
+      IF CustomerNo = '' THEN
+        SETRANGE("Account No.")
+      ELSE
+        SETRANGE("Account No.",CustomerNo);
+      CurrPage.UPDATE(TRUE);
+    END;
+
+    PROCEDURE UpdateBank@1000000002();
+    BEGIN
+      IF BankNo = '' THEN
+        SETRANGE("Bank Account")
+      ELSE
+        SETRANGE("Bank Account",BankNo);
+      CurrPage.UPDATE(TRUE);
+    END;
+
+    PROCEDURE BlockFields@1000000000();
+    BEGIN
+        "Account TypeEditable" := Interfaced = FALSE;
+        "Account No.Editable" := Interfaced = FALSE;
+        "Document No.Editable" := Interfaced = FALSE;
+        AmountEditable := Interfaced = FALSE;
+        "Amount (LCY)Editable" := Interfaced = FALSE;
+        "Currency CodeEditable" := Interfaced = FALSE;
+    END;
+
+    LOCAL PROCEDURE DateFilterOnAfterValidate@19006009();
+    BEGIN
+       //UPG13R2DEV.begin
+      {SETFILTER("Check Date",GETFILTER("Date Filter"));
+      CurrPage.UPDATE(FALSE);
+      }
+
+
+      IF ApplicationManagement.MakeDateFilter(DateFilter) = 0 THEN;
+      SETFILTER("Check Date",DateFilter);
+      UpdateCustomer;
+      UpdateBalance;
+    END;
+
+    LOCAL PROCEDURE CustomerNoOnAfterValidate@19016267();
+    BEGIN
+      UpdateCustomer;
+    END;
+
+    LOCAL PROCEDURE BankNoOnAfterValidate@19000626();
+    BEGIN
+      //YIMMACOLL
+      UpdateBank;
+    END;
+
+    LOCAL PROCEDURE OnAfterGetCurrRecord@19077479();
+    BEGIN
+      xRec := Rec;
+      BlockFields;
+    END;
+
+    PROCEDURE CreateExcelbook@1102159002();
+    BEGIN
+      ExcelBuf.CreateBookAndOpenExcel(Text004,'Lines',COMPANYNAME,USERID);                                                         //YIMMDEVIP1.0
+    END;
+
+    LOCAL PROCEDURE MakeExcelDataHeader@1102159003();
+    BEGIN
+
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('Account Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                 //3
+      ExcelBuf.AddColumn('Account No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);             //4
+      ExcelBuf.AddColumn('Document No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Description',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+      ExcelBuf.AddColumn('Check Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Check No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+      ExcelBuf.AddColumn('Currency Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Date Received',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+      ExcelBuf.AddColumn('Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Amount (LCY)',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Applies-to Doc. Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Applies-to Doc. No.',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Send To Bank',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+      ExcelBuf.AddColumn('Bank Receipt',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Bank Account',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+      ExcelBuf.AddColumn('Batch Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+
+
+
+      ExcelBuf.ClearNewRow;
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+    END;
+
+    BEGIN
+    {
+      //YIMMACOL
+      1) Only the bank receipt entry shall move to cashreceipt journal
+      2) Filteration on the basis of bank
+      3) Add PDC Bank Report on Print Menu Button
+      4) Add Filteration for Batch name on open form
+
+      // UPG13C
+      Code added or edited to solve compilation errors after migrating merged and customized objects to 2013 from 2009 R2
+
+      // UPG13R2C
+      Code added or edited to solve compilation errors after migrating merged and customized objects to 2013R2 from 2013
+      //SMDEV1.0
+      Changed the action properties (Image,Visibility)
+
+      CR#003 SV to show only propac data
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,30 @@
+OBJECT Table 50044 PymacShopCode
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/19/09;
+    Time=[ 9:26:42];
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;PymacShopCode       ;Code100        }
+  }
+  KEYS
+  {
+    {    ;PymacShopCode                           ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

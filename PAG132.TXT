@@ -1,0 +1,443 @@
+OBJECT Page 132 Posted Sales Invoice
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/04/14;
+    Time=18:00:28;
+    Modified=Yes;
+    Version List=NAVW17.10.00.35701,NAVAPAC7.10.00.35701,YIMMNVRAF,YIMMAKSPPSI,UPG13,UPG13R2,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Posted Sales Invoice;
+               ENA=Posted Sales Invoice];
+    InsertAllowed=No;
+    SourceTable=Table112;
+    PageType=Document;
+    RefreshOnActivate=Yes;
+    OnOpenPage=BEGIN
+                 SetSecurityFilterOnRespCenter;
+                 MasterSetup.GET; // UPG13
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 55      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Invoice;
+                                 ENA=&Invoice];
+                      Image=Invoice }
+      { 8       ;2   ;Action    ;
+                      Name=Statistics;
+                      ShortCutKey=F7;
+                      CaptionML=[ENU=Statistics;
+                                 ENA=Statistics];
+                      RunObject=Page 397;
+                      RunPageLink=No.=FIELD(No.);
+                      Promoted=Yes;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 57      ;2   ;Action    ;
+                      CaptionML=[ENU=Co&mments;
+                                 ENA=Co&mments];
+                      RunObject=Page 67;
+                      RunPageLink=Document Type=CONST(Posted Invoice),
+                                  No.=FIELD(No.),
+                                  Document Line No.=CONST(0);
+                      Image=ViewComments }
+      { 89      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 112     ;2   ;Action    ;
+                      CaptionML=[ENU=Approvals;
+                                 ENA=Approvals];
+                      Image=Approvals;
+                      OnAction=VAR
+                                 PostedApprovalEntries@1001 : Page 659;
+                               BEGIN
+                                 PostedApprovalEntries.Setfilters(DATABASE::"Sales Invoice Header","No.");
+                                 PostedApprovalEntries.RUN;
+                               END;
+                                }
+      { 1000000001;2 ;Action    ;
+                      CaptionML=ENU=Report;
+                      OnAction=BEGIN
+                                 // UPG13.begin
+                                 SalesInvHeader.SETRANGE("No.","No.");
+                                 IF (COMPANYNAME = MasterSetup."Company Name TBI") THEN
+                                    REPORT.RUNMODAL(60033,TRUE,TRUE,SalesInvHeader)
+                                 ELSE
+                                   REPORT.RUNMODAL(50052,TRUE,TRUE,SalesInvHeader);
+                                 // UPG13.end
+                               END;
+                                }
+      { 171     ;2   ;Separator  }
+      { 172     ;2   ;Action    ;
+                      CaptionML=[ENU=Credit Cards Transaction Lo&g Entries;
+                                 ENA=Credit Cards Transaction Lo&g Entries];
+                      RunObject=Page 829;
+                      RunPageLink=Document Type=CONST(Payment),
+                                  Document No.=FIELD(No.),
+                                  Customer No.=FIELD(Bill-to Customer No.);
+                      Image=CreditCardLog }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1000000000;1 ;Action    ;
+                      Name=Voucher;
+                      CaptionML=ENU=Voucher;
+                      Promoted=Yes;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 // UPG13.begin
+                                 GLENTRY.RESET;
+                                 GLENTRY.SETRANGE(GLENTRY."Document No.","No.");
+                                 IF GLENTRY.FIND('-') THEN
+                                 GLReg.SETRANGE(GLReg."From Entry No.",GLENTRY."Entry No.");
+                                 IF GLReg.FIND('-') THEN
+                                 REPORT.RUNMODAL(50000,TRUE,FALSE,GLENTRY);
+                                 // UPG13.end
+                               END;
+                                }
+      { 58      ;1   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=&Print;
+                                 ENA=&Print];
+                      Promoted=Yes;
+                      Image=Print;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 CurrPage.SETSELECTIONFILTER(SalesInvHeader);
+                                 SalesInvHeader.PrintRecords(TRUE);
+                               END;
+                                }
+      { 59      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate;
+                               END;
+                                }
+      { 1102159002;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 1102159003;1 ;Action    ;
+                      CaptionML=ENU=Customer Aging-YIMM;
+                      RunObject=Report 50092;
+                      Image=Report }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Sell-to Customer No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 96  ;2   ;Field     ;
+                SourceExpr="Sell-to Contact No.";
+                Editable=FALSE }
+
+    { 61  ;2   ;Field     ;
+                SourceExpr="Sell-to Customer Name";
+                Editable=FALSE }
+
+    { 63  ;2   ;Field     ;
+                SourceExpr="Sell-to Address";
+                Editable=FALSE }
+
+    { 65  ;2   ;Field     ;
+                SourceExpr="Sell-to Address 2";
+                Editable=FALSE }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Sell-to Post Code";
+                Editable=FALSE }
+
+    { 67  ;2   ;Field     ;
+                SourceExpr="Sell-to City";
+                Editable=FALSE }
+
+    { 1500000;2;Field     ;
+                SourceExpr="Sell-to County";
+                Editable=FALSE }
+
+    { 1500002;2;Field     ;
+                CaptionML=[ENU=Sell-to County/Country Code;
+                           ENA=Sell-to State/Country Code];
+                SourceExpr="Sell-to Country/Region Code";
+                Editable=FALSE }
+
+    { 69  ;2   ;Field     ;
+                SourceExpr="Sell-to Contact";
+                Editable=FALSE }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 25  ;2   ;Field     ;
+                SourceExpr="Document Date";
+                Editable=FALSE }
+
+    { 114 ;2   ;Field     ;
+                SourceExpr="Quote No." }
+
+    { 86  ;2   ;Field     ;
+                SourceExpr="Order No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 73  ;2   ;Field     ;
+                SourceExpr="Pre-Assigned No.";
+                Editable=FALSE }
+
+    { 94  ;2   ;Field     ;
+                SourceExpr="External Document No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Salesperson Code";
+                Editable=FALSE }
+
+    { 92  ;2   ;Field     ;
+                SourceExpr="Responsibility Center";
+                Editable=FALSE }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="No. Printed";
+                Editable=FALSE }
+
+    { 54  ;1   ;Part      ;
+                Name=SalesInvLines;
+                SubPageLink=Document No.=FIELD(No.);
+                PagePartID=Page133 }
+
+    { 1905885101;1;Group  ;
+                CaptionML=[ENU=Invoicing;
+                           ENA=Invoicing] }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Bill-to Customer No.";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 98  ;2   ;Field     ;
+                SourceExpr="Bill-to Contact No.";
+                Editable=FALSE }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Bill-to Name";
+                Editable=FALSE }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Bill-to Address";
+                Editable=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Bill-to Address 2";
+                Editable=FALSE }
+
+    { 78  ;2   ;Field     ;
+                SourceExpr="Bill-to Post Code";
+                Editable=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Bill-to City";
+                Editable=FALSE }
+
+    { 1500004;2;Field     ;
+                SourceExpr="Bill-to County";
+                Editable=FALSE }
+
+    { 1500006;2;Field     ;
+                SourceExpr="Bill-to Country/Region Code";
+                Editable=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Bill-to Contact";
+                Editable=FALSE }
+
+    { 7   ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 1 Code";
+                Editable=FALSE }
+
+    { 74  ;2   ;Field     ;
+                SourceExpr="Shortcut Dimension 2 Code";
+                Editable=FALSE }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Payment Terms Code";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Due Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Payment Discount %";
+                Editable=FALSE }
+
+    { 34  ;2   ;Field     ;
+                SourceExpr="Pmt. Discount Date";
+                Editable=FALSE }
+
+    { 82  ;2   ;Field     ;
+                SourceExpr="Payment Method Code";
+                Editable=FALSE }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="YMNI Type of Sales";
+                Editable=FALSE }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Direct Debit Mandate ID";
+                Editable=FALSE }
+
+    { 127 ;2   ;Field     ;
+                SourceExpr="Credit Card No.";
+                Editable=FALSE }
+
+    { 126 ;2   ;Field     ;
+                CaptionML=[ENU=Cr. Card Number (Last 4 Digits);
+                           ENA=Cr. Card Number (Last 4 Digits)];
+                SourceExpr=GetCreditcardNumber;
+                Editable=FALSE }
+
+    { 1906801201;1;Group  ;
+                CaptionML=[ENU=Shipping;
+                           ENA=Shipping] }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Ship-to Code";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Ship-to Name";
+                Editable=FALSE }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Ship-to Address";
+                Editable=FALSE }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Ship-to Address 2";
+                Editable=FALSE }
+
+    { 80  ;2   ;Field     ;
+                SourceExpr="Ship-to Post Code";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 44  ;2   ;Field     ;
+                SourceExpr="Ship-to City";
+                Editable=FALSE }
+
+    { 1500008;2;Field     ;
+                SourceExpr="Ship-to County";
+                Editable=FALSE }
+
+    { 1500010;2;Field     ;
+                SourceExpr="Ship-to Country/Region Code";
+                Editable=FALSE }
+
+    { 46  ;2   ;Field     ;
+                SourceExpr="Ship-to Contact";
+                Editable=FALSE }
+
+    { 76  ;2   ;Field     ;
+                SourceExpr="Location Code";
+                Editable=FALSE }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Shipment Method Code";
+                Editable=FALSE }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Shipment Date";
+                Importance=Promoted;
+                Editable=FALSE }
+
+    { 1907468901;1;Group  ;
+                CaptionML=[ENU=Foreign Trade;
+                           ENA=Foreign Trade] }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                Importance=Promoted;
+                OnAssistEdit=BEGIN
+                               ChangeExchangeRate.SetParameter("Currency Code","Currency Factor","Posting Date");
+                               ChangeExchangeRate.EDITABLE(FALSE);
+                               IF ChangeExchangeRate.RUNMODAL = ACTION::OK THEN BEGIN
+                                 "Currency Factor" := ChangeExchangeRate.GetParameter;
+                                 MODIFY;
+                               END;
+                               CLEAR(ChangeExchangeRate);
+                             END;
+                              }
+
+    { 52  ;2   ;Field     ;
+                SourceExpr="EU 3-Party Trade";
+                Editable=FALSE }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=TRUE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      SalesInvHeader@1000 : Record 112;
+      ChangeExchangeRate@1001 : Page 511;
+      GLENTRY@1000000000 : Record 17;
+      GLReg@1000000001 : Record 45;
+      MasterSetup@1000000002 : Record 50008;
+
+    BEGIN
+    {
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+      //SMDEV1.0
+      Added Report Customer Aging to display
+    }
+    END.
+  }
+}
+

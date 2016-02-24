@@ -1,0 +1,221 @@
+OBJECT Page 9005 Sales Manager Role Center
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/13;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.35701;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Role Center;
+               ENA=Role Centre];
+    PageType=RoleCenter;
+    ActionList=ACTIONS
+    {
+      { 1900000006;0 ;ActionContainer;
+                      ActionContainerType=Reports }
+      { 13      ;1   ;Action    ;
+                      CaptionML=[ENU=Customer - &Order Summary;
+                                 ENA=Customer - &Order Summary];
+                      RunObject=Report 107;
+                      Image=Report }
+      { 14      ;1   ;Action    ;
+                      CaptionML=[ENU=Customer - &Top 10 List;
+                                 ENA=Customer - &Top 10 List];
+                      RunObject=Report 111;
+                      Image=Report }
+      { 17      ;1   ;Separator  }
+      { 18      ;1   ;Action    ;
+                      CaptionML=[ENU=S&ales Statistics;
+                                 ENA=S&ales Statistics];
+                      RunObject=Report 112;
+                      Image=Report }
+      { 19      ;1   ;Action    ;
+                      CaptionML=[ENU=Salesperson - Sales &Statistics;
+                                 ENA=Salesperson - Sales &Statistics];
+                      RunObject=Report 114;
+                      Image=Report }
+      { 20      ;1   ;Action    ;
+                      CaptionML=[ENU=Salesperson - &Commission;
+                                 ENA=Salesperson - &Commission];
+                      RunObject=Report 115;
+                      Image=Report }
+      { 22      ;1   ;Separator  }
+      { 24      ;1   ;Action    ;
+                      CaptionML=[ENU=Campaign - &Details;
+                                 ENA=Campaign - &Details];
+                      RunObject=Report 5060;
+                      Image=Report }
+      { 1900000011;0 ;ActionContainer;
+                      ActionContainerType=HomeItems }
+      { 9       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Analysis Reports;
+                                 ENA=Sales Analysis Reports];
+                      RunObject=Page 9376 }
+      { 12      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Analysis by Dimensions;
+                                 ENA=Sales Analysis by Dimensions];
+                      RunObject=Page 9371 }
+      { 8       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Budgets;
+                                 ENA=Sales Budgets];
+                      RunObject=Page 9374 }
+      { 5       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Quotes;
+                                 ENA=Sales Quotes];
+                      RunObject=Page 9300;
+                      Image=Quote }
+      { 15      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Orders;
+                                 ENA=Sales Orders];
+                      RunObject=Page 9305;
+                      Image=Order }
+      { 7       ;1   ;Action    ;
+                      ShortCutKey=Return;
+                      CaptionML=[ENU=Open;
+                                 ENA=Open];
+                      RunObject=Page 9305;
+                      RunPageView=WHERE(Status=FILTER(Open));
+                      Image=Edit }
+      { 35      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Invoices;
+                                 ENA=Sales Invoices];
+                      RunObject=Page 9301;
+                      Image=Invoice }
+      { 16      ;1   ;Action    ;
+                      ShortCutKey=Return;
+                      CaptionML=[ENU=Open;
+                                 ENA=Open];
+                      RunObject=Page 9301;
+                      RunPageView=WHERE(Status=FILTER(Open));
+                      Image=Edit }
+      { 23      ;1   ;Action    ;
+                      CaptionML=[ENU=Items;
+                                 ENA=Items];
+                      RunObject=Page 31;
+                      Image=Item }
+      { 25      ;1   ;Action    ;
+                      CaptionML=[ENU=Contacts;
+                                 ENA=Contacts];
+                      RunObject=Page 5052;
+                      Image=CustomerContact }
+      { 26      ;1   ;Action    ;
+                      CaptionML=[ENU=Customers;
+                                 ENA=Customers];
+                      RunObject=Page 22;
+                      Image=Customer }
+      { 27      ;1   ;Action    ;
+                      CaptionML=[ENU=Campaigns;
+                                 ENA=Campaigns];
+                      RunObject=Page 5087;
+                      Image=Campaign }
+      { 28      ;1   ;Action    ;
+                      CaptionML=[ENU=Segments;
+                                 ENA=Segments];
+                      RunObject=Page 5093;
+                      Image=Segment }
+      { 29      ;1   ;Action    ;
+                      CaptionML=[ENU=To-dos;
+                                 ENA=To-dos];
+                      RunObject=Page 5096;
+                      Image=TaskList }
+      { 30      ;1   ;Action    ;
+                      CaptionML=[ENU=Teams;
+                                 ENA=Teams];
+                      RunObject=Page 5105;
+                      Image=TeamSales }
+      { 1900000012;0 ;ActionContainer;
+                      ActionContainerType=ActivityButtons }
+      { 39      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Administration Sales/Purchase;
+                                 ENA=Administration Sales/Purchase];
+                      Image=AdministrationSalesPurchases }
+      { 40      ;2   ;Action    ;
+                      CaptionML=[ENU=Salespeople/Purchasers;
+                                 ENA=Salespeople/Purchasers];
+                      RunObject=Page 14 }
+      { 32      ;2   ;Action    ;
+                      CaptionML=[ENU=Cust. Invoice Discounts;
+                                 ENA=Cust. Invoice Discounts];
+                      RunObject=Page 23 }
+      { 33      ;2   ;Action    ;
+                      CaptionML=[ENU=Vend. Invoice Discounts;
+                                 ENA=Vend. Invoice Discounts];
+                      RunObject=Page 28 }
+      { 34      ;2   ;Action    ;
+                      CaptionML=[ENU=Item Disc. Groups;
+                                 ENA=Item Disc. Groups];
+                      RunObject=Page 513 }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 48      ;1   ;Separator ;
+                      CaptionML=[ENU=Tasks;
+                                 ENA=Tasks];
+                      IsHeader=Yes }
+      { 37      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Price &Worksheet;
+                                 ENA=Sales Price &Worksheet];
+                      RunObject=Page 7023;
+                      Image=PriceWorksheet }
+      { 2       ;1   ;Separator  }
+      { 3       ;1   ;Action    ;
+                      CaptionML=[ENU=Sales &Prices;
+                                 ENA=Sales &Prices];
+                      RunObject=Page 7002;
+                      Image=SalesPrices }
+      { 10      ;1   ;Action    ;
+                      CaptionML=[ENU=Sales Line &Discounts;
+                                 ENA=Sales Line &Discounts];
+                      RunObject=Page 7004;
+                      Image=SalesLineDisc }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000008;0;Container;
+                ContainerType=RoleCenterArea }
+
+    { 1900724808;1;Group   }
+
+    { 21  ;2   ;Part      ;
+                PagePartID=Page9175;
+                PartType=Page }
+
+    { 1900724708;1;Group   }
+
+    { 11  ;2   ;Part      ;
+                PagePartID=Page770;
+                PartType=Page }
+
+    { 4   ;2   ;Part      ;
+                PagePartID=Page760;
+                PartType=Page }
+
+    { 1   ;2   ;Part      ;
+                PagePartID=Page675;
+                Visible=false;
+                PartType=Page }
+
+    { 1907692008;2;Part   ;
+                PagePartID=Page9150;
+                PartType=Page }
+
+    { 1902476008;2;Part   ;
+                PagePartID=Page9151;
+                Visible=false;
+                PartType=Page }
+
+    { 31  ;2   ;Part      ;
+                PartType=System;
+                SystemPartID=MyNotes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

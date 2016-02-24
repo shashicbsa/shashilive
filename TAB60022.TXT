@@ -1,0 +1,37 @@
+OBJECT Table 60022 EliSetupKI
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/10/10;
+    Time=13:27:28;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;PrimeryKey          ;Code10         }
+    { 2   ;   ;Capital Stock       ;Code30         }
+    { 3   ;   ;RE Beginning        ;Code30         }
+    { 4   ;   ;Minority Interset in P/L;Code30     }
+    { 5   ;   ;Investment YMKI     ;Code30         }
+    { 6   ;   ;Minoity in B/S      ;Code30         }
+    { 7   ;   ;Miscl income YMKI   ;Code30         }
+    { 8   ;   ;DevidenRP           ;Code20         }
+  }
+  KEYS
+  {
+    {    ;PrimeryKey                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

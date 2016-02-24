@@ -1,0 +1,42 @@
+OBJECT Table 2000000069 Client Add-in
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/29/14;
+    Time=12:00:00;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    CaptionML=[ENU=Client Add-in;
+               ENA=Client Add-in];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Control Add-in Name ;Text220       ;CaptionML=[ENU=Control Add-in Name;
+                                                              ENA=Control Add-in Name] }
+    { 5   ;   ;Public Key Token    ;Text20        ;CaptionML=[ENU=Public Key Token;
+                                                              ENA=Public Key Token] }
+    { 8   ;   ;Version             ;Text25        ;CaptionML=[ENU=Version;
+                                                              ENA=Version] }
+    { 20  ;   ;Description         ;Text250       ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 25  ;   ;Resource            ;BLOB          ;CaptionML=[ENU=Resource;
+                                                              ENA=Resource] }
+  }
+  KEYS
+  {
+    {    ;Control Add-in Name,Public Key Token    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

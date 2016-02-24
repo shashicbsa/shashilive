@@ -1,0 +1,126 @@
+OBJECT Page 369 Order Address List
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Order Address List;
+               ENA=Order Address List];
+    SourceTable=Table224;
+    SourceTableView=SORTING(Vendor No.,Code)
+                    ORDER(Ascending)
+                    WHERE(Blocked=CONST(No));
+    DataCaptionFields=Vendor No.;
+    PageType=List;
+    CardPageID=Order Address;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 10      ;1   ;ActionGroup;
+                      CaptionML=[ENU=&Address;
+                                 ENA=&Address];
+                      Image=Addresses }
+      { 11      ;2   ;Action    ;
+                      ShortCutKey=Shift+F7;
+                      CaptionML=ENU=Card;
+                      RunObject=Page 368;
+                      RunPageLink=Vendor No.=FIELD(Vendor No.),
+                                  Code=FIELD(Code);
+                      Image=EditLines }
+      { 1102601001;2 ;Separator  }
+      { 1102601002;2 ;Action    ;
+                      CaptionML=[ENU=Online Map;
+                                 ENA=Online Map];
+                      Image=Map;
+                      OnAction=BEGIN
+                                 DisplayMap;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Vendor No." }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Code }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Name 2" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name;
+                Visible=FALSE }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr=Address;
+                Visible=TRUE }
+
+    { 21  ;2   ;Field     ;
+                SourceExpr="Address 2";
+                Visible=TRUE }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Post Code";
+                Visible=TRUE }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 23  ;2   ;Field     ;
+                SourceExpr="Country/Region Code";
+                Visible=FALSE }
+
+    { 27  ;2   ;Field     ;
+                SourceExpr="Phone No.";
+                Visible=FALSE }
+
+    { 19  ;2   ;Field     ;
+                SourceExpr="Fax No.";
+                Visible=FALSE }
+
+    { 13  ;2   ;Field     ;
+                SourceExpr=Contact;
+                Visible=FALSE }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

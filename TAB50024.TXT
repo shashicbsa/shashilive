@@ -1,0 +1,51 @@
+OBJECT Table 50024 All Quotes
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/14/11;
+    Time=13:47:45;
+    Version List=Mel1.0;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page62027;
+    DrillDownPageID=Page62027;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Document Type       ;Option        ;CaptionML=ENU=Document Type;
+                                                   OptionCaptionML=ENU=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order;
+                                                   OptionString=Quote,Order,Invoice,Credit Memo,Blanket Order,Return Order }
+    { 2   ;   ;Quote No.           ;Code20         }
+    { 3   ;   ;Source No.          ;Code20         }
+    { 4   ;   ;Source Name         ;Text50         }
+    { 5   ;   ;Status              ;Option        ;CaptionML=ENU=Status;
+                                                   OptionCaptionML=ENU=Open,Released,Pending Approval,Pending Prepayment;
+                                                   OptionString=Open,Released,Pending Approval,Pending Prepayment;
+                                                   Editable=Yes }
+    { 6   ;   ;Invoice Posted      ;Boolean        }
+    { 7   ;   ;Invoice Posted Date ;Date           }
+    { 8   ;   ;Your Reference      ;Text30        ;CaptionML=ENU=Your Reference }
+    { 9   ;   ;Source Type         ;Option        ;CaptionML=ENU=Source Type;
+                                                   OptionCaptionML=ENU=" ,Customer,Vendor";
+                                                   OptionString=[ ,Customer,Vendor] }
+    { 10  ;   ;CostProcess         ;Decimal        }
+    { 11  ;   ;CostVendor          ;Decimal        }
+    { 12  ;   ;InitialEntry        ;Boolean        }
+    { 13  ;   ;DepositReceived     ;Decimal        }
+  }
+  KEYS
+  {
+    {    ;Document Type,Quote No.,Source No.      ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

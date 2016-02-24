@@ -1,0 +1,246 @@
+OBJECT Report 60065 JnlGenSlip-Export
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/25/14;
+    Time=19:43:45;
+    Modified=Yes;
+    Version List=YIMMDEVP1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPostReport=BEGIN
+                   MESSAGE('Done');
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table81;
+               DataItemTableView=SORTING(Journal Template Name,Journal Batch Name,Posting Date,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+                               CreateExcelbook;
+                               MakeExcelDataHeader;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  GenLineRec.GET("Journal Template Name","Journal Batch Name","Line No.");
+                                  MakeExcelDataBody(GenLineRec);
+                                END;
+
+               OnPostDataItem=BEGIN
+                                {
+                                {//YIMMASLST
+                                Master.GET;
+                                Genline2.RESET;
+                                CLEAR(Genline2);
+                                Genline2.SETCURRENTKEY(Genline2."Journal Template Name",Genline2."Journal Batch Name",Genline2."Posting Date",
+                                                      Genline2."Document No.");
+                                Genline2.SETRANGE(Genline2."Journal Template Name","Journal Template Name");
+                                Genline2.SETRANGE(Genline2."Journal Batch Name","Journal Batch Name");
+                                //CurrForm.SETSELECTIONFILTER(Genline2);//YIMMA
+                                IF Genline2.FINDSET THEN REPEAT
+                                  Genline2.TESTFIELD(Genline2."Slip No.",'');
+                                UNTIL Genline2.NEXT = 0;
+                                }
+                                //SlipNo := Nos.GetNextNo(Master."Slip Nos.","Posting Date",TRUE);
+                                //CLEAR(Nos);
+
+                                //i := 1;
+                                Bool := 0;
+                                Genline2.RESET;
+                                Genline2.SETRANGE("Journal Template Name","Journal Template Name");
+                                Genline2.SETRANGE("Journal Batch Name","Journal Batch Name");
+                                //CurrForm.SETSELECTIONFILTER(Genline21);//YIMMA
+                                IF Genline2.FINDSET THEN REPEAT
+                                  Bool += Genline2."Balance (LCY)";
+                                UNTIL Genline2.NEXT = 0;
+
+                                IF Bool = 0 THEN BEGIN
+                                Genline21.RESET;
+                                Genline21.SETRANGE("Journal Template Name","Journal Template Name");
+                                Genline21.SETRANGE("Journal Batch Name","Journal Batch Name");
+                                //CurrForm.SETSELECTIONFILTER(Genline21);//YIMMA
+
+                                  IF Genline21.FINDSET THEN REPEAT
+                                     MakeExcelDataBody(Genline21);
+
+                                    {
+                                    IF i = 1 THEN BEGIN
+
+                                      GenLineRec.GET(Genline21."Journal Template Name",Genline21."Journal Batch Name",Genline21."Line No.");
+                                      GenLineRec."Slip No." := SlipNo;
+                                      GenLineRec.Level := 0;
+                                      GenLineRec.MODIFY;
+                                      i := i + 1;
+
+                                    END ELSE BEGIN
+                                      GenLineRec.GET(Genline21."Journal Template Name",Genline21."Journal Batch Name",Genline21."Line No.");
+                                      GenLineRec."Slip No." := SlipNo;
+                                      GenLineRec.Level := 1;
+                                      GenLineRec.MODIFY;
+
+                                    END;
+                                    }
+                                  UNTIL Genline21.NEXT = 0;
+                                END ELSE
+                                ERROR(Text004);
+                                //YIMMASLEN
+                                }
+                              END;
+
+               ReqFilterFields=Journal Template Name,Journal Batch Name,Due Date,Type Of Transaction,Document No. }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      i@1102159021 : Integer;
+      Genline21@1102159020 : Record 81;
+      GenLineRec@1102159019 : Record 81;
+      Master@1102159018 : Record 50008;
+      Genline2@1102159017 : Record 81;
+      Nos@1102159016 : Codeunit 396;
+      SlipNo@1102159015 : Code[20];
+      CreateVendorPmtSuggestion@1102159014 : Report 50057;
+      TempGJnlLine22@1102159013 : Record 81;
+      GJnlLine22@1102159012 : Record 232;
+      "LineNo."@1102159011 : Integer;
+      GJnlLine11@1102159010 : Record 81;
+      Type@1102159009 : 'General,Sales,Purchases,Cash Receipts,Payments,Assets,Intercompany,Jobs,Post Dated';
+      ForGenBatch@1102159008 : Record 232;
+      SameSlipNo@1102159007 : Code[20];
+      Count@1102159006 : Integer;
+      GlSetup@1102159004 : Record 98;
+      Noseries@1102159003 : Record 309;
+      Bool@1102159002 : Decimal;
+      Text000@1102159023 : TextConst 'ENU=General Journal lines have been successfully inserted from Standard General Journal %1.';
+      Text001@1102159022 : TextConst 'ENU=Standard General Journal %1 has been successfully created.';
+      Text002@1102159005 : TextConst 'ENU=Generate Slip No. First';
+      Text004@1102159001 : TextConst 'ENU=Selected Lines are not Balance';
+      ExcelBuf@1102159024 : Record 370;
+
+    PROCEDURE MakeExcelInfo@3();
+    BEGIN
+      {
+      ExcelBuf.SetUseInfoSheet;
+      ExcelBuf.AddInfoColumn(FORMAT(Text005),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(COMPANYNAME,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text007),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(FORMAT(Text001),FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text006),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(REPORT::"ESPT Excel Report",FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text008),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(USERID,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      ExcelBuf.AddInfoColumn(FORMAT(Text009),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddInfoColumn(TODAY,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.NewRow;
+      //Excelbuf.AddInfoColumn(FORMAT(Text010),FALSE,'',TRUE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //Excelbuf.AddInfoColumn("VAT Entry".GETFILTERS,FALSE,'',FALSE,FALSE,FALSE,'',ExcelBuf."Cell Type"::Text);
+      //Excelbuf.NewRow;
+      ExcelBuf.ClearNewRow;
+      MakeExcelDataHeader;
+      }
+    END;
+
+    LOCAL PROCEDURE MakeExcelDataHeader@2();
+    BEGIN
+
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn('Journal Template Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn('Journal Batch Name',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                    //1
+      ExcelBuf.AddColumn('Line No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);            //2
+      ExcelBuf.AddColumn('Account Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                 //3
+      ExcelBuf.AddColumn('Account No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);             //4
+      ExcelBuf.AddColumn('Posting Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                    //5
+      ExcelBuf.AddColumn('Document Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);             //6
+      ExcelBuf.AddColumn('Document No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);        //7
+      ExcelBuf.AddColumn('Description',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                  //8
+      ExcelBuf.AddColumn('Bal. Account Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                 //9
+      ExcelBuf.AddColumn('Bal. Account No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);         //10
+      ExcelBuf.AddColumn('Currency Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);   //11
+      ExcelBuf.AddColumn('Amount',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                 //12
+      ExcelBuf.AddColumn('Shortcut Dimension 1 Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);             //13
+      ExcelBuf.AddColumn('Shortcut Dimension 2 Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                        //14
+      ExcelBuf.AddColumn('Applies-to Doc. Type',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                         //15
+      ExcelBuf.AddColumn('Applies-to Doc. No',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                     //16
+      ExcelBuf.AddColumn('Due Date',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                 //17
+      ExcelBuf.AddColumn('Payment Terms Code',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                   //18
+      ExcelBuf.AddColumn('Applies-to ID',FALSE,'',TRUE,FALSE,TRUE,'',ExcelBuf."Cell Type"::Text);                        //19
+
+      ExcelBuf.NewRow;
+      ExcelBuf.NewRow;
+    END;
+
+    PROCEDURE MakeExcelDataBody@4(VAR GenJln@1000000000 : Record 81);
+    VAR
+      BlankFiller@1000 : Text[250];
+      SalesTAxInvHeader@1000000001 : Record 28071;
+      PurchTaxCrMemoHeader@1000000002 : Record 28077;
+    BEGIN
+      ExcelBuf.NewRow;
+      ExcelBuf.AddColumn(FORMAT(GenJln."Journal Template Name"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(GenJln."Journal Batch Name"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+
+      ExcelBuf.AddColumn(FORMAT(GenJln."Line No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //2
+      ExcelBuf.AddColumn(FORMAT(GenJln."Account Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //3
+      ExcelBuf.AddColumn(FORMAT(GenJln."Account No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);               //4
+      ExcelBuf.AddColumn(FORMAT(GenJln."Posting Date"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+      ExcelBuf.AddColumn(FORMAT(GenJln."Document Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+      ExcelBuf.AddColumn(FORMAT(GenJln."Document No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //7
+
+      ExcelBuf.AddColumn(FORMAT(GenJln.Description),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);               //4
+      ExcelBuf.AddColumn(FORMAT(GenJln."Bal. Account Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+      ExcelBuf.AddColumn(FORMAT(GenJln."Bal. Account No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+      ExcelBuf.AddColumn(FORMAT(GenJln."Currency Code"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //7
+
+      ExcelBuf.AddColumn(FORMAT(GenJln.Amount),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);               //4
+      ExcelBuf.AddColumn(FORMAT(GenJln."Shortcut Dimension 1 Code"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+      ExcelBuf.AddColumn(FORMAT(GenJln."Shortcut Dimension 2 Code"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+      ExcelBuf.AddColumn(FORMAT(GenJln."Applies-to Doc. Type"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //7
+      ExcelBuf.AddColumn(FORMAT(GenJln."Applies-to Doc. No."),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);              //5
+      ExcelBuf.AddColumn(FORMAT(GenJln."Due Date"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+      ExcelBuf.AddColumn(FORMAT(GenJln."Payment Terms Code"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);
+      ExcelBuf.AddColumn(FORMAT(GenJln."Applies-to ID"),FALSE,'',FALSE,FALSE,TRUE,'@',ExcelBuf."Cell Type"::Text);                //6
+
+    END;
+
+    PROCEDURE CreateExcelbook@1();
+    BEGIN
+      //Excelbuf.CreateBook;
+      ExcelBuf.CreateBookAndOpenExcel(Text002,Text001,COMPANYNAME,USERID);                                                         //UPG13R2DEV
+      //ExcelBuf.GiveUserControl;
+      //ERROR('');                                                                                                                   //UPG13R2DEV
+    END;
+
+    BEGIN
+    {
+      //YIMMDEVIP1.0
+      Process report created for generating Slip No for multiple lines.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

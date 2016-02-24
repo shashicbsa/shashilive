@@ -1,0 +1,39 @@
+OBJECT Table 462 Payment Term Translation
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Payment Term Translation;
+               ENA=Payment Term Translation];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Payment Term        ;Code10        ;TableRelation="Payment Terms";
+                                                   CaptionML=[ENU=Payment Term;
+                                                              ENA=Payment Term] }
+    { 2   ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=[ENU=Language Code;
+                                                              ENA=Language Code] }
+    { 3   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+  }
+  KEYS
+  {
+    {    ;Payment Term,Language Code              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

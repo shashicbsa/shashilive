@@ -1,0 +1,63 @@
+OBJECT Table 905 Assembly Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Assembly Setup;
+               ENA=Assembly Setup];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary Key         ;Code10        ;CaptionML=[ENU=Primary Key;
+                                                              ENA=Primary Key] }
+    { 5   ;   ;Stockout Warning    ;Boolean       ;InitValue=Yes;
+                                                   CaptionML=[ENU=Stockout Warning;
+                                                              ENA=Stockout Warning] }
+    { 10  ;   ;Assembly Order Nos. ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Assembly Order Nos.;
+                                                              ENA=Assembly Order Nos.] }
+    { 20  ;   ;Assembly Quote Nos. ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Assembly Quote Nos.;
+                                                              ENA=Assembly Quote Nos.] }
+    { 30  ;   ;Blanket Assembly Order Nos.;Code10 ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Blanket Assembly Order Nos.;
+                                                              ENA=Blanket Assembly Order Nos.] }
+    { 50  ;   ;Posted Assembly Order Nos.;Code10  ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=Posted Assembly Order Nos.;
+                                                              ENA=Posted Assembly Order Nos.] }
+    { 100 ;   ;Copy Component Dimensions from;Option;
+                                                   CaptionML=[ENU=Copy Component Dimensions from;
+                                                              ENA=Copy Component Dimensions from];
+                                                   OptionCaptionML=[ENU=Item/Resource Card,Order Header;
+                                                                    ENA=Item/Resource Card,Order Header];
+                                                   OptionString=Item/Resource Card,Order Header }
+    { 110 ;   ;Default Location for Orders;Code10 ;TableRelation=Location;
+                                                   CaptionML=[ENU=Default Location for Orders;
+                                                              ENA=Default Location for Orders] }
+    { 120 ;   ;Copy Comments when Posting;Boolean ;InitValue=Yes;
+                                                   CaptionML=[ENU=Copy Comments when Posting;
+                                                              ENA=Copy Comments when Posting] }
+    { 130 ;   ;Create Movements Automatically;Boolean;
+                                                   CaptionML=[ENU=Create Movements Automatically;
+                                                              ENA=Create Movements Automatically] }
+  }
+  KEYS
+  {
+    {    ;Primary Key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

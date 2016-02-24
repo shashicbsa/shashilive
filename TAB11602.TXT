@@ -1,0 +1,71 @@
+OBJECT Table 11602 BAS XML Field ID
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS XML Field ID;
+               ENA=BAS XML Field ID];
+  }
+  FIELDS
+  {
+    { 2   ;   ;XML Field ID        ;Text80        ;CaptionML=[ENU=XML Field ID;
+                                                              ENA=XML Field ID];
+                                                   NotBlank=Yes }
+    { 3   ;   ;Field No.           ;Integer       ;TableRelation=Field.No. WHERE (TableNo=FILTER(11601));
+                                                   OnValidate=BEGIN
+                                                                IF "Field No." <> 0 THEN BEGIN
+                                                                  BASXMLFieldID.SETCURRENTKEY("Field No.");
+                                                                  BASXMLFieldID.SETRANGE("Field No.","Field No.");
+                                                                  IF BASXMLFieldID.FINDFIRST THEN
+                                                                    ERROR(Text11600,"Field No.",BASXMLFieldID."XML Field ID");
+                                                                END;
+
+                                                                CALCFIELDS("Field Description","Field Label No.");
+                                                              END;
+
+                                                   CaptionML=[ENU=Field No.;
+                                                              ENA=Field No.];
+                                                   NotBlank=Yes }
+    { 4   ;   ;Field Label No.     ;Text30        ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup(Field.FieldName WHERE (TableNo=FILTER(11601),
+                                                                                             No.=FIELD(Field No.)));
+                                                   CaptionML=[ENU=Field Label No.;
+                                                              ENA=Field Label No.];
+                                                   Editable=Yes }
+    { 5   ;   ;Field Description   ;Text80        ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup(Field."Field Caption" WHERE (TableNo=FILTER(11601),
+                                                                                                   No.=FIELD(Field No.)));
+                                                   CaptionML=[ENU=Field Description;
+                                                              ENA=Field Description];
+                                                   Editable=Yes }
+    { 6   ;   ;Setup Name          ;Code20        ;TableRelation="BAS Setup Name".Name;
+                                                   CaptionML=[ENU=Setup Name;
+                                                              ENA=Setup Name] }
+    { 7   ;   ;Line No.            ;Integer       ;AutoIncrement=Yes;
+                                                   CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+  }
+  KEYS
+  {
+    {    ;XML Field ID                            ;Clustered=Yes }
+    {    ;Field No.                                }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      BASXMLFieldID@1500000 : Record 11602;
+      Text11600@150000 : TextConst 'ENU=Field No. %1 has already been entered for XML Field ID %2.;ENA=Field No. %1 has already been entered for XML Field ID %2.';
+
+    BEGIN
+    END.
+  }
+}
+

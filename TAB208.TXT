@@ -1,0 +1,79 @@
+OBJECT Table 208 Job Posting Group
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Job Posting Group;
+               ENA=Job Posting Group];
+    LookupPageID=Page211;
+    DrillDownPageID=Page211;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;WIP Costs Account   ;Code20        ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=WIP Costs Account;
+                                                              ENA=WIP Costs Account] }
+    { 3   ;   ;WIP Accrued Costs Account;Code20   ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=WIP Accrued Costs Account;
+                                                              ENA=WIP Accrued Costs Account] }
+    { 4   ;   ;Job Costs Applied Account;Code20   ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Job Costs Applied Account;
+                                                              ENA=Job Costs Applied Account] }
+    { 5   ;   ;Job Costs Adjustment Account;Code20;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Job Costs Adjustment Account;
+                                                              ENA=Job Costs Adjustment Account] }
+    { 6   ;   ;G/L Expense Acc. (Contract);Code20 ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=G/L Expense Acc. (Contract);
+                                                              ENA=G/L Expense Acc. (Contract)] }
+    { 7   ;   ;Job Sales Adjustment Account;Code20;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Job Sales Adjustment Account;
+                                                              ENA=Job Sales Adjustment Account] }
+    { 8   ;   ;WIP Accrued Sales Account;Code20   ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=WIP Accrued Sales Account;
+                                                              ENA=WIP Accrued Sales Account] }
+    { 9   ;   ;WIP Invoiced Sales Account;Code20  ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=WIP Invoiced Sales Account;
+                                                              ENA=WIP Invoiced Sales Account] }
+    { 10  ;   ;Job Sales Applied Account;Code20   ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Job Sales Applied Account;
+                                                              ENA=Job Sales Applied Account] }
+    { 11  ;   ;Recognized Costs Account;Code20    ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Recognized Costs Account;
+                                                              ENA=Recognised Costs Account] }
+    { 12  ;   ;Recognized Sales Account;Code20    ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Recognized Sales Account;
+                                                              ENA=Recognised Sales Account] }
+    { 13  ;   ;Item Costs Applied Account;Code20  ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Item Costs Applied Account;
+                                                              ENA=Item Costs Applied Account] }
+    { 14  ;   ;Resource Costs Applied Account;Code20;
+                                                   TableRelation="G/L Account";
+                                                   CaptionML=[ENU=Resource Costs Applied Account;
+                                                              ENA=Resource Costs Applied Account] }
+    { 15  ;   ;G/L Costs Applied Account;Code20   ;TableRelation="G/L Account";
+                                                   CaptionML=[ENU=G/L Costs Applied Account;
+                                                              ENA=G/L Costs Applied Account] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

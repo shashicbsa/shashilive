@@ -1,0 +1,185 @@
+OBJECT Report 28001 BarCode Batch Job
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10.00.35701;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BarCode Batch Job;
+               ENA=BarCode Batch Job];
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 5444;    ;DataItem;                    ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1));
+               OnPreDataItem=VAR
+                               GLSetup@1240000 : Record 98;
+                               Text1240001@1240001 : TextConst 'ENU=You must specify an %1 in %2.;ENA=You must specify an %1 in %2.';
+                             BEGIN
+                               GLSetup.GET;
+                               IF GLSetup."AMAS Software" = 0 THEN
+                                 ERROR(Text1240001,GLSetup.FIELDCAPTION("AMAS Software"),GLSetup.TABLECAPTION);
+                               AddressID.LOCKTABLE;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  Window.OPEN(Text1500001);
+                                  IF CheckMasterCard THEN BEGIN
+                                    BrowseTable(14,0,5701,5702,5703,5714,5720);
+                                    BrowseTable(18,0,5,6,7,91,35);
+                                    BrowseTable(23,0,5,6,7,91,35);
+                                    BrowseTable(79,0,4,5,6,30,36);
+                                    BrowseTable(79,2,24,25,26,32,37);
+                                    BrowseTable(156,0,6,7,8,53,59);
+                                    BrowseTable(222,0,5,6,7,91,35);
+                                    BrowseTable(224,0,5,6,7,91,35);
+                                    BrowseTable(270,0,5,6,7,91,35);
+                                    BrowseTable(287,0,6,7,8,9,17);
+                                    BrowseTable(288,0,6,7,8,9,17);
+                                    BrowseTable(5200,0,8,9,10,11,25);
+                                    BrowseTable(5201,0,5,6,7,8,14);
+                                    BrowseTable(5209,0,3,9,5,4,14);
+                                    BrowseTable(5714,0,3,4,5,6,7);
+                                  END;
+                                  IF CheckContactCard THEN BEGIN
+                                    BrowseTable(5050,0,5,6,7,91,35);
+                                    BrowseTable(5051,0,5,6,7,8,10);
+                                  END;
+                                  IF CheckDocument THEN BEGIN
+                                    BrowseTable(36,1,7,8,9,85,87);
+                                    BrowseTable(36,2,15,16,17,91,93);
+                                    BrowseTable(36,3,81,82,83,88,90);
+                                    BrowseTable(38,4,7,8,9,85,87);
+                                    BrowseTable(38,2,15,16,17,91,93);
+                                    BrowseTable(38,5,81,82,83,88,90);
+                                    BrowseTable(295,0,5,6,8,7,10);
+                                    BrowseTable(302,0,5,6,8,7,10);
+                                    BrowseTable(5740,6,5,6,8,7,10);
+                                    BrowseTable(5740,7,14,15,17,16,19);
+                                    BrowseTable(5900,0,11,12,14,13,86);
+                                    BrowseTable(5900,1,44,45,47,46,88);
+                                    BrowseTable(5900,2,51,52,54,53,90);
+                                  END;
+                                  Window.CLOSE;
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 1240002;2;Field     ;
+                  CaptionML=[ENU=Check Master Cards;
+                             ENA=Check Master Cards];
+                  SourceExpr=CheckMasterCard }
+
+      { 1240006;2;Field     ;
+                  CaptionML=[ENU=Check Contact Cards;
+                             ENA=Check Contact Cards];
+                  SourceExpr=CheckContactCard }
+
+      { 1240008;2;Field     ;
+                  CaptionML=[ENU=Check Documents;
+                             ENA=Check Documents];
+                  SourceExpr=CheckDocument }
+
+      { 1240000;2;Field     ;
+                  CaptionML=[ENU=Check Existing Package Sequence No.;
+                             ENA=Check Existing DPID];
+                  SourceExpr=CheckExistingAddressID }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text1500001@1240008 : TextConst 'ENU=Checking Table No.    #1######\Checking Address Type #2######\\@3@@@@@@@@@@@@@@@@@@@@@@@@@@@@;ENA=Checking Table No.    #1######\Checking Address Type #2######\\@3@@@@@@@@@@@@@@@@@@@@@@@@@@@@';
+      AddressID@1500006 : Record 28003;
+      PostCodeCheck@1500005 : Codeunit 28000;
+      CheckMasterCard@1500004 : Boolean;
+      CheckContactCard@1500003 : Boolean;
+      CheckDocument@1500002 : Boolean;
+      CheckExistingAddressID@1500001 : Boolean;
+      Window@1500000 : Dialog;
+
+    LOCAL PROCEDURE BrowseTable@1500001(TableNo@1500006 : Integer;AddressType@1500005 : 'Main,Bill-to,Ship-to,Sell-to,Pay-to,Buy-from,Transfer-from,Transfer-to';AddressFieldNo@1500004 : Integer;Address2FieldNo@1500003 : Integer;CityFieldNo@1500002 : Integer;PostCodeFieldNo@1500001 : Integer;CountryCodeFieldNo@1500000 : Integer);
+    VAR
+      RecordRef@1500015 : RecordRef;
+      AddressFieldRef@1500014 : FieldRef;
+      Address2FieldRef@1500013 : FieldRef;
+      CityFieldRef@1500012 : FieldRef;
+      PostCodeFieldRef@1500011 : FieldRef;
+      CountryCodeFieldRef@1500010 : FieldRef;
+      TotalRec@1500009 : Integer;
+      CurrentRec@1500008 : Integer;
+      SkipRec@1500007 : Boolean;
+    BEGIN
+      Window.UPDATE(1,TableNo);
+      Window.UPDATE(2,AddressType);
+      RecordRef.OPEN(TableNo);
+      TotalRec := RecordRef.COUNT;
+      CurrentRec := 1;
+      AddressFieldRef := RecordRef.FIELD(AddressFieldNo);
+      Address2FieldRef := RecordRef.FIELD(Address2FieldNo);
+      CityFieldRef := RecordRef.FIELD(CityFieldNo);
+      PostCodeFieldRef := RecordRef.FIELD(PostCodeFieldNo);
+      CountryCodeFieldRef := RecordRef.FIELD(CountryCodeFieldNo);
+      IF RecordRef.FIND('-') THEN
+        REPEAT
+          SkipRec := FALSE;
+          Window.UPDATE(3,ROUND((CurrentRec / TotalRec) * 10000,1));
+          GetAddressID(
+            TableNo,
+            RecordRef.GETPOSITION,
+            AddressType,
+            FORMAT(AddressFieldRef.VALUE),
+            FORMAT(Address2FieldRef.VALUE),
+            FORMAT(CityFieldRef.VALUE),
+            FORMAT(PostCodeFieldRef.VALUE));
+          CurrentRec := CurrentRec + 1;
+        UNTIL RecordRef.NEXT = 0;
+
+      RecordRef.CLOSE;
+    END;
+
+    LOCAL PROCEDURE GetAddressID@1500000(TableNo@1500006 : Integer;TableKey@1500005 : Text[1024];AddressType@1500004 : 'Main,Bill-to,Ship-to,Sell-to,Pay-to,Buy-from,Transfer-from,Transfer-to';Address@1500003 : Text[90];Address2@1500002 : Text[90];City@1500001 : Text[90];PostCode@1500000 : Code[20]);
+    VAR
+      Name@1500011 : Text[90];
+      Name2@1500010 : Text[90];
+      Contact@1500009 : Text[90];
+      County@1500008 : Text[50];
+      CountryCode@1500007 : Code[10];
+    BEGIN
+      PostCodeCheck.ValidateAddress(
+        1,TableNo,TableKey,AddressType,
+        Name,Name2,Contact,Address,Address2,City,PostCode,County,CountryCode);
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

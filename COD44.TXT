@@ -1,0 +1,421 @@
+OBJECT Codeunit 44 NASManagement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/16/14;
+    Time=[ 6:00:00];
+    Modified=Yes;
+    Version List=NAVW17.00,S-000,S-002,S-003,S-004;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      gCod_ServiceID@1012 : Code[5];
+      gTxt_ServiceName@1011 : Text[40];
+      gBol_ServiceIsValid@1010 : Boolean;
+      gCoA_LicenseNumber@1009 : ARRAY [2] OF Code[20];
+      gDaA_LicenseDate@1008 : ARRAY [2] OF Date;
+      gDaA_LicenseSession@1007 : ARRAY [2] OF Integer;
+      gDlg_Status@1005 : Dialog;
+      gBol_StatusIsOpen@1004 : Boolean;
+      gInt_StatusPercentControlNo@1003 : Integer;
+      gInt_StatusTotalToProcess@1002 : Integer;
+      gInt_StatusTotalProcessed@1001 : Integer;
+      gInt_StatusNextProcessed@1000 : Integer;
+
+    PROCEDURE NASHandler@1(NASID@1000 : Text[260]);
+    VAR
+      Parameter@1008 : Text[260];
+      ParamStr@1007 : Text[260];
+      SepPosition@1006 : Integer;
+    BEGIN
+      ParamStr := UPPERCASE(NASID);
+      REPEAT
+        SepPosition := STRPOS(ParamStr,',');
+        IF SepPosition > 0 THEN
+          Parameter := COPYSTR(ParamStr,1,SepPosition - 1)
+        ELSE
+          Parameter := ParamStr;
+
+        CASE Parameter OF
+          'JOBQUEUE':
+            CODEUNIT.RUN(CODEUNIT::"Job Queue - NAS Start Up");
+        END;
+        ParamStr := COPYSTR(ParamStr,SepPosition + 1);
+      UNTIL SepPosition = 0;
+    END;
+
+    PROCEDURE ServiceIsValid_Bol@49() Boolean : Boolean;
+    VAR
+      lRec_ActiveSession@1003 : Record 2000000110;
+    BEGIN
+    END;
+
+    PROCEDURE ServiceTextIsValid_Txt@46(pBol_IsValid@1000 : Boolean) Text_150 : Text[150];
+    BEGIN
+    END;
+
+    PROCEDURE ServiceTextInfo_Txt@44() Text_500 : Text[500];
+    BEGIN
+    END;
+
+    PROCEDURE NavLicenseType_Txt@19() Text_20 : Text[20];
+    VAR
+      lRec_LicensePermission@1000 : Record 2000000043;
+    BEGIN
+    END;
+
+    PROCEDURE NavClientType_Txt@20() Text_20 : Text[20];
+    VAR
+      lRec_Session@1000 : Record 2000000110;
+    BEGIN
+    END;
+
+    PROCEDURE NewLine_Txt@22() Text_5 : Text[5];
+    VAR
+      lDNe_Environment@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Environment";
+    BEGIN
+    END;
+
+    PROCEDURE MathMax_Dec@36(pDec_Number1@1000 : Decimal;pDec_Number2@1001 : Decimal) Decimal : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE MathMax_BIn@52(pBIn_Number1@1001 : BigInteger;pBIn_Number2@1000 : BigInteger) BigInteger : BigInteger;
+    BEGIN
+    END;
+
+    PROCEDURE MathMax_Int@35(pInt_Number1@1001 : Integer;pInt_Number2@1000 : Integer) Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE MathMax_Dat@41(pDat_Date1@1001 : Date;pDat_Date2@1000 : Date) Date : Date;
+    BEGIN
+    END;
+
+    PROCEDURE MathMax_DTi@54(pDTi_DateTime1@1001 : DateTime;pDTi_DateTime2@1000 : DateTime) DateTime : DateTime;
+    BEGIN
+    END;
+
+    PROCEDURE MathMin_Dec@34(pDec_Number1@1000 : Decimal;pDec_Number2@1001 : Decimal) Decimal : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE MathMin_BIn@56(pBIn_Number1@1001 : BigInteger;pBIn_Number2@1000 : BigInteger) BigInteger : BigInteger;
+    BEGIN
+    END;
+
+    PROCEDURE MathMin_Int@33(pInt_Number1@1001 : Integer;pInt_Number2@1000 : Integer) Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE MathMin_Dat@40(pDat_Date1@1001 : Date;pDat_Date2@1000 : Date) Date : Date;
+    BEGIN
+    END;
+
+    PROCEDURE MathMin_DTi@58(pDTi_DateTime1@1001 : DateTime;pDTi_DateTime2@1000 : DateTime) DateTime : DateTime;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Cod@31(pBol_Expression@1000 : Boolean;pCod_ValueIfTrue@1002 : Code[250];pCod_ValueIfFalse@1001 : Code[250]) Code_250 : Code[250];
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Txt@42(pBol_Expression@1000 : Boolean;pTxt_ValueIfTrue@1002 : Text;pTxt_ValueIfFalse@1001 : Text) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Dec@30(pBol_Expression@1000 : Boolean;pDec_ValueIfTrue@1001 : Decimal;pDec_ValueIfFalse@1002 : Decimal) Decimal : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_BIn@50(pBol_Expression@1000 : Boolean;pInt_ValueIfTrue@1001 : BigInteger;pInt_ValueIfFalse@1002 : BigInteger) BigInteger : BigInteger;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Int@37(pBol_Expression@1000 : Boolean;pInt_ValueIfTrue@1001 : Integer;pInt_ValueIfFalse@1002 : Integer) Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Bol@12(pBol_Expression@1000 : Boolean;pBol_ValueIfTrue@1001 : Boolean;pBol_ValueIfFalse@1002 : Boolean) Boolean : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Dur@13(pBol_Expression@1000 : Boolean;pDur_ValueIfTrue@1001 : Duration;pDur_ValueIfFalse@1002 : Duration) Duration : Duration;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_Dat@28(pBol_Expression@1000 : Boolean;pDat_ValueIfTrue@1001 : Date;pDat_ValueIfFalse@1002 : Date) Date : Date;
+    BEGIN
+    END;
+
+    PROCEDURE GetIf_DTi@47(pBol_Expression@1000 : Boolean;pDat_ValueIfTrue@1001 : DateTime;pDat_ValueIfFalse@1002 : DateTime) DateTime : DateTime;
+    BEGIN
+    END;
+
+    PROCEDURE GetChar1_Chr@7(pTxt_Text@1000 : Text[1]) Char : Char;
+    BEGIN
+    END;
+
+    PROCEDURE GetChar2_Chr@8(pInt_Integer@1000 : Integer) Char : Char;
+    BEGIN
+    END;
+
+    PROCEDURE GetIfEmpty_Cod@55(pCod_Value@1002 : Code[250];pCod_ValueIfEmpty@1001 : Code[250]) Code_250 : Code[250];
+    BEGIN
+    END;
+
+    PROCEDURE GetIfEmpty_Txt@48(pTxt_Value@1002 : Text;pTxt_ValueIfEmpty@1001 : Text) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE TextFromNumber_Txt@25(pVar_Number@1003 : Variant;pTxt_GroupSeparator@1002 : Text[5];pTxt_DecimalSeparator@1001 : Text[5];pInt_NegativePattern@1000 : Integer) Text : Text;
+    VAR
+      lDNe_CultureInfo@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_Wrapper@1006 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Runtime.InteropServices.VariantWrapper";
+      lDNe_Decimal@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Decimal";
+      lDec_Decimal@1007 : Decimal;
+    BEGIN
+    END;
+
+    PROCEDURE TextFromDateTime_Txt@29(pVar_DateTime@1003 : Variant;pTxt_FormatString@1002 : Text) Text : Text;
+    VAR
+      lDNe_CultureInfo@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_DateTime@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE TextFromStream_Txt@63(VAR vInS_InStream@1000 : InStream) Text : Text;
+    VAR
+      lTxt_Buffer@1001 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE TextReplaceFirst_Txt@6(pTxt_Text@1000 : Text;pTxt_OldText@1001 : Text;pTxt_NewText@1002 : Text) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE TextReplace_Txt@32(pTxt_Text@1000 : Text;pTxt_OldText@1001 : Text;pTxt_NewText@1002 : Text) Text : Text;
+    VAR
+      lDNe_String@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.String";
+    BEGIN
+    END;
+
+    PROCEDURE TextJoinList_Txt@26(pTxt_Delimiter@1002 : Text;pDNe_StringList@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1") Text : Text;
+    VAR
+      lDNe_StringBuilder@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Text.StringBuilder";
+      lInt_Count@1003 : Integer;
+      i@1004 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE TextJoinArray_Txt@27(pTxt_Delimiter@1002 : Text;pDNe_StringList@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array") Text : Text;
+    VAR
+      lDNe_StringList@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+    BEGIN
+    END;
+
+    PROCEDURE TextSplit@24(pTxt_String@1000 : Text;pTxt_Delimiter@1002 : Text;VAR vDNe_StringList@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1");
+    VAR
+      lInt_Position@1003 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE TextTrim_Txt@3(pTxt_Text@1000 : Text) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE NumberGroupSeparator_Txt@21() Text_5 : Text[5];
+    BEGIN
+    END;
+
+    PROCEDURE NumberDecimalSeparator_Txt@10() Text_5 : Text[5];
+    BEGIN
+    END;
+
+    PROCEDURE NumberOfDecimals_Int@59() Integer : Integer;
+    VAR
+      lRec_GLSetup@1000 : Record 98;
+    BEGIN
+    END;
+
+    PROCEDURE NumberNegativePattern_Int@5() Integer : Integer;
+    VAR
+      lDNe_CultureInfo@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromText_Dec@18(pTxt_Number@1000 : Text;pTxt_GroupSeparator@1001 : Text[5];pTxt_DecimalSeparator@1002 : Text[5];pInt_NegativePattern@1003 : Integer) Decimal : Decimal;
+    VAR
+      lDNe_CultureInfo@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_Decimal@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Decimal";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromText_Int@17(pTxt_Number@1000 : Text;pTxt_GroupSeparator@1001 : Text[5];pTxt_DecimalSeparator@1002 : Text[5];pInt_NegativePattern@1003 : Integer) Integer : Integer;
+    VAR
+      lDNe_CultureInfo@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_Decimal@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Decimal";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromText_BIn@16(pTxt_Number@1000 : Text;pTxt_GroupSeparator@1001 : Text[5];pTxt_DecimalSeparator@1002 : Text[5];pInt_NegativePattern@1003 : Integer) BigInteger : BigInteger;
+    VAR
+      lDNe_CultureInfo@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_Decimal@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Decimal";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromDNet_Dec@51(pDNe_Object@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Decimal") Decimal : Decimal;
+    VAR
+      lDNe_Convert@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Convert";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromDNet_Int@53(pDNe_Object@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Int32") Integer : Integer;
+    VAR
+      lDNe_Convert@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Convert";
+    BEGIN
+    END;
+
+    PROCEDURE NumberFromDNet_BInt@57(pDNe_Object@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Int64") BigInteger : BigInteger;
+    VAR
+      lDNe_Convert@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Convert";
+    BEGIN
+    END;
+
+    PROCEDURE TimeFormat_Txt@9() Text_20 : Text[20];
+    VAR
+      lDNe_List@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+      lDNe_CultureInfo@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+    BEGIN
+    END;
+
+    PROCEDURE DateFormat_Txt@2() Text_20 : Text[20];
+    VAR
+      lDNe_List@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+      lDNe_CultureInfo@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+    BEGIN
+    END;
+
+    PROCEDURE DateTimeFormat_Txt@14() Text_20 : Text[20];
+    VAR
+      lDNe_List@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+      lDNe_CultureInfo@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+    BEGIN
+    END;
+
+    PROCEDURE TimeFromText_Tim@11(pTxt_TimeString@1000 : Text;pTxt_TimeFormat@1001 : Text) Time : Time;
+    VAR
+      lDNe_CultureInfo@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+      lDNe_DateTime1@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE DateFromText_Dat@4(pTxt_DateString@1000 : Text;pTxt_DateFormat@1001 : Text) Date : Date;
+    VAR
+      lDNe_CultureInfo@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE DateTimeFromText_DTi@15(pTxt_DateTimeString@1000 : Text;pTxt_DateTimeFormat@1001 : Text) DateTime : DateTime;
+    VAR
+      lDNe_CultureInfo@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Globalization.CultureInfo";
+      lDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE DateTimeFromDNet_DTi@45(pDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime") DateTime : DateTime;
+    VAR
+      lDNe_DateTime@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+      lDat_Date@1001 : Date;
+      lDur_Duration@1005 : Duration;
+    BEGIN
+    END;
+
+    PROCEDURE DNetDateTime@43(VAR vDNe_DateTime@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";pDat_Date@1002 : Date;pTim_Time@1001 : Time);
+    BEGIN
+    END;
+
+    PROCEDURE DNetDateTimeFromNav@39(VAR vDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";pDTi_DateTime@1000 : DateTime);
+    VAR
+      lDat_Date@1001 : Date;
+      lDur_Duration@1004 : Duration;
+    BEGIN
+    END;
+
+    PROCEDURE DNetDateTimeFromNavVar@61(VAR vDNe_DateTime@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";pVar_TimeOrDateOrDateTime@1000 : Variant);
+    BEGIN
+    END;
+
+    PROCEDURE ListInit@23(pInt_Capacity@1001 : Integer;pTxt_InitText@1003 : Text;VAR vDNe_List@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1");
+    VAR
+      i@1002 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE ListFromDictionary@38(pTxt_Delimiter@1002 : Text;pDNe_Dictionary@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";VAR vDNe_List@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1");
+    VAR
+      lDNe_EnumDicItems@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DicItem@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+    BEGIN
+    END;
+
+    PROCEDURE ListAddPrefixAndSuffix@60(pTxt_Prefix@1001 : Text;VAR vDNe_List@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";pTxt_Suffix@1002 : Text);
+    VAR
+      lTxt_Text@1004 : Text;
+      lInt_NoOfLoop@1003 : Integer;
+      i@1005 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Status_Open@69(pTxt_Message@1000 : Text;pInt_PercentControlNoOrZero@1001 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE Status_Update@66(pInt_ControlNo@1000 : Integer;pVar_Value@1001 : Variant);
+    BEGIN
+    END;
+
+    PROCEDURE Status_Close@67();
+    BEGIN
+    END;
+
+    PROCEDURE Status_SetTotalToProcess@65(pInt_TotalToProcess@1000 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE Status_IncreaseProcessed@62(pInt_TotalProcessedToAdd@1000 : Integer);
+    BEGIN
+    END;
+
+    PROCEDURE Status_TotalProcessed_Int@68() Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Status_TotalToProcess_Int@64() Integer : Integer;
+    BEGIN
+    END;
+
+    BEGIN
+    {
+      Code  | Version | Author      | Description
+      -----------------------------------------------------------------------------------------------------------------------------------
+      S-000   130101    4BzSoftware   Common Functions. Please do not modify this object!
+                                      To modify, please contact Seller or email to Author 4BzSoftware@gmail.com
+      S-002   140628    4BzSoftware   Query and Excel Report.
+      S-003   140412    4BzSoftware   Universal Data Import Export.
+      S-004   130916    4BzSoftware   Payroll Module.
+    }
+    END.
+  }
+}
+

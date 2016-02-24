@@ -1,0 +1,638 @@
+OBJECT Report 62071 E-FAKTUR VAT-OUT
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/15;
+    Time=15:27:07;
+    Modified=Yes;
+    Version List=E-FAKTUR1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+
+                   CalledFromOtherReport := FALSE;
+                 END;
+
+    OnPreReport=VAR
+                  SalesInvLine@1102159009 : Record 113;
+                  SalesInvHdr@1102159008 : Record 112;
+                  VatDetails@1102159007 : Record 50015;
+                  PurchTaxCrMeHdr@1102159006 : Record 28077;
+                  PurchTaxCrMeLine@1102159005 : Record 28078;
+                  PurchCrMeHdr@1102159004 : Record 124;
+                  PurchCrMeLine@1102159003 : Record 125;
+                  VatDetails2@1102159002 : TEMPORARY Record 50015;
+                  NoSeries@1102159001 : Record 308;
+                BEGIN
+
+                  Master_setup_2.GET;
+                  ch:=9;
+
+                  IF GUIALLOWED THEN BEGIN
+
+                    IF ((D1 = 0D) OR (D2 = 0D)) THEN
+                      ERROR(Text001);
+
+                    IF ((D1 > D2)) THEN
+                      ERROR(Text002);
+
+                    IF (Master_setup_2."E-FAKTUR Interface File Path" = '') THEN
+                      ERROR(Text003);
+
+                    IF (Master_setup_2."E-FAKTUR VAT - OUT" = '') THEN
+                      ERROR(Text000);
+
+                  END ELSE BEGIN
+                    D1 := TODAY;
+                    D2 := TODAY;
+                  END;
+
+                  IF NOT CalledFromOtherReport THEN BEGIN
+                    InterfaceFile := Master_setup_2."E-FAKTUR Interface File Path" + '\' + Master_setup_2."E-FAKTUR VAT - OUT";
+
+                    F1.CREATE(InterfaceFile);
+                    F1.CREATEOUTSTREAM(Outstreamobj);
+                    F1.TEXTMODE(TRUE);
+
+                  END;
+
+                  IF GUIALLOWED THEN
+                    Window.OPEN('Export in progress...\(Please Wait)');
+
+                  //VatDetails.RESET;
+                  //VatDetails.SETCURRENTKEY("Tax Invoice No.");
+                  //VatDetails.SETRANGE("Tax Invoice Date", D1, D2);
+                  //IF VatDetails.FINDSET THEN
+                  //REPEAT
+                  //    IF ((VatDetails."Document Type" = VatDetails."Document Type"::Invoice) AND
+                  //       (VatDetails."Entry Type" = VatDetails."Entry Type"::Sale ) AND
+                  //       (VatDetails."Vat Type" = VatDetails."Vat Type"::Out))
+                  //    THEN BEGIN
+
+                  SaleTaxInvHdr.RESET;
+                  SaleTaxInvHdr.SETRANGE("Tax Invoice Date", D1, D2);
+                  SaleTaxInvHdr.SETFILTER("No.", '<>%1', '');
+
+                  IF SaleTaxInvHdr.FINDSET THEN
+                    REPEAT
+                      SalesInvHdr.RESET;
+                      SalesInvHdr.SETRANGE("Pre-Assigned No.", SaleTaxInvHdr."Pre-Assigned No.");
+
+                      IF SalesInvHdr.FINDSET THEN BEGIN
+                        SalesInvLine.RESET;
+                        SalesInvLine.SETRANGE("Document No.", SalesInvHdr."No.");
+
+                        IF SalesInvLine.FINDSET THEN BEGIN
+                          //VatDetails2.COPY(VatDetails);
+                          WrtieVatOutFile(SaleTaxInvHdr);
+
+                          NoSeries.RESET;
+                          NoSeries.SETRANGE(Code,SalesInvHdr."Pre-Assigned No. Series");
+
+                          IF NoSeries.FINDSET THEN BEGIN
+
+                            IF NoSeries."Manual Invoice no. series" THEN
+                              InsertTempTable(SalesInvLine, SalesInvHdr, SaleTaxInvHdr);
+
+                          END;
+
+                        END;
+
+                      END;
+
+                    UNTIL SaleTaxInvHdr.NEXT =0;
+
+                  //IF ((VatDetails."Document Type" = VatDetails."Document Type"::"Credit Memo") AND
+                  //    (VatDetails."Entry Type" = VatDetails."Entry Type"::Purchase ) AND
+                  //    (VatDetails."Vat Type" = VatDetails."Vat Type"::Out))
+                  //THEN BEGIN
+
+                  PurchTaxCrMeHdr.RESET;
+                  PurchTaxCrMeHdr.SETRANGE("Tax Invoice Date",D1, D2);
+                  PurchTaxCrMeHdr.SETFILTER("No.", '<>%1','');
+
+                  IF PurchTaxCrMeHdr.FINDSET THEN
+                    REPEAT
+                      PurchCrMeHdr.RESET;
+                      PurchCrMeHdr.SETRANGE("No.", PurchTaxCrMeHdr."Pre-Assigned No.");
+
+                      IF PurchCrMeHdr.FINDSET THEN BEGIN
+                        PurchCrMeLine.RESET;
+                        PurchCrMeLine.SETRANGE("Document No.", PurchCrMeHdr."No.");
+
+                      IF PurchCrMeLine.FINDSET THEN BEGIN
+                        //VatDetails2.COPY(VatDetails);
+                        WrtieVatOutFile2(PurchTaxCrMeHdr);
+
+                        NoSeries.RESET;
+                        NoSeries.SETRANGE(Code, PurchCrMeHdr."Pre-Assigned No. Series");//shashi 2506
+
+                        IF NoSeries.FINDSET THEN BEGIN
+
+                          IF NoSeries."Manual Invoice no. series" THEN
+                            InsertTempTable2(PurchCrMeLine, PurchCrMeHdr, PurchTaxCrMeHdr);
+
+                        END;
+
+                      END;
+
+                    END;
+                  UNTIL PurchTaxCrMeHdr.NEXT =0;
+                  //END;
+                  //UNTIL VatDetails.NEXT = 0;
+                END;
+
+    OnPostReport=VAR
+                   DownloadFileName@1000000000 : Text[50];
+                 BEGIN
+
+                   IF GUIALLOWED THEN
+                     Window.CLOSE;
+
+                   IF NOT CalledFromOtherReport THEN
+                     F1.CLOSE;
+
+                   //IF GUIALLOWED THEN
+                     //MESSAGE('VAT-OUT File Export Completed!');
+                   IF NOT CalledFromOtherReport THEN BEGIN
+                     IF GUIALLOWED THEN BEGIN
+                       DownloadFileName :=  Master_setup_2."E-FAKTUR VAT - OUT";
+                       DOWNLOAD(InterfaceFile, 'Download Vat Out Details', '', '', DownloadFileName);
+                     END;
+                   END;
+                 END;
+
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1000000000;;Container;
+                  Name=VAT-OUT;
+                  ContainerType=ContentArea }
+
+      { 1000000001;1;Group  ;
+                  CaptionML=ENU=TAX Invoice Date;
+                  GroupType=Group }
+
+      { 1000000002;2;Field  ;
+                  CaptionML=ENU=From Date;
+                  SourceExpr=D1 }
+
+      { 1000000003;2;Field  ;
+                  CaptionML=ENU=To Date;
+                  SourceExpr=D2 }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      D1@1000000026 : Date;
+      D2@1000000025 : Date;
+      SaleTaxInvHdr@1000000024 : Record 28071;
+      SalesTaxInvLine@1000000023 : Record 28072;
+      Master_setup_2@1000000022 : Record 60053;
+      ch@1000000021 : Char;
+      InterfaceFile@1000000020 : Text[100];
+      Outstreamobj@1000000019 : OutStream;
+      F1@1000000018 : File;
+      TranCode@1000000017 : Text[30];
+      ReplaceTaxInv@1000000016 : Text[30];
+      num1@1000000015 : Text[30];
+      num2@1000000014 : Text[30];
+      num3@1000000013 : Text[30];
+      num4@1000000012 : Text[30];
+      MOT@1000000011 : Text[30];
+      YOT@1000000010 : Text[30];
+      NewNo@1000000009 : Text[30];
+      PrevNo@1000000008 : Text[30];
+      DetailInvAsef@1000000007 : Record 60056;
+      PurchTaxCrMeHdr@1000000006 : Record 28077;
+      Window@1000000005 : Dialog;
+      PurchCrMeHdr@1000000004 : Record 124;
+      up@1000000003 : Decimal;
+      ta@1000000002 : Decimal;
+      CalledFromOtherReport@1000000001 : Boolean;
+      PurchTaxCrMeLine@1000000000 : Record 125;
+      Text000@1000000030 : TextConst 'ENU=Error: Please set valid file name in Master Setup-2';
+      Text001@1000000029 : TextConst 'ENU=Error: Please insert date';
+      Text002@1000000028 : TextConst 'ENU=Error: From date should be less than to date';
+      Text003@1000000027 : TextConst 'ENU=Error:Please set valid path in Master Setup-2';
+
+    PROCEDURE InsertTempTable@1102159004(VAR SalesInvoiceLine@1102159001 : Record 113;VAR SalesInvHeader@1102159003 : Record 112;VAR SalesTaxInvHdr@1000000000 : Record 28071);
+    VAR
+      Cust@1000000001 : Record 18;
+    BEGIN
+
+      Cust.RESET;
+      Cust.GET(SaleTaxInvHdr."Sell-to Customer No.");
+
+      IF CalledFromOtherReport THEN BEGIN
+        DetailInvAsef.RESET;
+        DetailInvAsef.SETRANGE(DetailInvAsef."Invoice No.",SalesInvHeader."Pre-Assigned No.");
+
+        IF NOT DetailInvAsef.FINDSET THEN BEGIN
+
+          IF SalesInvoiceLine.FINDSET THEN
+            up := SalesInvoiceLine."Unit Price";        //shashi
+            ta := SalesInvoiceLine."Tax Amount (VAT)";  //shahsi
+
+            REPEAT
+
+              IF (NOT (SalesInvoiceLine."VAT Prod. Posting Group"  IN ['','NO VAT'])) OR (Cust.TaxExampted) THEN BEGIN
+                DetailInvAsef.RESET;
+                DetailInvAsef.SETRANGE("Invoice No.", SalesInvHeader."Pre-Assigned No.");
+                DetailInvAsef.SETRANGE("Reference No.", SalesInvHeader."External Document No.");
+                DetailInvAsef.SETRANGE("Customer/Entity Code", SalesInvHeader."Sell-to Customer No.");
+                DetailInvAsef.SETRANGE("Object Code/Item No", SalesInvoiceLine."Description 2");
+                DetailInvAsef.SETRANGE("Object/Item Name", SalesInvoiceLine.Narration);
+                //DetailInvAsef.SETRANGE("PPNBM Tariff",SalesInvoiceLine."VAT %");
+
+                IF DetailInvAsef.FINDSET THEN BEGIN //AND ((up = SalesInvoiceLine."Unit Price") AND
+                  //(ta = SalesInvoiceLine."Tax Amount (VAT)"))THEN BEGIN
+                  IF SalesInvoiceLine."VAT %" = 100 THEN                            //new
+                    DetailInvAsef."Unit Price" := SalesInvoiceLine."Unit Price" * 10  //new
+                  ELSE                                                                  //new
+                    DetailInvAsef."Unit Price" := SalesInvoiceLine."Unit Price";
+                  DetailInvAsef."Total Quantity" := DetailInvAsef."Total Quantity" + SalesInvoiceLine.Quantity;
+                  //DetailInvAsef."Total Price" := DetailInvAsef."Total Price" + SalesInvoiceLine."Amount Including VAT";
+                  //DetailInvAsef."Base Amount Before Tax" := SalesInvoiceLine."Unit Price";
+                  DetailInvAsef."VAT/PPN" := DetailInvAsef."VAT/PPN" + SalesInvoiceLine."Tax Amount (VAT)";
+                  DetailInvAsef.MODIFY(TRUE);
+
+                END ELSE BEGIN
+                  DetailInvAsef.RESET;
+
+                  IF DetailInvAsef.FINDLAST THEN
+                    DetailInvAsef."Entry No" := DetailInvAsef."Entry No" + 1;
+
+                  DetailInvAsef.INSERT;
+                  DetailInvAsef."Invoice No." := SalesInvHeader."Pre-Assigned No.";
+                  DetailInvAsef."Reference No." := SalesInvHeader."External Document No.";
+                  DetailInvAsef."Customer/Entity Code" := SalesInvHeader."Sell-to Customer No.";
+                  DetailInvAsef."Object Code/Item No" := SalesInvoiceLine."Description 2";
+                  DetailInvAsef."Object/Item Name" := SalesInvoiceLine.Narration;
+                  IF SalesInvoiceLine."VAT %" = 100 THEN                            //new
+                    DetailInvAsef."Unit Price" := SalesInvoiceLine."Unit Price" * 10  //new
+                  ELSE                                                                  //new
+                    //DetailInvAsef."Unit Price" := SalesInvoiceLine."Unit Price";      //new
+                  DetailInvAsef."Unit Price" := SalesInvoiceLine."Unit Price";
+                  DetailInvAsef."Total Quantity" := SalesInvoiceLine.Quantity;
+                  //DetailInvAsef."Total Price" := SalesInvoiceLine."Amount Including VAT";
+                  DetailInvAsef.Discount := 0;
+                  //DetailInvAsef."Base Amount Before Tax" := SalesInvoiceLine."Unit Price";
+                  DetailInvAsef."VAT/PPN" := SalesInvoiceLine."Tax Amount (VAT)";
+                  DetailInvAsef."PPNBM Tariff" := 0;
+                  DetailInvAsef.PPNBM := 0;
+                  DetailInvAsef."Tax Invoice Date" := SalesTaxInvHdr."Tax Invoice Date";
+                  DetailInvAsef.MODIFY;
+                END;
+
+              END;
+
+            UNTIL SalesInvoiceLine.NEXT = 0;
+
+        END;
+
+      END;
+    END;
+
+    PROCEDURE WrtieVatOutFile@1102159001(VAR SalesTaxInvHdr@1102159001 : Record 28071);
+    VAR
+      Amount@1000000002 : Decimal;
+      SalesTaxInvLine@1000000001 : Record 28072;
+      VatAmt@1000000000 : Decimal;
+    BEGIN
+
+      IF NOT CalledFromOtherReport THEN BEGIN
+        SalesTaxInvHdr.CALCFIELDS(Amount,"Amount Including VAT");
+        TranCode := COPYSTR(SalesTaxInvHdr."No.", 1, 2);
+        ReplaceTaxInv := COPYSTR(SalesTaxInvHdr."No.", 3, 1);
+        num1 := COPYSTR(SalesTaxInvHdr."No.", 5, 3);
+        num2 := COPYSTR(SalesTaxInvHdr."No.", 9, 2);
+        num3 := COPYSTR(SalesTaxInvHdr."No.", 12, 8);
+        num4 := num1 + num2 + num3;
+        MOT := FORMAT(DATE2DMY(SalesTaxInvHdr."Tax Invoice Date", 2));
+
+        IF STRLEN(FORMAT(MOT)) <> 2 THEN
+          MOT := '0' + FORMAT(MOT)
+        ELSE
+          MOT := FORMAT(MOT);
+
+        YOT := FORMAT(DATE2DMY(SalesTaxInvHdr."Tax Invoice Date", 3));
+        Amount := CalculateBaseAmount(SalesTaxInvHdr);
+        VatAmt := CalculateVatAmount(SalesTaxInvHdr);
+
+        Outstreamobj.WRITETEXT(FORMAT('FK'));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(TranCode));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(ReplaceTaxInv));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(num4));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(MOT));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(YOT));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(SalesTaxInvHdr."Tax Invoice Date",0,'<Day,2>/<Month,2>/<Year4>'));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(SalesTaxInvHdr."Ship-to Code"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(SaleTaxInvHdr."Ship-to Name"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(SalesTaxInvHdr."Ship-to Address"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        //Outstreamobj.WRITETEXT(FORMAT(round(SalesTaxInvHdr.Amount,1,'<'));
+        Outstreamobj.WRITETEXT(FORMAT(ROUND(Amount,1,'<')));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(ROUND((VatAmt),1,'<')));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(SalesTaxInvHdr."Posting Description"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+
+        //SaleTaxInvHdr.RESET;
+        //SaleTaxInvHdr.SETRANGE("No.", VatDetails."Document No.");
+        //IF SaleTaxInvHdr.FINDSET THEN;
+        Outstreamobj.WRITETEXT(FORMAT(SalesTaxInvHdr."Pre-Assigned No."));
+        Outstreamobj.WRITETEXT();
+
+      END;
+    END;
+
+    PROCEDURE InsertTempTable2@1102159002(VAR PurchCrMeLine@1102159001 : Record 125;VAR PurchCrMeHdr@1102159003 : Record 124;VAR PurchTaxCrMemoHdr@1000000000 : Record 28077);
+    BEGIN
+
+      IF CalledFromOtherReport THEN BEGIN
+        DetailInvAsef.RESET;
+        DetailInvAsef.SETRANGE("Invoice No.",PurchCrMeHdr."Pre-Assigned No.");
+
+        IF NOT DetailInvAsef.FINDSET THEN BEGIN
+
+          IF PurchCrMeLine.FINDSET THEN
+              //up := PurchCrMeLine."Direct Unit Cost";        //shashi
+              //ta := PurchCrMeLine."Amount Including VAT" - PurchCrMeLine."Direct Unit Cost";  //shahsi
+            REPEAT
+
+              IF NOT (PurchCrMeLine."VAT Prod. Posting Group"  IN ['','PRRT_NOVAT'])  THEN BEGIN
+                DetailInvAsef.RESET;
+                DetailInvAsef.SETRANGE("Invoice No.", PurchCrMeHdr."Pre-Assigned No.");
+                DetailInvAsef.SETRANGE("Reference No.", PurchCrMeHdr."Vendor Cr. Memo No.");
+                DetailInvAsef.SETRANGE("Customer/Entity Code", PurchCrMeHdr."Buy-from Vendor No.");
+                DetailInvAsef.SETRANGE("Object Code/Item No", PurchCrMeLine."Description 2");
+                DetailInvAsef.SETRANGE("Object/Item Name", PurchCrMeLine.Narration);
+                //DetailInvAsef.SETRANGE("PPNBM Tariff",PurchCrMeLine."VAT %");
+
+                IF DetailInvAsef.FINDSET THEN BEGIN //AND ((up = PurchCrMeLine."Direct Unit Cost") AND
+                  //(ta = PurchCrMeLine."Amount Including VAT" - PurchCrMeLine."Direct Unit Cost"))
+                  DetailInvAsef."Unit Price" := PurchCrMeLine."Direct Unit Cost";
+                  DetailInvAsef."Total Quantity" := DetailInvAsef."Total Quantity" + PurchCrMeLine.Quantity;
+                 // DetailInvAsef."Total Price" := DetailInvAsef."Total Price" + PurchCrMeLine."Amount Including VAT";
+                  //DetailInvAsef."Base Amount Before Tax" := PurchCrMeLine."Direct Unit Cost";
+                  DetailInvAsef."VAT/PPN" := DetailInvAsef."VAT/PPN" +
+                  (PurchCrMeLine."Amount Including VAT" - PurchCrMeLine.Amount);
+                  DetailInvAsef.MODIFY(TRUE);
+
+                END ELSE BEGIN
+                  DetailInvAsef.RESET;
+
+                  IF DetailInvAsef.FINDLAST THEN
+                    DetailInvAsef."Entry No" := DetailInvAsef."Entry No" + 1;
+
+                  DetailInvAsef.INSERT;
+                  DetailInvAsef."Invoice No." := PurchCrMeHdr."Pre-Assigned No.";
+                  DetailInvAsef."Reference No." := PurchCrMeHdr."Vendor Cr. Memo No.";
+                  DetailInvAsef."Customer/Entity Code" := PurchCrMeHdr."Buy-from Vendor No.";
+                  DetailInvAsef."Object Code/Item No" := PurchCrMeLine."Description 2";
+                  DetailInvAsef."Object/Item Name" := PurchCrMeLine.Narration;
+                  DetailInvAsef."Unit Price" := PurchCrMeLine."Direct Unit Cost";
+                  DetailInvAsef."Total Quantity" := PurchCrMeLine.Quantity;
+                  //DetailInvAsef."Total Price" := PurchCrMeLine."Amount Including VAT";
+                  DetailInvAsef.Discount := 0;
+                  //DetailInvAsef."Base Amount Before Tax" := PurchCrMeLine."Direct Unit Cost";
+                  DetailInvAsef."VAT/PPN" := PurchCrMeLine."Amount Including VAT" - PurchCrMeLine.Amount;
+                  DetailInvAsef."PPNBM Tariff" := 0;
+                  DetailInvAsef.PPNBM := 0;
+                  DetailInvAsef."Tax Invoice Date" := PurchTaxCrMemoHdr."Tax Invoice Date";
+                  DetailInvAsef.MODIFY;
+                END;
+
+              END;
+
+            UNTIL PurchCrMeLine.NEXT = 0;
+
+        END;
+
+      END;
+    END;
+
+    PROCEDURE WrtieVatOutFile2@1102159003(VAR PurchTaxCrMemoHdr@1102159001 : Record 28077);
+    VAR
+      PurchTaxCrMemoLine@1000000000 : Record 28078;
+      amount@1000000001 : Decimal;
+      VatAmt@1000000002 : Decimal;
+    BEGIN
+
+      IF NOT CalledFromOtherReport THEN BEGIN
+        PurchTaxCrMemoHdr.CALCFIELDS(Amount,"Amount Including VAT");
+        TranCode := COPYSTR(PurchTaxCrMemoHdr."No.", 1, 2);
+        ReplaceTaxInv := COPYSTR(PurchTaxCrMemoHdr."No.", 3, 1);
+        num1 := COPYSTR(PurchTaxCrMemoHdr."No.", 5, 3);
+        num2 := COPYSTR(PurchTaxCrMemoHdr."No.", 9, 2);
+        num3 := COPYSTR(PurchTaxCrMemoHdr."No.", 12, 8);
+        num4 := num1 + num2 + num3;
+        MOT := FORMAT(DATE2DMY(PurchTaxCrMemoHdr."Tax Invoice Date", 2));
+
+        IF STRLEN(FORMAT(MOT)) <> 2 THEN
+          MOT := '0' + FORMAT(MOT)
+        ELSE
+          MOT := FORMAT(MOT);
+
+        YOT := FORMAT(DATE2DMY(PurchTaxCrMemoHdr."Tax Invoice Date", 3));
+        amount := 0;
+
+        PurchTaxCrMemoLine.RESET;
+        PurchTaxCrMemoLine.SETRANGE("Document No.",PurchTaxCrMemoHdr."No.");
+
+        IF PurchTaxCrMemoLine.FINDFIRST THEN
+          REPEAT
+
+            IF PurchTaxCrMemoLine."VAT %" <> 0 THEN BEGIN
+              amount := amount + PurchTaxCrMemoLine."Line Amount";
+              VatAmt := VatAmt + (PurchTaxCrMemoLine."Amount Including VAT" - PurchTaxCrMemoLine.Amount);
+            END;
+
+          UNTIL PurchTaxCrMemoLine.NEXT = 0;
+
+        Outstreamobj.WRITETEXT(FORMAT('FK'));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(TranCode));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(ReplaceTaxInv));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(num4));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(MOT));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(YOT));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr."Tax Invoice Date",0,'<Day,2>/<Month,2>/<Year4>'));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr."Ship-to Code"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr."Ship-to Name"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr."Ship-to Address"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        //Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr.Amount));
+        Outstreamobj.WRITETEXT(FORMAT(ROUND(amount,1,'<')));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(ROUND((VatAmt),1,'<')));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(PurchTaxCrMemoHdr."Posting Description"));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+        Outstreamobj.WRITETEXT(FORMAT(0));
+        Outstreamobj.WRITETEXT(FORMAT('|'));
+
+        PurchCrMeHdr.RESET;
+        PurchCrMeHdr.SETRANGE("No.", PurchTaxCrMemoHdr."Pre-Assigned No.");
+
+        IF PurchCrMeHdr.FINDSET THEN
+          Outstreamobj.WRITETEXT(FORMAT(PurchCrMeHdr."Pre-Assigned No."));
+        Outstreamobj.WRITETEXT();
+
+      END;
+    END;
+
+    PROCEDURE GetFromDate@1000000000() fromdate : Date;
+    BEGIN
+
+      EXIT(D1);
+    END;
+
+    PROCEDURE GetToDate@1000000001() todate : Date;
+    BEGIN
+
+      EXIT(D2);
+    END;
+
+    PROCEDURE SetCalledFromOtherReport@1000000002();
+    BEGIN
+
+      CalledFromOtherReport := TRUE;
+    END;
+
+    PROCEDURE CalculateBaseAmount@1000000004(SalesTaxInvoiceHdr@1000000000 : Record 28071) BaseAmount : Decimal;
+    VAR
+      SalesTaxInvoiceLine@1000000001 : Record 28072;
+      Cust@1000000002 : Record 18;
+    BEGIN
+
+      Cust.RESET;
+
+      IF Cust.GET(SalesTaxInvoiceHdr."Sell-to Customer No.") THEN;
+
+
+      BaseAmount := 0;
+      SalesTaxInvoiceLine.RESET;
+      SalesTaxInvoiceLine.SETRANGE("Document No.", SalesTaxInvoiceHdr."No.");
+
+      IF SalesTaxInvoiceLine.FINDSET THEN
+        REPEAT
+
+          IF (Cust.TaxExampted) THEN BEGIN
+
+            IF (SalesTaxInvoiceLine."VAT %" = 100) THEN
+              BaseAmount := BaseAmount + (SalesTaxInvoiceLine."Paid VAT" * 10)
+            ELSE
+              BaseAmount := BaseAmount + SalesTaxInvoiceLine."Line Amount";
+
+          END ELSE BEGIN
+            IF SalesTaxInvoiceLine."VAT %" <> 0 THEN BEGIN
+
+              IF (SalesTaxInvoiceLine."VAT %" = 100) THEN
+                BaseAmount := BaseAmount + (SalesTaxInvoiceLine."Paid VAT" * 10)
+              ELSE
+                BaseAmount := BaseAmount + SalesTaxInvoiceLine."Line Amount";
+
+            END;
+          END;
+
+        UNTIL SalesTaxInvoiceLine.NEXT = 0;
+
+      EXIT(BaseAmount);
+    END;
+
+    PROCEDURE CalculateVatAmount@1000000009(SalesTaxInvoiceHdr@1000000000 : Record 28071) VatAmount : Decimal;
+    VAR
+      SalesTaxInvoiceLine@1000000001 : Record 28072;
+      Cust@1000000002 : Record 18;
+    BEGIN
+      Cust.RESET;
+
+      IF Cust.GET(SalesTaxInvoiceHdr."Sell-to Customer No.") THEN;
+
+      VatAmount := 0;
+
+      SalesTaxInvoiceLine.RESET;
+      SalesTaxInvoiceLine.SETRANGE("Document No.", SalesTaxInvoiceHdr."No.");
+
+      IF SalesTaxInvoiceLine.FINDSET THEN
+        REPEAT
+
+          IF (Cust.TaxExampted) THEN
+            VatAmount := VatAmount + (SalesTaxInvoiceLine.Amount * 0.1)
+
+          ELSE
+          IF SalesTaxInvoiceLine."VAT %" <> 0 THEN BEGIN
+            VatAmount := VatAmount + SalesTaxInvoiceLine."Paid VAT";
+
+          END;
+
+        UNTIL SalesTaxInvoiceLine.NEXT = 0;
+
+      EXIT(VatAmount);
+    END;
+
+    BEGIN
+    {
+
+      //E-FAKTUR1.0 New Report created to export VAT-OUT file for E-FAKTUR Aslo it will fill table for detail invoice
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

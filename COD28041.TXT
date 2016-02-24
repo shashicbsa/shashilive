@@ -1,0 +1,27 @@
+OBJECT Codeunit 28041 G/L Reg.-WHT Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    TableNo=45;
+    OnRun=BEGIN
+            WHTEntry.SETRANGE("Entry No.","From WHT Entry No.","To WHT Entry No.");
+            PAGE.RUN(PAGE::"WHT Entry",WHTEntry);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      WHTEntry@1000 : Record 28044;
+
+    BEGIN
+    END.
+  }
+}
+

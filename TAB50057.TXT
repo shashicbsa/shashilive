@@ -1,0 +1,35 @@
+OBJECT Table 50057 Table for Report Heading
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/26/10;
+    Time=11:47:17;
+    Version List=TBI1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Journal Template Name;Code10       ;TableRelation="Gen. Journal Template";
+                                                   CaptionML=ENU=Journal Template Name }
+    { 2   ;   ;Journal Batch Name  ;Code10        ;TableRelation="Gen. Journal Batch".Name WHERE (Journal Template Name=FIELD(Journal Template Name));
+                                                   CaptionML=ENU=Journal Batch Name }
+    { 3   ;   ;Report Heading      ;Text100        }
+    { 4   ;   ;Company Name        ;Text150       ;TableRelation=Company.Name }
+  }
+  KEYS
+  {
+    {    ;Journal Template Name,Company Name      ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

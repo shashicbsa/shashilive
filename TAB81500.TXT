@@ -1,0 +1,32 @@
+OBJECT Table 81500 Permission Set New
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/25/15;
+    Time=18:53:14;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Role ID             ;Code50         }
+    { 2   ;   ;Name                ;Text50         }
+  }
+  KEYS
+  {
+    {    ;Role ID                                 ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

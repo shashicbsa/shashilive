@@ -1,0 +1,41 @@
+OBJECT Table 50020 G-Port In-Transit Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=05/18/09;
+    Time=10:07:36;
+    Version List=Ginv1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer        }
+    { 2   ;   ;Line No.            ;Integer       ;Description=A Sequential No Like 1,2,3,µµ. }
+    { 3   ;   ;Document No.        ;Code20        ;Description=An Identification No from G-PORT ( Material Receiving Event in G-PORT through Interface PYMAC-->NAV) }
+    { 4   ;   ;Posting Date        ;Date          ;Description=Date of Receiving Material ( The Date On Which PYMAC Send the Material Reciving Info To G-PORT) }
+    { 5   ;   ;Commodity Code      ;Code20        ;Description=Code Of Commodity }
+    { 6   ;   ;Debit Amount        ;Decimal       ;Description=The Amount of Material Received.The Length 20 is Including 2 Decimal Place) }
+    { 7   ;   ;Credit Amount       ;Decimal       ;Description=The Amount of Material In-Transit.The Length 20 is Including 2 Decimal Place) }
+    { 8   ;   ;Shop Code           ;Code20        ;Description=Division Value }
+    { 9   ;   ;Model Code          ;Code20        ;Description=Model Code }
+    { 10  ;   ;Recceive Or Cancel  ;Boolean       ;Description=[1=Receive;0=Cancel] }
+    { 11  ;   ;Narration           ;Text50        ;Description=Any Comment text From G-PORT }
+  }
+  KEYS
+  {
+    {    ;Document No.,Line No.                   ;Clustered=Yes }
+    { No ;                                        ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

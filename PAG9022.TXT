@@ -1,0 +1,394 @@
+OBJECT Page 9022 Small Business Role Center
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Small Business Role Center;
+               ENA=Small Business Role Centre];
+    PageType=RoleCenter;
+    ActionList=ACTIONS
+    {
+      { 1       ;    ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 4       ;1   ;ActionGroup;
+                      CaptionML=[ENU=New;
+                                 ENA=New] }
+      { 52      ;2   ;Action    ;
+                      CaptionML=[ENU=Sales Quote;
+                                 ENA=Sales Quote];
+                      ToolTipML=[ENU=Create a new sales quote;
+                                 ENA=Create a new sales quote];
+                      RunObject=Page 1324;
+                      Image=Quote;
+                      RunPageMode=Create }
+      { 2       ;2   ;Action    ;
+                      CaptionML=[ENU=Sales Invoice;
+                                 ENA=Sales Invoice];
+                      ToolTipML=[ENU=Create a new sales invoice.;
+                                 ENA=Create a new sales invoice.];
+                      RunObject=Page 1304;
+                      Image=NewInvoice;
+                      RunPageMode=Create }
+      { 32      ;2   ;Action    ;
+                      CaptionML=[ENU=Purchase Invoice;
+                                 ENA=Purchase Invoice];
+                      ToolTipML=[ENU=Create a new purchase invoice.;
+                                 ENA=Create a new purchase invoice.];
+                      RunObject=Page 1354;
+                      Image=NewInvoice;
+                      RunPageMode=Create }
+      { 58      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Payments;
+                                 ENA=Payments] }
+      { 59      ;2   ;Action    ;
+                      CaptionML=[ENU=Payment Registration;
+                                 ENA=Payment Registration];
+                      ToolTipML=[ENU=Process your customers' payments by matching amounts received on your bank account with the related unpaid sales invoices and then post and apply the payments to your books.;
+                                 ENA=Process your customers' payments by matching amounts received on your bank account with the related unpaid sales invoices and then post and apply the payments to your books.];
+                      RunObject=Page 981;
+                      Image=Payment }
+      { 21      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Setup;
+                                 ENA=Setup];
+                      Image=Setup }
+      { 27      ;2   ;ActionGroup;
+                      CaptionML=[ENU=Setup;
+                                 ENA=Setup];
+                      Image=Setup }
+      { 49      ;3   ;Action    ;
+                      CaptionML=[ENU=Company Information;
+                                 ENA=Company Information];
+                      ToolTipML=[ENU=Enter the company name, address, and bank information that will be inserted on your business documents.;
+                                 ENA=Enter the company name, address, and bank information that will be inserted on your business documents.];
+                      RunObject=Page 1352;
+                      Image=CompanyInformation }
+      { 22      ;3   ;Action    ;
+                      CaptionML=[ENU=General Ledger Setup;
+                                 ENA=General Ledger Setup];
+                      ToolTipML=[ENU=Define your general accounting policies, such as the allowed posting period and how payments are processed. Set up your default dimensions for financial analysis.;
+                                 ENA=Define your general accounting policies, such as the allowed posting period and how payments are processed. Set up your default dimensions for financial analysis.];
+                      RunObject=Page 1348;
+                      Image=JournalSetup }
+      { 31      ;3   ;Action    ;
+                      CaptionML=[ENU=Sales & Receivables Setup;
+                                 ENA=Sales & Receivables Setup];
+                      ToolTipML=[ENU=Define your general policies for sales invoicing and returns, such as when to show credit and stockout warnings and how to post sales discounts. Set up your number series for creating customers and different sales documents.;
+                                 ENA=Define your general policies for sales invoicing and returns, such as when to show credit and stockout warnings and how to post sales discounts. Set up your number series for creating customers and different sales documents.];
+                      RunObject=Page 1350;
+                      Image=ReceivablesPayablesSetup }
+      { 46      ;3   ;Action    ;
+                      CaptionML=[ENU=Purchases & Payables Setup;
+                                 ENA=Purchases & Payables Setup];
+                      ToolTipML=[ENU=Define your general policies for purchase invoicing and returns, such as whether to require vendor invoice numbers and how to post purchase discounts. Set up your number series for creating vendors and different purchase documents.;
+                                 ENA=Define your general policies for purchase invoicing and returns, such as whether to require vendor invoice numbers and how to post purchase discounts. Set up your number series for creating vendors and different purchase documents.];
+                      RunObject=Page 1349;
+                      Image=Purchase }
+      { 47      ;3   ;Action    ;
+                      CaptionML=[ENU=Inventory Setup;
+                                 ENA=Inventory Setup];
+                      ToolTipML=[ENU=Define your general inventory policies, such as whether to allow negative inventory and how to post and adjust item costs. Set up your number series for creating new inventory items or services.;
+                                 ENA=Define your general inventory policies, such as whether to allow negative inventory and how to post and adjust item costs. Set up your number series for creating new inventory items or services.];
+                      RunObject=Page 1351;
+                      Image=InventorySetup }
+      { 60      ;3   ;Action    ;
+                      CaptionML=[ENU=Fixed Assets Setup;
+                                 ENA=Fixed Assets Setup];
+                      ToolTipML=[ENU=Define your accounting policies for fixed assets, such as the allowed posting period and whether to allow posting to main assets. Set up your number series for creating new fixed assets.;
+                                 ENA=Define your accounting policies for fixed assets, such as the allowed posting period and whether to allow posting to main assets. Set up your number series for creating new fixed assets.];
+                      RunObject=Page 1353;
+                      Image=FixedAssets }
+      { 61      ;3   ;Action    ;
+                      CaptionML=[ENU=Human Resources Setup;
+                                 ENA=Human Resources Setup];
+                      ToolTipML=[ENU=Set up your number series for creating new employee cards and define if employment time is measured by days or hours.;
+                                 ENA=Set up your number series for creating new employee cards and define if employment time is measured by days or hours.];
+                      RunObject=Page 5233;
+                      Image=HRSetup }
+      { 65      ;1   ;ActionGroup;
+                      Name=Help;
+                      CaptionML=[ENU=Help;
+                                 ENA=Help] }
+      { 54      ;2   ;Action    ;
+                      CaptionML=[ENU=Show/Hide Getting Started;
+                                 ENA=Show/Hide Getting Started];
+                      RunObject=Codeunit 1321;
+                      Image=Help }
+      { 8       ;0   ;ActionContainer;
+                      ActionContainerType=HomeItems }
+      { 14      ;1   ;Action    ;
+                      CaptionML=[ENU=Customers;
+                                 ENA=Customers];
+                      RunObject=Page 1301 }
+      { 6       ;1   ;Action    ;
+                      CaptionML=[ENU=Vendors;
+                                 ENA=Vendors];
+                      RunObject=Page 1331 }
+      { 15      ;1   ;Action    ;
+                      CaptionML=[ENU=Items;
+                                 ENA=Items];
+                      RunObject=Page 1303 }
+      { 5       ;1   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Invoices;
+                                 ENA=Posted Sales Invoices];
+                      RunObject=Page 1309 }
+      { 69      ;1   ;Action    ;
+                      Name=PostedPurchaseInvoices;
+                      CaptionML=[ENU=Posted Purchase Invoices;
+                                 ENA=Posted Purchase Invoices];
+                      RunObject=Page 1359 }
+      { 38      ;    ;ActionContainer;
+                      ActionContainerType=ActivityButtons }
+      { 39      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Bookkeeping;
+                                 ENA=Bookkeeping];
+                      Image=Journals }
+      { 37      ;2   ;Action    ;
+                      CaptionML=[ENU=Chart of Accounts;
+                                 ENA=Chart of Accounts];
+                      RunObject=Page 16 }
+      { 62      ;2   ;Action    ;
+                      CaptionML=[ENU=G/L Budgets;
+                                 ENA=G/L Budgets];
+                      RunObject=Page 121 }
+      { 63      ;2   ;Action    ;
+                      CaptionML=[ENU=Fixed Assets;
+                                 ENA=Fixed Assets];
+                      RunObject=Page 5601 }
+      { 64      ;2   ;Action    ;
+                      CaptionML=[ENU=Employees;
+                                 ENA=Employees];
+                      RunObject=Page 5201 }
+      { 40      ;2   ;Action    ;
+                      CaptionML=[ENU=General Journals;
+                                 ENA=General Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(General),
+                                        Recurring=CONST(No));
+                      Image=Journal }
+      { 43      ;2   ;Action    ;
+                      CaptionML=[ENU=Cash Receipt Journals;
+                                 ENA=Cash Receipt Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Cash Receipts),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 42      ;2   ;Action    ;
+                      CaptionML=[ENU=Payment Journals;
+                                 ENA=Payment Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Payments),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 57      ;2   ;Action    ;
+                      CaptionML=[ENU=Sales Invoices;
+                                 ENA=Sales Invoices];
+                      RunObject=Page 1306 }
+      { 56      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Invoices;
+                                 ENA=Posted Sales Invoices];
+                      RunObject=Page 1309 }
+      { 29      ;2   ;Action    ;
+                      CaptionML=[ENU=Sales Credit Memos;
+                                 ENA=Sales CR/Adj Notes];
+                      RunObject=Page 1317 }
+      { 20      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Credit Memos;
+                                 ENA=Posted Sales CR/Adj Notes];
+                      RunObject=Page 1321 }
+      { 25      ;2   ;Action    ;
+                      CaptionML=[ENU=Reminders;
+                                 ENA=Reminders];
+                      RunObject=Page 436;
+                      Image=Reminder }
+      { 30      ;2   ;Action    ;
+                      CaptionML=[ENU=Issued Reminders;
+                                 ENA=Issued Reminders];
+                      RunObject=Page 440;
+                      Image=OrderReminder }
+      { 24      ;2   ;Action    ;
+                      CaptionML=[ENU=Finance Charge Memos;
+                                 ENA=Finance Charge Memos];
+                      RunObject=Page 448;
+                      Image=FinChargeMemo }
+      { 26      ;2   ;Action    ;
+                      CaptionML=[ENU=Issued Finance Charge Memos;
+                                 ENA=Issued Finance Charge Memos];
+                      RunObject=Page 452;
+                      Image=PostedMemo }
+      { 34      ;2   ;Action    ;
+                      Name=<Page Mini Purchase Invoices>;
+                      CaptionML=[ENU=Purchase Invoices;
+                                 ENA=Purchase Invoices];
+                      RunObject=Page 1356 }
+      { 18      ;2   ;Action    ;
+                      Name=<Page Mini Posted Purchase Invoices>;
+                      CaptionML=[ENU=Posted Purchase Invoices;
+                                 ENA=Posted Purchase Invoices];
+                      RunObject=Page 1359 }
+      { 53      ;2   ;Action    ;
+                      Name=<Page Mini Purchase Credit Memos>;
+                      CaptionML=[ENU=Purchase Credit Memos;
+                                 ENA=Purchase CR/Adj Notes];
+                      RunObject=Page 1367 }
+      { 19      ;2   ;Action    ;
+                      Name=<Page Mini Posted Purchase Credit Memos>;
+                      CaptionML=[ENU=Posted Purchase Credit Memos;
+                                 ENA=Posted Purchase CR/Adj Notes];
+                      RunObject=Page 1371 }
+      { 70      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Analysis;
+                                 ENA=Analysis];
+                      Image=AnalysisView }
+      { 71      ;2   ;Action    ;
+                      CaptionML=[ENU=Account Schedules;
+                                 ENA=Account Schedules];
+                      RunObject=Page 103 }
+      { 72      ;2   ;Action    ;
+                      CaptionML=[ENU=Sales Analysis Reports;
+                                 ENA=Sales Analysis Reports];
+                      RunObject=Page 9376 }
+      { 73      ;2   ;Action    ;
+                      CaptionML=[ENU=Purchase Analysis Reports;
+                                 ENA=Purchase Analysis Reports];
+                      RunObject=Page 9375 }
+      { 74      ;2   ;Action    ;
+                      CaptionML=[ENU=Inventory Analysis Reports;
+                                 ENA=Inventory Analysis Reports];
+                      RunObject=Page 9377 }
+      { 79      ;2   ;Action    ;
+                      CaptionML=[ENU=VAT Reports;
+                                 ENA=GST Reports];
+                      RunObject=Page 744 }
+      { 75      ;2   ;Action    ;
+                      CaptionML=[ENU=Cash Flow Forecasts;
+                                 ENA=Cash Flow Forecasts];
+                      RunObject=Page 849 }
+      { 76      ;2   ;Action    ;
+                      CaptionML=[ENU=Chart of Cash Flow Accounts;
+                                 ENA=Chart of Cash Flow Accounts];
+                      RunObject=Page 851 }
+      { 77      ;2   ;Action    ;
+                      CaptionML=[ENU=Cash Flow Manual Revenues;
+                                 ENA=Cash Flow Manual Revenues];
+                      RunObject=Page 857 }
+      { 78      ;2   ;Action    ;
+                      CaptionML=[ENU=Cash Flow Manual Expenses;
+                                 ENA=Cash Flow Manual Expenses];
+                      RunObject=Page 859 }
+      { 23      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Bank & Payments;
+                                 ENA=Bank & Payments];
+                      Image=Bank }
+      { 17      ;2   ;Action    ;
+                      CaptionML=[ENU=Bank Accounts;
+                                 ENA=Bank Accounts];
+                      RunObject=Page 371;
+                      Image=BankAccount }
+      { 28      ;2   ;Action    ;
+                      CaptionML=[ENU=Bank Acc. Reconciliations;
+                                 ENA=Bank Acc. Reconciliations];
+                      RunObject=Page 388;
+                      Image=BankAccountRec }
+      { 33      ;2   ;Action    ;
+                      CaptionML=[ENU=Bank Acc. Statements;
+                                 ENA=Bank Acc. Statements];
+                      RunObject=Page 389;
+                      Image=BankAccountStatement }
+      { 3       ;2   ;Action    ;
+                      CaptionML=[ENU=General Journals;
+                                 ENA=General Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(General),
+                                        Recurring=CONST(No));
+                      Image=Journal }
+      { 36      ;2   ;Action    ;
+                      CaptionML=[ENU=Payment Journals;
+                                 ENA=Payment Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Payments),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 41      ;2   ;Action    ;
+                      CaptionML=[ENU=Cash Receipt Journals;
+                                 ENA=Cash Receipt Journals];
+                      RunObject=Page 251;
+                      RunPageView=WHERE(Template Type=CONST(Cash Receipts),
+                                        Recurring=CONST(No));
+                      Image=Journals }
+      { 44      ;2   ;Action    ;
+                      CaptionML=[ENU=Currencies;
+                                 ENA=Currencies];
+                      RunObject=Page 5;
+                      Image=Currency }
+      { 45      ;2   ;Action    ;
+                      CaptionML=[ENU=Direct Debit Collections;
+                                 ENA=Direct Debit Collections];
+                      RunObject=Page 1207 }
+      { 35      ;1   ;ActionGroup;
+                      CaptionML=[ENU=VAT Reporting;
+                                 ENA=GST Reporting];
+                      Image=Statistics }
+      { 11      ;2   ;Action    ;
+                      CaptionML=[ENU=VAT Statements;
+                                 ENA=GST Statements];
+                      RunObject=Page 320 }
+      { 80      ;2   ;Action    ;
+                      CaptionML=[ENU=Instrastat Journals;
+                                 ENA=Instrastat Journals];
+                      RunObject=Page 327 }
+      { 51      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Invoices;
+                                 ENA=Posted Sales Invoices];
+                      RunObject=Page 1309 }
+      { 48      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Sales Credit Memos;
+                                 ENA=Posted Sales CR/Adj Notes];
+                      RunObject=Page 1321 }
+      { 50      ;2   ;Action    ;
+                      CaptionML=[ENU=Posted Purchase Invoices;
+                                 ENA=Posted Purchase Invoices];
+                      RunObject=Page 146 }
+    }
+  }
+  CONTROLS
+  {
+    { 13  ;0   ;Container ;
+                ContainerType=RoleCenterArea }
+
+    { 12  ;1   ;Group      }
+
+    { 16  ;2   ;Part      ;
+                PagePartID=Page1310;
+                PartType=Page }
+
+    { 7   ;2   ;Part      ;
+                CaptionML=[ENU=Favorite Customers;
+                           ENA=Favorite Customers];
+                PagePartID=Page9150;
+                PartType=Page }
+
+    { 10  ;1   ;Group     ;
+                GroupType=Group }
+
+    { 55  ;2   ;Part      ;
+                PagePartID=Page1390;
+                PartType=Page }
+
+    { 9   ;2   ;Part      ;
+                PagePartID=Page1393;
+                PartType=Page }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

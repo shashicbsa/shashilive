@@ -1,0 +1,3260 @@
+OBJECT Report 25 Account Schedule
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/15;
+    Time=12:45:42;
+    Modified=Yes;
+    Version List=NAVW17.10.00.36035,NAVAPAC7.10.00.36035;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Account Schedule;
+               ENA=Account Schedule];
+    OnPreReport=BEGIN
+                  TransferValues;
+                  UpdateFilters;
+                  InitAccSched;
+
+                  SalesSetup.GET;
+                    i:=1;
+                    Comp_Info.GET;
+                END;
+
+  }
+  DATASET
+  {
+    { 2151;    ;DataItem;AccScheduleName     ;
+               DataItemTable=Table84;
+               DataItemTableView=SORTING(Name);
+               OnPreDataItem=BEGIN
+                               SETRANGE(Name,AccSchedName);
+
+                               PageGroupNo := 1;
+                               NextPageGroupNo := 1;
+
+
+
+                               //==========================AccScheduleName - Header 1  -OnPreSection
+
+                               IF Typee THEN BEGIN
+                                 IF ExportToExcel THEN
+                                   BEGIN
+                                     RowNo += 1;
+                                     ColNo := 1;
+                                     {
+                                     ExcelBuf.AddColumn(RowNo,ColNo,'Description',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Budget',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Actual',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Increase(Decrease)',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'%',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Budget',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Actual',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                      ExcelBuf.AddColumn(RowNo,ColNo,'Increase(Decrease)',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                     ExcelBuf.AddColumn(RowNo,ColNo,'%',TRUE,FALSE,'@');
+                                     }
+                                   END;
+                               END ELSE  BEGIN
+                               //  CurrReport.SHOWOUTPUT(FALSE);
+                               V_ASN_Header1:=FALSE;
+                               END;
+
+
+
+                               //==========================AccScheduleName - Header 2  -OnPreSection
+
+
+                               IF NOT Typee THEN BEGIN
+                                 IF ExportToExcel THEN
+                                   BEGIN
+                                     RowNo += 1;
+                                     ColNo := 1;
+                                     {
+                                     EnterCell(RowNo,ColNo,'Description',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                     EnterCell(RowNo,ColNo,'CURRENT MONTH',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                     EnterCell(RowNo,ColNo,'LAST MONTH',TRUE,FALSE,'@');
+                                     ColNo += 1;
+                                     EnterCell(RowNo,ColNo,'INCREASE(DECREASE)',TRUE,FALSE,'@');
+                                     }
+                                   END;
+                               END ELSE
+                               //  CurrReport.SHOWOUTPUT(FALSE);
+                                 V_ASN_Header2:=FALSE;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  CurrReport.PAGENO := 1;
+                                  GLSetup.GET;
+                                  IF "Analysis View Name" <> '' THEN BEGIN
+                                    AnalysisView.GET("Analysis View Name");
+                                  END ELSE BEGIN
+                                    AnalysisView.INIT;
+                                    AnalysisView."Dimension 1 Code" := GLSetup."Global Dimension 1 Code";
+                                    AnalysisView."Dimension 2 Code" := GLSetup."Global Dimension 2 Code";
+                                  END;
+
+                                  IF UseAmtsInAddCurr THEN
+                                    HeaderText := STRSUBSTNO(Text003,GLSetup."Additional Reporting Currency")
+                                  ELSE
+                                    IF GLSetup."LCY Code" <> '' THEN
+                                      HeaderText := STRSUBSTNO(Text003,GLSetup."LCY Code")
+                                    ELSE
+                                      HeaderText := '';
+                                END;
+                                 }
+
+    { 1102159009;1;Column;V_ASN_Header2      ;
+               SourceExpr=V_ASN_Header2 }
+
+    { 1102159012;1;Column;Comp_Info_Name     ;
+               SourceExpr=Comp_Info.Name }
+
+    { 1102159008;1;Column;V_ASN_Header1      ;
+               SourceExpr=V_ASN_Header1 }
+
+    { 1102159006;1;Column;Typee              ;
+               SourceExpr=Typee }
+
+    { 1102159013;1;Column;GLBudgetFilter     ;
+               SourceExpr=GLBudgetFilter }
+
+    { 93  ;1   ;Column  ;AccScheduleNameName ;
+               SourceExpr=Name }
+
+    { 6714;1   ;DataItem;Heading             ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1)) }
+
+    { 70  ;2   ;Column  ;ColumnLayoutName    ;
+               SourceExpr=ColumnLayoutName }
+
+    { 69  ;2   ;Column  ;FiscalStartDate     ;
+               SourceExpr=FORMAT(FiscalStartDate) }
+
+    { 66  ;2   ;Column  ;PeriodText          ;
+               SourceExpr=PeriodText }
+
+    { 67  ;2   ;Column  ;CompanyName         ;
+               SourceExpr=COMPANYNAME }
+
+    { 1   ;2   ;Column  ;AccScheduleNameDesc ;
+               SourceExpr=AccScheduleName.Description }
+
+    { 110 ;2   ;Column  ;AnalysisViewCode    ;
+               SourceExpr=AnalysisView.Code }
+
+    { 112 ;2   ;Column  ;AnalysisViewName    ;
+               SourceExpr=AnalysisView.Name }
+
+    { 2   ;2   ;Column  ;HeaderText          ;
+               SourceExpr=HeaderText }
+
+    { 10  ;2   ;Column  ;TableAccSchedLineFilter;
+               SourceExpr="Acc. Schedule Line".TABLECAPTION + ': ' + AccSchedLineFilter }
+
+    { 7   ;2   ;Column  ;AccSchedLineFilter  ;
+               SourceExpr=AccSchedLineFilter }
+
+    { 14  ;2   ;Column  ;ShowAccSchedSetup   ;
+               SourceExpr=ShowAccSchedSetup }
+
+    { 73  ;2   ;Column  ;ColumnLayoutNameCaption;
+               SourceExpr=ColumnLayoutNameCaptionLbl }
+
+    { 71  ;2   ;Column  ;AccScheduleNameCaption;
+               SourceExpr=AccScheduleNameCaptionLbl }
+
+    { 72  ;2   ;Column  ;FiscalStartDateCaption;
+               SourceExpr=FiscalStartDateCaptionLbl }
+
+    { 74  ;2   ;Column  ;PeriodTextCaption   ;
+               SourceExpr=PeriodTextCaptionLbl }
+
+    { 64  ;2   ;Column  ;CurrReportPageNoCaption;
+               SourceExpr=CurrReportPageNoCaptionLbl }
+
+    { 65  ;2   ;Column  ;AccountScheduleCaption;
+               SourceExpr=AccountScheduleCaptionLbl }
+
+    { 111 ;2   ;Column  ;AnalysisViewCodeCaption;
+               SourceExpr=AnalysisViewCodeCaptionLbl }
+
+    { 6684;2   ;DataItem;AccSchedLineSpec    ;
+               DataItemTable=Table85;
+               DataItemTableView=SORTING(Schedule Name,Line No.);
+               OnPreDataItem=BEGIN
+                               IF NOT ShowAccSchedSetup THEN
+                                 CurrReport.BREAK;
+
+                               NextPageGroupNo += 1;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF "Row No." <> '' THEN
+                                    LineShadowed := NOT LineShadowed
+                                  ELSE
+                                    LineShadowed := FALSE;
+                                END;
+
+               DataItemLinkReference=AccScheduleName;
+               DataItemLink=Schedule Name=FIELD(Name) }
+
+    { 85  ;3   ;Column  ;AccSchedLineSpecShow;
+               SourceExpr=Show }
+
+    { 81  ;3   ;Column  ;AccSchedLineSpecTotalingType;
+               SourceExpr="Totaling Type" }
+
+    { 79  ;3   ;Column  ;AccSchedLineSpecTotaling;
+               SourceExpr=Totaling }
+
+    { 77  ;3   ;Column  ;AccSchedLineSpecDesc;
+               SourceExpr=Description }
+
+    { 75  ;3   ;Column  ;AccSchedLineSpecRowNo;
+               SourceExpr="Row No." }
+
+    { 3   ;3   ;Column  ;AccSchedLineSpecRowType;
+               SourceExpr="Row Type" }
+
+    { 5   ;3   ;Column  ;AccSchedLineSpecAmountType;
+               SourceExpr="Amount Type" }
+
+    { 107 ;3   ;Column  ;BoldFormat          ;
+               SourceExpr=FORMAT(Bold) }
+
+    { 108 ;3   ;Column  ;ItalicFformat       ;
+               SourceExpr=FORMAT(Italic) }
+
+    { 109 ;3   ;Column  ;UnderlineFormat     ;
+               SourceExpr=FORMAT(Underline) }
+
+    { 113 ;3   ;Column  ;ShowOppSignFormat   ;
+               SourceExpr=FORMAT("Show Opposite Sign") }
+
+    { 114 ;3   ;Column  ;NewPageFormat       ;
+               SourceExpr=FORMAT("New Page") }
+
+    { 87  ;3   ;Column  ;AnalysisViewDim1Code;
+               SourceExpr=AnalysisView."Dimension 1 Code" }
+
+    { 92  ;3   ;Column  ;AccSchedLineSpecDim1Totaling;
+               SourceExpr="Dimension 1 Totaling" }
+
+    { 89  ;3   ;Column  ;AnalysisViewDim2Code;
+               SourceExpr=AnalysisView."Dimension 2 Code" }
+
+    { 94  ;3   ;Column  ;AccSchedLineSpecDim2Totaling;
+               SourceExpr="Dimension 2 Totaling" }
+
+    { 90  ;3   ;Column  ;AnalysisViewDim3Code;
+               SourceExpr=AnalysisView."Dimension 3 Code" }
+
+    { 104 ;3   ;Column  ;AccSchedLineSpecDim3Totaling;
+               SourceExpr="Dimension 3 Totaling" }
+
+    { 91  ;3   ;Column  ;AnalysisViewDim4Code;
+               SourceExpr=AnalysisView."Dimension 4 Code" }
+
+    { 106 ;3   ;Column  ;AccSchedLineSpecDim4Totaling;
+               SourceExpr="Dimension 4 Totaling" }
+
+    { 105 ;3   ;Column  ;AccSchedLineSpecScheduleName;
+               SourceExpr="Schedule Name" }
+
+    { 9   ;3   ;Column  ;SetupLineShadowed   ;
+               SourceExpr=LineShadowed }
+
+    { 102 ;3   ;Column  ;ShOppositeSignCaption;
+               SourceExpr=ShOppositeSignCaptionLbl }
+
+    { 100 ;3   ;Column  ;UnderlineCaption    ;
+               SourceExpr=UnderlineCaptionLbl }
+
+    { 98  ;3   ;Column  ;ItalicCaption       ;
+               SourceExpr=ItalicCaptionLbl }
+
+    { 96  ;3   ;Column  ;BoldCaption         ;
+               SourceExpr=BoldCaptionLbl }
+
+    { 86  ;3   ;Column  ;ShowCaption         ;
+               SourceExpr=ShowCaptionLbl }
+
+    { 84  ;3   ;Column  ;NewPageCaption      ;
+               SourceExpr=NewPageCaptionLbl }
+
+    { 82  ;3   ;Column  ;TotalingTypeCaption ;
+               SourceExpr=TotalingTypeCaptionLbl }
+
+    { 80  ;3   ;Column  ;TotalingCaption     ;
+               SourceExpr=TotalingCaptionLbl }
+
+    { 88  ;3   ;Column  ;AnalysisViewDim1CodeCaption;
+               SourceExpr=AnalysisViewDim1CodeCaptionLbl }
+
+    { 4   ;3   ;Column  ;RowTypeCaption      ;
+               SourceExpr=RowTypeCaptionLbl }
+
+    { 6   ;3   ;Column  ;AmounttTypeCaption  ;
+               SourceExpr=AmounttTypeCaptionLbl }
+
+    { 1856;2   ;DataItem;PageBreak           ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1));
+               OnPreDataItem=BEGIN
+                               IF NOT ShowAccSchedSetup THEN
+                                 CurrReport.BREAK;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  CurrReport.NEWPAGE;
+                                END;
+                                 }
+
+    { 7769;2   ;DataItem;                    ;
+               DataItemTable=Table85;
+               DataItemTableView=SORTING(Schedule Name,Line No.);
+               PrintOnlyIfDetail=Yes;
+               OnPreDataItem=BEGIN
+                               PageGroupNo := NextPageGroupNo;
+
+                               SETFILTER("Date Filter",DateFilter);
+                               SETFILTER("G/L Budget Filter",GLBudgetFilter);
+                               SETFILTER("Cost Budget Filter",CostBudgetFilter);
+                               SETFILTER("Business Unit Filter",BusinessUnitFilter);
+                               SETFILTER("Dimension 1 Filter",Dim1Filter);
+                               SETFILTER("Dimension 2 Filter",Dim2Filter);
+                               SETFILTER("Dimension 3 Filter",Dim3Filter);
+                               SETFILTER("Dimension 4 Filter",Dim4Filter);
+                               SETFILTER("Cost Center Filter",CostCenterFilter);
+                               SETFILTER("Cost Object Filter",CostObjectFilter);
+                               SETFILTER("Cash Flow Forecast Filter",CashFlowFilter);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF (Show = Show::No) OR NOT ShowLine(Bold,Italic) THEN
+                                    CurrReport.SKIP;
+
+
+
+                                  Bold_control := Bold;
+                                  Italic_control := Italic;
+                                  Underline_control := Underline;
+                                  PageGroupNo := NextPageGroupNo;
+                                  IF "New Page" THEN
+                                    NextPageGroupNo := PageGroupNo + 1;
+
+                                  IF "Row No." <> '' THEN
+                                    LineShadowed := NOT LineShadowed
+                                  ELSE
+                                    LineShadowed := FALSE;
+                                END;
+
+               DataItemLinkReference=AccScheduleName;
+               DataItemLink=Schedule Name=FIELD(Name) }
+
+    { 18  ;3   ;Column  ;NextPageGroupNo     ;
+               OptionCaptionML=[ENU=None,Division by Zero,Period Error,Both;
+                                ENA=None,Division by Zero,Period Error,Both];
+               SourceExpr=NextPageGroupNo }
+
+    { 30  ;3   ;Column  ;AccScheduleLineDesc ;
+               SourceExpr=Description }
+
+    { 29  ;3   ;Column  ;AccScheduleLineRowNo;
+               SourceExpr="Row No." }
+
+    { 12  ;3   ;Column  ;AccScheduleLineLineNo;
+               SourceExpr="Line No." }
+
+    { 28  ;3   ;Column  ;BoldControl         ;
+               SourceExpr=Bold_control }
+
+    { 27  ;3   ;Column  ;ItalicControl       ;
+               SourceExpr=Italic_control }
+
+    { 20  ;3   ;Column  ;UnderlineControls   ;
+               SourceExpr=Underline_control }
+
+    { 13  ;3   ;Column  ;LineShadowed        ;
+               SourceExpr=LineShadowed }
+
+    { 5937;3   ;DataItem;                    ;
+               DataItemTable=Table334;
+               OnPreDataItem=BEGIN
+                               SETRANGE("Column Layout Name",ColumnLayoutName);
+                               LineSkipped := TRUE;
+
+                               //deepa
+
+                               V_HeaderText:=GLBudgetFilter+',Actual,INCREASE(DECREASE),%,'+GLBudgetFilter+',Actual,INCREASE(DECREASE),%';
+                                i:=1;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  Header:='';
+
+
+                                  //Message('i=  '+format(i));
+                                  IF i<=8 THEN  BEGIN
+                                  V_Text:=SELECTSTR(i,V_HeaderText) ;
+                                   i+=1;
+
+                                  END;
+
+
+
+
+                                  //Message(format(V_Text));
+
+                                  IF Show = Show::Never THEN
+                                  BEGIN
+                                  //mESSAGE(fORMAT("Column Layout"."Column Header")+'   '+format("Column Layout".Show));
+                                  CurrReport.SKIP;
+                                  END;
+
+                                  //Message('yes...');
+
+                                  //IF  ("Column Layout"."Column Header"='CURRENT MONTH') OR ("Column Layout"."Column Header"='LAST MONTH') OR ("Column Layout"."Column Header"='INCREASE(DECREASE)') THEN
+                                    //BEGIN
+                                  //EVALUATE(V_DynamicHeader,"Column Layout"."Column Header");
+                                  Header := "Column Header";
+                                  //END;
+
+                                  RoundingHeader := '';
+
+                                  IF "Rounding Factor" IN ["Rounding Factor"::"1000","Rounding Factor"::"1000000"] THEN BEGIN
+                                    HasRounding := TRUE;
+                                    CASE "Rounding Factor" OF
+
+                                      "Rounding Factor"::"1000":
+                                        RoundingHeader := Text000;
+                                      "Rounding Factor"::"1000000":
+                                        RoundingHeader := Text001;
+                                    END;
+                                  END;
+
+                                  ColumnValuesAsText := '';
+
+                                  ColumnValuesDisplayed := AccSchedManagement.CalcCell("Acc. Schedule Line","Column Layout",UseAmtsInAddCurr,IncludeSimulation);
+                                  IF AccSchedManagement.GetDivisionError THEN BEGIN
+                                    IF ShowError IN [ShowError::"Division by Zero",ShowError::Both] THEN
+                                      ColumnValuesAsText := Text002;
+                                  END ELSE
+                                    IF AccSchedManagement.GetPeriodError THEN BEGIN
+                                      IF ShowError IN [ShowError::"Period Error",ShowError::Both] THEN
+                                        ColumnValuesAsText := Text004;
+                                    END ELSE BEGIN
+                                      ColumnValuesAsText :=
+                                        AccSchedManagement.FormatCellAsText("Column Layout",ColumnValuesDisplayed);
+
+                                      IF "Acc. Schedule Line"."Totaling Type" = "Acc. Schedule Line"."Totaling Type"::Formula THEN
+                                        CASE "Acc. Schedule Line".Show OF
+                                          "Acc. Schedule Line".Show::"When Positive Balance":
+                                            IF ColumnValuesDisplayed < 0 THEN
+                                              ColumnValuesAsText := '';
+                                          "Acc. Schedule Line".Show::"When Negative Balance":
+                                            IF ColumnValuesDisplayed > 0 THEN
+                                              ColumnValuesAsText := '';
+                                          "Acc. Schedule Line".Show::"If Any Column Not Zero":
+                                            IF ColumnValuesDisplayed = 0 THEN
+                                              ColumnValuesAsText := '';
+                                        END;
+                                    END;
+
+
+                                  IF (ColumnValuesAsText <> '') OR ("Acc. Schedule Line".Show = "Acc. Schedule Line".Show::Yes) THEN
+                                    LineSkipped := FALSE;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                IF LineSkipped THEN
+                                  LineShadowed := NOT LineShadowed;
+                              END;
+                               }
+
+    { 15  ;4   ;Column  ;ColumnNo            ;
+               SourceExpr="Column No." }
+
+    { 11  ;4   ;Column  ;Header              ;
+               SourceExpr=Header }
+
+    { 17  ;4   ;Column  ;RoundingHeader      ;
+               SourceExpr=RoundingHeader;
+               AutoCalcField=No }
+
+    { 1102159004;4;Column;ColumnHeader_ColumnLayout;
+               SourceExpr="Column Layout"."Column Header" }
+
+    { 1102159007;4;Column;V_DynamicHeader    ;
+               SourceExpr=V_DynamicHeader }
+
+    { 43  ;4   ;Column  ;ColumnValuesAsText  ;
+               SourceExpr=ColumnValuesAsText;
+               AutoCalcField=No }
+
+    { 1102159011;4;Column;V_Text             ;
+               SourceExpr=V_Text }
+
+    { 19  ;4   ;Column  ;LineSkipped         ;
+               SourceExpr=LineSkipped }
+
+    { 1102159010;4;Column;V_HeaderText       ;
+               SourceExpr=V_HeaderText }
+
+    { 21  ;4   ;Column  ;LineNo_ColumnLayout ;
+               SourceExpr="Line No." }
+
+    { 1102159005;0;DataItem;                 ;
+               DataItemTable=Table2000000026;
+               DataItemTableView=SORTING(Number)
+                                 WHERE(Number=CONST(1)) }
+
+    { 1102159003;1;Column;BS1_IssueBy        ;
+               SourceExpr=SalesSetup.BS_IssueBy }
+
+    { 1102159001;1;Column;BS_CheckBY         ;
+               SourceExpr=SalesSetup.BS_CheckBY }
+
+    { 1102159002;1;Column;BS_AppBY           ;
+               SourceExpr=SalesSetup.BS_AppBY }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnInit=BEGIN
+               Dim4FilterEnable := TRUE;
+               Dim3FilterEnable := TRUE;
+               Dim2FilterEnable := TRUE;
+               Dim1FilterEnable := TRUE;
+             END;
+
+      OnOpenPage=BEGIN
+                   GLSetup.GET;
+                   TransferValues;
+                   IF AccSchedName <> '' THEN
+                     ValidateAccSchedName;
+                   IF NOT UseHiddenFilters THEN
+                     HiddenFilterEditable := TRUE;
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 28  ;2   ;Group     ;
+                  CaptionML=[ENU=Layout;
+                             ENA=Layout] }
+
+      { 3   ;3   ;Field     ;
+                  Name=AccSchedNam;
+                  Lookup=Yes;
+                  CaptionML=[ENU=Acc. Schedule Name;
+                             ENA=Acc. Schedule Name];
+                  SourceExpr=AccSchedName;
+                  TableRelation="Acc. Schedule Name";
+                  Editable=HiddenFilterEditable;
+                  OnValidate=BEGIN
+                               ValidateAccSchedName
+                             END;
+
+                  OnLookup=BEGIN
+                             EXIT(AccSchedManagement.LookupName(AccSchedName,Text));
+                           END;
+                            }
+
+      { 2   ;3   ;Field     ;
+                  Name=ColumnLayoutNames;
+                  Lookup=Yes;
+                  CaptionML=[ENU=Column Layout Name;
+                             ENA=Column Layout Name];
+                  SourceExpr=ColumnLayoutName;
+                  TableRelation="Column Layout Name".Name;
+                  Editable=HiddenFilterEditable;
+                  OnValidate=BEGIN
+                               IF ColumnLayoutName = '' THEN
+                                 ERROR(Text006);
+                               AccSchedManagement.CheckColumnName(ColumnLayoutName);
+                             END;
+
+                  OnLookup=BEGIN
+                             EXIT(AccSchedManagement.LookupColumnName(ColumnLayoutName,Text));
+                           END;
+                            }
+
+      { 27  ;2   ;Group     ;
+                  CaptionML=[ENU=Filters;
+                             ENA=Filters] }
+
+      { 11  ;3   ;Field     ;
+                  Name=DateFilters;
+                  CaptionML=[ENU=Date Filter;
+                             ENA=Date Filter];
+                  SourceExpr=DateFilter;
+                  Editable=HiddenFilterEditable;
+                  OnValidate=VAR
+                               ApplicationManagement@1001 : Codeunit 1;
+                             BEGIN
+                               IF ApplicationManagement.MakeDateFilter(DateFilter) = 0 THEN;
+                               "Acc. Schedule Line".SETFILTER("Date Filter",DateFilter);
+                               DateFilter := "Acc. Schedule Line".GETFILTER("Date Filter");
+                             END;
+                              }
+
+      { 13  ;3   ;Field     ;
+                  Name=GLBudgetFilter;
+                  CaptionML=[ENU=G/L Budget Filter;
+                             ENA=G/L Budget Filter];
+                  SourceExpr=GLBudgetFilter;
+                  TableRelation="G/L Budget Name".Name;
+                  Editable=HiddenFilterEditable;
+                  OnValidate=BEGIN
+                               "Acc. Schedule Line".SETFILTER("G/L Budget Filter",GLBudgetFilter);
+                               GLBudgetFilter := "Acc. Schedule Line".GETFILTER("G/L Budget Filter");
+                             END;
+                              }
+
+      { 9   ;3   ;Field     ;
+                  Name=CostBudgetFilter;
+                  CaptionML=[ENU=Cost Budget Filter;
+                             ENA=Cost Budget Filter];
+                  SourceExpr=CostBudgetFilter;
+                  TableRelation="Cost Budget Name".Name;
+                  Editable=HiddenFilterEditable;
+                  OnValidate=BEGIN
+                               "Acc. Schedule Line".SETFILTER("Cost Budget Filter",CostBudgetFilter);
+                               CostBudgetFilter := "Acc. Schedule Line".GETFILTER("Cost Budget Filter");
+                             END;
+                              }
+
+      { 23  ;3   ;Field     ;
+                  Name=BusinessUnitFilter;
+                  CaptionML=[ENU=Business Unit Filter;
+                             ENA=Business Unit Filter];
+                  SourceExpr=BusinessUnitFilter;
+                  TableRelation="Business Unit";
+                  Editable=HiddenFilterEditable;
+                  LookupPageID=Business Unit List;
+                  OnValidate=BEGIN
+                               "Acc. Schedule Line".SETFILTER("Business Unit Filter",BusinessUnitFilter);
+                               BusinessUnitFilter := "Acc. Schedule Line".GETFILTER("Business Unit Filter");
+                             END;
+                              }
+
+      { 1500002;3;Field     ;
+                  CaptionML=[ENU=Include Simulation;
+                             ENA=Include Simulation];
+                  SourceExpr=IncludeSimulation }
+
+      { 26  ;2   ;Group     ;
+                  CaptionML=[ENU=Dimension Filters;
+                             ENA=Dimension Filters] }
+
+      { 15  ;3   ;Field     ;
+                  Name=Dim1Filter;
+                  CaptionML=[ENU=Dimension 1 Filter;
+                             ENA=Dimension 1 Filter];
+                  SourceExpr=Dim1Filter;
+                  CaptionClass=FormGetCaptionClass(1);
+                  Enabled=Dim1FilterEnable;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=BEGIN
+                             EXIT(FormLookUpDimFilter(AnalysisView."Dimension 1 Code",Text));
+                           END;
+                            }
+
+      { 17  ;3   ;Field     ;
+                  Name=Dim2Filter;
+                  CaptionML=[ENU=Dimension 2 Filter;
+                             ENA=Dimension 2 Filter];
+                  SourceExpr=Dim2Filter;
+                  CaptionClass=FormGetCaptionClass(2);
+                  Enabled=Dim2FilterEnable;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=BEGIN
+                             EXIT(FormLookUpDimFilter(AnalysisView."Dimension 2 Code",Text));
+                           END;
+                            }
+
+      { 21  ;3   ;Field     ;
+                  Name=Dim3Filter;
+                  CaptionML=[ENU=Dimension 3 Filter;
+                             ENA=Dimension 3 Filter];
+                  SourceExpr=Dim3Filter;
+                  CaptionClass=FormGetCaptionClass(3);
+                  Enabled=Dim3FilterEnable;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=BEGIN
+                             EXIT(FormLookUpDimFilter(AnalysisView."Dimension 3 Code",Text));
+                           END;
+                            }
+
+      { 19  ;3   ;Field     ;
+                  Name=Dim4Filter;
+                  CaptionML=[ENU=Dimension 4 Filter;
+                             ENA=Dimension 4 Filter];
+                  SourceExpr=Dim4Filter;
+                  CaptionClass=FormGetCaptionClass(4);
+                  Enabled=Dim4FilterEnable;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=BEGIN
+                             EXIT(FormLookUpDimFilter(AnalysisView."Dimension 4 Code",Text));
+                           END;
+                            }
+
+      { 1   ;3   ;Field     ;
+                  CaptionML=[ENU=Cost Center Filter;
+                             ENA=Cost Centre Filter];
+                  SourceExpr=CostCenterFilter;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=VAR
+                             CostCenter@1002 : Record 1112;
+                           BEGIN
+                             EXIT(CostCenter.LookupCostCenterFilter(Text));
+                           END;
+                            }
+
+      { 6   ;3   ;Field     ;
+                  CaptionML=[ENU=Cost Object Filter;
+                             ENA=Cost Object Filter];
+                  SourceExpr=CostObjectFilter;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=VAR
+                             CostObject@1002 : Record 1113;
+                           BEGIN
+                             EXIT(CostObject.LookupCostObjectFilter(Text));
+                           END;
+                            }
+
+      { 8   ;3   ;Field     ;
+                  CaptionML=[ENU=Cash Flow Filter;
+                             ENA=Cash Flow Filter];
+                  SourceExpr=CashFlowFilter;
+                  Editable=HiddenFilterEditable;
+                  OnLookup=VAR
+                             CashFlowForecast@1000 : Record 840;
+                           BEGIN
+                             EXIT(CashFlowForecast.LookupCashFlowFilter(Text));
+                           END;
+                            }
+
+      { 25  ;2   ;Group     ;
+                  CaptionML=[ENU=Show;
+                             ENA=Show] }
+
+      { 4   ;3   ;Field     ;
+                  CaptionML=[ENU=Show Error;
+                             ENA=Show Error];
+                  OptionCaptionML=[ENU=None,Division by Zero,Period Error,Both;
+                                   ENA=None,Division by Zero,Period Error,Both];
+                  SourceExpr=ShowError }
+
+      { 5   ;3   ;Field     ;
+                  CaptionML=[ENU=Show Amounts in Add. Reporting Currency;
+                             ENA=Show Amounts in Add. Reporting Currency];
+                  SourceExpr=UseAmtsInAddCurr;
+                  MultiLine=Yes }
+
+      { 7   ;3   ;Field     ;
+                  CaptionML=[ENU=Show Account Schedule Setup;
+                             ENA=Show Account Schedule Setup];
+                  SourceExpr=ShowAccSchedSetup;
+                  MultiLine=Yes }
+
+      { 1102159001;3;Field  ;
+                  Name=PL Format;
+                  SourceExpr=Typee }
+
+    }
+  }
+  LABELS
+  {
+    { 1450000;DescriptionCaptionLbl;
+                                CaptionML=[ENU=Description;
+                                           ENA=Description] }
+    { 1450001;RowNoCaptionLbl  ;CaptionML=[ENU=Row No.;
+                                           ENA=Row No.] }
+  }
+  CODE
+  {
+    VAR
+      AnalysisView@1102159062 : Record 363;
+      GLSetup@1102159061 : Record 98;
+      AccSchedManagement@1102159054 : Codeunit 8;
+      AccSchedName@1102159053 : Code[10];
+      AccSchedNameHidden@1102159052 : Code[10];
+      ColumnLayoutName@1102159051 : Code[10];
+      ColumnLayoutNameHidden@1102159050 : Code[10];
+      EndDate@1102159049 : Date;
+      ShowError@1102159048 : 'None,Division by Zero,Period Error,Both';
+      DateFilter@1102159047 : Text[30];
+      UseHiddenFilters@1102159046 : Boolean;
+      DateFilterHidden@1102159045 : Text[30];
+      GLBudgetFilter@1102159044 : Text[30];
+      GLBudgetFilterHidden@1102159043 : Text[30];
+      CostBudgetFilter@1102159042 : Text[30];
+      CostBudgetFilterHidden@1102159041 : Text[30];
+      BusinessUnitFilter@1102159040 : Text[30];
+      BusinessUnitFilterHidden@1102159039 : Text[30];
+      Dim1Filter@1102159038 : Text[250];
+      Dim1FilterHidden@1102159037 : Text[250];
+      Dim2Filter@1102159036 : Text[250];
+      Dim2FilterHidden@1102159035 : Text[250];
+      Dim3Filter@1102159034 : Text[250];
+      Dim3FilterHidden@1102159033 : Text[250];
+      Dim4Filter@1102159032 : Text[250];
+      Dim4FilterHidden@1102159031 : Text[250];
+      CostCenterFilter@1102159030 : Text[250];
+      CostObjectFilter@1102159029 : Text[250];
+      CashFlowFilter@1102159028 : Text[250];
+      FiscalStartDate@1102159027 : Date;
+      ColumnValuesDisplayed@1102159026 : Decimal;
+      ColumnValuesAsText@1102159025 : Text;
+      PeriodText@1102159024 : Text[30];
+      AccSchedLineFilter@1102159023 : Text;
+      Header@1102159022 : Text[30];
+      RoundingHeader@1102159021 : Text[30];
+      HasRounding@1102159020 : Boolean;
+      UseAmtsInAddCurr@1102159019 : Boolean;
+      ShowAccSchedSetup@1102159018 : Boolean;
+      HeaderText@1102159017 : Text[100];
+      Bold_control@1102159016 : Boolean;
+      Italic_control@1102159015 : Boolean;
+      Underline_control@1102159014 : Boolean;
+      PageGroupNo@1102159013 : Integer;
+      NextPageGroupNo@1102159012 : Integer;
+      IncludeSimulation@1102159011 : Boolean;
+      Dim1FilterEnable@1102159010 : Boolean INDATASET;
+      Dim2FilterEnable@1102159009 : Boolean INDATASET;
+      Dim3FilterEnable@1102159008 : Boolean INDATASET;
+      Dim4FilterEnable@1102159007 : Boolean INDATASET;
+      HiddenFilterEditable@1102159006 : Boolean INDATASET;
+      LineShadowed@1102159005 : Boolean;
+      LineSkipped@1102159004 : Boolean;
+      SalesSetup@1102159003 : Record 311;
+      Typee@1102159002 : Boolean;
+      Company@1102159001 : Record 79;
+      Text000@1102159081 : TextConst 'ENU=(Thousands);ENA=(Thousands)';
+      Text001@1102159080 : TextConst 'ENU=(Millions);ENA=(Millions)';
+      Text002@1102159079 : TextConst 'ENU=* ERROR *;ENA=* ERROR *';
+      Text003@1102159078 : TextConst 'ENU=All amounts are in %1.;ENA=All amounts are in %1.';
+      Text004@1102159077 : TextConst 'ENU=Not Available;ENA=Not Available';
+      Text005@1102159076 : TextConst 'ENU=1,6,,Dimension %1 Filter;ENA=1,6,,Dimension %1 Filter';
+      Text006@1102159075 : TextConst 'ENU=Enter the Column Layout Name.;ENA=Enter the Column Layout Name.';
+      ColumnLayoutNameCaptionLbl@1102159074 : TextConst 'ENU=Column Layout;ENA=Column Layout';
+      AccScheduleNameCaptionLbl@1102159073 : TextConst 'ENU=Account Schedule;ENA=Account Schedule';
+      FiscalStartDateCaptionLbl@1102159072 : TextConst 'ENU=Fiscal Start Date;ENA=Fiscal Start Date';
+      PeriodTextCaptionLbl@1102159071 : TextConst 'ENU=Period;ENA=Period';
+      CurrReportPageNoCaptionLbl@1102159070 : TextConst 'ENU=Page;ENA=Page';
+      AccountScheduleCaptionLbl@1102159069 : TextConst 'ENU=Account Schedule;ENA=Account Schedule';
+      AnalysisViewCodeCaptionLbl@1102159068 : TextConst 'ENU=Analysis View;ENA=Analysis View';
+      ShOppositeSignCaptionLbl@1102159067 : TextConst 'ENU=Show Opposite Sign;ENA=Show Opposite Sign';
+      UnderlineCaptionLbl@1102159066 : TextConst 'ENU=Underline;ENA=Underline';
+      ItalicCaptionLbl@1102159065 : TextConst 'ENU=Italic;ENA=Italic';
+      BoldCaptionLbl@1102159064 : TextConst 'ENU=Bold;ENA=Bold';
+      ShowCaptionLbl@1102159063 : TextConst 'ENU=Show;ENA=Show';
+      NewPageCaptionLbl@1102159060 : TextConst 'ENU=New Page;ENA=New Page';
+      TotalingTypeCaptionLbl@1102159059 : TextConst 'ENU=Totaling Type;ENA=Totalling Type';
+      TotalingCaptionLbl@1102159058 : TextConst 'ENU=Totaling;ENA=Totalling';
+      AnalysisViewDim1CodeCaptionLbl@1102159057 : TextConst 'ENU=Dimension Code;ENA=Dimension Code';
+      RowTypeCaptionLbl@1102159056 : TextConst 'ENU=Row Type;ENA=Row Type';
+      AmounttTypeCaptionLbl@1102159055 : TextConst 'ENU=Amount Type;ENA=Amount Type';
+      ExportToExcel@1102159085 : Boolean;
+      ExcelBuf@1102159084 : TEMPORARY Record 370;
+      RowNo@1102159083 : Integer;
+      ColNo@1102159082 : Integer;
+      V_ASN_Header1@1102159086 : Boolean;
+      V_ASN_Header2@1102159087 : Boolean;
+      V_DynamicHeader@1102159088 : 'CURRENT MONTH,LAST MONTH,INCREASE(DECREASE)';
+      V_HeaderText@1102159089 : Text;
+      i@1102159090 : Integer;
+      V_Text@1102159091 : Text;
+      Comp_Info@1102159092 : Record 79;
+
+    PROCEDURE InitAccSched@10();
+    BEGIN
+      AccScheduleName.SETRANGE(Name,AccSchedName);
+      "Acc. Schedule Line".SETFILTER("Date Filter",DateFilter);
+      "Acc. Schedule Line".SETFILTER("G/L Budget Filter",GLBudgetFilter);
+      "Acc. Schedule Line".SETFILTER("Cost Budget Filter",CostBudgetFilter);
+      "Acc. Schedule Line".SETFILTER("Business Unit Filter",BusinessUnitFilter);
+      "Acc. Schedule Line".SETFILTER("Dimension 1 Filter",Dim1Filter);
+      "Acc. Schedule Line".SETFILTER("Dimension 2 Filter",Dim2Filter);
+      "Acc. Schedule Line".SETFILTER("Dimension 3 Filter",Dim3Filter);
+      "Acc. Schedule Line".SETFILTER("Dimension 4 Filter",Dim4Filter);
+      "Acc. Schedule Line".SETFILTER("Cost Center Filter",CostCenterFilter);
+      "Acc. Schedule Line".SETFILTER("Cost Object Filter",CostObjectFilter);
+      "Acc. Schedule Line".SETFILTER("Cash Flow Forecast Filter",CashFlowFilter);
+
+      EndDate := "Acc. Schedule Line".GETRANGEMAX("Date Filter");
+      FiscalStartDate := AccSchedManagement.FindFiscalYear(EndDate);
+
+      AccSchedLineFilter := "Acc. Schedule Line".GETFILTERS;
+      PeriodText := "Acc. Schedule Line".GETFILTER("Date Filter");
+      HasRounding := FALSE;
+    END;
+
+    PROCEDURE SetAccSchedName@6(NewAccSchedName@1000 : Code[10]);
+    BEGIN
+      AccSchedNameHidden := NewAccSchedName;
+    END;
+
+    PROCEDURE SetColumnLayoutName@1(ColLayoutName@1000 : Code[10]);
+    BEGIN
+      ColumnLayoutNameHidden := ColLayoutName;
+    END;
+
+    PROCEDURE SetFilters@4(NewDateFilter@1000 : Text[30];NewBudgetFilter@1001 : Text[30];NewCostBudgetFilter@1007 : Text[30];NewBusUnitFilter@1002 : Text[30];NewDim1Filter@1003 : Text[250];NewDim2Filter@1004 : Text[250];NewDim3Filter@1005 : Text[250];NewDim4Filter@1006 : Text[250]);
+    BEGIN
+      DateFilterHidden := NewDateFilter;
+      GLBudgetFilterHidden := NewBudgetFilter;
+      CostBudgetFilterHidden := NewCostBudgetFilter;
+      BusinessUnitFilterHidden := NewBusUnitFilter;
+      Dim1FilterHidden := NewDim1Filter;
+      Dim2FilterHidden := NewDim2Filter;
+      Dim3FilterHidden := NewDim3Filter;
+      Dim4FilterHidden := NewDim4Filter;
+      UseHiddenFilters := TRUE;
+    END;
+
+    PROCEDURE ShowLine@3(Bold@1000 : Boolean;Italic@1001 : Boolean) : Boolean;
+    BEGIN
+      IF "Acc. Schedule Line"."Totaling Type" = "Acc. Schedule Line"."Totaling Type"::"Set Base For Percent" THEN
+        EXIT(FALSE);
+      IF "Acc. Schedule Line".Show = "Acc. Schedule Line".Show::No THEN
+        EXIT(FALSE);
+      IF "Acc. Schedule Line".Bold <> Bold THEN
+        EXIT(FALSE);
+      IF "Acc. Schedule Line".Italic <> Italic THEN
+        EXIT(FALSE);
+
+      EXIT(TRUE);
+    END;
+
+    LOCAL PROCEDURE FormLookUpDimFilter@57(Dim@1000 : Code[20];VAR Text@1001 : Text[1024]) : Boolean;
+    VAR
+      DimVal@1002 : Record 349;
+      DimValList@1003 : Page 560;
+    BEGIN
+      IF Dim = '' THEN
+        EXIT(FALSE);
+      DimValList.LOOKUPMODE(TRUE);
+      DimVal.SETRANGE("Dimension Code",Dim);
+      DimValList.SETTABLEVIEW(DimVal);
+      IF DimValList.RUNMODAL = ACTION::LookupOK THEN BEGIN
+        DimValList.GETRECORD(DimVal);
+        Text := DimValList.GetSelectionFilter;
+        EXIT(TRUE);
+      END;
+      EXIT(FALSE)
+    END;
+
+    LOCAL PROCEDURE FormGetCaptionClass@12(DimNo@1000 : Integer) : Text[250];
+    BEGIN
+      CASE DimNo OF
+        1:
+          BEGIN
+            IF AnalysisView."Dimension 1 Code" <> '' THEN
+              EXIT('1,6,' + AnalysisView."Dimension 1 Code");
+            EXIT(STRSUBSTNO(Text005,DimNo));
+          END;
+        2:
+          BEGIN
+            IF AnalysisView."Dimension 2 Code" <> '' THEN
+              EXIT('1,6,' + AnalysisView."Dimension 2 Code");
+            EXIT(STRSUBSTNO(Text005,DimNo));
+          END;
+        3:
+          BEGIN
+            IF AnalysisView."Dimension 3 Code" <> '' THEN
+              EXIT('1,6,' + AnalysisView."Dimension 3 Code");
+            EXIT(STRSUBSTNO(Text005,DimNo));
+          END;
+        4:
+          BEGIN
+            IF AnalysisView."Dimension 4 Code" <> '' THEN
+              EXIT('1,6,' + AnalysisView."Dimension 4 Code");
+            EXIT(STRSUBSTNO(Text005,DimNo));
+          END;
+      END;
+    END;
+
+    LOCAL PROCEDURE TransferValues@5();
+    VAR
+      ColumnLayoutName2@1000 : Record 333;
+    BEGIN
+      GLSetup.GET;
+      IF AccSchedNameHidden <> '' THEN
+        AccSchedName := AccSchedNameHidden;
+      IF ColumnLayoutNameHidden <> '' THEN
+        ColumnLayoutName := ColumnLayoutNameHidden;
+      IF DateFilterHidden <> '' THEN
+        DateFilter := DateFilterHidden;
+      IF GLBudgetFilterHidden <> '' THEN
+        GLBudgetFilter := GLBudgetFilterHidden;
+      IF CostBudgetFilterHidden <> '' THEN
+        CostBudgetFilter := CostBudgetFilterHidden;
+      IF BusinessUnitFilterHidden <> '' THEN
+        BusinessUnitFilter := BusinessUnitFilterHidden;
+      IF Dim1FilterHidden <> '' THEN
+        Dim1Filter := Dim1FilterHidden;
+      IF Dim2FilterHidden <> '' THEN
+        Dim2Filter := Dim2FilterHidden;
+      IF Dim3FilterHidden <> '' THEN
+        Dim3Filter := Dim3FilterHidden;
+      IF Dim4FilterHidden <> '' THEN
+        Dim4Filter := Dim4FilterHidden;
+
+      IF AccSchedName <> '' THEN
+        IF NOT AccScheduleName.GET(AccSchedName) THEN
+          AccSchedName := '';
+      IF AccSchedName = '' THEN
+        IF AccScheduleName.FINDFIRST THEN
+          AccSchedName := AccScheduleName.Name;
+
+      IF ColumnLayoutName <> '' THEN
+        IF NOT ColumnLayoutName2.GET(ColumnLayoutName) THEN
+          ColumnLayoutName := AccScheduleName."Default Column Layout";
+
+      IF AccScheduleName."Analysis View Name" <> '' THEN
+        AnalysisView.GET(AccScheduleName."Analysis View Name")
+      ELSE BEGIN
+        AnalysisView."Dimension 1 Code" := GLSetup."Global Dimension 1 Code";
+        AnalysisView."Dimension 2 Code" := GLSetup."Global Dimension 2 Code";
+      END;
+    END;
+
+    LOCAL PROCEDURE UpdateFilters@7();
+    BEGIN
+      IF UseHiddenFilters THEN BEGIN
+        DateFilter := DateFilterHidden;
+        GLBudgetFilter := GLBudgetFilterHidden;
+        CostBudgetFilter := CostBudgetFilterHidden;
+        BusinessUnitFilter := BusinessUnitFilterHidden;
+        Dim1Filter := Dim1FilterHidden;
+        Dim2Filter := Dim2FilterHidden;
+        Dim3Filter := Dim3FilterHidden;
+        Dim4Filter := Dim4FilterHidden;
+      END;
+
+      IF ColumnLayoutName = '' THEN
+        IF AccScheduleName.FINDFIRST THEN
+          ColumnLayoutName := AccScheduleName."Default Column Layout";
+    END;
+
+    PROCEDURE ValidateAccSchedName@2();
+    BEGIN
+      AccSchedManagement.CheckName(AccSchedName);
+      AccScheduleName.GET(AccSchedName);
+      IF AccScheduleName."Default Column Layout" <> '' THEN
+        ColumnLayoutName := AccScheduleName."Default Column Layout";
+      IF AccScheduleName."Analysis View Name" <> '' THEN
+        AnalysisView.GET(AccScheduleName."Analysis View Name")
+      ELSE BEGIN
+        CLEAR(AnalysisView);
+        AnalysisView."Dimension 1 Code" := GLSetup."Global Dimension 1 Code";
+        AnalysisView."Dimension 2 Code" := GLSetup."Global Dimension 2 Code";
+      END;
+      Dim1FilterEnable := AnalysisView."Dimension 1 Code" <> '';
+      Dim2FilterEnable := AnalysisView."Dimension 2 Code" <> '';
+      Dim3FilterEnable := AnalysisView."Dimension 3 Code" <> '';
+      Dim4FilterEnable := AnalysisView."Dimension 4 Code" <> '';
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:DataSourceID>aa735c03-5860-44b4-bb96-53a55f9ca503</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="V_ASN_Header2">
+          <DataField>V_ASN_Header2</DataField>
+        </Field>
+        <Field Name="Comp_Info_Name">
+          <DataField>Comp_Info_Name</DataField>
+        </Field>
+        <Field Name="V_ASN_Header1">
+          <DataField>V_ASN_Header1</DataField>
+        </Field>
+        <Field Name="Typee">
+          <DataField>Typee</DataField>
+        </Field>
+        <Field Name="GLBudgetFilter">
+          <DataField>GLBudgetFilter</DataField>
+        </Field>
+        <Field Name="AccScheduleNameName">
+          <DataField>AccScheduleNameName</DataField>
+        </Field>
+        <Field Name="ColumnLayoutName">
+          <DataField>ColumnLayoutName</DataField>
+        </Field>
+        <Field Name="FiscalStartDate">
+          <DataField>FiscalStartDate</DataField>
+        </Field>
+        <Field Name="PeriodText">
+          <DataField>PeriodText</DataField>
+        </Field>
+        <Field Name="CompanyName">
+          <DataField>CompanyName</DataField>
+        </Field>
+        <Field Name="AccScheduleNameDesc">
+          <DataField>AccScheduleNameDesc</DataField>
+        </Field>
+        <Field Name="AnalysisViewCode">
+          <DataField>AnalysisViewCode</DataField>
+        </Field>
+        <Field Name="AnalysisViewName">
+          <DataField>AnalysisViewName</DataField>
+        </Field>
+        <Field Name="HeaderText">
+          <DataField>HeaderText</DataField>
+        </Field>
+        <Field Name="TableAccSchedLineFilter">
+          <DataField>TableAccSchedLineFilter</DataField>
+        </Field>
+        <Field Name="AccSchedLineFilter">
+          <DataField>AccSchedLineFilter</DataField>
+        </Field>
+        <Field Name="ShowAccSchedSetup">
+          <DataField>ShowAccSchedSetup</DataField>
+        </Field>
+        <Field Name="ColumnLayoutNameCaption">
+          <DataField>ColumnLayoutNameCaption</DataField>
+        </Field>
+        <Field Name="AccScheduleNameCaption">
+          <DataField>AccScheduleNameCaption</DataField>
+        </Field>
+        <Field Name="FiscalStartDateCaption">
+          <DataField>FiscalStartDateCaption</DataField>
+        </Field>
+        <Field Name="PeriodTextCaption">
+          <DataField>PeriodTextCaption</DataField>
+        </Field>
+        <Field Name="CurrReportPageNoCaption">
+          <DataField>CurrReportPageNoCaption</DataField>
+        </Field>
+        <Field Name="AccountScheduleCaption">
+          <DataField>AccountScheduleCaption</DataField>
+        </Field>
+        <Field Name="AnalysisViewCodeCaption">
+          <DataField>AnalysisViewCodeCaption</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecShow">
+          <DataField>AccSchedLineSpecShow</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecTotalingType">
+          <DataField>AccSchedLineSpecTotalingType</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecTotaling">
+          <DataField>AccSchedLineSpecTotaling</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecDesc">
+          <DataField>AccSchedLineSpecDesc</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecRowNo">
+          <DataField>AccSchedLineSpecRowNo</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecRowType">
+          <DataField>AccSchedLineSpecRowType</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecAmountType">
+          <DataField>AccSchedLineSpecAmountType</DataField>
+        </Field>
+        <Field Name="BoldFormat">
+          <DataField>BoldFormat</DataField>
+        </Field>
+        <Field Name="ItalicFformat">
+          <DataField>ItalicFformat</DataField>
+        </Field>
+        <Field Name="UnderlineFormat">
+          <DataField>UnderlineFormat</DataField>
+        </Field>
+        <Field Name="ShowOppSignFormat">
+          <DataField>ShowOppSignFormat</DataField>
+        </Field>
+        <Field Name="NewPageFormat">
+          <DataField>NewPageFormat</DataField>
+        </Field>
+        <Field Name="AnalysisViewDim1Code">
+          <DataField>AnalysisViewDim1Code</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecDim1Totaling">
+          <DataField>AccSchedLineSpecDim1Totaling</DataField>
+        </Field>
+        <Field Name="AnalysisViewDim2Code">
+          <DataField>AnalysisViewDim2Code</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecDim2Totaling">
+          <DataField>AccSchedLineSpecDim2Totaling</DataField>
+        </Field>
+        <Field Name="AnalysisViewDim3Code">
+          <DataField>AnalysisViewDim3Code</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecDim3Totaling">
+          <DataField>AccSchedLineSpecDim3Totaling</DataField>
+        </Field>
+        <Field Name="AnalysisViewDim4Code">
+          <DataField>AnalysisViewDim4Code</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecDim4Totaling">
+          <DataField>AccSchedLineSpecDim4Totaling</DataField>
+        </Field>
+        <Field Name="AccSchedLineSpecScheduleName">
+          <DataField>AccSchedLineSpecScheduleName</DataField>
+        </Field>
+        <Field Name="SetupLineShadowed">
+          <DataField>SetupLineShadowed</DataField>
+        </Field>
+        <Field Name="ShOppositeSignCaption">
+          <DataField>ShOppositeSignCaption</DataField>
+        </Field>
+        <Field Name="UnderlineCaption">
+          <DataField>UnderlineCaption</DataField>
+        </Field>
+        <Field Name="ItalicCaption">
+          <DataField>ItalicCaption</DataField>
+        </Field>
+        <Field Name="BoldCaption">
+          <DataField>BoldCaption</DataField>
+        </Field>
+        <Field Name="ShowCaption">
+          <DataField>ShowCaption</DataField>
+        </Field>
+        <Field Name="NewPageCaption">
+          <DataField>NewPageCaption</DataField>
+        </Field>
+        <Field Name="TotalingTypeCaption">
+          <DataField>TotalingTypeCaption</DataField>
+        </Field>
+        <Field Name="TotalingCaption">
+          <DataField>TotalingCaption</DataField>
+        </Field>
+        <Field Name="AnalysisViewDim1CodeCaption">
+          <DataField>AnalysisViewDim1CodeCaption</DataField>
+        </Field>
+        <Field Name="RowTypeCaption">
+          <DataField>RowTypeCaption</DataField>
+        </Field>
+        <Field Name="AmounttTypeCaption">
+          <DataField>AmounttTypeCaption</DataField>
+        </Field>
+        <Field Name="NextPageGroupNo">
+          <DataField>NextPageGroupNo</DataField>
+        </Field>
+        <Field Name="AccScheduleLineDesc">
+          <DataField>AccScheduleLineDesc</DataField>
+        </Field>
+        <Field Name="AccScheduleLineRowNo">
+          <DataField>AccScheduleLineRowNo</DataField>
+        </Field>
+        <Field Name="AccScheduleLineLineNo">
+          <DataField>AccScheduleLineLineNo</DataField>
+        </Field>
+        <Field Name="BoldControl">
+          <DataField>BoldControl</DataField>
+        </Field>
+        <Field Name="ItalicControl">
+          <DataField>ItalicControl</DataField>
+        </Field>
+        <Field Name="UnderlineControls">
+          <DataField>UnderlineControls</DataField>
+        </Field>
+        <Field Name="LineShadowed">
+          <DataField>LineShadowed</DataField>
+        </Field>
+        <Field Name="ColumnNo">
+          <DataField>ColumnNo</DataField>
+        </Field>
+        <Field Name="Header">
+          <DataField>Header</DataField>
+        </Field>
+        <Field Name="RoundingHeader">
+          <DataField>RoundingHeader</DataField>
+        </Field>
+        <Field Name="ColumnHeader_ColumnLayout">
+          <DataField>ColumnHeader_ColumnLayout</DataField>
+        </Field>
+        <Field Name="V_DynamicHeader">
+          <DataField>V_DynamicHeader</DataField>
+        </Field>
+        <Field Name="ColumnValuesAsText">
+          <DataField>ColumnValuesAsText</DataField>
+        </Field>
+        <Field Name="V_Text">
+          <DataField>V_Text</DataField>
+        </Field>
+        <Field Name="LineSkipped">
+          <DataField>LineSkipped</DataField>
+        </Field>
+        <Field Name="V_HeaderText">
+          <DataField>V_HeaderText</DataField>
+        </Field>
+        <Field Name="LineNo_ColumnLayout">
+          <DataField>LineNo_ColumnLayout</DataField>
+        </Field>
+        <Field Name="BS1_IssueBy">
+          <DataField>BS1_IssueBy</DataField>
+        </Field>
+        <Field Name="BS_CheckBY">
+          <DataField>BS_CheckBY</DataField>
+        </Field>
+        <Field Name="BS_AppBY">
+          <DataField>BS_AppBY</DataField>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>DataSet</rd:DataSetName>
+        <rd:SchemaPath>Report.xsd</rd:SchemaPath>
+        <rd:TableName>Result</rd:TableName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Rectangle Name="list1_Contents">
+            <ReportItems>
+              <Tablix Name="Table1">
+                <TablixBody>
+                  <TablixColumns>
+                    <TablixColumn>
+                      <Width>9.5cm</Width>
+                    </TablixColumn>
+                    <TablixColumn>
+                      <Width>4cm</Width>
+                    </TablixColumn>
+                  </TablixColumns>
+                  <TablixRows>
+                    <TablixRow>
+                      <Height>0.58209cm</Height>
+                      <TablixCells>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="textbox51">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Parameters!DescriptionCaptionLbl.Value</Value>
+                                      <Style>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>textbox46</rd:DefaultName>
+                              <ZIndex>89</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <TopBorder>
+                                  <Width>0.5pt</Width>
+                                </TopBorder>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </BottomBorder>
+                                <LeftBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </LeftBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </RightBorder>
+                                <BackgroundColor>#efefef</BackgroundColor>
+                                <VerticalAlign>Bottom</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>5pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Header_1_">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!ColumnHeader_ColumnLayout.Value</Value>
+                                      <Style>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <ZIndex>296</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <TopBorder>
+                                  <Width>0.5pt</Width>
+                                </TopBorder>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </BottomBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </RightBorder>
+                                <BackgroundColor>#efefef</BackgroundColor>
+                                <VerticalAlign>Bottom</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                      </TablixCells>
+                    </TablixRow>
+                    <TablixRow>
+                      <Height>0.58208cm</Height>
+                      <TablixCells>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Acc__Schedule_Line_Description_Control23">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!AccScheduleLineDesc.Value</Value>
+                                      <Style>
+                                        <FontStyle>=IIF(Fields!ItalicControl.Value=TRUE,"Italic","Normal")</FontStyle>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>=IIF(Fields!BoldControl.Value=TRUE,"Bold","Normal")</FontWeight>
+                                        <TextDecoration>=IIF(Fields!UnderlineControls.Value=TRUE,"Underline","None")</TextDecoration>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <ZIndex>208</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </BottomBorder>
+                                <LeftBorder>
+                                  <Style>Solid</Style>
+                                </LeftBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>5pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="ColumnValuesAsText_1__Control24">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!ColumnValuesAsText.Value</Value>
+                                      <Style>
+                                        <FontStyle>=IIF(Fields!ItalicControl.Value=TRUE,"Italic","Normal")</FontStyle>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>=IIF(Fields!BoldControl.Value=TRUE,"Bold","Normal")</FontWeight>
+                                        <TextDecoration>=IIF(Fields!UnderlineControls.Value=TRUE,"Underline","None")</TextDecoration>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Right</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <ZIndex>207</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <BottomBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </BottomBorder>
+                                <RightBorder>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>4pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                      </TablixCells>
+                    </TablixRow>
+                  </TablixRows>
+                </TablixBody>
+                <TablixColumnHierarchy>
+                  <TablixMembers>
+                    <TablixMember />
+                    <TablixMember>
+                      <Group Name="Columns">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!ColumnHeader_ColumnLayout.Value</GroupExpression>
+                        </GroupExpressions>
+                        <PageBreak>
+                          <BreakLocation>Between</BreakLocation>
+                        </PageBreak>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!LineNo_ColumnLayout.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember />
+                      </TablixMembers>
+                      <Visibility>
+                        <Hidden>=iif( (Fields!ColumnHeader_ColumnLayout.Value="CURRENT MONTH") or (Fields!ColumnHeader_ColumnLayout.Value="LAST MONTH") or (Fields!ColumnHeader_ColumnLayout.Value="INCREASE(DECREASE)"),false,true)</Hidden>
+                      </Visibility>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixColumnHierarchy>
+                <TablixRowHierarchy>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Group Name="Header">
+                        <GroupExpressions>
+                          <GroupExpression>0</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>Header</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember>
+                          <KeepWithGroup>After</KeepWithGroup>
+                          <RepeatOnNewPage>true</RepeatOnNewPage>
+                          <KeepTogether>true</KeepTogether>
+                        </TablixMember>
+                        <TablixMember>
+                          <Group Name="ScheduleNameGroup">
+                            <GroupExpressions>
+                              <GroupExpression>=Fields!AccSchedLineSpecScheduleName.Value</GroupExpression>
+                            </GroupExpressions>
+                          </Group>
+                          <SortExpressions>
+                            <SortExpression>
+                              <Value>=Fields!AccSchedLineSpecScheduleName.Value</Value>
+                            </SortExpression>
+                          </SortExpressions>
+                          <TablixMembers>
+                            <TablixMember>
+                              <Group Name="PageGroup">
+                                <GroupExpressions>
+                                  <GroupExpression>=Fields!NextPageGroupNo.Value</GroupExpression>
+                                </GroupExpressions>
+                                <PageBreak>
+                                  <BreakLocation>Between</BreakLocation>
+                                </PageBreak>
+                                <Filters>
+                                  <Filter>
+                                    <FilterExpression>=Fields!NextPageGroupNo.Value</FilterExpression>
+                                    <Operator>NotEqual</Operator>
+                                    <FilterValues>
+                                      <FilterValue>=nothing</FilterValue>
+                                    </FilterValues>
+                                  </Filter>
+                                </Filters>
+                              </Group>
+                              <SortExpressions>
+                                <SortExpression>
+                                  <Value>=Fields!AccSchedLineSpecScheduleName.Value</Value>
+                                </SortExpression>
+                              </SortExpressions>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <Group Name="Lines">
+                                    <GroupExpressions>
+                                      <GroupExpression>=Fields!AccScheduleLineLineNo.Value</GroupExpression>
+                                    </GroupExpressions>
+                                  </Group>
+                                  <SortExpressions>
+                                    <SortExpression>
+                                      <Value>=Fields!AccScheduleLineLineNo.Value</Value>
+                                    </SortExpression>
+                                  </SortExpressions>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                  <Visibility>
+                                    <Hidden>=IIF(Last(Fields!LineSkipped.Value, "Lines") = True, True, False)</Hidden>
+                                  </Visibility>
+                                  <KeepTogether>true</KeepTogether>
+                                </TablixMember>
+                              </TablixMembers>
+                            </TablixMember>
+                          </TablixMembers>
+                        </TablixMember>
+                      </TablixMembers>
+                      <KeepTogether>true</KeepTogether>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixRowHierarchy>
+                <RepeatColumnHeaders>true</RepeatColumnHeaders>
+                <RepeatRowHeaders>true</RepeatRowHeaders>
+                <KeepTogether>true</KeepTogether>
+                <DataSetName>DataSet_Result</DataSetName>
+                <Top>1.35202cm</Top>
+                <Height>1.16417cm</Height>
+                <Width>13.5cm</Width>
+                <Visibility>
+                  <Hidden>=iif(Fields!Typee.Value,true,false)</Hidden>
+                </Visibility>
+                <DataElementOutput>NoOutput</DataElementOutput>
+                <Style>
+                  <Border>
+                    <Style>None</Style>
+                  </Border>
+                  <TopBorder>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </TopBorder>
+                </Style>
+              </Tablix>
+              <Tablix Name="Table2">
+                <TablixBody>
+                  <TablixColumns>
+                    <TablixColumn>
+                      <Width>5cm</Width>
+                    </TablixColumn>
+                    <TablixColumn>
+                      <Width>2.5cm</Width>
+                    </TablixColumn>
+                  </TablixColumns>
+                  <TablixRows>
+                    <TablixRow>
+                      <Height>0.635cm</Height>
+                      <TablixCells>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Textbox59">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>Description</Value>
+                                      <Style>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox59</rd:DefaultName>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </Border>
+                                <TopBorder>
+                                  <Style>None</Style>
+                                </TopBorder>
+                                <BackgroundColor>#efefef</BackgroundColor>
+                                <VerticalAlign>Top</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>5pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Textbox62">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!V_Text.Value</Value>
+                                      <Style>
+                                        <FontStyle>=IIF(Fields!ItalicControl.Value=TRUE,"Italic","Normal")</FontStyle>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>8pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                        <TextDecoration>=IIF(Fields!UnderlineControls.Value=TRUE,"Underline","None")</TextDecoration>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Center</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox62</rd:DefaultName>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </Border>
+                                <TopBorder>
+                                  <Style>None</Style>
+                                </TopBorder>
+                                <LeftBorder>
+                                  <Style>None</Style>
+                                </LeftBorder>
+                                <BackgroundColor>#efefef</BackgroundColor>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                      </TablixCells>
+                    </TablixRow>
+                    <TablixRow>
+                      <Height>0.56885cm</Height>
+                      <TablixCells>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Acc__Schedule_Line_Description_Control24">
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!AccScheduleLineDesc.Value</Value>
+                                      <Style>
+                                        <FontStyle>=IIF(Fields!ItalicControl.Value=TRUE,"Italic","Normal")</FontStyle>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>7pt</FontSize>
+                                        <FontWeight>=IIF(Fields!BoldControl.Value=TRUE,"Bold","Normal")</FontWeight>
+                                        <TextDecoration>=IIF(Fields!UnderlineControls.Value=TRUE,"Underline","None")</TextDecoration>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Left</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <ZIndex>208</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </Border>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>5pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                        <TablixCell>
+                          <CellContents>
+                            <Textbox Name="Textbox37">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>=Fields!ColumnValuesAsText.Value</Value>
+                                      <Style>
+                                        <FontStyle>=IIF(Fields!ItalicControl.Value=TRUE,"Italic","Normal")</FontStyle>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>6.5pt</FontSize>
+                                        <FontWeight>=IIF(Fields!BoldControl.Value=TRUE,"Bold","Normal")</FontWeight>
+                                        <TextDecoration>=IIF(Fields!UnderlineControls.Value=TRUE,"Underline","None")</TextDecoration>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style>
+                                    <TextAlign>Right</TextAlign>
+                                  </Style>
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox37</rd:DefaultName>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                  <Width>0.5pt</Width>
+                                </Border>
+                                <LeftBorder>
+                                  <Style>None</Style>
+                                </LeftBorder>
+                                <RightBorder>
+                                  <Color>Black</Color>
+                                </RightBorder>
+                                <VerticalAlign>Middle</VerticalAlign>
+                                <PaddingLeft>5pt</PaddingLeft>
+                                <PaddingRight>4pt</PaddingRight>
+                              </Style>
+                            </Textbox>
+                          </CellContents>
+                        </TablixCell>
+                      </TablixCells>
+                    </TablixRow>
+                  </TablixRows>
+                </TablixBody>
+                <TablixColumnHierarchy>
+                  <TablixMembers>
+                    <TablixMember />
+                    <TablixMember>
+                      <Group Name="LineNo_ColumnLayout">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!LineNo_ColumnLayout.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!LineNo_ColumnLayout.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember />
+                      </TablixMembers>
+                      <Visibility>
+                        <Hidden>=iif(Fields!ColumnHeader_ColumnLayout.Value="",true,false)</Hidden>
+                      </Visibility>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixColumnHierarchy>
+                <TablixRowHierarchy>
+                  <TablixMembers>
+                    <TablixMember>
+                      <KeepWithGroup>After</KeepWithGroup>
+                      <RepeatOnNewPage>true</RepeatOnNewPage>
+                    </TablixMember>
+                    <TablixMember>
+                      <Group Name="Header2">
+                        <GroupExpressions>
+                          <GroupExpression>0</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>Header</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember>
+                          <Group Name="ScheduleNameGroup2">
+                            <GroupExpressions>
+                              <GroupExpression>=Fields!AccSchedLineSpecScheduleName.Value</GroupExpression>
+                            </GroupExpressions>
+                          </Group>
+                          <SortExpressions>
+                            <SortExpression>
+                              <Value>=Fields!AccSchedLineSpecScheduleName.Value</Value>
+                            </SortExpression>
+                          </SortExpressions>
+                          <TablixMembers>
+                            <TablixMember>
+                              <Group Name="PageGroup2">
+                                <GroupExpressions>
+                                  <GroupExpression>=Fields!NextPageGroupNo.Value</GroupExpression>
+                                </GroupExpressions>
+                                <PageBreak>
+                                  <BreakLocation>Between</BreakLocation>
+                                </PageBreak>
+                                <Filters>
+                                  <Filter>
+                                    <FilterExpression>=Fields!NextPageGroupNo.Value</FilterExpression>
+                                    <Operator>NotEqual</Operator>
+                                    <FilterValues>
+                                      <FilterValue>=nothing</FilterValue>
+                                    </FilterValues>
+                                  </Filter>
+                                </Filters>
+                              </Group>
+                              <SortExpressions>
+                                <SortExpression>
+                                  <Value>=Fields!AccSchedLineSpecScheduleName.Value</Value>
+                                </SortExpression>
+                              </SortExpressions>
+                              <TablixMembers>
+                                <TablixMember>
+                                  <Group Name="Lines2">
+                                    <GroupExpressions>
+                                      <GroupExpression>=Fields!AccScheduleLineLineNo.Value</GroupExpression>
+                                    </GroupExpressions>
+                                  </Group>
+                                  <SortExpressions>
+                                    <SortExpression>
+                                      <Value>=Fields!AccScheduleLineLineNo.Value</Value>
+                                    </SortExpression>
+                                  </SortExpressions>
+                                  <TablixMembers>
+                                    <TablixMember />
+                                  </TablixMembers>
+                                  <Visibility>
+                                    <Hidden>=Microsoft.VisualBasic.Interaction.IIF(Last(Fields!LineSkipped.Value, "Lines2") = True, True, False)</Hidden>
+                                  </Visibility>
+                                  <KeepTogether>true</KeepTogether>
+                                </TablixMember>
+                              </TablixMembers>
+                            </TablixMember>
+                          </TablixMembers>
+                        </TablixMember>
+                      </TablixMembers>
+                      <KeepTogether>true</KeepTogether>
+                    </TablixMember>
+                  </TablixMembers>
+                </TablixRowHierarchy>
+                <RepeatColumnHeaders>true</RepeatColumnHeaders>
+                <RepeatRowHeaders>true</RepeatRowHeaders>
+                <KeepTogether>true</KeepTogether>
+                <DataSetName>DataSet_Result</DataSetName>
+                <Height>1.20385cm</Height>
+                <Width>7.5cm</Width>
+                <ZIndex>1</ZIndex>
+                <Visibility>
+                  <Hidden>=iif(Fields!Typee.Value,false,true)</Hidden>
+                </Visibility>
+                <DataElementOutput>NoOutput</DataElementOutput>
+                <Style />
+              </Tablix>
+            </ReportItems>
+            <Height>2.51619cm</Height>
+            <Width>24.97406cm</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Rectangle>
+          <Rectangle Name="Rectangle1">
+            <ReportItems>
+              <Textbox Name="Textbox2">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Issued by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Top>0.09657cm</Top>
+                <Left>14.51638cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox3">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Checked by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Top>0.09657cm</Top>
+                <Left>16.84504cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>1</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <LeftBorder>
+                    <Style>None</Style>
+                  </LeftBorder>
+                  <RightBorder>
+                    <Style>None</Style>
+                  </RightBorder>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox4">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Approved by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Top>0.09657cm</Top>
+                <Left>19.17371cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>2</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox5">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS1_IssueBy.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox5</rd:DefaultName>
+                <Top>2.22354cm</Top>
+                <Left>14.51673cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>3</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox166">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS_CheckBY.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>2.22354cm</Top>
+                <Left>16.84539cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>4</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox7">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS_AppBY.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox5</rd:DefaultName>
+                <Top>2.22354cm</Top>
+                <Left>19.17406cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>5</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>None</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <TopBorder>
+                    <Style>Solid</Style>
+                  </TopBorder>
+                  <BottomBorder>
+                    <Style>Solid</Style>
+                  </BottomBorder>
+                  <RightBorder>
+                    <Style>Solid</Style>
+                  </RightBorder>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox8">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.62955cm</Top>
+                <Left>14.51708cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>6</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>None</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <LeftBorder>
+                    <Style>Solid</Style>
+                  </LeftBorder>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox30">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.62602cm</Top>
+                <Left>16.84539cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>7</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>None</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <LeftBorder>
+                    <Style>Solid</Style>
+                  </LeftBorder>
+                  <RightBorder>
+                    <Style>Solid</Style>
+                  </RightBorder>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox31">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.62602cm</Top>
+                <Left>19.1737cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>8</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>None</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <RightBorder>
+                    <Style>Solid</Style>
+                  </RightBorder>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+            </ReportItems>
+            <KeepTogether>true</KeepTogether>
+            <Top>2.53603cm</Top>
+            <Height>2.80591cm</Height>
+            <Width>21.53447cm</Width>
+            <ZIndex>1</ZIndex>
+            <Visibility>
+              <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result")=FALSE,false,true)</Hidden>
+            </Visibility>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Rectangle>
+          <Rectangle Name="Rectangle2">
+            <ReportItems>
+              <Textbox Name="Textbox6">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Issued by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Left>17.95862cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox11">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Checked by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Left>20.28728cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>1</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox14">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Approved by</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox2</rd:DefaultName>
+                <Left>22.61595cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>2</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox15">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS1_IssueBy.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox5</rd:DefaultName>
+                <Top>2.12697cm</Top>
+                <Left>17.95897cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>3</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox167">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS_CheckBY.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>2.12697cm</Top>
+                <Left>20.28763cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>4</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox16">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=Last(Fields!BS_AppBY.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontFamily>Segoe UI</FontFamily>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Center</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox5</rd:DefaultName>
+                <Top>2.12697cm</Top>
+                <Left>22.6163cm</Left>
+                <Height>0.52945cm</Height>
+                <Width>2.32866cm</Width>
+                <ZIndex>5</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox17">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.53298cm</Top>
+                <Left>17.95932cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>6</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox32">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.52945cm</Top>
+                <Left>20.28763cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>7</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+              <Textbox Name="Textbox33">
+                <CanGrow>true</CanGrow>
+                <KeepTogether>true</KeepTogether>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value />
+                        <Style>
+                          <FontSize>8pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style />
+                  </Paragraph>
+                </Paragraphs>
+                <rd:DefaultName>Textbox8</rd:DefaultName>
+                <Top>0.52945cm</Top>
+                <Left>22.61594cm</Left>
+                <Height>1.59752cm</Height>
+                <Width>2.32831cm</Width>
+                <ZIndex>8</ZIndex>
+                <Style>
+                  <Border>
+                    <Style>Solid</Style>
+                    <Width>0.5pt</Width>
+                  </Border>
+                  <PaddingLeft>2pt</PaddingLeft>
+                  <PaddingRight>2pt</PaddingRight>
+                  <PaddingTop>2pt</PaddingTop>
+                  <PaddingBottom>2pt</PaddingBottom>
+                </Style>
+              </Textbox>
+            </ReportItems>
+            <KeepTogether>true</KeepTogether>
+            <Top>5.34436cm</Top>
+            <Left>0.02063cm</Left>
+            <Height>2.71287cm</Height>
+            <Width>24.95343cm</Width>
+            <ZIndex>2</ZIndex>
+            <Visibility>
+              <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result"),false,true)</Hidden>
+            </Visibility>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Rectangle>
+        </ReportItems>
+        <Height>8.05723cm</Height>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Body>
+      <Width>25.00001cm</Width>
+      <Page>
+        <PageHeader>
+          <Height>2.06891cm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Rectangle Name="Rectangle4">
+              <ReportItems>
+                <Textbox Name="Textbox18">
+                  <CanGrow>true</CanGrow>
+                  <CanShrink>true</CanShrink>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=First(Fields!Comp_Info_Name.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>9pt</FontSize>
+                            <FontWeight>Bold</FontWeight>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Center</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox9</rd:DefaultName>
+                  <Top>0.04972in</Top>
+                  <Left>2.15723in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>2.71875in</Width>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox19">
+                  <CanGrow>true</CanGrow>
+                  <CanShrink>true</CanShrink>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=First(Fields!AccScheduleNameDesc.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>9pt</FontSize>
+                            <FontWeight>Bold</FontWeight>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Center</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox10</rd:DefaultName>
+                  <Top>0.21639in</Top>
+                  <Left>2.15723in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>2.71875in</Width>
+                  <ZIndex>1</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox20">
+                  <CanGrow>true</CanGrow>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>="Period : " + First(Fields!PeriodText.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>7pt</FontSize>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Right</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox12</rd:DefaultName>
+                  <Top>0.04972in</Top>
+                  <Left>6.78471in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>1.67461in</Width>
+                  <ZIndex>2</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox21">
+                  <CanGrow>true</CanGrow>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=FormatDateTime(Today(),dateformat.ShortDate)</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>7pt</FontSize>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Right</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox12</rd:DefaultName>
+                  <Top>0.23028in</Top>
+                  <Left>6.78485in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>1.67447in</Width>
+                  <ZIndex>3</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+              </ReportItems>
+              <KeepTogether>true</KeepTogether>
+              <Height>0.39695in</Height>
+              <Width>8.46536in</Width>
+              <Visibility>
+                <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result")=FALSE,false,true)</Hidden>
+              </Visibility>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+              </Style>
+            </Rectangle>
+            <Textbox Name="Textbox93">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value />
+                      <Style />
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox93</rd:DefaultName>
+              <Top>1.38099cm</Top>
+              <Height>0.2in</Height>
+              <Width>1.9685in</Width>
+              <ZIndex>1</ZIndex>
+              <Visibility>
+                <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result"),false,true)</Hidden>
+              </Visibility>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                  <Width>0.5pt</Width>
+                </Border>
+                <BottomBorder>
+                  <Style>None</Style>
+                </BottomBorder>
+                <RightBorder>
+                  <Style>None</Style>
+                </RightBorder>
+                <BackgroundColor>#efefef</BackgroundColor>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox94">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>CURRENT MONTH</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox93</rd:DefaultName>
+              <Top>1.38099cm</Top>
+              <Left>5cm</Left>
+              <Height>0.2in</Height>
+              <Width>3.93701in</Width>
+              <ZIndex>2</ZIndex>
+              <Visibility>
+                <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result"),false,true)</Hidden>
+              </Visibility>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                  <Width>0.5pt</Width>
+                </Border>
+                <BackgroundColor>#efefef</BackgroundColor>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox95">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>YEAR-TO-DATE</Value>
+                      <Style>
+                        <FontSize>9pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox93</rd:DefaultName>
+              <Top>1.38099cm</Top>
+              <Left>15cm</Left>
+              <Height>0.2in</Height>
+              <Width>3.93701in</Width>
+              <ZIndex>3</ZIndex>
+              <Visibility>
+                <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result"),false,true)</Hidden>
+              </Visibility>
+              <Style>
+                <Border>
+                  <Style>Solid</Style>
+                  <Width>0.5pt</Width>
+                </Border>
+                <BackgroundColor>#efefef</BackgroundColor>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Rectangle Name="Rectangle5">
+              <ReportItems>
+                <Textbox Name="Textbox22">
+                  <CanGrow>true</CanGrow>
+                  <CanShrink>true</CanShrink>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=First(Fields!Comp_Info_Name.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>9pt</FontSize>
+                            <FontWeight>Bold</FontWeight>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Center</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox9</rd:DefaultName>
+                  <Top>0.01222in</Top>
+                  <Left>3.03629in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>3.09125in</Width>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox23">
+                  <CanGrow>true</CanGrow>
+                  <CanShrink>true</CanShrink>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=First(Fields!AccScheduleNameDesc.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>9pt</FontSize>
+                            <FontWeight>Bold</FontWeight>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Center</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox10</rd:DefaultName>
+                  <Top>0.17889in</Top>
+                  <Left>3.03629in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>3.09125in</Width>
+                  <ZIndex>1</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox24">
+                  <CanGrow>true</CanGrow>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>="Period : " + First(Fields!PeriodText.Value, "DataSet_Result")</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>7pt</FontSize>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Right</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox12</rd:DefaultName>
+                  <Top>0.01222in</Top>
+                  <Left>7.71794in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>2.11437in</Width>
+                  <ZIndex>2</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+                <Textbox Name="Textbox25">
+                  <CanGrow>true</CanGrow>
+                  <KeepTogether>true</KeepTogether>
+                  <Paragraphs>
+                    <Paragraph>
+                      <TextRuns>
+                        <TextRun>
+                          <Value>=FormatDateTime(Today(),dateformat.ShortDate)</Value>
+                          <Style>
+                            <FontFamily>Segoe UI</FontFamily>
+                            <FontSize>7pt</FontSize>
+                          </Style>
+                        </TextRun>
+                      </TextRuns>
+                      <Style>
+                        <TextAlign>Right</TextAlign>
+                      </Style>
+                    </Paragraph>
+                  </Paragraphs>
+                  <rd:DefaultName>Textbox12</rd:DefaultName>
+                  <Top>0.19278in</Top>
+                  <Left>7.71808in</Left>
+                  <Height>0.16667in</Height>
+                  <Width>2.11423in</Width>
+                  <ZIndex>3</ZIndex>
+                  <Style>
+                    <Border>
+                      <Style>None</Style>
+                    </Border>
+                    <PaddingLeft>2pt</PaddingLeft>
+                    <PaddingRight>2pt</PaddingRight>
+                    <PaddingTop>2pt</PaddingTop>
+                    <PaddingBottom>2pt</PaddingBottom>
+                  </Style>
+                </Textbox>
+              </ReportItems>
+              <KeepTogether>true</KeepTogether>
+              <Height>0.35945in</Height>
+              <Width>9.83231in</Width>
+              <ZIndex>4</ZIndex>
+              <Visibility>
+                <Hidden>=IIF(First(Fields!Typee.Value, "DataSet_Result"),false,true)</Hidden>
+              </Visibility>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+              </Style>
+            </Rectangle>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageHeader>
+        <PageHeight>21cm</PageHeight>
+        <PageWidth>29.7cm</PageWidth>
+        <InteractiveHeight>11in</InteractiveHeight>
+        <InteractiveWidth>8.5in</InteractiveWidth>
+        <LeftMargin>2cm</LeftMargin>
+        <RightMargin>2cm</RightMargin>
+        <TopMargin>1.75001cm</TopMargin>
+        <BottomMargin>1.75001cm</BottomMargin>
+        <ColumnSpacing>1.27cm</ColumnSpacing>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="DescriptionCaptionLbl">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>DescriptionCaptionLbl</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>DescriptionCaptionLbl</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="RowNoCaptionLbl">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>RowNoCaptionLbl</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>RowNoCaptionLbl</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Shared Data1 as Object
+Shared Data2 as Object
+Shared Data3 as Object
+
+Public Function GetData(Num as Integer, Group as integer) as Object
+if Group = 1 then
+   Return Cstr(Choose(Num, Split(Cstr(Data1),Chr(177))))
+End If
+
+if Group = 2 then
+   Return Cstr(Choose(Num, Split(Cstr(Data2),Chr(177))))
+End If
+
+if Group = 3 then
+   Return Cstr(Choose(Num, Split(Cstr(Data3),Chr(177))))
+End If
+
+End Function
+
+Public Function SetData(NewData as Object,Group as integer)
+  If Group = 1 and NewData &lt;&gt; "" Then
+      Data1 = NewData
+  End If
+
+  If Group = 2 and NewData &lt;&gt; "" Then
+      Data2 = NewData
+  End If
+
+  If Group = 3 and NewData &lt;&gt; "" Then
+      Data3 = NewData
+  End If
+
+  Return True
+End Function</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+  <rd:ReportID>181ac405-3e59-4785-8bff-f5239ed34435</rd:ReportID>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

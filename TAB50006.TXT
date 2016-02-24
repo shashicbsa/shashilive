@@ -1,0 +1,70 @@
+OBJECT Table 50006 Payment Buffer_Cust
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/15;
+    Time=15:49:51;
+    Modified=Yes;
+    Version List=YIMMRYAR;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Payment Buffer_Cust;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Vendor No.          ;Code20        ;TableRelation=Customer;
+                                                   CaptionML=ENU=Vendor No. }
+    { 2   ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=ENU=Currency Code }
+    { 3   ;   ;Vendor Ledg. Entry No.;Integer     ;TableRelation=Customer;
+                                                   CaptionML=ENU=Vendor Ledg. Entry No. }
+    { 4   ;   ;Dimension Entry No. ;Integer       ;CaptionML=ENU=Dimension Entry No. }
+    { 5   ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Global Dimension 1 Code;
+                                                   CaptionClass='1,1,1' }
+    { 6   ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Global Dimension 2 Code;
+                                                   CaptionClass='1,1,2' }
+    { 7   ;   ;Document No.        ;Code20        ;CaptionML=ENU=Document No. }
+    { 8   ;   ;Amount              ;Decimal       ;CaptionML=ENU=Amount;
+                                                   AutoFormatType=1 }
+    { 9   ;   ;Vendor Ledg. Entry Doc. Type;Option;CaptionML=ENU=Vendor Ledg. Entry Doc. Type;
+                                                   OptionCaptionML=ENU=" ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund";
+                                                   OptionString=[ ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund] }
+    { 10  ;   ;Vendor Ledg. Entry Doc. No.;Code20 ;CaptionML=ENU=Vendor Ledg. Entry Doc. No. }
+    { 50001;  ;Posting Group       ;Code20        ;Description=YIMMNVPG }
+    { 50002;  ;Type Of Transaction ;Option        ;OptionCaptionML=ENU=" ,Selling In,Selling Out,Direct,Indirect,Adm.MKT,Free Service,Claim,Promotion,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Other YMKI,Propac Ex.,Intrst_Deposit,Imacs-ATV,Imacs-Generator,Imacs-CBU,Campaign,DDS1 Vendor,DDS2 Vendor,DDS3 Vendor,DDS4 Vendor,DDS5 Vendor,DDS6 Vendor,DDS7 Vendor,DDS8 Vendor,DDS9 Vendor,MKT Vendor,SVC Vendor,MS Vendor,POD Vendor,Others Purchase,Ekspedisi Log-POD";
+                                                   OptionString=[ ,Selling In,Selling Out,Direct,Indirect,Adm.MKT,Free Service,Claim,Promotion,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Other YMKI,Propac Ex.,Intrst_Deposit,Imacs-ATV,Imacs-Generator,Imacs-CBU,Campaign,DDS1 Vendor,DDS2 Vendor,DDS3 Vendor,DDS4 Vendor,DDS5 Vendor,DDS6 Vendor,DDS7 Vendor,DDS8 Vendor,DDS9 Vendor,MKT Vendor,SVC Vendor,MS Vendor,POD Vendor,Others Purchase,Ekspedisi Log-POD];
+                                                   Description=YIMMATOP }
+    { 50003;  ;Bank Code           ;Code20        ;Description=YIMMRBDTL }
+    { 50004;  ;Bank Account No     ;Code30        ;Description=YIMMRBDTL }
+    { 50005;  ;Vend/Cust Bank Name ;Text50        ;Description=YIMMRBDTL }
+    { 50006;  ;Bank Address        ;Text50        ;Description=YIMMRBDTL }
+    { 50007;  ;BeniName            ;Text50        ;Description=YIMMRBDTL }
+    { 50008;  ;Vend Ledg. Entry Description;Text50;Description=YIMMRBDTL }
+    { 50009;  ;CustomerName        ;Text50        ;Description=To Flow Customer Name }
+  }
+  KEYS
+  {
+    {    ;Vendor No.,Currency Code,Vendor Ledg. Entry No.,Dimension Entry No.;
+                                                   Clustered=Yes }
+    {    ;Document No.                             }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      YIMMRYAR- This Table is Made to Craete The Suggest Customer Payment/Receipt.The Table is as same as
+      Payment Buffer(Which Is System Defaut Table for Suggest Vendor PAyment)
+      //YIMMRPRENO
+        To Flow the VEND LEDG ENTRY DESCRIPTION TO GL LINES
+    }
+    END.
+  }
+}
+

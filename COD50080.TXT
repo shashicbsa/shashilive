@@ -1,0 +1,1522 @@
+OBJECT Codeunit 50080 AdvAccSchedManagement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/14/14;
+    Time=12:29:03;
+    Modified=Yes;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    TableNo=85;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=DEFAULT';
+      Text001@1001 : TextConst 'ENU=Default Schedule';
+      Text002@1002 : TextConst 'ENU=Default Columns';
+      Text005@1003 : TextConst 'ENU=M';
+      Text006@1004 : TextConst 'ENU=Q';
+      Text007@1005 : TextConst 'ENU=Y';
+      Text012@1006 : TextConst 'ENU=You have entered an illegal value or a nonexistent row number.';
+      Text013@1007 : TextConst 'ENU=You have entered an illegal value or a nonexistent column number.';
+      Text014@1008 : TextConst 'ENU=<Precision,';
+      Text015@1009 : TextConst 'ENU=><Standard Format,0>';
+      Text016@1010 : TextConst 'ENU=<Precision,1><Standard Format,0>';
+      Text017@1011 : TextConst 'ENU=The error occurred when the program tried to calculate:\';
+      Text018@1012 : TextConst 'ENU="Acc. Sched. Line: Row No. = %1, Line No. = %2, Totaling = %3\"';
+      Text019@1013 : TextConst 'ENU="Acc. Sched. Column: Column No. = %4, Line No. = %5, Formula  = %6"';
+      Text020@1014 : TextConst 'ENU=Because of circular references, the program cannot calculate a formula.';
+      GAccSchedName@1015 : Record 60040;
+      GRowLayout@1016 : Record 60041;
+      GColumnLayout@1000000000 : Record 60041;
+      AccSchedCellValue@1017 : TEMPORARY Record 342;
+      CurrExchRate@1018 : Record 330;
+      GLSetup@1019 : Record 98;
+      AddRepCurrency@1035 : Record 4;
+      AnalysisViewRead@1037 : Boolean;
+      StartDate@1020 : Date;
+      EndDate@1021 : Date;
+      FiscalStartDate@1022 : Date;
+      DivisionError@1023 : Boolean;
+      PeriodError@1034 : Boolean;
+      CallLevel@1024 : Integer;
+      CallingRowLayoutID@1025 : Integer;
+      CallingColumnLayoutID@1026 : Integer;
+      OldAccSchedLineFilters@1000000007 : Text[250];
+      OldColumnLayoutFilters@1000000006 : Text[250];
+      OldAccSchedLineName@1000000005 : Code[20];
+      OldColumnLayoutName@1000000004 : Code[20];
+      OldCalcAddCurr@1000000003 : Boolean;
+      NormalFormatString@1032 : Text[80];
+      GLSetupRead@1033 : Boolean;
+      Text021@1040 : TextConst 'ENU=Conversion of dimension totaling filter %1 results in a filter that becomes too long.';
+      Text022@1041 : TextConst 'ENU=You cannot have more than %1 lines with %2 of %3.';
+      Text023@1042 : TextConst 'ENU=Formulas ending with a percent sign require %2 %1 on a line before it.';
+      Text024@1043 : TextConst 'ENU=The %1 %3 on the %2 must equal the %4 %6 on the %5 when any Dimension Totaling is used in any Column.';
+      SourceTypeFilter@1000000002 : ' ,Customer,Vendor';
+      SourceNoFilter@1000000001 : Text[250];
+      Dim1Filter@1000000010 : Text[250];
+      Dim2Filter@1000000009 : Text[250];
+      BusUnitFilter@1000000008 : Text[250];
+      SaveCellValues@1000000011 : Boolean;
+      CYear@1000000014 : Integer;
+      CMonth@1000000013 : ',January,February,March,April,May,Jun,July,August,September,October,November,December';
+      AdvAccSchedValue@1000000012 : Record 60043;
+      ReCalculate@1000000015 : Boolean;
+
+    PROCEDURE OpenSchedule@1(CurrentAccSchedName@1000 : Code[20];CurrentType@1000000000 : 'Row,Column';VAR RowLayout@1001 : Record 60041);
+    BEGIN
+      CheckTemplateName(CurrentAccSchedName);
+      RowLayout.FILTERGROUP(2);
+      RowLayout.SETRANGE("Account Schedule Name",CurrentAccSchedName);
+      RowLayout.SETRANGE(Type,CurrentType);
+      RowLayout.FILTERGROUP(0);
+    END;
+
+    PROCEDURE CheckTemplateName@2(VAR CurrentAccSchedName@1000 : Code[20]);
+    VAR
+      AccSchedName@1001 : Record 60040;
+    BEGIN
+      IF NOT AccSchedName.GET(CurrentAccSchedName) THEN BEGIN
+        IF NOT AccSchedName.FIND('-') THEN BEGIN
+          AccSchedName.INIT;
+          AccSchedName.Name := Text000;
+          AccSchedName.Description := Text001;
+          AccSchedName.INSERT;
+        END;
+        CurrentAccSchedName := AccSchedName.Name;
+      END;
+    END;
+
+    PROCEDURE CheckName@3(CurrentAccSchedName@1000 : Code[20]);
+    VAR
+      AccSchedName@1000000000 : Record 60040;
+    BEGIN
+      AccSchedName.GET(CurrentAccSchedName);
+    END;
+
+    PROCEDURE SetName@4(CurrentAccSchedName@1000 : Code[20];CurrentType@1000000000 : 'Row,Column';VAR RowLayout@1001 : Record 60041);
+    BEGIN
+      RowLayout.FILTERGROUP(2);
+      RowLayout.SETRANGE("Account Schedule Name",CurrentAccSchedName);
+      RowLayout.SETRANGE(Type,CurrentType);
+      RowLayout.FILTERGROUP(0);
+      IF RowLayout.FIND('-') THEN;
+    END;
+
+    PROCEDURE LookupName@5(CurrentAccSchedName@1000 : Code[20];VAR EntrdAccSchedName@1001 : Text[20]) : Boolean;
+    VAR
+      AccSchedName@1002 : Record 60040;
+    BEGIN
+      AccSchedName.Name := CurrentAccSchedName;
+      //UPG13C.begin
+      //IF FORM.RUNMODAL(0,AccSchedName) <> ACTION::LookupOK THEN
+      IF PAGE.RUNMODAL(0,AccSchedName) <> ACTION::LookupOK THEN
+      //UPG13C.end
+        EXIT(FALSE);
+
+      EntrdAccSchedName := AccSchedName.Name;
+      EXIT(TRUE);
+    END;
+
+    PROCEDURE CopyColumnsToTemp@21(NewColumnName@1000 : Code[20];VAR TempColumnLayout@1001 : Record 60041);
+    VAR
+      ColumnLayout@1002 : Record 60041;
+    BEGIN
+      TempColumnLayout.SETRANGE(Type,TempColumnLayout.Type::Column);
+      TempColumnLayout.DELETEALL;
+      ColumnLayout.SETRANGE("Account Schedule Name",NewColumnName);
+      ColumnLayout.SETRANGE(Type,ColumnLayout.Type::Column);
+      IF ColumnLayout.FIND('-') THEN
+        REPEAT
+          TempColumnLayout := ColumnLayout;
+          TempColumnLayout.INSERT;
+        UNTIL ColumnLayout.NEXT = 0;
+      IF TempColumnLayout.FIND('-') THEN;
+    END;
+
+    PROCEDURE CalcCell@8(VAR RowLayout@1000 : Record 60041;VAR ColumnLayout@1001 : Record 60041;CalcAddCurr@1002 : Boolean) : Decimal;
+    VAR
+      Result@1003 : Decimal;
+      TotalingSetup@1000000000 : Record 60042;
+    BEGIN
+      GRowLayout.COPYFILTERS(RowLayout);
+      GColumnLayout.COPYFILTERS(ColumnLayout);
+
+      DivisionError := FALSE;
+      PeriodError := FALSE;
+      CallLevel := 0;
+      CallingRowLayoutID := RowLayout."Line No.";
+      CallingColumnLayoutID := ColumnLayout."Line No.";
+
+      IF ReCalculate THEN
+        Result := CalcCellValueFromStored(RowLayout,ColumnLayout,CalcAddCurr)
+      ELSE BEGIN
+        StartDate := GRowLayout.GETRANGEMIN("Date Filter");
+        IF EndDate <> GRowLayout.GETRANGEMAX("Date Filter") THEN BEGIN
+          EndDate := GRowLayout.GETRANGEMAX("Date Filter");
+          FiscalStartDate := FindFiscalYear(EndDate);
+        END;
+
+        IF (OldAccSchedLineFilters <> RowLayout.GETFILTERS) OR
+           (OldColumnLayoutFilters <> ColumnLayout.GETFILTERS) OR
+           (OldAccSchedLineName <> RowLayout."Account Schedule Name") OR
+           (OldColumnLayoutName <> ColumnLayout."Account Schedule Name") OR
+           (OldCalcAddCurr <> CalcAddCurr)
+        THEN BEGIN
+          OldAccSchedLineFilters := RowLayout.GETFILTERS;
+          OldColumnLayoutFilters := ColumnLayout.GETFILTERS;
+          OldAccSchedLineName := RowLayout."Account Schedule Name";
+          OldColumnLayoutName := ColumnLayout."Account Schedule Name";
+          OldCalcAddCurr := CalcAddCurr;
+        END;
+
+        Result := CalcCellValue(RowLayout,ColumnLayout,CalcAddCurr);
+      END;
+
+      WITH RowLayout DO BEGIN
+        CASE Show OF
+          Show::Yes :
+            BEGIN
+              IF ColumnLayout.Show = ColumnLayout.Show::No THEN
+                Result := 0
+              ELSE IF ColumnLayout.Show = ColumnLayout.Show::"When Positive Balance" THEN
+                IF Result < 0 THEN
+                  Result := 0
+              ELSE IF ColumnLayout.Show = ColumnLayout.Show::"When Negative Balance" THEN
+                IF Result > 0 THEN
+                  Result := 0;
+            END;
+          Show::No :
+            BEGIN
+              Result := 0;
+            END;
+          Show::"When Positive Balance" :
+            BEGIN
+              IF (ColumnLayout.Show = ColumnLayout.Show::No) OR
+                 (ColumnLayout.Show = ColumnLayout.Show::"When Negative Balance") THEN
+                Result := 0
+              ELSE IF (ColumnLayout.Show = ColumnLayout.Show::Yes) OR
+                      (ColumnLayout.Show = ColumnLayout.Show::"When Positive Balance") THEN
+                IF Result < 0 THEN
+                  Result := 0;
+            END;
+          Show::"When Negative Balance" :
+            BEGIN
+              IF (ColumnLayout.Show = ColumnLayout.Show::No) OR
+                 (ColumnLayout.Show = ColumnLayout.Show::"When Positive Balance") THEN
+                Result := 0
+              ELSE IF (ColumnLayout.Show = ColumnLayout.Show::Yes) OR
+                      (ColumnLayout.Show = ColumnLayout.Show::"When Negative Balance") THEN
+                IF Result > 0 THEN
+                  Result := 0;
+            END;
+        END;
+        IF TotalingSetup.GET(ColumnLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) THEN BEGIN
+          CASE TotalingSetup.Show OF
+            TotalingSetup.Show::No :
+              BEGIN
+                Result := 0;
+              END;
+            TotalingSetup.Show::"When Positive Balance" :
+              BEGIN
+                IF Result < 0 THEN
+                  Result := 0;
+              END;
+            TotalingSetup.Show::"When Negative Balance" :
+              BEGIN
+                IF Result > 0 THEN
+                  Result := 0;
+              END;
+          END;
+        END;
+      END;
+
+      IF (RowLayout."Show Opposite Sign") THEN
+        Result := -Result;
+
+      IF (ColumnLayout."Show Opposite Sign") THEN
+        Result := -Result;
+
+      IF RowLayout."Elimination Entry Only" OR ColumnLayout."Elimination Entry Only" THEN
+        Result := ABS(Result);
+
+      EXIT(Result);
+    END;
+
+    LOCAL PROCEDURE CalcCellValue@6(RowLayout@1000 : Record 60041;ColumnLayout@1001 : Record 60041;CalcAddCurr@1002 : Boolean) : Decimal;
+    VAR
+      Result@1003 : Decimal;
+      GLAcc@1004 : Record 15;
+      RowTotalingFilter@1000000000 : Boolean;
+      ColTotalingFilter@1000000001 : Boolean;
+      TotalingSetup@1000000002 : Record 60042;
+      TotalingType@1000000003 : ' ,Posting Accounts,Total Accounts,Formula';
+      TotalingExp@1000000004 : Text[250];
+      BaseRowID@1000000005 : Integer;
+      BaseColID@1000000006 : Integer;
+      BaseRowLine@1000000007 : Record 60041;
+      BaseColLine@1000000009 : Record 60041;
+      BaseValue@1000000008 : Decimal;
+    BEGIN
+      Result := 0;
+
+      IF ((RowLayout.Description = '') AND (RowLayout."Description 2" = '') AND (RowLayout."Description 3" = '')) OR
+         ((ColumnLayout.Description = '') AND (ColumnLayout."Description 2" = '') AND (ColumnLayout."Description 3" = ''))OR
+         RowLayout."Skip Calculation" OR ColumnLayout."Skip Calculation" THEN
+        EXIT(Result);
+
+      SourceTypeFilter := SourceTypeFilter::" ";
+      SourceNoFilter := '';
+
+      IF AccSchedCellValue.GET(RowLayout."Line No.",ColumnLayout."Line No.") THEN BEGIN
+        Result := AccSchedCellValue.Value;
+        DivisionError := DivisionError OR AccSchedCellValue."Has Error";
+        PeriodError := PeriodError OR AccSchedCellValue."Period Error";
+
+      END ELSE BEGIN
+        IF (ColumnLayout."Totaling Type" = ColumnLayout."Totaling Type"::Formula) AND
+           (ColumnLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+              FALSE,ColumnLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+
+        END ELSE IF (ColumnLayout."Totaling Type" = ColumnLayout."Totaling Type"::Percentage) AND
+           (ColumnLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+              FALSE,ColumnLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+          IF TotalingSetup.GET(ColumnLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) THEN BEGIN
+            IF TotalingSetup."Percentage Base Row" <> '' THEN BEGIN
+              BaseRowLine.RESET;
+              BaseRowLine.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+              BaseRowLine.SETRANGE(Type,BaseRowLine.Type::Row);
+              BaseRowLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Row");
+              IF BaseRowLine.FINDFIRST THEN
+                BaseRowID := BaseRowLine."Line No.";
+            END ELSE
+              BaseRowID := TotalingSetup."Row Line No.";
+
+            IF TotalingSetup."Percentage Base Column" <> '' THEN BEGIN
+              BaseColLine.RESET;
+              BaseColLine.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+              BaseColLine.SETRANGE(Type,BaseColLine.Type::Column);
+              BaseColLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Column");
+              IF BaseColLine.FINDFIRST THEN
+                BaseColID := BaseColLine."Line No.";
+            END ELSE
+              BaseColID := TotalingSetup."Column Line No.";
+
+            IF AccSchedCellValue.GET(BaseRowID,BaseColID) THEN BEGIN
+              BaseValue := ABS(AccSchedCellValue.Value);
+              IF BaseValue <> 0 THEN
+                Result := (Result/BaseValue)*100
+              ELSE
+                Result := 0;
+            END ELSE
+              Result := 0;
+          END;
+
+        END ELSE IF (RowLayout."Totaling Type" = RowLayout."Totaling Type"::Formula) AND
+                    (RowLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+             TRUE,RowLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+
+        END ELSE IF (RowLayout."Totaling Type" = RowLayout."Totaling Type"::Percentage) AND
+                    (RowLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+             TRUE,RowLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+          IF TotalingSetup.GET(RowLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) THEN BEGIN
+            IF TotalingSetup."Percentage Base Row" <> '' THEN BEGIN
+              BaseRowLine.RESET;
+              BaseRowLine.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+              BaseRowLine.SETRANGE(Type,BaseRowLine.Type::Row);
+              BaseRowLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Row");
+              IF BaseRowLine.FINDFIRST THEN
+                BaseRowID := BaseRowLine."Line No.";
+            END ELSE
+              BaseRowID := TotalingSetup."Row Line No.";
+
+            IF TotalingSetup."Percentage Base Column" <> '' THEN BEGIN
+              BaseColLine.RESET;
+              BaseColLine.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+              BaseColLine.SETRANGE(Type,BaseColLine.Type::Column);
+              BaseColLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Column");
+              IF BaseColLine.FINDFIRST THEN
+                BaseColID := BaseColLine."Line No.";
+            END ELSE
+              BaseColID := TotalingSetup."Column Line No.";
+
+            IF AccSchedCellValue.GET(BaseRowID,BaseColID) THEN BEGIN
+              BaseValue := ABS(AccSchedCellValue.Value);
+              IF BaseValue <> 0 THEN
+                Result := (Result/BaseValue)*100
+              ELSE
+                Result := 0;
+            END ELSE
+              Result := 0;
+          END;
+
+        END ELSE BEGIN
+          IF (StartDate = 0D) OR (EndDate = 0D) OR (EndDate = 12319999D) THEN BEGIN
+            Result := 0;
+            PeriodError := TRUE;
+
+          END ELSE BEGIN
+
+            IF TotalingSetup.GET(RowLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) AND
+               (TotalingSetup.Totaling <> '') THEN BEGIN
+              TotalingType := TotalingSetup."Totaling Type";
+              TotalingExp := TotalingSetup.Totaling;
+            END ELSE IF RowLayout.Totaling <> '' THEN BEGIN
+              TotalingType := RowLayout."Totaling Type";
+              TotalingExp := RowLayout.Totaling;
+            END ELSE IF ColumnLayout.Totaling <> '' THEN BEGIN
+              TotalingType := ColumnLayout."Totaling Type";
+              TotalingExp := ColumnLayout.Totaling;
+            END;
+
+            IF (TotalingType = TotalingType::"Posting Accounts") OR (TotalingType = TotalingType::"Total Accounts") THEN BEGIN
+              RowLayout.COPYFILTERS(GRowLayout);
+              ColumnLayout.COPYFILTERS(GColumnLayout);
+              SetGLAccFilters(GLAcc,RowLayout,ColumnLayout,TotalingType,TotalingExp);
+              IF (TotalingType = TotalingType::"Posting Accounts") AND
+                (STRLEN(TotalingExp) <= MAXSTRLEN(GLAcc.Totaling)) AND (STRPOS(TotalingExp,'*') = 0)
+              THEN BEGIN
+                GLAcc."Account Type" := GLAcc."Account Type"::Total;
+                GLAcc.Totaling := TotalingExp;
+                Result := Result + CalcGLAcc(GLAcc,RowLayout,ColumnLayout,TotalingExp);
+              END ELSE
+                IF GLAcc.FIND('-') THEN
+                  REPEAT
+                    Result := Result + CalcGLAcc(GLAcc,RowLayout,ColumnLayout,TotalingExp);
+                  UNTIL GLAcc.NEXT = 0;
+            END ELSE
+              Result := 0;
+          END;
+        END;
+
+        AccSchedCellValue."Row No." := RowLayout."Line No.";
+        AccSchedCellValue."Column No." := ColumnLayout."Line No.";
+        AccSchedCellValue.Value := Result;
+        AccSchedCellValue."Has Error" := DivisionError;
+        AccSchedCellValue."Period Error" := PeriodError;
+        AccSchedCellValue.INSERT;
+
+        IF SaveCellValues THEN BEGIN
+          IF AdvAccSchedValue.GET(CYear,CMonth,RowLayout."Account Schedule Name",RowLayout."Line No.",ColumnLayout."Line No.") THEN
+          BEGIN
+            AdvAccSchedValue.Amount := Result;
+            AdvAccSchedValue.MODIFY;
+          END ELSE BEGIN
+            AdvAccSchedValue.INIT;
+            AdvAccSchedValue.Year := CYear;
+            AdvAccSchedValue.Month := CMonth;
+            AdvAccSchedValue."Account Schedule Name" := RowLayout."Account Schedule Name";
+            AdvAccSchedValue."Row Line No." := RowLayout."Line No.";
+            AdvAccSchedValue."Row Description" := RowLayout.Description;
+            AdvAccSchedValue."Row Description 2" := RowLayout."Description 2";
+            AdvAccSchedValue."Row Description 3" := RowLayout."Description 3";
+            AdvAccSchedValue."Column Line No." := ColumnLayout."Line No.";
+            AdvAccSchedValue."Column Description" := ColumnLayout.Description;
+            AdvAccSchedValue."Column Description 2" := ColumnLayout."Description 2";
+            AdvAccSchedValue."Column Description 3" := ColumnLayout."Description 3";
+            AdvAccSchedValue.Amount := Result;
+            AdvAccSchedValue.INSERT;
+          END;
+        END;
+      END;
+
+      EXIT(Result);
+    END;
+
+    PROCEDURE SetGLAccFilters@17(VAR GLAcc@1000 : Record 15;VAR RowLayout@1001 : Record 60041;VAR ColumnLayout@1000000000 : Record 60041;TotalingType@1000000005 : ' ,Posting Accounts,Total Accounts,Formula';TotalingExp@1000000004 : Text[250]);
+    VAR
+      FromDate@1000000003 : Date;
+      ToDate@1000000002 : Date;
+      FiscalStartDate2@1000000001 : Date;
+      ComparisonDateFormula@1000000006 : DateFormula;
+      ComparisonPeriodFormula@1000000007 : Code[20];
+    BEGIN
+      CASE TotalingType OF
+        TotalingType::"Posting Accounts":
+          BEGIN
+            GLAcc.SETFILTER("No.",TotalingExp);
+            GLAcc.SETRANGE("Account Type",GLAcc."Account Type"::Posting);
+          END;
+        TotalingType::"Total Accounts":
+          BEGIN
+            GLAcc.SETFILTER("No.",TotalingExp);
+            GLAcc.SETFILTER("Account Type",'<>%1',GLAcc."Account Type"::Posting);
+          END;
+      END;
+
+
+      IF (NOT RowLayout."Skip Source Filter") AND (NOT ColumnLayout."Skip Source Filter") THEN BEGIN
+        IF RowLayout."Source Type" <> RowLayout."Source Type"::" " THEN
+          SourceTypeFilter := RowLayout."Source Type"
+        ELSE IF ColumnLayout."Source Type" <> ColumnLayout."Source Type"::" " THEN
+          SourceTypeFilter := ColumnLayout."Source Type";
+
+        IF RowLayout."Source No." <> '' THEN
+            SourceNoFilter := RowLayout."Source No."
+        ELSE IF ColumnLayout."Source No." <> '' THEN
+            SourceNoFilter := ColumnLayout."Source No.";
+      END;
+
+      //Dimension 1 filters
+      Dim1Filter := RowLayout.GETFILTER("Dimension 1 Filter");
+      IF (Dim1Filter <> '') AND (ColumnLayout.GETFILTER("Dimension 1 Filter") <> '') THEN
+        Dim1Filter += '|';
+      Dim1Filter += ColumnLayout.GETFILTER("Dimension 1 Filter");
+
+      IF (Dim1Filter <> '') AND (RowLayout."Dimension 1 Totaling" <> '') THEN
+        Dim1Filter += '|';
+      Dim1Filter += RowLayout."Dimension 1 Totaling";
+
+      IF (Dim1Filter <> '') AND (ColumnLayout."Dimension 1 Totaling" <> '') THEN
+        Dim1Filter += '|';
+      Dim1Filter += ColumnLayout."Dimension 1 Totaling";
+
+      //Dimension 2 Filters
+      Dim2Filter := RowLayout.GETFILTER("Dimension 2 Filter");
+      IF (Dim2Filter <> '') AND (ColumnLayout.GETFILTER("Dimension 2 Filter") <> '') THEN
+        Dim2Filter += '|';
+      Dim2Filter += ColumnLayout.GETFILTER("Dimension 2 Filter");
+
+      IF (Dim2Filter <> '') AND (RowLayout."Dimension 2 Totaling" <> '') THEN
+        Dim2Filter += '|';
+      Dim2Filter += RowLayout."Dimension 2 Totaling";
+
+      IF (Dim2Filter <> '') AND (ColumnLayout."Dimension 2 Totaling" <> '') THEN
+        Dim2Filter += '|';
+      Dim2Filter += ColumnLayout."Dimension 2 Totaling";
+
+      BusUnitFilter := RowLayout.GETFILTER("Business Unit Filter");
+      IF (BusUnitFilter <> '') AND (ColumnLayout.GETFILTER("Business Unit Filter") <> '')THEN
+        BusUnitFilter += '|';
+      BusUnitFilter += ColumnLayout.GETFILTER("Business Unit Filter");
+
+      IF (BusUnitFilter <> '') AND (RowLayout."Business Unit Totaling" <> '')THEN
+        BusUnitFilter += '|';
+      BusUnitFilter += RowLayout."Business Unit Totaling";
+
+      IF (BusUnitFilter <> '') AND (ColumnLayout."Business Unit Totaling" <> '')THEN
+        BusUnitFilter += '|';
+      BusUnitFilter += ColumnLayout."Business Unit Totaling";
+
+      IF TotalingExp = '' THEN
+        EXIT;
+
+      WITH RowLayout DO BEGIN
+        IF (FORMAT("Comparison Date Formula") <> '0') AND (FORMAT("Comparison Date Formula") <> '') THEN
+          ComparisonDateFormula := "Comparison Date Formula"
+        ELSE IF "Comparison Period Formula" <> '' THEN
+          ComparisonPeriodFormula := "Comparison Period Formula"
+        ELSE IF (FORMAT(ColumnLayout."Comparison Date Formula") <> '0') AND (FORMAT(ColumnLayout."Comparison Date Formula") <> '') THEN
+          ComparisonDateFormula := ColumnLayout."Comparison Date Formula"
+        ELSE IF ColumnLayout."Comparison Period Formula" <> '' THEN
+          ComparisonPeriodFormula := ColumnLayout."Comparison Period Formula";
+
+        IF (FORMAT(ComparisonDateFormula) <> '0') AND (FORMAT(ComparisonDateFormula) <> '') THEN BEGIN
+          FromDate := CALCDATE(ComparisonDateFormula,StartDate);
+          IF (EndDate = CALCDATE('<CM>',EndDate)) AND
+             ((STRPOS(FORMAT(ComparisonDateFormula),Text005) > 0) OR
+              (STRPOS(FORMAT(ComparisonDateFormula),Text006) > 0) OR
+              (STRPOS(FORMAT(ComparisonDateFormula),Text007) > 0))
+          THEN
+            ToDate := CALCDATE('<CM>',CALCDATE(ComparisonDateFormula,EndDate))
+          ELSE
+            ToDate := CALCDATE(ComparisonDateFormula,EndDate);
+          FiscalStartDate2 := FindFiscalYear(ToDate);
+        END ELSE IF ComparisonPeriodFormula <> '' THEN BEGIN
+          AccPeriodStartEnd(ComparisonPeriodFormula,StartDate,FromDate,ToDate);
+          FiscalStartDate2 := FindFiscalYear(ToDate);
+        END ELSE BEGIN
+          FromDate := StartDate;
+          ToDate := EndDate;
+          FiscalStartDate2 := FiscalStartDate;
+        END;
+
+        CASE "Line Type" OF
+          "Line Type"::"Net Change" :
+            CASE ColumnLayout."Line Type" OF
+              ColumnLayout."Line Type"::"Net Change":
+                GLAcc.SETRANGE("Date Filter",FromDate,ToDate);
+              ColumnLayout."Line Type"::"Beginning Balance":
+                GLAcc.SETFILTER("Date Filter",'<%1',FromDate);  // always includes closing date
+              ColumnLayout."Line Type"::"Balance at Date":
+                GLAcc.SETRANGE("Date Filter",0D,ToDate);
+              ColumnLayout."Line Type"::"Year to Date":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,ToDate);
+              ColumnLayout."Line Type"::"Rest of Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",CALCDATE('<+1D>',ToDate),FindEndOfFiscalYear(FiscalStartDate2));
+              ColumnLayout."Line Type"::"Entire Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,FindEndOfFiscalYear(FiscalStartDate2));
+            END;
+          "Line Type"::"Balance at Date" :
+            IF (ColumnLayout."Line Type" <> ColumnLayout."Line Type"::"Net Change") AND
+               (ColumnLayout."Line Type" <> ColumnLayout."Line Type"::"Balance at Date") THEN
+              GLAcc.SETRANGE("Date Filter",0D)   // Force a zero return
+            ELSE
+              GLAcc.SETRANGE("Date Filter",0D,ToDate);
+          "Line Type"::"Beginning Balance" :
+            IF (ColumnLayout."Line Type" <> ColumnLayout."Line Type"::"Net Change") AND
+               (ColumnLayout."Line Type" <> ColumnLayout."Line Type"::"Beginning Balance") THEN
+              GLAcc.SETRANGE("Date Filter",0D)   // Force a zero return
+            ELSE
+              GLAcc.SETRANGE(
+                "Date Filter",0D,CLOSINGDATE(FromDate-1));
+          "Line Type"::"Year to Date" :
+            CASE ColumnLayout."Line Type" OF
+              ColumnLayout."Line Type"::"Net Change",ColumnLayout."Line Type"::"Year to Date":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,ToDate);
+              ColumnLayout."Line Type"::"Beginning Balance":
+                GLAcc.SETFILTER("Date Filter",'<%1',FiscalStartDate2);  // always includes closing date
+              ColumnLayout."Line Type"::"Balance at Date":
+                GLAcc.SETRANGE("Date Filter",0D,ToDate);
+              ColumnLayout."Line Type"::"Rest of Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",0D);   // Force a zero return
+              ColumnLayout."Line Type"::"Entire Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,FindEndOfFiscalYear(FiscalStartDate2));
+            END;
+          "Line Type"::"Rest of Fiscal Year" :
+            CASE ColumnLayout."Line Type" OF
+              ColumnLayout."Line Type"::"Net Change",
+              ColumnLayout."Line Type"::"Rest of Fiscal Year":
+                GLAcc.SETRANGE(
+                  "Date Filter",CALCDATE('<+1D>',ToDate),FindEndOfFiscalYear(FiscalStartDate2));
+              ColumnLayout."Line Type"::"Beginning Balance":
+                GLAcc.SETRANGE("Date Filter",0D,ToDate);
+              ColumnLayout."Line Type"::"Balance at Date":
+                GLAcc.SETRANGE("Date Filter",0D,FindEndOfFiscalYear(ToDate));
+              ColumnLayout."Line Type"::"Year to Date":
+                GLAcc.SETRANGE("Date Filter",0D);   // Force a zero return
+              ColumnLayout."Line Type"::"Entire Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,FindEndOfFiscalYear(FiscalStartDate2));
+            END;
+          "Line Type"::"Entire Fiscal Year" :
+            CASE ColumnLayout."Line Type" OF
+              ColumnLayout."Line Type"::"Net Change",
+              ColumnLayout."Line Type"::"Entire Fiscal Year":
+                GLAcc.SETRANGE(
+                  "Date Filter",
+                  FiscalStartDate2,
+                  FindEndOfFiscalYear(FiscalStartDate2));
+              ColumnLayout."Line Type"::"Beginning Balance":
+                GLAcc.SETFILTER("Date Filter",'<%1',FiscalStartDate2);  // always includes closing date
+              ColumnLayout."Line Type"::"Balance at Date":
+                GLAcc.SETRANGE("Date Filter",0D,FindEndOfFiscalYear(ToDate));
+              ColumnLayout."Line Type"::"Year to Date":
+                GLAcc.SETRANGE("Date Filter",FiscalStartDate2,ToDate);
+              ColumnLayout."Line Type"::"Rest of Fiscal Year":
+                GLAcc.SETRANGE("Date Filter",CALCDATE('<+1D>',ToDate),FindEndOfFiscalYear(FiscalStartDate2));
+            END;
+        END;
+      END;
+    END;
+
+    LOCAL PROCEDURE CalcGLAcc@7(VAR GLAcc@1001 : Record 15;VAR RowLayout@1002 : Record 60041;VAR ColumnLayout@1003 : Record 60041;TotalingExpression@1000000001 : Text[250]) ColValue@1000 : Decimal;
+    VAR
+      GLEntry@1005 : Record 17;
+      GLBudgEntry@1006 : Record 96;
+      AmountType@1009 : 'Net Amount,Debit Amount,Credit Amount';
+      TestBalance@1010 : Boolean;
+      Balance@1011 : Decimal;
+      LedgerEntryType@1000000002 : 'G/L Entries,G/L Budget Entries';
+      BusUnit@1000000004 : Record 220;
+      BalanceALL@1000000006 : Decimal;
+      ColValueAll@1000000007 : Decimal;
+      BalanceElimination@1000000008 : Decimal;
+      ColValyeElimination@1000000009 : Decimal;
+    BEGIN
+      ColValue := 0;
+      IF GAccSchedName.Name <> RowLayout."Account Schedule Name" THEN
+        GAccSchedName.GET(RowLayout."Account Schedule Name");
+
+      AmountType :=  ColumnLayout."Amount Type";
+      CASE RowLayout."Amount Type" OF
+        RowLayout."Amount Type"::"Debit Amount":
+          CASE AmountType OF
+            AmountType::"Net Amount":
+              AmountType := AmountType::"Debit Amount";
+            AmountType::"Credit Amount":
+              EXIT(0);
+          END;
+        RowLayout."Amount Type"::"Credit Amount":
+          CASE AmountType OF
+            AmountType::"Net Amount":
+              AmountType := AmountType::"Credit Amount";
+            AmountType::"Debit Amount":
+              EXIT(0);
+          END;
+      END;
+
+
+      IF TotalingExpression <> ''  THEN BEGIN
+        TestBalance :=
+          RowLayout.Show IN [RowLayout.Show::"When Positive Balance",RowLayout.Show::"When Negative Balance"];
+
+        LedgerEntryType := ColumnLayout."Ledger Entry Type";
+        IF RowLayout."Ledger Entry Type" = RowLayout."Ledger Entry Type"::"G/L Budget Entries" THEN
+          LedgerEntryType := LedgerEntryType::"G/L Budget Entries";
+
+        CASE LedgerEntryType OF
+          LedgerEntryType::"G/L Entries" :
+            BEGIN
+                WITH GLEntry DO BEGIN
+                  SETCURRENTKEY(
+                    "G/L Account No.","Business Unit Code","Global Dimension 1 Code","Global Dimension 2 Code",
+                    "Posting Date","Source Type","Source No.","Ref. Batch");
+
+                  //SETRANGE("Entry Type","Entry Type"::Definitive);
+                  IF GLAcc.Totaling = '' THEN
+                    SETRANGE("G/L Account No.",GLAcc."No.")
+                  ELSE
+                    SETFILTER("G/L Account No.",GLAcc.Totaling);
+
+                  GLAcc.COPYFILTER("Date Filter","Posting Date");
+
+                  IF SourceTypeFilter <> SourceTypeFilter::" " THEN
+                    SETRANGE("Source Type",SourceTypeFilter)
+                  ELSE
+                    SETRANGE("Source Type");
+                  IF SourceNoFilter <> '' THEN
+                    SETFILTER("Source No.",SourceNoFilter)
+                  ELSE
+                    SETRANGE("Source No.");
+
+                  SETFILTER("Global Dimension 1 Code",Dim1Filter);
+                  SETFILTER("Global Dimension 2 Code",Dim2Filter);
+
+                  //Elimination entries from current company ----------------------------------------------
+                  BEGIN
+                    SETFILTER("Business Unit Code",'%1','');
+                    CHANGECOMPANY(COMPANYNAME);
+                    CASE AmountType OF
+                      AmountType::"Net Amount" :
+                        BEGIN
+                          CALCSUMS(Amount);
+                          ColValyeElimination := Amount;
+                        END;
+                      AmountType::"Debit Amount" :
+                        BEGIN
+                          IF TestBalance THEN BEGIN
+                            CALCSUMS("Debit Amount",Amount);
+                            BalanceElimination := Amount;
+                          END ELSE
+                            CALCSUMS("Debit Amount");
+                          ColValyeElimination := "Debit Amount";
+                        END;
+                      AmountType::"Credit Amount" :
+                        BEGIN
+                          IF TestBalance THEN BEGIN
+                            CALCSUMS("Credit Amount",Amount);
+                            BalanceElimination := Amount;
+                          END ELSE
+                            CALCSUMS("Credit Amount");
+                          ColValyeElimination := "Credit Amount";
+                        END;
+                    END;
+                  END;
+
+                  //All entries from other companies---------------------------------------------------
+                  BEGIN
+                    BusUnit.RESET;
+                    BusUnit.SETFILTER(Code,BusUnitFilter);
+                    IF BusUnit.FINDFIRST THEN REPEAT
+                      CHANGECOMPANY(BusUnit."Company Name");
+                      CASE AmountType OF
+                        AmountType::"Net Amount" :
+                          BEGIN
+                            CALCSUMS(Amount);
+                            ColValueAll += Amount;
+                            BalanceALL += Amount;
+                          END;
+                        AmountType::"Debit Amount" :
+                          BEGIN
+                            IF TestBalance THEN BEGIN
+                              CALCSUMS("Debit Amount",Amount);
+                              BalanceALL += Amount;
+                            END ELSE
+                              CALCSUMS("Debit Amount");
+                            ColValueAll += "Debit Amount";
+                         END;
+                        AmountType::"Credit Amount" :
+                          BEGIN
+                            IF TestBalance THEN BEGIN
+                              CALCSUMS("Credit Amount",Amount);
+                              BalanceALL += Amount;
+                            END ELSE
+                              CALCSUMS("Credit Amount");
+                            ColValueAll += "Credit Amount";
+                          END;
+                      END;
+                    UNTIL BusUnit.NEXT=0;
+                  END;
+                  IF RowLayout."Elimination Entry Only" OR ColumnLayout."Elimination Entry Only" THEN BEGIN
+                    Balance := BalanceElimination;
+                    ColValue := ColValyeElimination;
+                  END ELSE BEGIN
+                    IF (BusUnitFilter <> '') THEN BEGIN
+                      Balance := BalanceALL;
+                      ColValue := ColValueAll;
+                    END ELSE BEGIN
+                      Balance := BalanceALL + BalanceElimination;
+                      ColValue := ColValueAll + ColValyeElimination;
+                    END;
+                  END;
+                END;
+            END;
+
+          LedgerEntryType::"G/L Budget Entries" :
+            BEGIN
+              WITH GLBudgEntry DO BEGIN
+                SETCURRENTKEY(
+                  "Budget Name","G/L Account No.","Business Unit Code",
+                  "Global Dimension 1 Code","Global Dimension 2 Code",
+                  "Budget Dimension 1 Code","Budget Dimension 2 Code",
+                  "Budget Dimension 3 Code","Budget Dimension 4 Code",Date,
+                  "Source Type","Source No.");
+
+                IF GLAcc.Totaling = '' THEN
+                  SETRANGE("G/L Account No.",GLAcc."No.")
+                ELSE
+                  SETFILTER("G/L Account No.",GLAcc.Totaling);
+
+                GLAcc.COPYFILTER("Date Filter",Date);
+                RowLayout.COPYFILTER("Budget Filter","Budget Name");
+
+                IF SourceTypeFilter <> SourceTypeFilter::" " THEN
+                  SETRANGE("Source Type",SourceTypeFilter)
+                ELSE
+                  SETRANGE("Source Type");
+                IF SourceNoFilter <> '' THEN
+                  SETFILTER("Source No.",SourceNoFilter)
+                ELSE
+                  SETRANGE("Source No.");
+
+                SETFILTER("Global Dimension 1 Code",Dim1Filter);
+                SETFILTER("Global Dimension 2 Code",Dim2Filter);
+                SETFILTER("Business Unit Code",BusUnitFilter);
+
+                IF RowLayout."Elimination Entry Only" OR ColumnLayout."Elimination Entry Only" THEN
+                  SETFILTER("Business Unit Code",'%1','');
+
+                CASE AmountType OF
+                  AmountType::"Net Amount" :
+                    BEGIN
+                      CALCSUMS(Amount);
+                      ColValue := Amount;
+                    END;
+                  AmountType::"Debit Amount" :
+                    BEGIN
+                      CALCSUMS(Amount);
+                      ColValue := Amount;
+                      IF ColValue < 0 THEN
+                        ColValue := 0;
+                    END;
+                  AmountType::"Credit Amount" :
+                    BEGIN
+                      CALCSUMS(Amount);
+                      ColValue := Amount;
+                      IF ColValue > 0 THEN
+                        ColValue := 0;
+                      ColValue := ColValue;
+                    END;
+                END;
+                Balance := Amount;
+              END;
+            END;
+        END;
+        IF TestBalance THEN BEGIN
+          IF RowLayout.Show = RowLayout.Show::"When Positive Balance" THEN
+            IF Balance < 0 THEN
+              EXIT(0);
+          IF RowLayout.Show = RowLayout.Show::"When Negative Balance" THEN
+            IF Balance > 0 THEN
+              EXIT(0);
+        END;
+
+      END;
+
+      EXIT(ColValue);
+    END;
+
+    PROCEDURE FormatCellAsText@24(VAR ColumnLayout2@1000 : Record 60041;Value@1001 : Decimal) : Text[30];
+    VAR
+      ValueAsText@1003 : Text[30];
+    BEGIN
+      IF NormalFormatString = '' THEN BEGIN
+        IF NOT GLSetupRead THEN BEGIN
+          GLSetup.GET;
+          GLSetupRead := TRUE;
+        END;
+        NormalFormatString := Text014 + GLSetup."Amount Decimal Places" + Text015;
+      END;
+      WITH ColumnLayout2 DO
+        IF Value <> 0 THEN BEGIN
+          CASE "Rounding Factor" OF
+            "Rounding Factor"::None :
+              ValueAsText := FORMAT(Value,0,NormalFormatString);
+            "Rounding Factor"::"0.01" :
+              ValueAsText := FORMAT(ROUND(Value,0.01));
+            "Rounding Factor"::"0.1" :
+              ValueAsText := FORMAT(ROUND(Value,0.1));
+            "Rounding Factor"::"1" :
+              ValueAsText := FORMAT(ROUND(Value,1));
+            "Rounding Factor"::"1000" :
+              ValueAsText := FORMAT(ROUND(Value/1000,1));
+            "Rounding Factor"::"1000000" :
+              ValueAsText := FORMAT(ROUND(Value/1000000,1));
+          END;
+          IF (ColumnLayout2."Totaling Type" = ColumnLayout2."Totaling Type"::Formula) AND
+             (STRPOS(ColumnLayout2.Totaling,'%') > 1) THEN
+            ValueAsText := ValueAsText + '%';
+        END;
+      EXIT(ValueAsText);
+    END;
+
+    PROCEDURE GetDivisionError@18() : Boolean;
+    BEGIN
+      EXIT(DivisionError);
+    END;
+
+    PROCEDURE GetPeriodError@31() : Boolean;
+    BEGIN
+      EXIT(PeriodError);
+    END;
+
+    PROCEDURE ShowError@19(MessageLine@1000 : Text[100];VAR RowLayout@1001 : Record 60041;VAR ColumnLayout@1002 : Record 60041);
+    BEGIN
+      RowLayout.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+      RowLayout.SETRANGE("Line No.",CallingRowLayoutID);
+      IF RowLayout.FIND('-') THEN;
+      ColumnLayout.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+      ColumnLayout.SETRANGE("Line No.",CallingColumnLayoutID);
+      IF ColumnLayout.FIND('-') THEN;
+      ERROR(
+        MessageLine +'\\' +
+        Text017 +
+        Text018 +
+        Text019,
+        RowLayout."Row/Col No.", RowLayout."Line No.",RowLayout.Totaling,
+        ColumnLayout."Row/Col No.",ColumnLayout."Line No.",ColumnLayout.Totaling);
+    END;
+
+    PROCEDURE InsertGLAccounts@12(VAR RowLayout@1000 : Record 60041);
+    VAR
+      GLAcc@1001 : Record 15;
+      RecRef@1006 : RecordRef;
+      ChangeLogMgt@1007 : Codeunit 423;
+      GLAccCount@1003 : Integer;
+      RowLineNo@1004 : Integer;
+      i@1005 : Integer;
+    BEGIN
+      {
+      GLAccList.LOOKUPMODE(TRUE);
+      IF GLAccList.RUNMODAL = ACTION::LookupOK THEN BEGIN
+        GLAccList.SetSelection(GLAcc);
+        GLAccCount := GLAcc.COUNT;
+        IF GLAccCount > 0 THEN BEGIN
+          RowLineNo := RowLayout."Line No.";
+          RowLayout.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+          IF RowLayout.FIND('+') THEN
+            REPEAT
+              i := RowLayout."Line No.";
+              IF i >= RowLineNo THEN BEGIN
+                RowLayout.DELETE;
+                RowLayout."Line No." := i + 10000 * GLAccCount;
+                RowLayout.INSERT;
+              END;
+            UNTIL (i <= RowLineNo) OR (RowLayout.NEXT(-1) = 0);
+
+          IF RowLineNo = 0 THEN
+            RowLineNo := 10000;
+
+          IF GLAcc.FIND('-') THEN
+            REPEAT
+              RowLayout.INIT;
+              RowLayout."Line No." := RowLineNo;
+              RowLineNo := RowLineNo + 10000;
+              RowLayout.Description := GLAcc.Name;
+              IF GLAcc."Account Type" IN
+                 [GLAcc."Account Type"::Posting,GLAcc."Account Type"::Total,GLAcc."Account Type"::"End-Total"]
+              THEN BEGIN
+                //RowLayout.Totaling := GLAcc."No.";
+                //RowLayout."Row/Col No." := COPYSTR(GLAcc."No.",1,MAXSTRLEN(RowLayout."Row/Col No."));
+              END;
+              IF GLAcc."Account Type" IN
+                 [GLAcc."Account Type"::Total,GLAcc."Account Type"::"End-Total"]
+              THEN
+                //RowLayout."Totaling Type" := RowLayout."Totaling Type"::"Total Accounts"
+              //ELSE
+                //RowLayout."Totaling Type" := RowLayout."Totaling Type"::"Posting Accounts";
+              RowLayout.INSERT;
+              RecRef.GETTABLE(RowLayout);
+              ChangeLogMgt.LogInsertion(RecRef);
+            UNTIL GLAcc.NEXT = 0;
+        END;
+      END;
+      }
+    END;
+
+    LOCAL PROCEDURE ExchangeAmtAddCurrToLCY@23(AmountLCY@1000 : Decimal) : Decimal;
+    BEGIN
+      IF NOT GLSetupRead THEN BEGIN
+        GLSetup.GET;
+        GLSetupRead := TRUE;
+      END;
+
+      EXIT(
+        CurrExchRate.ExchangeAmtLCYToFCY(
+          WORKDATE,GLSetup."Additional Reporting Currency",AmountLCY,
+          CurrExchRate.ExchangeRate(WORKDATE,GLSetup."Additional Reporting Currency")));
+    END;
+
+    PROCEDURE SetAccSchedName@22(VAR NewAccSchedName@1000 : Record 60040);
+    BEGIN
+      GAccSchedName := NewAccSchedName;
+    END;
+
+    PROCEDURE GetDimTotalingFilter@32(DimNo@1001 : Integer;DimTotaling@1000 : Text[80]) : Text[1024];
+    VAR
+      DimTotaling2@1002 : Text[80];
+      DimTotalPart@1005 : Text[80];
+      ResultFilter@1003 : Text[1024];
+      ResultFilter2@1006 : Text[1024];
+      i@1004 : Integer;
+    BEGIN
+      IF DimTotaling = '' THEN
+        EXIT(DimTotaling);
+      DimTotaling2 := DimTotaling;
+      REPEAT
+        i := STRPOS(DimTotaling2,'|');
+        IF i > 0 THEN BEGIN
+          DimTotalPart := COPYSTR(DimTotaling2,1,i - 1);
+          IF i < STRLEN(DimTotaling2) THEN
+            DimTotaling2 := COPYSTR(DimTotaling2,i + 1)
+          ELSE
+            DimTotaling2 := '';
+        END ELSE
+          DimTotalPart := DimTotaling2;
+        ResultFilter2 := ConvDimTotalingFilter(DimNo,DimTotalPart);
+        IF ResultFilter2 <> '' THEN
+          IF STRLEN(ResultFilter) + STRLEN(ResultFilter2) + 1 > MAXSTRLEN(ResultFilter) THEN
+            ERROR(Text021,DimTotaling)
+          ELSE BEGIN
+            IF ResultFilter <> '' THEN
+              ResultFilter := ResultFilter + '|';
+            ResultFilter := ResultFilter + ResultFilter2;
+          END;
+      UNTIL i <= 0;
+      EXIT(ResultFilter);
+    END;
+
+    LOCAL PROCEDURE ConvDimTotalingFilter@28(DimNo@1000 : Integer;DimTotaling@1001 : Text[80]) : Text[1024];
+    VAR
+      DimVal@1003 : Record 349;
+      DimCode@1002 : Code[20];
+      ResultFilter@1004 : Text[1024];
+      DimValTotaling@1005 : Boolean;
+      GLSetup@1000000000 : Record 98;
+    BEGIN
+      IF DimTotaling = '' THEN
+        EXIT(DimTotaling);
+
+      GLSetup.GET;
+
+      CASE DimNo OF
+        1: DimCode := GLSetup."Shortcut Dimension 1 Code";
+        2: DimCode := GLSetup."Shortcut Dimension 2 Code";
+        3: DimCode := GLSetup."Shortcut Dimension 3 Code";
+        4: DimCode := GLSetup."Shortcut Dimension 4 Code";
+      END;
+      IF DimCode = '' THEN
+        EXIT(DimTotaling);
+
+      DimVal.SETRANGE("Dimension Code",DimCode);
+      DimVal.SETFILTER(Code,DimTotaling);
+      IF DimVal.FIND('-') THEN
+        REPEAT
+          DimValTotaling :=
+            DimVal."Dimension Value Type" IN
+            [DimVal."Dimension Value Type"::Total,DimVal."Dimension Value Type"::"End-Total"];
+          IF DimValTotaling AND (DimVal.Totaling <> '') THEN BEGIN
+            IF STRLEN(ResultFilter) + STRLEN(DimVal.Totaling) + 1 > MAXSTRLEN(ResultFilter) THEN
+              ERROR(Text021,DimTotaling);
+            IF ResultFilter <> '' THEN
+              ResultFilter := ResultFilter + '|';
+            ResultFilter := ResultFilter + DimVal.Totaling;
+          END;
+        UNTIL (DimVal.NEXT = 0) OR NOT (DimValTotaling);
+
+      IF DimValTotaling THEN
+        EXIT(ResultFilter)
+      ELSE
+        EXIT(DimTotaling);
+    END;
+
+    LOCAL PROCEDURE EvaluateExpression@1000000000(IsRowLineExpression@1000 : Boolean;Expression@1001 : Text[80];RowLayout@1002 : Record 60041;ColumnLayout@1003 : Record 60041;CalcAddCurr@1004 : Boolean) : Decimal;
+    VAR
+      RowLayout2@1018 : Record 60041;
+      Result@1005 : Decimal;
+      Parantheses@1006 : Integer;
+      Operator@1007 : Char;
+      LeftOperand@1008 : Text[80];
+      RightOperand@1009 : Text[80];
+      LeftResult@1010 : Decimal;
+      RightResult@1011 : Decimal;
+      i@1012 : Integer;
+      IsExpression@1013 : Boolean;
+      IsFilter@1014 : Boolean;
+      Operators@1015 : Text[8];
+      OperatorNo@1016 : Integer;
+      RowLayoutID@1017 : Integer;
+    BEGIN
+      Result := 0;
+
+      CallLevel := CallLevel + 1;
+      IF CallLevel > 25 THEN
+        ShowError(Text020,
+                   RowLayout,ColumnLayout);
+
+      Expression := DELCHR(Expression,'<>',' ');
+      IF STRLEN(Expression) > 0 THEN BEGIN
+        Parantheses := 0;
+        IsExpression := FALSE;
+        Operators := '+-*/^%';
+        OperatorNo := 1;
+        REPEAT
+          i := STRLEN(Expression);
+          REPEAT
+            IF Expression[i] = '(' THEN
+              Parantheses := Parantheses + 1
+            ELSE
+              IF Expression[i] = ')' THEN
+                Parantheses := Parantheses - 1;
+            IF (Parantheses = 0) AND (Expression[i] = Operators[OperatorNo]) THEN
+              IsExpression := TRUE
+            ELSE
+              i := i - 1;
+          UNTIL IsExpression OR (i <= 0);
+          IF NOT IsExpression THEN
+            OperatorNo := OperatorNo + 1;
+        UNTIL (OperatorNo > STRLEN(Operators)) OR IsExpression;
+        IF IsExpression THEN BEGIN
+          IF i > 1 THEN
+            LeftOperand := COPYSTR(Expression,1,i - 1)
+          ELSE
+            LeftOperand := '';
+          IF i < STRLEN(Expression) THEN
+            RightOperand := COPYSTR(Expression,i + 1)
+          ELSE
+            RightOperand := '';
+          Operator := Expression[i];
+          LeftResult :=
+            EvaluateExpression(
+              IsRowLineExpression,LeftOperand,RowLayout,ColumnLayout,CalcAddCurr);
+          {
+          IF (RightOperand = '') AND (Operator = '%') AND NOT IsRowLineExpression //AND
+             //(RowLayout."Totaling Type" <> RowLayout."Totaling Type"::"Set Base For Percent")
+          THEN BEGIN
+            RowLayout2.COPY(RowLayout);
+            RowLayout2."Line No." := GetBasePercentLine(RowLayout,ColumnLayout);
+            RowLayout2.FIND;
+            RightResult :=
+              EvaluateExpression(
+                IsRowLineExpression,LeftOperand,RowLayout2,ColumnLayout,CalcAddCurr);
+          END ELSE
+          }
+            RightResult :=
+              EvaluateExpression(
+                IsRowLineExpression,RightOperand,RowLayout,ColumnLayout,CalcAddCurr);
+          CASE Operator OF
+            '^':
+              Result := POWER(LeftResult,RightResult);
+            '%' :
+              IF RightResult = 0 THEN BEGIN
+                Result := 0;
+                DivisionError := TRUE;
+              END ELSE
+                Result := 100 * LeftResult / RightResult;
+            '*':
+              Result := LeftResult * RightResult;
+            '/':
+              IF RightResult = 0 THEN BEGIN
+                Result := 0;
+                DivisionError := TRUE;
+              END ELSE
+                Result := LeftResult / RightResult;
+            '+':
+              Result := LeftResult + RightResult;
+            '-':
+              Result := LeftResult - RightResult;
+          END;
+        END ELSE
+          IF (Expression[1] = '(') AND (Expression[STRLEN(Expression)] = ')') THEN
+            Result :=
+              EvaluateExpression(
+                IsRowLineExpression,COPYSTR(Expression,2,STRLEN(Expression) - 2),
+                RowLayout,ColumnLayout,CalcAddCurr)
+          ELSE BEGIN
+            IsFilter :=
+               (STRPOS(Expression,'..') +
+                STRPOS(Expression,'|') +
+                STRPOS(Expression,'<') +
+                STRPOS(Expression,'>') +
+                STRPOS(Expression,'&') +
+                STRPOS(Expression,'=') > 0);
+            IF (STRLEN(Expression) > 10) AND (NOT IsFilter) THEN
+              EVALUATE(Result,Expression)
+            ELSE
+              IF IsRowLineExpression THEN BEGIN
+                RowLayout.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+                RowLayout.SETRANGE(Type,RowLayout.Type::Row);
+                RowLayout.SETFILTER("Row/Col No.",Expression);
+                RowLayoutID := RowLayout."Line No.";
+                IF RowLayout.FIND('-') THEN
+                  REPEAT
+                    IF RowLayout."Line No." <> RowLayoutID THEN
+                      Result := Result + CalcCellValue(RowLayout,ColumnLayout,CalcAddCurr);
+                  UNTIL RowLayout.NEXT = 0
+                ELSE
+                  IF IsFilter OR (NOT EVALUATE(Result,Expression)) THEN
+                    ShowError(Text012,RowLayout,ColumnLayout);
+              END ELSE BEGIN
+                ColumnLayout.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+                ColumnLayout.SETRANGE(Type,ColumnLayout.Type::Column);
+                ColumnLayout.SETFILTER("Row/Col No.",Expression);
+                RowLayoutID := ColumnLayout."Line No.";
+                IF ColumnLayout.FIND('-') THEN
+                  REPEAT
+                    IF ColumnLayout."Line No." <> RowLayoutID THEN
+                      Result := Result + CalcCellValue(RowLayout,ColumnLayout,CalcAddCurr);
+                  UNTIL ColumnLayout.NEXT = 0
+                ELSE
+                  IF IsFilter OR (NOT EVALUATE(Result,Expression)) THEN
+                    ShowError(Text013,RowLayout,ColumnLayout);
+              END;
+          END;
+      END;
+      CallLevel := CallLevel - 1;
+      EXIT(Result);
+    END;
+
+    PROCEDURE FindFiscalYear@10(BalanceDate@1000 : Date) : Date;
+    VAR
+      AccountingPeriod@1001 : Record 50;
+    BEGIN
+      AccountingPeriod.SETRANGE("New Fiscal Year",TRUE);
+      AccountingPeriod.SETRANGE("Starting Date",0D,BalanceDate);
+      IF AccountingPeriod.FIND('+') THEN
+        EXIT(AccountingPeriod."Starting Date");
+      AccountingPeriod.RESET;
+      AccountingPeriod.FIND('-');
+      EXIT(AccountingPeriod."Starting Date");
+    END;
+
+    LOCAL PROCEDURE FindEndOfFiscalYear@27(BalanceDate@1000 : Date) : Date;
+    VAR
+      AccountingPeriod@1001 : Record 50;
+    BEGIN
+      AccountingPeriod.SETRANGE("New Fiscal Year",TRUE);
+      AccountingPeriod.SETFILTER("Starting Date",'>%1',FindFiscalYear(BalanceDate));
+      IF AccountingPeriod.FIND('-') THEN
+        EXIT((CALCDATE('<-1D>',AccountingPeriod."Starting Date")));
+      EXIT((12319999D));
+    END;
+
+    LOCAL PROCEDURE AccPeriodStartEnd@26(Formula@1002 : Code[20];Date@1000 : Date;VAR StartDate@1013 : Date;VAR EndDate@1014 : Date);
+    VAR
+      ColumnLayout@1006 : Record 334;
+      AccountingPeriod@1001 : Record 50;
+      AccountingPeriodFY@1007 : Record 50;
+      Steps@1005 : Integer;
+      Type@1004 : ' ,Period,Fiscal year,Fiscal Halfyear,Fiscal Quarter';
+      CurrentPeriodNo@1003 : Integer;
+      RangeFromType@1012 : 'Int,CP,LP';
+      RangeToType@1011 : 'Int,CP,LP';
+      RangeFromInt@1010 : Integer;
+      RangeToInt@1009 : Integer;
+    BEGIN
+      IF Formula = '' THEN
+        EXIT;
+
+      ColumnLayout.ParsePeriodFormula(
+        Formula,Steps,Type,RangeFromType,RangeToType,RangeFromInt,RangeToInt);
+
+      // Find current period
+      AccountingPeriod.SETFILTER("Starting Date",'<=%1',Date);
+      IF NOT AccountingPeriod.FIND('+') THEN BEGIN
+        AccountingPeriod.RESET;
+        IF Steps < 0 THEN
+          AccountingPeriod.FIND('-')
+        ELSE
+          AccountingPeriod.FIND('+')
+      END;
+      AccountingPeriod.RESET;
+
+      CASE Type OF
+        Type::Period:
+          BEGIN
+            IF AccountingPeriod.NEXT(Steps) <> Steps THEN
+              PeriodError := TRUE;
+            StartDate := AccountingPeriod."Starting Date";
+            EndDate := AccPeriodEndDate(StartDate);
+          END;
+        Type::"Fiscal year":
+          BEGIN
+            AccountingPeriodFY := AccountingPeriod;
+            WHILE NOT AccountingPeriodFY."New Fiscal Year" DO
+              IF AccountingPeriodFY.FIND('<') THEN
+                CurrentPeriodNo += 1
+              ELSE
+                AccountingPeriodFY."New Fiscal Year" := TRUE;
+            AccountingPeriodFY.SETRANGE("New Fiscal Year",TRUE);
+            AccountingPeriodFY.NEXT(Steps);
+
+            AccPeriodStartOrEnd(AccountingPeriodFY,CurrentPeriodNo,RangeFromType,RangeFromInt,FALSE,StartDate);
+            AccPeriodStartOrEnd(AccountingPeriodFY,CurrentPeriodNo,RangeToType,RangeToInt,TRUE,EndDate);
+          END;
+      END;
+    END;
+
+    LOCAL PROCEDURE AccPeriodEndDate@29(StartDate@1000 : Date) : Date;
+    VAR
+      AccountingPeriod@1001 : Record 50;
+    BEGIN
+      AccountingPeriod."Starting Date" := StartDate;
+      IF AccountingPeriod.FIND('>') THEN
+        EXIT(AccountingPeriod."Starting Date" - 1);
+      EXIT(12319999D);
+    END;
+
+    LOCAL PROCEDURE AccPeriodGetPeriod@35(VAR AccountingPeriod@1001 : Record 50;AccPeriodNo@1000 : Integer) : Date;
+    BEGIN
+      CASE TRUE OF
+        AccPeriodNo > 0:
+          BEGIN
+            AccountingPeriod.NEXT(AccPeriodNo);
+            EXIT;
+          END;
+        AccPeriodNo = 0:
+          EXIT;
+        AccPeriodNo < 0:
+          BEGIN
+            AccountingPeriod.SETRANGE("New Fiscal Year",TRUE);
+            IF NOT AccountingPeriod.FIND('>') THEN BEGIN
+              AccountingPeriod.RESET;
+              AccountingPeriod.FIND('+');
+              EXIT;
+            END;
+            AccountingPeriod.RESET;
+            AccountingPeriod.FIND('<');
+            EXIT;
+          END;
+      END;
+    END;
+
+    LOCAL PROCEDURE AccPeriodStartOrEnd@30(AccountingPeriod@1000 : Record 50;CurrentPeriodNo@1007 : Integer;RangeType@1006 : 'Int,CP,LP';RangeInt@1009 : Integer;EndDate@1003 : Boolean;VAR Date@1002 : Date);
+    BEGIN
+      CASE RangeType OF
+        RangeType::CP:
+          AccPeriodGetPeriod(AccountingPeriod,CurrentPeriodNo);
+        RangeType::LP:
+          AccPeriodGetPeriod(AccountingPeriod,-1);
+        RangeType::Int:
+          AccPeriodGetPeriod(AccountingPeriod,RangeInt - 1);
+      END;
+      IF EndDate THEN
+        Date := AccPeriodEndDate(AccountingPeriod."Starting Date")
+      ELSE
+        Date := AccountingPeriod."Starting Date";
+    END;
+
+    PROCEDURE InitCellValue@1000000011(VAR RowLayout@1000 : Record 60041;VAR ColumnLayout@1000000000 : Record 60041;CalcAddCurr@1002 : Boolean);
+    VAR
+      Result@1003 : Decimal;
+      RowLine@1000000001 : Record 60041;
+      ColLine@1000000002 : Record 60041;
+    BEGIN
+      RowLine.COPYFILTERS(RowLayout);
+      RowLine.SETFILTER("Totaling Type",'<>%1',RowLine."Totaling Type"::Percentage);
+
+      ColLine.COPYFILTERS(ColumnLayout);
+      ColLine.SETFILTER("Totaling Type",'<>%1',ColLine."Totaling Type"::Percentage);
+
+      IF RowLine.FINDFIRST THEN
+      REPEAT
+        WITH RowLine DO
+        BEGIN
+          ColLine.FINDFIRST;
+          REPEAT
+            Result := CalcCell(RowLine,ColLine,CalcAddCurr);
+          UNTIL ColLine.NEXT = 0;
+        END;
+      UNTIL RowLine.NEXT = 0;
+    END;
+
+    PROCEDURE SetToSaveValues@1000000001(NewSaveValues@1000000000 : Boolean;NewCYear@1000000002 : Integer;NewCMonth@1000000001 : ',January,February,March,April,May,Jun,July,August,September,October,November,December');
+    BEGIN
+      SaveCellValues := NewSaveValues;
+      CYear := NewCYear;
+      CMonth := NewCMonth;
+    END;
+
+    LOCAL PROCEDURE CalcCellValueFromStored@1000000002(RowLayout@1000 : Record 60041;ColumnLayout@1001 : Record 60041;CalcAddCurr@1002 : Boolean) : Decimal;
+    VAR
+      Result@1003 : Decimal;
+      GLAcc@1004 : Record 15;
+      RowTotalingFilter@1000000000 : Boolean;
+      ColTotalingFilter@1000000001 : Boolean;
+      TotalingSetup@1000000002 : Record 60042;
+      TotalingType@1000000003 : ' ,Posting Accounts,Total Accounts,Formula';
+      TotalingExp@1000000004 : Text[250];
+      BaseRowID@1000000005 : Integer;
+      BaseColID@1000000006 : Integer;
+      BaseRowLine@1000000007 : Record 60041;
+      BaseColLine@1000000009 : Record 60041;
+      BaseValue@1000000008 : Decimal;
+    BEGIN
+      Result := 0;
+
+      IF ((RowLayout.Description = '') AND (RowLayout."Description 2" = '') AND (RowLayout."Description 3" = '')) OR
+         ((ColumnLayout.Description = '') AND (ColumnLayout."Description 2" = '') AND (ColumnLayout."Description 3" = ''))OR
+         RowLayout."Skip Calculation" OR ColumnLayout."Skip Calculation" THEN
+        EXIT(Result);
+
+      IF AccSchedCellValue.GET(RowLayout."Line No.",ColumnLayout."Line No.") THEN BEGIN
+        Result := AccSchedCellValue.Value;
+        DivisionError := DivisionError OR AccSchedCellValue."Has Error";
+        PeriodError := PeriodError OR AccSchedCellValue."Period Error";
+
+      END ELSE BEGIN
+        IF (ColumnLayout."Totaling Type" = ColumnLayout."Totaling Type"::Formula) AND
+           (ColumnLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+              FALSE,ColumnLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+
+        END ELSE IF (ColumnLayout."Totaling Type" = ColumnLayout."Totaling Type"::Percentage) AND
+           (ColumnLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+              FALSE,ColumnLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+          IF TotalingSetup.GET(ColumnLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) THEN BEGIN
+            IF TotalingSetup."Percentage Base Row" <> '' THEN BEGIN
+              BaseRowLine.RESET;
+              BaseRowLine.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+              BaseRowLine.SETRANGE(Type,BaseRowLine.Type::Row);
+              BaseRowLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Row");
+              IF BaseRowLine.FINDFIRST THEN
+                BaseRowID := BaseRowLine."Line No.";
+            END ELSE
+              BaseRowID := TotalingSetup."Row Line No.";
+
+            IF TotalingSetup."Percentage Base Column" <> '' THEN BEGIN
+              BaseColLine.RESET;
+              BaseColLine.SETRANGE("Account Schedule Name",ColumnLayout."Account Schedule Name");
+              BaseColLine.SETRANGE(Type,BaseColLine.Type::Column);
+              BaseColLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Column");
+              IF BaseColLine.FINDFIRST THEN
+                BaseColID := BaseColLine."Line No.";
+            END ELSE
+              BaseColID := TotalingSetup."Column Line No.";
+
+            IF AccSchedCellValue.GET(BaseRowID,BaseColID) THEN BEGIN
+              BaseValue := ABS(AccSchedCellValue.Value);
+              IF BaseValue <> 0 THEN
+                Result := (Result/BaseValue)*100
+              ELSE
+                Result := 0;
+            END ELSE
+              Result := 0;
+          END;
+
+        END ELSE IF (RowLayout."Totaling Type" = RowLayout."Totaling Type"::Formula) AND
+                    (RowLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+             TRUE,RowLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+
+        END ELSE IF (RowLayout."Totaling Type" = RowLayout."Totaling Type"::Percentage) AND
+                    (RowLayout.Totaling <> '') THEN BEGIN
+          Result :=
+            EvaluateExpression(
+             TRUE,RowLayout.Totaling,RowLayout,ColumnLayout,CalcAddCurr);
+          IF TotalingSetup.GET(RowLayout."Account Schedule Name",CallingRowLayoutID,CallingColumnLayoutID) THEN BEGIN
+            IF TotalingSetup."Percentage Base Row" <> '' THEN BEGIN
+              BaseRowLine.RESET;
+              BaseRowLine.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+              BaseRowLine.SETRANGE(Type,BaseRowLine.Type::Row);
+              BaseRowLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Row");
+              IF BaseRowLine.FINDFIRST THEN
+                BaseRowID := BaseRowLine."Line No.";
+            END ELSE
+              BaseRowID := TotalingSetup."Row Line No.";
+
+            IF TotalingSetup."Percentage Base Column" <> '' THEN BEGIN
+              BaseColLine.RESET;
+              BaseColLine.SETRANGE("Account Schedule Name",RowLayout."Account Schedule Name");
+              BaseColLine.SETRANGE(Type,BaseColLine.Type::Column);
+              BaseColLine.SETRANGE("Row/Col No.",TotalingSetup."Percentage Base Column");
+              IF BaseColLine.FINDFIRST THEN
+                BaseColID := BaseColLine."Line No.";
+            END ELSE
+              BaseColID := TotalingSetup."Column Line No.";
+
+            IF AccSchedCellValue.GET(BaseRowID,BaseColID) THEN BEGIN
+              BaseValue := ABS(AccSchedCellValue.Value);
+              IF BaseValue <> 0 THEN
+                Result := (Result/BaseValue)*100
+              ELSE
+                Result := 0;
+            END ELSE
+              Result := 0;
+          END;
+
+        END ELSE BEGIN
+            IF AdvAccSchedValue.GET(CYear,CMonth,RowLayout."Account Schedule Name",RowLayout."Line No.",ColumnLayout."Line No.") THEN
+              Result := AdvAccSchedValue.Amount
+            ELSE
+              Result := 0;
+        END;
+
+        AccSchedCellValue."Row No." := RowLayout."Line No.";
+        AccSchedCellValue."Column No." := ColumnLayout."Line No.";
+        AccSchedCellValue.Value := Result;
+        AccSchedCellValue."Has Error" := DivisionError;
+        AccSchedCellValue."Period Error" := PeriodError;
+        AccSchedCellValue.INSERT;
+
+        IF AdvAccSchedValue.GET(CYear,CMonth,RowLayout."Account Schedule Name",RowLayout."Line No.",ColumnLayout."Line No.") THEN
+        BEGIN
+          AdvAccSchedValue.Amount := Result;
+          AdvAccSchedValue.MODIFY;
+        END;
+      END;
+
+      EXIT(Result);
+    END;
+
+    PROCEDURE SetToReCalculate@1000000014(NewReCalculate@1000000000 : Boolean;NewCYear@1000000002 : Integer;NewCMonth@1000000001 : ',January,February,March,April,May,Jun,July,August,September,October,November,December');
+    BEGIN
+      ReCalculate := NewReCalculate;
+      CYear := NewCYear;
+      CMonth := NewCMonth;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,39 @@
+OBJECT Table 28045 WHT Certificate Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/31/04;
+    Time=12:00:00;
+    Version List=NAVAP4.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT Certificate Buffer;
+               ENA=WHT Certificate Buffer];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+    { 2   ;   ;Vendor No.          ;Code20        ;CaptionML=[ENU=Vendor No.;
+                                                              ENA=Vendor No.];
+                                                   Editable=No }
+    { 3   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+  }
+  KEYS
+  {
+    {    ;Line No.                                ;Clustered=Yes }
+    {    ;Vendor No.,Document No.                  }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

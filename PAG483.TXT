@@ -1,0 +1,103 @@
+OBJECT Page 483 Currency Exchange Rates
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/21/15;
+    Time=18:44:21;
+    Modified=Yes;
+    Version List=NAVW13.00,NAVAP4.00,YIMMDEVIP1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Currency Exchange Rates;
+               ENA=Currency Exchange Rates];
+    SourceTable=Table330;
+    DataCaptionFields=Currency Code;
+    PageType=List;
+    OnInsertRecord=VAR
+                     CurrExchRate@1001 : Record 330;
+                   BEGIN
+                     CurrExchRate := xRec;
+                     IF NOT BelowxRec THEN BEGIN
+                       CurrExchRate.COPYFILTERS(Rec);
+                       IF CurrExchRate.NEXT(-1) <> 0 THEN
+                         TRANSFERFIELDS(CurrExchRate,FALSE)
+                     END ELSE
+                       TRANSFERFIELDS(CurrExchRate,FALSE)
+                   END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Starting Date" }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 19  ;2   ;Field     ;
+                SourceExpr="Relational Currency Code";
+                Visible=TRUE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Exchange Rate Amount" }
+
+    { 13  ;2   ;Field     ;
+                CaptionML=[ENU=Bank Rate;
+                           ENA=Relational Exch. Rate Amount];
+                SourceExpr="Relational Exch. Rate Amount" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="Tax Rate Amount" }
+
+    { 1102159002;2;Field  ;
+                CaptionML=ENU=Tax Rate;
+                SourceExpr="Rel Tax Rate Amount" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Adjustment Exch. Rate Amount" }
+
+    { 21  ;2   ;Field     ;
+                SourceExpr="Relational Adjmt Exch Rate Amt" }
+
+    { 1500000;2;Field     ;
+                SourceExpr="Settlement Rate Amount" }
+
+    { 1500002;2;Field     ;
+                SourceExpr="Relational Sett. Rate Amount" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Fix Exchange Rate Amount" }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //YIMMDEVIP1.0
+      Point No - 14 Displayed two fields  Tax Rate Amount & Rel Tax Rate Amount and changes caption of Rel Tax Rate Amount to Tax Amount.
+    }
+    END.
+  }
+}
+

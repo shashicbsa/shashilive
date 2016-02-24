@@ -1,0 +1,206 @@
+OBJECT Report 60062 Detail G/L Ledger
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/03/15;
+    Time=11:24:32;
+    Modified=Yes;
+    Version List=YIMMDEVIP1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   TAB := 9;
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159002;;DataItem;                  ;
+               DataItemTable=Table17;
+               DataItemTableView=SORTING(Entry No.);
+               OnPreDataItem=BEGIN
+                               FileName :=CommonDial.ServerTempFileName('.txt');
+                               MyFile.CREATE(FileName);
+                               MyFile.CREATEOUTSTREAM(OutStreamObj);
+
+                               OutStreamObj.WRITETEXT(FORMAT('G/L Account No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Posting Date')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Document Type')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Document No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Description')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Bal. Account No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Amount')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Global Dimension 1 Code')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Global Dimension 2 Code')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Journal Batch Name')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Reason Code')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Debit Amount')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Credit Amount')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Vendor Type')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Source Type')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Source No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Narration')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Slip No.')+FORMAT(TAB));
+                               //OutStreamObj.WRITETEXT(FORMAT('Vendor Name')+FORMAT(TAB)); //NK
+                               OutStreamObj.WRITETEXT(FORMAT('Entity Name')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Type Of Transaction')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Tax Invoice No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Tax Invoice Date')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('NPWP No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('NPWP Name')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('DebitOri')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('CreditOri')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('CurrCode')+FORMAT(TAB));
+
+                               OutStreamObj.WRITETEXT(FORMAT('Bank Name')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Bank Account No.')+FORMAT(TAB));
+                               OutStreamObj.WRITETEXT(FORMAT('Contact')+FORMAT(TAB));
+
+                               OutStreamObj.WRITETEXT();
+                               OutStreamObj.WRITETEXT();
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  "G/L Entry".CALCFIELDS("Customer Name");
+
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."G/L Account No.")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Posting Date")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Document Type")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Document No.")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".Description)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Bal. Account No.")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".Amount,0,9)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Global Dimension 1 Code")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Global Dimension 2 Code")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Journal Batch Name")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Reason Code")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Debit Amount",0,9)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Credit Amount",0,9)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Customer Type") + FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Source Type")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Source No.")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".Narration)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Slip No.")+FORMAT(TAB));
+                                  //OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Vendor Name")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Customer Name")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Type Of Transaction")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Tax Invoice No.")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Tax Invoice Date")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Ship-to Code")+FORMAT(TAB));
+
+                                  S2Add.SETRANGE(S2Add.Code,"G/L Entry"."Ship-to Code");
+                                  IF S2Add.FINDFIRST THEN
+                                   Ship2Address := S2Add."Name 2";
+
+                                  OutStreamObj.WRITETEXT(FORMAT(Ship2Address)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".DebitOri,0,9)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".CreditOri,0,9)+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry".CurrCode)+FORMAT(TAB));
+
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Bank Name Cust/Vend")+FORMAT(TAB));
+                                  OutStreamObj.WRITETEXT(FORMAT("G/L Entry"."Bank Account No.")+FORMAT(TAB));
+
+                                  CBAcc.SETRANGE(CBAcc."Bank Account No.","G/L Entry"."Bank Account No.");
+                                  IF CBAcc.FINDFIRST THEN
+                                   Contact := CBAcc.Contact;
+
+                                  OutStreamObj.WRITETEXT(FORMAT(Contact)+FORMAT(TAB));
+
+
+                                  OutStreamObj.WRITETEXT();
+                                END;
+
+               OnPostDataItem=BEGIN
+                                MyFile.CLOSE;
+                                //MESSAGE(FileName);
+                                CommonDial.DownloadTempFile(FileName);
+                              END;
+
+               ReqFilterFields=G/L Account No.,Posting Date,CurrCode,Customer Type,Type Of Transaction,Slip No.,Customer Name }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1102159001;;Container;
+                  ContainerType=ContentArea }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      GLAcct@1102159001 : Code[20];
+      Pstngdt@1102159002 : Text;
+      FileName@1102159003 : Text;
+      Text006@1102159012 : TextConst 'ENU=User must select the file;THA=â»Ã´àÅ×Í¡ä¿Åì';
+      Text001@1102159004 : TextConst 'ENU=Specify File Name';
+      MyFile@1102159005 : File;
+      OutStreamObj@1102159006 : OutStream;
+      ToFileName@1102159007 : File;
+      FilePath@1102159008 : Text[1024];
+      WFIle@1102159009 : Text;
+      OpenFileName@1102159010 : Text;
+      TempFile@1102159011 : File;
+      DownloadedFileName@1102159013 : Text[1024];
+      FileName1@1102159014 : Text[100];
+      Text11004@1102159015 : TextConst 'ENU=GL Detail';
+      TAB@1102159017 : Char;
+      PostedCrMemo@1102159018 : Record 114;
+      Cust@1102159019 : Record 18;
+      CustType@1102159020 : Text;
+      CommonDial@1102159016 : Codeunit 419;
+      Ship2Address@1000000000 : Text[150];
+      Contact@1000000001 : Text[100];
+      S2Add@1000000002 : Record 222;
+      CBAcc@1000000003 : Record 287;
+
+    PROCEDURE DownloadFile@1102159001();
+    VAR
+      CommonDialogMgt@1102159001 : Codeunit 419;
+      Text001@1102159004 : TextConst;
+      Text002@1102159003 : TextConst;
+      i@1102159005 : Integer;
+    BEGIN
+      //CommonDialogMgt.OpenFileWithName(DownloadedFileName);
+      CommonDialogMgt.OpenFileDialog('GL Register',DownloadedFileName,'*.txt|*.*');
+        FOR i := STRLEN(FileName) DOWNTO 1 DO
+          BEGIN
+            IF COPYSTR(FileName,i,1) = '\' THEN
+              BEGIN
+                FileName1 := COPYSTR(FileName,i + 1);
+                i := 0;
+              END;
+          END;
+      {
+      IF ISSERVICETIER THEN
+        BEGIN
+          TempFile.CREATETEMPFILE;
+          FileName := TempFile.NAME + '.txt';
+          TempFile.CLOSE;
+          IF DOWNLOAD(Text001, '',Text002,'',FileName) THEN;
+        END;
+      }
+    END;
+
+    BEGIN
+    {
+      //YIMMDEVIP1.0
+      Point no : 29    Create a report like dataport 50003 and added few more filters
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

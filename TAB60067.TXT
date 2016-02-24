@@ -1,0 +1,35 @@
+OBJECT Table 60067 Object details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/22/15;
+    Time=18:25:24;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Object Type         ;Option        ;OptionCaptionML=ENU=TableData,Table,,Report,,Codeunit,XMLport,MenuSuite,Page,Query,System,FieldNumber;
+                                                   OptionString=TableData,Table,,Report,,Codeunit,XMLport,MenuSuite,Page,Query,System,FieldNumber }
+    { 2   ;   ;Object ID           ;Integer        }
+    { 3   ;   ;Profile ID          ;Code30         }
+    { 4   ;   ;Object Name         ;Text50         }
+  }
+  KEYS
+  {
+    {    ;Object Type,Object ID,Object Name       ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

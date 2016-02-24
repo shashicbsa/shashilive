@@ -1,0 +1,76 @@
+OBJECT Page 7702 Fields
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/12/06;
+    Time=12:00:00;
+    Version List=NAVW14.00.02;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=Fields;
+               ENA=Fields];
+    SourceTable=Table2000000041;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                CaptionML=[ENU=TableNo;
+                           ENA=TableNo];
+                SourceExpr=TableNo }
+
+    { 4   ;2   ;Field     ;
+                CaptionML=[ENU=No.;
+                           ENA=No.];
+                SourceExpr="No." }
+
+    { 6   ;2   ;Field     ;
+                CaptionML=[ENU=TableName;
+                           ENA=TableName];
+                SourceExpr=TableName }
+
+    { 8   ;2   ;Field     ;
+                CaptionML=[ENU=FieldName;
+                           ENA=FieldName];
+                SourceExpr=FieldName }
+
+    { 10  ;2   ;Field     ;
+                CaptionML=[ENU=Type;
+                           ENA=Type];
+                SourceExpr=Type }
+
+    { 12  ;2   ;Field     ;
+                CaptionML=[ENU=Class;
+                           ENA=Class];
+                SourceExpr=Class }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

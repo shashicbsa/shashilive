@@ -1,0 +1,42 @@
+OBJECT Page 63155 Propac Shop Code Mapping
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/22/15;
+    Time=14:49:05;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table60061;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1102159001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1102159002;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Area Code DDS" }
+
+    { 1102159004;2;Field  ;
+                SourceExpr="Propac Shop Code" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Page created to map Shop Code with Area Code DDS in case of Propac Interface.
+    }
+    END.
+  }
+}
+

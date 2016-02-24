@@ -1,0 +1,48 @@
+OBJECT Table 60040 Adv. Acc. Schedule Name
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/29/10;
+    Time=10:32:58;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Name,Description;
+    OnDelete=BEGIN
+               AccSchedLayout.SETRANGE("Account Schedule Name",Name);
+               AccSchedLayout.DELETEALL(TRUE);
+             END;
+
+    CaptionML=ENU=Acc. Schedule Name-YMSLI;
+    LookupPageID=Page62080;
+    DrillDownPageID=Page62080;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Name                ;Code20        ;CaptionML=ENU=Name;
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text80        ;CaptionML=ENU=Description }
+    { 3   ;   ;Prefix Year to Column;Boolean      ;CaptionML=ENU=Prefix Year to Column Description }
+    { 4   ;   ;Prefix Year to Row  ;Boolean       ;CaptionML=ENU=Prefix Year to Row Description }
+    { 5   ;   ;Issued By           ;Text30         }
+    { 6   ;   ;Checked By          ;Text30         }
+    { 7   ;   ;Approved By         ;Text30         }
+  }
+  KEYS
+  {
+    {    ;Name                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      AccSchedLayout@1000 : Record 60041;
+
+    BEGIN
+    END.
+  }
+}
+

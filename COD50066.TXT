@@ -1,0 +1,241 @@
+OBJECT Codeunit 50066 CONSOL-CHECK VALIDATION
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/22/10;
+    Time=11:36:11;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+                  {
+                  SalesLine.SETRANGE("Document Type","Document Type");
+                  SalesLine.SETRANGE("Document No.","No.");
+                  SalesLine.SETFILTER(SalesLine."Qty. to Ship",'<>0');
+                  SalesLine.SETRANGE("Shipment No.",'');
+
+
+                                 }
+
+
+            ConsolValidation(073110D);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      VendorLedgerEntryRec@1000000000 : Record 25;
+      StartingMonthdate@1000000001 : Date;
+      Asondate@1000000002 : Date;
+      Original_Amt_LCY@1000000003 : Decimal;
+      WHT_Amt_LCY@1000000004 : Decimal;
+      Total_Org_WHT@1000000007 : Decimal;
+      Original_Amt_LCY_6@1000000005 : Decimal;
+      WHT_Amt_LCY_6@1000000006 : Decimal;
+      Total_Org_WHT_6@1000000008 : Decimal;
+      CustomerLedgerEntryRec@1000000009 : Record 21;
+      Original_Amt_LCY_YIMM@1000000010 : Decimal;
+      WHT_Amt_LCY_YIMM@1000000011 : Decimal;
+      Total_Org_WHT_YIMM@1000000012 : Decimal;
+      Original_Amt_LCY_YMMWJ@1000000013 : Decimal;
+      WHT_Amt_LCY_YMMWJ@1000000014 : Decimal;
+      Total_Org_WHT_YMMWJ@1000000015 : Decimal;
+      Text0001@1000000016 : TextConst 'ENU=The Total Amount of YIMM is';
+      Text0002@1000000017 : TextConst 'ENU=The Total Amount of YMKI is';
+      Text0003@1000000018 : TextConst 'ENU=The Total Amount of YIMM is %1 The Total Amount of YMKI is %2  and the Diff is %3 So that consolidation is not posible.';
+      Text0004@1000000019 : TextConst 'ENU=The Total Amount of YIMM is %1 and The Total Amount of YMWJ is %2 and the Diff is %3 So that consolidation is not posible.';
+      ABSTotal_Org_WHT@1000000020 : Decimal;
+      ABSTotal_Org_WHT_YIMM@1000000021 : Decimal;
+      ABSTotal_Org_WHT_6@1000000022 : Decimal;
+      ABSTotal_Org_WHT_YMMWJ@1000000023 : Decimal;
+      Diff_YIMM_KI@1000000024 : Decimal;
+      Diff_YIMM_WJ@1000000025 : Decimal;
+      MasterSetupRec@1000000026 : Record 50008;
+      ConsolAsOnDate@1000000027 : Date;
+      ABS_Original_Amt_LCY@1000000028 : Decimal;
+      ABS_WHT_Amt_LCY@1000000029 : Decimal;
+      ABS_Total_Org_WHT@1000000030 : Decimal;
+      ABS_Original_Amt_LCY_6@1000000031 : Decimal;
+      ABS_WHT_Amt_LCY_6@1000000032 : Decimal;
+      ABS_Total_Org_WHT_6@1000000033 : Decimal;
+      ABS_Original_Amt_LCY_YIMM@1000000034 : Decimal;
+      ABS_WHT_Amt_LCY_YIMM@1000000035 : Decimal;
+      ABS_Total_Org_WHT_YIMM@1000000036 : Decimal;
+      ABS_Original_Amt_LCY_YMMWJ@1000000037 : Decimal;
+      ABS_WHT_Amt_LCY_YMMWJ@1000000038 : Decimal;
+      ABS_Total_Org_WHT_YMMWJ@1000000039 : Decimal;
+
+    PROCEDURE ConsolValidation@1000000000(ConsolAsOnDate@1000000000 : Date);
+    BEGIN
+      //********************* YIMM ******************************   START
+      //********* For vendor =  PT Yamaha Motor Kencana Indonesia *************** START
+      ResetAll;
+      IF VendorLedgerEntryRec.CHANGECOMPANY('YIMM') = TRUE THEN
+      BEGIN
+      VendorLedgerEntryRec.RESET;
+      //SETRANGE("Cust. Ledger Entry"."Date Filter",0D,ConsolAsOnDate);
+      VendorLedgerEntryRec.SETRANGE(VendorLedgerEntryRec."Posting Date",0D,ConsolAsOnDate);
+      VendorLedgerEntryRec.SETFILTER(VendorLedgerEntryRec."Remaining Amt. (LCY)", '<>0');
+      VendorLedgerEntryRec.SETRANGE(VendorLedgerEntryRec."Vendor No.",'VDRL-09-01-0763');
+      IF VendorLedgerEntryRec.FIND('-') THEN
+      REPEAT
+      VendorLedgerEntryRec.CALCFIELDS("Original Amt. (LCY)","WHT Amount (LCY)");
+
+      Original_Amt_LCY := (Original_Amt_LCY+VendorLedgerEntryRec."Original Amt. (LCY)");
+      ABS_Original_Amt_LCY := ABS(Original_Amt_LCY);
+      WHT_Amt_LCY := (WHT_Amt_LCY+VendorLedgerEntryRec."WHT Amount (LCY)");
+      ABS_WHT_Amt_LCY := ABS(WHT_Amt_LCY);
+      Total_Org_WHT := (Original_Amt_LCY+WHT_Amt_LCY);
+      ABS_Total_Org_WHT := ABS(Total_Org_WHT);
+      UNTIL VendorLedgerEntryRec.NEXT=0;
+      MESSAGE(FORMAT(ABS_Original_Amt_LCY));
+      MESSAGE(FORMAT(ABS_WHT_Amt_LCY));
+      MESSAGE(FORMAT(ABS_Total_Org_WHT));
+      END;
+      //********* For vendor =  PT Yamaha Motor Kencana Indonesia *************** END
+
+      //********* For vendor =  PT. YAMAHA MOTOR MFG.-WEST JAVA ***************   START
+      IF VendorLedgerEntryRec.CHANGECOMPANY('YIMM') = TRUE THEN
+      BEGIN
+      VendorLedgerEntryRec.RESET;
+      VendorLedgerEntryRec.SETRANGE(VendorLedgerEntryRec."Posting Date",0D,ConsolAsOnDate);
+      VendorLedgerEntryRec.SETFILTER(VendorLedgerEntryRec."Remaining Amt. (LCY)", '<>0');
+      VendorLedgerEntryRec.SETRANGE(VendorLedgerEntryRec."Vendor No.",'VDRL-09-01-0006');
+      IF VendorLedgerEntryRec.FIND('-') THEN
+      REPEAT
+      VendorLedgerEntryRec.CALCFIELDS("Original Amt. (LCY)","WHT Amount (LCY)");
+      Original_Amt_LCY_6 := (Original_Amt_LCY_6+VendorLedgerEntryRec."Original Amt. (LCY)");
+      ABS_Original_Amt_LCY_6 := ABS(Original_Amt_LCY_6);
+      WHT_Amt_LCY_6 := (WHT_Amt_LCY_6+VendorLedgerEntryRec."WHT Amount (LCY)");
+      ABS_WHT_Amt_LCY_6 := ABS(WHT_Amt_LCY_6);
+      Total_Org_WHT_6 := (Original_Amt_LCY_6+WHT_Amt_LCY_6);
+      ABS_Total_Org_WHT_6 := ABS(Total_Org_WHT_6);
+      UNTIL VendorLedgerEntryRec.NEXT=0;
+      MESSAGE(FORMAT(ABS_Original_Amt_LCY_6));
+      MESSAGE(FORMAT(ABS_WHT_Amt_LCY_6));
+      MESSAGE(FORMAT(ABS_Total_Org_WHT_6));
+      END;
+
+      //********* For vendor =  PT. YAMAHA MOTOR MFG.-WEST JAVA *************** END
+            //********************* YIMM ******************************    END
+        //********************* YMKI ******************************   START
+      //********* For Customer =  YIMM ***************
+      IF CustomerLedgerEntryRec.CHANGECOMPANY('YMKI') = TRUE THEN
+      BEGIN
+      CustomerLedgerEntryRec.RESET;
+      CustomerLedgerEntryRec.SETRANGE(CustomerLedgerEntryRec."Posting Date",0D,ConsolAsOnDate);
+      CustomerLedgerEntryRec.SETFILTER(CustomerLedgerEntryRec."Remaining Amt. (LCY)", '<>0');
+      CustomerLedgerEntryRec.SETRANGE(CustomerLedgerEntryRec."Customer No.",'YIMM');
+      IF CustomerLedgerEntryRec.FIND('-') THEN
+      REPEAT
+      CustomerLedgerEntryRec.CALCFIELDS("Original Amt. (LCY)","WHT Amount (LCY)");
+      Original_Amt_LCY_YIMM := (Original_Amt_LCY_YIMM+CustomerLedgerEntryRec."Original Amt. (LCY)");
+      ABS_Original_Amt_LCY_YIMM := ABS(Original_Amt_LCY_YIMM);
+      WHT_Amt_LCY_YIMM := (WHT_Amt_LCY_YIMM+CustomerLedgerEntryRec."WHT Amount (LCY)");
+      ABS_WHT_Amt_LCY_YIMM := ABS(WHT_Amt_LCY_YIMM);
+      Total_Org_WHT_YIMM := (Original_Amt_LCY_YIMM + WHT_Amt_LCY_YIMM);
+      ABS_Total_Org_WHT_YIMM := ABS(Total_Org_WHT_YIMM);
+      UNTIL CustomerLedgerEntryRec.NEXT=0;
+      MESSAGE(FORMAT(ABS_Original_Amt_LCY_YIMM));
+      MESSAGE(FORMAT(ABS_WHT_Amt_LCY_YIMM));
+      MESSAGE(FORMAT(ABS_Total_Org_WHT_YIMM));
+      END;
+
+      //********* For Customer =  YIMM ***************
+        //********************* YMKI ******************************   END
+        //********************* YMMWJ ******************************   START
+      //********* For Customer =  YIMM ***************
+      IF CustomerLedgerEntryRec.CHANGECOMPANY('YMMWJ') = TRUE THEN
+      BEGIN
+      CustomerLedgerEntryRec.RESET;
+      CustomerLedgerEntryRec.SETRANGE(CustomerLedgerEntryRec."Posting Date",0D,ConsolAsOnDate);
+      CustomerLedgerEntryRec.SETFILTER(CustomerLedgerEntryRec."Remaining Amt. (LCY)", '<>0');
+      CustomerLedgerEntryRec.SETRANGE(CustomerLedgerEntryRec."Customer No.",'YIMM');
+      IF CustomerLedgerEntryRec.FIND('-') THEN
+      REPEAT
+      CustomerLedgerEntryRec.CALCFIELDS("Original Amt. (LCY)","WHT Amount (LCY)");
+      Original_Amt_LCY_YMMWJ := (Original_Amt_LCY_YMMWJ+CustomerLedgerEntryRec."Original Amt. (LCY)");
+      ABS_Original_Amt_LCY_YMMWJ := ABS(Original_Amt_LCY_YMMWJ);
+      WHT_Amt_LCY_YMMWJ := (WHT_Amt_LCY_YMMWJ + CustomerLedgerEntryRec."WHT Amount (LCY)");
+      ABS_WHT_Amt_LCY_YMMWJ := ABS(WHT_Amt_LCY_YMMWJ);
+      Total_Org_WHT_YMMWJ := (Original_Amt_LCY_YMMWJ + WHT_Amt_LCY_YMMWJ);
+      ABS_Total_Org_WHT_YMMWJ := ABS(Total_Org_WHT_YMMWJ);
+      UNTIL CustomerLedgerEntryRec.NEXT=0;
+      MESSAGE(FORMAT(ABS_Original_Amt_LCY_YMMWJ));
+      MESSAGE(FORMAT(ABS_WHT_Amt_LCY_YMMWJ));
+      MESSAGE(FORMAT(ABS_Total_Org_WHT_YMMWJ));
+      END;
+      //********* For Customer =  YIMM ***************
+        //********************* YMMWJ ******************************   END
+
+      ABSTotal_Org_WHT :=  ABS(Total_Org_WHT);
+      ABSTotal_Org_WHT_YIMM :=  ABS(Total_Org_WHT_YIMM);
+      ABSTotal_Org_WHT_6 := ABS(Total_Org_WHT_6);
+      ABSTotal_Org_WHT_YMMWJ := ABS(Total_Org_WHT_YMMWJ);
+         MasterSetupRec.RESET;
+         IF MasterSetupRec.CHANGECOMPANY('YIMM CONSOL') = TRUE THEN
+            BEGIN
+            IF MasterSetupRec.GET THEN
+
+      IF ABSTotal_Org_WHT - ABSTotal_Org_WHT_YIMM <> MasterSetupRec."Consol Diff AMT"  THEN
+         Diff_YIMM_KI := ABSTotal_Org_WHT - ABSTotal_Org_WHT_YIMM;
+         ERROR(Text0003, ABSTotal_Org_WHT,ABSTotal_Org_WHT_YIMM,Diff_YIMM_KI);
+
+      IF ABSTotal_Org_WHT_6 - ABSTotal_Org_WHT_YMMWJ <> MasterSetupRec."Consol Diff AMT" THEN
+         Diff_YIMM_WJ := ABSTotal_Org_WHT_6 - ABSTotal_Org_WHT_YMMWJ;
+         ERROR(Text0004, ABSTotal_Org_WHT_6,ABSTotal_Org_WHT_YMMWJ,Diff_YIMM_WJ);
+            END;
+    END;
+
+    PROCEDURE ResetAll@1000000001();
+    BEGIN
+      Original_Amt_LCY  := 0;
+      ABS_Original_Amt_LCY := 0;
+      WHT_Amt_LCY := 0;
+      ABS_WHT_Amt_LCY := 0;
+      Total_Org_WHT := 0;
+      ABS_Total_Org_WHT := 0;
+
+      Original_Amt_LCY_6 := 0;
+      ABS_Original_Amt_LCY_6 := 0;
+      WHT_Amt_LCY_6 := 0;
+      ABS_WHT_Amt_LCY_6 := 0;
+      Total_Org_WHT_6 := 0;
+      ABS_Total_Org_WHT_6 := 0;
+
+      Original_Amt_LCY_YIMM := 0;
+      ABS_Original_Amt_LCY_YIMM := 0;
+      WHT_Amt_LCY_YIMM := 0;
+      ABS_WHT_Amt_LCY_YIMM := 0;
+      Total_Org_WHT_YIMM := 0;
+      ABS_Total_Org_WHT_YIMM := 0;
+
+      Original_Amt_LCY_YMMWJ := 0;
+      ABS_Original_Amt_LCY_YMMWJ := 0;
+      WHT_Amt_LCY_YMMWJ := 0;
+      ABS_WHT_Amt_LCY_YMMWJ := 0;
+      Total_Org_WHT_YMMWJ := 0;
+      ABS_Total_Org_WHT_YMMWJ := 0;
+    END;
+
+    BEGIN
+    {
+      Tag Name      Dated       Description           JMD
+      ---------------------------------------------------------------------------------------------
+      YMSLIPKS1.0  04/08/10    Consol-Check-Validation Functionality Development
+                                  -New Codeunit object.
+
+
+
+
+      Name
+      YIMM                    PT. YAMAHA INDONESIA MOTOR MFG.
+      YMKI  VDRL-09-01-0763   PT Yamaha Motor Kencana Indonesia
+      YMMWJ VDRL-09-01-0006   PT. YAMAHA MOTOR MFG.-WEST JAVA
+    }
+    END.
+  }
+}
+

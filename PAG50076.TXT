@@ -1,0 +1,62 @@
+OBJECT Page 50076 Tanda Terima For Ckng
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/30/15;
+    Time=17:06:38;
+    Modified=Yes;
+    Version List=To be deleted After Parallel,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table36;
+    SourceTableView=SORTING(Document Type,No.)
+                    WHERE(Reason Code=FILTER(SALRT));
+    PageType=Card;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Document Type" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Sell-to Customer No." }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="No." }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr=Status }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Due Date" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Reason Code" }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="Type Of Transaction" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //SMDEV1.0
+      Reason Code Filter Added
+    }
+    END.
+  }
+}
+

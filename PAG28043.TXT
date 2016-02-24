@@ -1,0 +1,102 @@
+OBJECT Page 28043 WHT Posting Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/21/14;
+    Time=19:53:21;
+    Modified=Yes;
+    Version List=NAVAP6.00,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT Posting Setup;
+               ENA=WHT Posting Setup];
+    SourceTable=Table28043;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500000;1;Group     ;
+                GroupType=Repeater }
+
+    { 1500001;2;Field     ;
+                SourceExpr="WHT Business Posting Group" }
+
+    { 1000000002;2;Field  ;
+                SourceExpr=Description }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=NPWP }
+
+    { 1500003;2;Field     ;
+                SourceExpr="WHT Product Posting Group" }
+
+    { 1500019;2;Field     ;
+                SourceExpr="WHT Calculation Rule" }
+
+    { 1500021;2;Field     ;
+                SourceExpr="WHT Minimum Invoice Amount" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Reason Code" }
+
+    { 1500005;2;Field     ;
+                SourceExpr="WHT %" }
+
+    { 1500011;2;Field     ;
+                SourceExpr="Realized WHT Type" }
+
+    { 1500007;2;Field     ;
+                SourceExpr="Prepaid WHT Account Code" }
+
+    { 1500009;2;Field     ;
+                SourceExpr="Payable WHT Account Code" }
+
+    { 1500013;2;Field     ;
+                SourceExpr="WHT Report" }
+
+    { 150000;2 ;Field     ;
+                SourceExpr="Bal. Prepaid Account Type" }
+
+    { 150002;2 ;Field     ;
+                SourceExpr="Bal. Prepaid Account No." }
+
+    { 150004;2 ;Field     ;
+                SourceExpr="Bal. Payable Account Type" }
+
+    { 150006;2 ;Field     ;
+                SourceExpr="Bal. Payable Account No." }
+
+    { 1500015;2;Field     ;
+                SourceExpr="WHT Report Line No. Series" }
+
+    { 1500017;2;Field     ;
+                SourceExpr="Revenue Type" }
+
+    { 1500027;2;Field     ;
+                SourceExpr="Purch. WHT Adj. Account No." }
+
+    { 1500029;2;Field     ;
+                SourceExpr="Sales WHT Adj. Account No." }
+
+    { 1500031;2;Field     ;
+                SourceExpr=Sequence }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

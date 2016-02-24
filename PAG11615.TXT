@@ -1,0 +1,92 @@
+OBJECT Page 11615 EFT Register
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    CaptionML=[ENU=EFT Register;
+               ENA=EFT Register];
+    SourceTable=Table11609;
+    PageType=Card;
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 1500017 ;1   ;ActionGroup;
+                      CaptionML=[ENU=Vendor;
+                                 ENA=Vendor];
+                      Image=Vendor }
+      { 1500018 ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=[ENU=Entries;
+                                 ENA=Entries];
+                      RunObject=Page 29;
+                      RunPageView=SORTING(EFT Register No.);
+                      RunPageLink=EFT Register No.=FIELD(No.);
+                      Image=Entries }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1500016 ;1   ;Action    ;
+                      CaptionML=[ENU=Create File;
+                                 ENA=Create File];
+                      Promoted=Yes;
+                      Image=CreateDocument;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 BankAcc@150003 : Record 270;
+                                 EFTManagement@1500000 : Codeunit 11603;
+                                 FileMgt@150002 : Codeunit 419;
+                                 FileName@150001 : Text[250];
+                               BEGIN
+                                 IF NOT CONFIRM(Text11000,FALSE,'EFT Payment',"No.") THEN
+                                   ERROR('');
+                                 IF FileName = '' THEN
+                                   FileName := '.txt';
+                                 FileName := FileMgt.SaveFileDialog(Text11001,FileName,'');
+
+                                 IF BankAcc.GET("Bank Account Code") THEN
+                                   EFTManagement.CreateFileFromEFTRegister(Rec,FileName,"File Description",BankAcc);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500000;1;Group     ;
+                GroupType=Repeater }
+
+    { 1500001;2;Field     ;
+                SourceExpr="No." }
+
+    { 1500003;2;Field     ;
+                SourceExpr="EFT Payment" }
+
+    { 1500005;2;Field     ;
+                SourceExpr="File Created" }
+
+    { 1500007;2;Field     ;
+                SourceExpr="Total Amount (LCY)" }
+
+    { 1500009;2;Field     ;
+                SourceExpr=Time }
+
+  }
+  CODE
+  {
+    VAR
+      Text11000@1500000 : TextConst 'ENU=File for "%1" with EFT No %2 is already created.\\Do you want to create the file again.;ENA=File for "%1" with EFT No %2 is already created.\\Do you want to create the file again.';
+      Text11001@150000 : TextConst 'ENU=EFT File;ENA=EFT File';
+
+    BEGIN
+    END.
+  }
+}
+

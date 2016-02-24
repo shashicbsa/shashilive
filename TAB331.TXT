@@ -1,0 +1,58 @@
+OBJECT Table 331 Adjust Exchange Rate Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Adjust Exchange Rate Buffer;
+               ENA=Adjust Exchange Rate Buffer];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code] }
+    { 2   ;   ;Posting Group       ;Code10        ;CaptionML=[ENU=Posting Group;
+                                                              ENA=Posting Group] }
+    { 3   ;   ;AdjBase             ;Decimal       ;CaptionML=[ENU=AdjBase;
+                                                              ENA=AdjBase];
+                                                   AutoFormatType=1 }
+    { 4   ;   ;AdjBaseLCY          ;Decimal       ;CaptionML=[ENU=AdjBaseLCY;
+                                                              ENA=AdjBaseLCY];
+                                                   AutoFormatType=1 }
+    { 5   ;   ;AdjAmount           ;Decimal       ;CaptionML=[ENU=AdjAmount;
+                                                              ENA=AdjAmount];
+                                                   AutoFormatType=1 }
+    { 6   ;   ;TotalGainsAmount    ;Decimal       ;CaptionML=[ENU=TotalGainsAmount;
+                                                              ENA=TotalGainsAmount];
+                                                   AutoFormatType=1 }
+    { 7   ;   ;TotalLossesAmount   ;Decimal       ;CaptionML=[ENU=TotalLossesAmount;
+                                                              ENA=TotalLossesAmount];
+                                                   AutoFormatType=1 }
+    { 8   ;   ;Dimension Entry No. ;Integer       ;CaptionML=[ENU=Dimension Entry No.;
+                                                              ENA=Dimension Entry No.] }
+    { 9   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 10  ;   ;IC Partner Code     ;Code20        ;CaptionML=[ENU=IC Partner Code;
+                                                              ENA=IC Partner Code] }
+  }
+  KEYS
+  {
+    {    ;Currency Code,Posting Group,Dimension Entry No.,Posting Date,IC Partner Code;
+                                                   Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

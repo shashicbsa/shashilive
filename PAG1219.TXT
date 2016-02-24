@@ -1,0 +1,50 @@
+OBJECT Page 1219 Post Exch Mapping Part
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/02/13;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.35800;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Posting Exchange Mapping;
+               ENA=Posting Exchange Mapping];
+    SourceTable=Table1224;
+    PageType=ListPart;
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Group     ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 3   ;2   ;Field     ;
+                CaptionML=[ENU=Table ID;
+                           ENA=Table ID];
+                SourceExpr="Table ID" }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Mapping Codeunit" }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Posting Exch. No. Field ID" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Posting Exch. Line Field ID" }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

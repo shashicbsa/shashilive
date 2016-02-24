@@ -1,0 +1,51 @@
+OBJECT Page 28041 WHT Product Posting Group
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT Product Posting Group;
+               ENA=WHT Product Posting Group];
+    SourceTable=Table28041;
+    PageType=List;
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1500009 ;1   ;Action    ;
+                      CaptionML=[ENU=&Setup;
+                                 ENA=&Setup];
+                      RunObject=Page 28043;
+                      RunPageLink=WHT Product Posting Group=FIELD(Code);
+                      Promoted=Yes;
+                      Image=Setup;
+                      PromotedCategory=Process }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1500000;1;Group     ;
+                GroupType=Repeater }
+
+    { 1500001;2;Field     ;
+                SourceExpr=Code }
+
+    { 1500003;2;Field     ;
+                SourceExpr=Description }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

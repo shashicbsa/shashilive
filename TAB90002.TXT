@@ -1,0 +1,43 @@
+OBJECT Table 90002 Nav Gen. Jnl. Template
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/11/10;
+    Time=17:54:16;
+    Version List=TBI1.0;
+  }
+  PROPERTIES
+  {
+    LookupPageID=Page90012;
+    DrillDownPageID=Page90012;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Name                ;Code10        ;TableRelation="Gen. Journal Template";
+                                                   OnValidate=BEGIN
+                                                                IF GenJnlTemplate.GET(Name) THEN
+                                                                  Description := GenJnlTemplate.Description;
+                                                              END;
+
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text50         }
+    { 3   ;   ;Is Approval Batch   ;Boolean        }
+    { 4   ;   ;No. Series Initial  ;Code2          }
+  }
+  KEYS
+  {
+    {    ;Name                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      GenJnlTemplate@1000000000 : Record 80;
+
+    BEGIN
+    END.
+  }
+}
+

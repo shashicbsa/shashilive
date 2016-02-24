@@ -1,0 +1,191 @@
+OBJECT XMLport 16630 WHT-EFiling
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=WHT-EFiling;
+               ENA=WHT-EFiling];
+    OnPreXMLport=BEGIN
+                   FType := 'H1604E';
+                   FType1 := 'H1604E';
+                   FType2 := 'H1604E';
+                 END;
+
+    OnPostXMLport=BEGIN
+                    TempWHTEntry.RESET;
+                    IF TempWHTEntry.FIND('-') THEN
+                      TempWHTEntry.DELETEALL;
+                  END;
+
+    UseRequestPage=Yes;
+  }
+  ELEMENTS
+  {
+    { [{A039A056-1CA9-48AA-ACD9-EF1E4A1903CB}];  ;CompanyInformation  ;Element ;Text     }
+
+    { [{8A9ED71F-E6CC-4A76-810F-9044E5F908D4}];1 ;CompanyInfo         ;Attribute;Text    }
+
+    { [{5E12CFD6-F52E-4825-B843-B0C2AA079940}];1 ;FType               ;Element ;Text     }
+
+    { [{DB499ABB-9F04-47DE-9EE3-9A9DC28893B2}];1 ;VATRegistrationNo   ;Element ;Text     }
+
+    { [{DE92B960-7628-4393-ABB7-83F236573D1B}];1 ;BranchCode          ;Element ;Text     }
+
+    { [{FCCDB357-9737-4593-B568-82121A7EAD67}];1 ;ReturnPeriod        ;Element ;Text     }
+
+    { [{99C53C18-00E0-4FFB-9E16-DC5428791E85}];1 ;TempWHTEntryEFiling ;Element ;Table   ;
+                                                  VariableName=Temp WHT Entry - EFiling;
+                                                  SourceTable=Table16608;
+                                                  Export::OnPreXMLItem=BEGIN
+                                                                         WHTEntry1.SETCURRENTKEY("Bill-to/Pay-to No.","WHT Revenue Type","WHT Prod. Posting Group");
+                                                                         WHTEntry1.SETFILTER("Applies-to Entry No.",'<>0');
+                                                                         WHTEntry1.SETRANGE("Transaction Type",WHTEntry1."Transaction Type"::Purchase);
+                                                                         WHTEntry1.SETFILTER("Posting Date",ReturnPeriod);
+                                                                         WHTEntry1.SETFILTER("Bill-to/Pay-to No.",VendID);
+                                                                         IF WHTEntry1.FINDFIRST THEN
+                                                                           REPORT.RUNMODAL(REPORT::"E-Filing",FALSE,FALSE,WHTEntry1);
+                                                                       END;
+
+                                                  Export::OnAfterGetRecord=BEGIN
+                                                                             ScheduleNo := 'D3';
+                                                                             ScheduleNo1 := 'D3';
+                                                                             IncomePymt := "Temp WHT Entry - EFiling"."Base (LCY)";
+                                                                             TIN := "Company Information"."VAT Registration No.";
+                                                                             TIN1 := "Company Information"."VAT Registration No.";
+                                                                             // Vend.GET("Temp WHT Entry - EFiling"."Bill-to/Pay-to No.");
+                                                                             IF Vend.GET(VendID) THEN;
+                                                                             PayeeTIN := Vend."VAT Registration No.";
+                                                                             PayeeBranchCode := PayeeBranchCode;
+                                                                             RegName := Vend.Name;
+                                                                             TempWHTEntry.COPYFILTERS("Temp WHT Entry - EFiling");
+                                                                             IncomePymt := 0;
+                                                                             IF TempWHTEntry.FIND('-') THEN
+                                                                               REPEAT
+                                                                                 IncomePymt := IncomePymt + TempWHTEntry."Base (LCY)";
+                                                                               UNTIL TempWHTEntry.NEXT = 0;
+                                                                           END;
+                                                                            }
+
+    { [{8FC9E1F4-0575-493E-A760-2DDE766D0C53}];2 ;ScheduleNo          ;Element ;Text     }
+
+    { [{5AEDA805-E47A-419D-82D0-5F818CDC82EC}];2 ;FType1              ;Element ;Text     }
+
+    { [{E04F4706-ACED-41FB-876D-E4A76D14E26C}];2 ;TIN                 ;Element ;Text     }
+
+    { [{D5890F3A-F3BD-4773-B811-9B6BBC9CA237}];2 ;Branchcode1         ;Element ;Text     }
+
+    { [{3543724A-AF9B-4EDF-9F6C-E284CDD51C19}];2 ;ReturnPeriod1       ;Element ;Text     }
+
+    { [{FD3C615B-A396-4965-917C-331E5B4E29B8}];2 ;SeqNo               ;Element ;Text     }
+
+    { [{9BEAC7E2-214D-4AFE-BF7E-A9517D346A6B}];2 ;PayeeTIN            ;Element ;Text     }
+
+    { [{B73314F0-C590-4024-92F9-F3FA66CE9703}];2 ;PayeeBranchCode     ;Element ;Text     }
+
+    { [{E84649EC-160C-4F27-8C80-975ACC96DB92}];2 ;RegName             ;Element ;Text     }
+
+    { [{44AEAC82-ABA9-4806-AE9C-20B1DE7B854D}];2 ;LastName            ;Element ;Text     }
+
+    { [{4BEF1D3A-46A1-4C6B-9BA8-00B61D0765E7}];2 ;FirstName           ;Element ;Text     }
+
+    { [{D978DE60-9BE1-4263-9D85-A44A1529729A}];2 ;MiddleName          ;Element ;Text     }
+
+    { [{8A160C2B-B6C9-417F-BC58-87E1359A89DB}];2 ;WHTRevenuType       ;Element ;Field   ;
+                                                  DataType=Code;
+                                                  SourceField=Temp WHT Entry - EFiling::WHT Revenue Type }
+
+    { [{2CA83453-8039-4E3C-B31C-441DE9DF3E05}];2 ;BaseLCY             ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Temp WHT Entry - EFiling::Base (LCY) }
+
+    { [{54A81FF4-3F97-4D58-B3DD-38FE899D0035}];2 ;WHT                 ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Temp WHT Entry - EFiling::WHT % }
+
+    { [{17E42F0B-76EA-47D8-B7DD-1080F65916AE}];2 ;AmountLCY           ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Temp WHT Entry - EFiling::Amount (LCY) }
+
+    { [{973969C2-F8FB-462D-B534-6A8341E8315E}];2 ;TempWHTEntryEFiling3;Element ;Table   ;
+                                                  VariableName=Temp WHT Entry - EFiling3;
+                                                  SourceTable=Table16608;
+                                                  Export::OnAfterGetRecord=BEGIN
+                                                                             ScheduleNo := 'D3';
+                                                                             IncomePymt := "Temp WHT Entry - EFiling3"."Base (LCY)";
+                                                                             TIN := "Company Information"."VAT Registration No.";
+                                                                             Vend.GET("Temp WHT Entry - EFiling3"."Bill-to/Pay-to No.");
+                                                                             PayeeTIN := Vend."VAT Registration No.";
+                                                                             PayeeBranchCode := PayeeBranchCode;
+                                                                             RegName := Vend.Name;
+                                                                             TempWHTEntry.RESET;
+                                                                             TempWHTEntry.COPYFILTERS("Temp WHT Entry - EFiling3");
+                                                                             IncomePymt := 0;
+                                                                             IF TempWHTEntry.FIND('-') THEN
+                                                                               REPEAT
+                                                                                 IncomePymt := IncomePymt + TempWHTEntry."Amount (LCY)";
+                                                                               UNTIL TempWHTEntry.NEXT = 0;
+                                                                           END;
+                                                                            }
+
+    { [{7FAEBDF4-8E97-490E-B491-A747E8110B02}];3 ;ScheduleNo1         ;Element ;Text     }
+
+    { [{A7136F8C-5162-4DE3-BB79-52854FD45FEB}];3 ;FType2              ;Element ;Text     }
+
+    { [{76387BB2-5989-4582-891C-954A9A3C3B49}];3 ;TIN1                ;Element ;Text     }
+
+    { [{A4531F74-8397-4E52-AB8C-C2C7C5645A1F}];3 ;Branchcode2         ;Element ;Text     }
+
+    { [{EFFEAAEF-07C4-4389-B576-32F1685BAD75}];3 ;ReturnPeriod2       ;Element ;Text     }
+
+    { [{5454844E-F03B-4325-A9E2-E20058762614}];3 ;WHT                 ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Temp WHT Entry - EFiling::WHT % }
+
+    { [{6F1A4DFD-15B6-40B8-B4B3-9B223E6571E0}];3 ;AmountLCY           ;Element ;Field   ;
+                                                  DataType=Decimal;
+                                                  SourceField=Temp WHT Entry - EFiling::Amount (LCY) }
+
+  }
+  EVENTS
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  CODE
+  {
+    VAR
+      "Company Information"@1500007 : Record 79;
+      TempWHTEntry@1500006 : Record 16608;
+      WHTEntry1@1500003 : Record 28044;
+      Vend@1500000 : Record 23;
+      IncomePymt@1500004 : Decimal;
+      VendID@1500001 : Code[20];
+
+    PROCEDURE InitVariables@1(VendorIDFilter@1000 : Code[20];ReturnPeriodFilter@1001 : Text[30];BranchCodeFilter@1002 : Text[3];PayeeBranchCodeFilter@1003 : Text[3]);
+    BEGIN
+      VendID := VendorIDFilter;
+      ReturnPeriod := ReturnPeriodFilter;
+      ReturnPeriod1 := ReturnPeriodFilter;
+      ReturnPeriod2 := ReturnPeriodFilter;
+      BranchCode := BranchCodeFilter;
+      Branchcode1 := BranchCodeFilter;
+      PayeeBranchCode := PayeeBranchCodeFilter;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

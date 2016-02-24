@@ -1,0 +1,686 @@
+OBJECT Page 60020 Customer Card - Assignment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/06/15;
+    Time=15:41:08;
+    Modified=Yes;
+    Version List=MASTER-REG,TBI1.0,UPG13C,YIMMDEVIP1.0,SMDEV1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Entity Card-Assignment;
+    SourceTable=Table18;
+    PageType=Card;
+    RefreshOnActivate=Yes;
+    OnInit=BEGIN
+             ContactEditable := TRUE;
+             MapPointVisible := TRUE;
+           END;
+
+    OnOpenPage=VAR
+                 MapMgt@1000 : Codeunit 802;
+               BEGIN
+                 ActivateFields;
+                 IF NOT MapMgt.TestSetup THEN
+                   MapPointVisible := FALSE;
+               END;
+
+    OnFindRecord=VAR
+                   RecordFound@1000 : Boolean;
+                 BEGIN
+                   RecordFound := FIND(Which);
+                   CurrPage.EDITABLE := RecordFound OR (GETFILTER("No.") = '');
+                   EXIT(RecordFound);
+                 END;
+
+    OnAfterGetRecord=BEGIN
+                       ActivateFields;
+
+                       OnAfterGetCurrRecord;
+                     END;
+
+    OnNewRecord=BEGIN
+                  OnAfterGetCurrRecord;
+                END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 74      ;1   ;ActionGroup;
+                      CaptionML=ENU=&Customer }
+      { 80      ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=ENU=Ledger E&ntries;
+                      RunObject=Page 25;
+                      RunPageView=SORTING(Customer No.);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 135     ;2   ;ActionGroup;
+                      CaptionML=ENU=Sales &History;
+                      Visible=FALSE }
+      { 139     ;3   ;Action    ;
+                      CaptionML=ENU=Used as &Sell-to Entity;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 //SalesInfoPaneMgt.LookupCustHistory("No.",FALSE); // UPG13C
+                               END;
+                                }
+      { 140     ;3   ;Action    ;
+                      CaptionML=ENU=Used as &Bill-to Entity;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 //SalesInfoPaneMgt.LookupCustHistory("No.",TRUE); // UPG13C
+                               END;
+                                }
+      { 151     ;2   ;ActionGroup;
+                      CaptionML=ENU=Issued Documents;
+                      Visible=FALSE }
+      { 152     ;3   ;Action    ;
+                      CaptionML=ENU=Issued &Reminders;
+                      RunObject=Page 438;
+                      RunPageView=SORTING(Customer No.,Posting Date);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 153     ;3   ;Action    ;
+                      CaptionML=ENU=Issued &Finance Charge Memos;
+                      RunObject=Page 450;
+                      RunPageView=SORTING(Customer No.,Posting Date);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 78      ;2   ;Action    ;
+                      CaptionML=ENU=Co&mments;
+                      RunObject=Page 124;
+                      RunPageLink=Table Name=CONST(Customer),
+                                  No.=FIELD(No.);
+                      Image=ViewComments }
+      { 84      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=ENU=Dimensions;
+                      RunObject=Page 540;
+                      RunPageLink=Table ID=CONST(18),
+                                  No.=FIELD(No.);
+                      Image=Dimensions }
+      { 99      ;2   ;Action    ;
+                      CaptionML=ENU=Bank Accounts;
+                      RunObject=Page 424;
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Image=BankAccount }
+      { 81      ;2   ;Action    ;
+                      CaptionML=ENU=Addresses;
+                      RunObject=Page 301;
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Image=ShipAddress }
+      { 14      ;2   ;Action    ;
+                      CaptionML=ENU=C&ontact;
+                      Visible=FALSE;
+                      OnAction=BEGIN
+                                 ShowContact;
+                               END;
+                                }
+      { 100     ;2   ;Separator  }
+      { 76      ;2   ;Action    ;
+                      ShortCutKey=F7;
+                      CaptionML=ENU=Statistics;
+                      RunObject=Page 151;
+                      RunPageLink=No.=FIELD(No.),
+                                  Date Filter=FIELD(Date Filter),
+                                  Global Dimension 1 Filter=FIELD(Global Dimension 1 Filter),
+                                  Global Dimension 2 Filter=FIELD(Global Dimension 2 Filter);
+                      Promoted=Yes;
+                      Visible=FALSE;
+                      Image=Statistics;
+                      PromotedCategory=Process }
+      { 112     ;2   ;Action    ;
+                      CaptionML=ENU=Statistics by C&urrencies;
+                      RunObject=Page 486;
+                      RunPageLink=Customer Filter=FIELD(No.),
+                                  Global Dimension 1 Filter=FIELD(Global Dimension 1 Filter),
+                                  Global Dimension 2 Filter=FIELD(Global Dimension 2 Filter),
+                                  Date Filter=FIELD(Date Filter);
+                      Visible=FALSE }
+      { 77      ;2   ;Action    ;
+                      CaptionML=ENU=Entry Statistics;
+                      RunObject=Page 302;
+                      RunPageLink=No.=FIELD(No.),
+                                  Date Filter=FIELD(Date Filter),
+                                  Global Dimension 1 Filter=FIELD(Global Dimension 1 Filter),
+                                  Global Dimension 2 Filter=FIELD(Global Dimension 2 Filter);
+                      Visible=FALSE }
+      { 79      ;2   ;Action    ;
+                      CaptionML=ENU=S&ales;
+                      RunObject=Page 155;
+                      RunPageLink=No.=FIELD(No.),
+                                  Global Dimension 1 Filter=FIELD(Global Dimension 1 Filter),
+                                  Global Dimension 2 Filter=FIELD(Global Dimension 2 Filter);
+                      Visible=FALSE }
+      { 115     ;2   ;Separator  }
+      { 94      ;2   ;Action    ;
+                      CaptionML=ENU=Cross Re&ferences;
+                      RunObject=Page 5723;
+                      RunPageView=SORTING(Cross-Reference Type,Cross-Reference Type No.);
+                      RunPageLink=Cross-Reference Type=CONST(Customer),
+                                  Cross-Reference Type No.=FIELD(No.);
+                      Visible=FALSE }
+      { 125     ;2   ;Separator  }
+      { 126     ;2   ;Action    ;
+                      CaptionML=ENU=Ser&vice Contracts;
+                      RunObject=Page 6065;
+                      RunPageView=SORTING(Customer No.,Ship-to Code);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=ServiceAgreement }
+      { 127     ;2   ;Action    ;
+                      CaptionML=ENU=Service &Items;
+                      RunObject=Page 5988;
+                      RunPageView=SORTING(Customer No.,Ship-to Code,Item No.,Serial No.);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 138     ;2   ;Separator  }
+      { 147     ;2   ;Action    ;
+                      CaptionML=ENU=&Jobs;
+                      RunObject=Page 88;
+                      RunPageView=SORTING(Bill-to Customer No.);
+                      RunPageLink=Bill-to Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 82      ;1   ;ActionGroup;
+                      CaptionML=ENU=S&ales }
+      { 83      ;2   ;Action    ;
+                      CaptionML=ENU=Invoice &Discounts;
+                      RunObject=Page 23;
+                      RunPageLink=Code=FIELD(Invoice Disc. Code);
+                      Visible=FALSE }
+      { 113     ;2   ;Action    ;
+                      CaptionML=ENU=Prices;
+                      RunObject=Page 7002;
+                      RunPageView=SORTING(Sales Type,Sales Code);
+                      RunPageLink=Sales Type=CONST(Customer),
+                                  Sales Code=FIELD(No.);
+                      Visible=FALSE;
+                      Image=ResourcePrice }
+      { 136     ;2   ;Action    ;
+                      CaptionML=ENU=Line Discounts;
+                      RunObject=Page 7004;
+                      RunPageView=SORTING(Sales Type,Sales Code);
+                      RunPageLink=Sales Type=CONST(Customer),
+                                  Sales Code=FIELD(No.);
+                      Visible=FALSE }
+      { 162     ;2   ;Action    ;
+                      CaptionML=ENU=Prepa&yment Percentages;
+                      RunObject=Page 664;
+                      RunPageView=SORTING(Sales Type,Sales Code);
+                      RunPageLink=Sales Type=CONST(Customer),
+                                  Sales Code=FIELD(No.);
+                      Visible=FALSE }
+      { 148     ;2   ;Action    ;
+                      CaptionML=ENU=S&td. Entity Sales Codes;
+                      RunObject=Page 173;
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE }
+      { 137     ;2   ;Separator  }
+      { 85      ;2   ;Action    ;
+                      CaptionML=ENU=Quotes;
+                      RunObject=Page 41;
+                      RunPageView=SORTING(Document Type,Sell-to Customer No.,No.);
+                      RunPageLink=Sell-to Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=Quote }
+      { 114     ;2   ;Action    ;
+                      CaptionML=ENU=Blanket Orders;
+                      RunObject=Page 507;
+                      RunPageView=SORTING(Document Type,Sell-to Customer No.);
+                      RunPageLink=Sell-to Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=BlanketOrder }
+      { 86      ;2   ;Action    ;
+                      CaptionML=ENU=Orders;
+                      RunObject=Page 42;
+                      RunPageView=SORTING(Document Type,Sell-to Customer No.,No.);
+                      RunPageLink=Sell-to Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=Document }
+      { 121     ;2   ;Action    ;
+                      CaptionML=ENU=Return Orders;
+                      RunObject=Page 6630;
+                      RunPageView=SORTING(Document Type,Sell-to Customer No.,No.);
+                      RunPageLink=Sell-to Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=ReturnOrder }
+      { 128     ;2   ;Action    ;
+                      CaptionML=ENU=Service Orders;
+                      RunObject=Page 5900;
+                      RunPageView=SORTING(Document Type,Customer No.);
+                      RunPageLink=Customer No.=FIELD(No.);
+                      Visible=FALSE;
+                      Image=Document }
+      { 6500    ;2   ;Action    ;
+                      CaptionML=ENU=Item &Tracking Entries;
+                      Visible=FALSE;
+                      Image=ItemTrackingLedger;
+                      OnAction=VAR
+                                 ItemTrackingMgt@1000 : Codeunit 6500;
+                               BEGIN
+                                 ItemTrackingMgt.CallItemTrackingEntryForm(1,"No.",'','','','','');
+                               END;
+                                }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 163     ;1   ;ActionGroup;
+                      CaptionML=ENU=F&unctions }
+      { 167     ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=Apply Template;
+                      Visible=FALSE;
+                      Image=ApplyTemplate;
+                      OnAction=VAR
+                                 TemplateMgt@1000 : Codeunit 8612;
+                                 RecRef@1001 : RecordRef;
+                               BEGIN
+                                 RecRef.GETTABLE(Rec);
+                                 TemplateMgt.UpdateFromTemplateSelection(RecRef);
+                               END;
+                                }
+      { 89      ;1   ;Action    ;
+                      CaptionML=ENU=Comment;
+                      ToolTipML=ENU=Comment;
+                      RunObject=Page 124;
+                      RunPageLink=Table Name=CONST(Customer),
+                                  No.=FIELD(No.);
+                      Promoted=No;
+                      Visible=FALSE;
+                      Image=ViewComments;
+                      PromotedCategory=Process }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=ENU=General }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No.";
+                OnAssistEdit=BEGIN
+                               IF AssistEdit(xRec) THEN
+                                 CurrPage.UPDATE;
+                             END;
+                              }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr=Address }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Address 2" }
+
+    { 90  ;2   ;Field     ;
+                CaptionML=ENU=Post Code/City;
+                SourceExpr="Post Code" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=City }
+
+    { 1500013;2;Field     ;
+                SourceExpr=County }
+
+    { 91  ;2   ;Field     ;
+                CaptionML=ENU=County/Country Code;
+                SourceExpr="Country/Region Code" }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Phone No." }
+
+    { 122 ;2   ;Field     ;
+                SourceExpr="Primary Contact No." }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr=Contact;
+                Editable=ContactEditable;
+                OnValidate=BEGIN
+                             ContactOnAfterValidate;
+                           END;
+                            }
+
+    { 1000000016;2;Field  ;
+                CaptionML=ENU=Special Entity;
+                SourceExpr="Special Customer" }
+
+    { 1102159002;2;Field  ;
+                SourceExpr=DF }
+
+    { 88  ;2   ;Field     ;
+                SourceExpr=Comment;
+                Editable=False }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Search Name" }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Salesperson Code" }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Responsibility Center" }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr=Blocked }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Last Date Modified" }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Entity type" }
+
+    { 1102159006;2;Field  ;
+                SourceExpr=Info1 }
+
+    { 1102159004;2;Field  ;
+                SourceExpr=Info2 }
+
+    { 1102159005;2;Field  ;
+                SourceExpr=Info3 }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Virtual Account No." }
+
+    { 1000000008;2;Field  ;
+                SourceExpr=YIMM }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=YMKI;
+                Visible=FALSE }
+
+    { 1000000012;2;Field  ;
+                SourceExpr=YMMWJ;
+                Visible=FALSE }
+
+    { 1000000014;2;Field  ;
+                SourceExpr=TBI }
+
+    { 1000000018;2;Field  ;
+                SourceExpr=YEID }
+
+    { 1000000020;2;Field  ;
+                SourceExpr=MELCO }
+
+    { 1102159001;2;Field  ;
+                SourceExpr=YMNI }
+
+    { 1000000001;2;Field  ;
+                SourceExpr=YMRID }
+
+    { 1902768601;1;Group  ;
+                CaptionML=ENU=Communication }
+
+    { 103 ;2   ;Field     ;
+                Name=<Phone No.2>;
+                SourceExpr="Phone No." }
+
+    { 104 ;2   ;Field     ;
+                SourceExpr="Fax No." }
+
+    { 107 ;2   ;Field     ;
+                SourceExpr="E-Mail" }
+
+    { 109 ;2   ;Field     ;
+                SourceExpr="Home Page" }
+
+    { 154 ;2   ;Field     ;
+                SourceExpr="IC Partner Code";
+                OnValidate=BEGIN
+                             ICPartnerCodeOnAfterValidate;
+                           END;
+                            }
+
+    { 1905885101;1;Group  ;
+                CaptionML=ENU=Invoicing }
+
+    { 34  ;2   ;Field     ;
+                CaptionML=[ENU=Bill-to Entity No.;
+                           ENA=Bill-to Customer No.];
+                SourceExpr="Bill-to Customer No." }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Invoice Copies" }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Invoice Disc. Code" }
+
+    { 156 ;2   ;Field     ;
+                SourceExpr="Copy Sell-to Addr. to Qte From" }
+
+    { 1500011;2;Field     ;
+                SourceExpr="Tax Document Type" }
+
+    { 1000000000;2;Field  ;
+                CaptionML=ENU=Type of Entity(Party);
+                SourceExpr="Customer Type" }
+
+    { 1000000002;2;Field  ;
+                CaptionML=ENU=Type of Dealer;
+                SourceExpr="Type of Dealer" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Area Code DDS" }
+
+    { 93  ;2   ;Field     ;
+                SourceExpr="Service Zone Code" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Bank Account" }
+
+    { 70  ;2   ;Field     ;
+                SourceExpr="Gen. Bus. Posting Group" }
+
+    { 58  ;2   ;Field     ;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 1500004;2;Field     ;
+                SourceExpr="WHT Business Posting Group" }
+
+    { 38  ;2   ;Field     ;
+                CaptionML=[ENU=Entity Posting Group;
+                           ENA=Customer Posting Group];
+                SourceExpr="Customer Posting Group" }
+
+    { 40  ;2   ;Field     ;
+                CaptionML=[ENU=Entity Price Group;
+                           ENA=Customer Price Group];
+                SourceExpr="Customer Price Group" }
+
+    { 44  ;2   ;Field     ;
+                CaptionML=[ENU=Entity Group Code;
+                           ENA=Customer Disc. Group];
+                SourceExpr="Customer Disc. Group" }
+
+    { 46  ;2   ;Field     ;
+                SourceExpr="Allow Line Disc." }
+
+    { 129 ;2   ;Field     ;
+                SourceExpr="Prices Including VAT" }
+
+    { 160 ;2   ;Field     ;
+                SourceExpr="Prepayment %" }
+
+    { 1901677601;1;Group  ;
+                CaptionML=ENU=Payments }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Application Method" }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Payment Terms Code" }
+
+    { 11  ;2   ;Field     ;
+                SourceExpr="Payment Method Code" }
+
+    { 15  ;2   ;Field     ;
+                SourceExpr="Reminder Terms Code" }
+
+    { 52  ;2   ;Field     ;
+                SourceExpr="Fin. Charge Terms Code" }
+
+    { 54  ;2   ;Field     ;
+                SourceExpr="Print Statements" }
+
+    { 60  ;2   ;Field     ;
+                SourceExpr="Last Statement No." }
+
+    { 143 ;2   ;Field     ;
+                SourceExpr="Block Payment Tolerance";
+                OnValidate=BEGIN
+                             IF "Block Payment Tolerance" THEN BEGIN
+                               IF CONFIRM(Text002,FALSE) THEN
+                                 PaymentToleranceMgt.DelTolCustLedgEntry(Rec);
+                             END ELSE BEGIN
+                               IF CONFIRM(Text001,FALSE) THEN
+                                 PaymentToleranceMgt.CalcTolCustLedgEntry(Rec);
+                             END;
+                           END;
+                            }
+
+    { 1906801201;1;Group  ;
+                CaptionML=ENU=Shipping }
+
+    { 95  ;2   ;Field     ;
+                SourceExpr="Location Code" }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Combine Shipments" }
+
+    { 158 ;2   ;Field     ;
+                SourceExpr=Reserve }
+
+    { 123 ;2   ;Field     ;
+                SourceExpr="Shipping Advice" }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr="Shipment Method Code" }
+
+    { 101 ;2   ;Field     ;
+                SourceExpr="Shipping Agent Code" }
+
+    { 131 ;2   ;Field     ;
+                SourceExpr="Shipping Agent Service Code" }
+
+    { 119 ;2   ;Field     ;
+                SourceExpr="Shipping Time" }
+
+    { 141 ;2   ;Field     ;
+                DrillDown=No;
+                SourceExpr="Base Calendar Code" }
+
+    { 146 ;2   ;Field     ;
+                Name=Customized Calendar;
+                CaptionML=ENU=Customized Calendar;
+                SourceExpr=CalendarMgmt.CustomizedCalendarExistText(CustomizedCalendar."Source Type"::Customer,"No.",'',"Base Calendar Code");
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              CurrPage.SAVERECORD;
+                              TESTFIELD("Base Calendar Code");
+                              CalendarMgmt.ShowCustomizedCalendar(CustomizedCalEntry."Source Type"::Customer,"No.",'',"Base Calendar Code");
+                            END;
+                             }
+
+    { 1907468901;1;Group  ;
+                CaptionML=ENU=Foreign Trade }
+
+    { 67  ;2   ;Field     ;
+                SourceExpr="Currency Code" }
+
+    { 66  ;2   ;Field     ;
+                SourceExpr="Language Code" }
+
+    { 69  ;2   ;Field     ;
+                SourceExpr="VAT Registration No." }
+
+    { 1902813501;1;Group  ;
+                CaptionML=ENU=Registration }
+
+    { 1500007;2;Group     ;
+                CaptionML=ENU=APAC Requirements }
+
+    { 1500008;3;Field     ;
+                Name=<VAT Registration No.2>;
+                SourceExpr="VAT Registration No." }
+
+    { 1500019;2;Field     ;
+                SourceExpr="IRD No." }
+
+    { 1500017;2;Field     ;
+                CaptionML=ENU=APAC Requirements;
+                SourceExpr=ABN }
+
+    { 1500018;2;Field     ;
+                SourceExpr="ABN Division Part No." }
+
+    { 1500016;2;Field     ;
+                CaptionML=ENU=AU/NZ Requirements;
+                SourceExpr=Registered }
+
+  }
+  CODE
+  {
+    VAR
+      CustomizedCalEntry@1001 : Record 7603;
+      Text001@1003 : TextConst 'ENU=Do you want to allow payment tolerance for entries that are currently open?';
+      CustomizedCalendar@1005 : Record 7602;
+      Text002@1006 : TextConst 'ENU=Do you want to remove payment tolerance from entries that are currently open?';
+      CalendarMgmt@1002 : Codeunit 7600;
+      PaymentToleranceMgt@1000 : Codeunit 426;
+      SalesInfoPaneMgt@1004 : Codeunit 7171;
+      PostDatedCheck@1500000 : Record 28090;
+      GLSetup@1500001 : Record 98;
+      MapPointVisible@19022708 : Boolean INDATASET;
+      ContactEditable@19051436 : Boolean INDATASET;
+
+    PROCEDURE ActivateFields@3();
+    BEGIN
+      ContactEditable := "Primary Contact No." = '';
+      //GLSetup.GET;
+      //CurrPage."WHT Business Posting Group".EDITABLE(NOT GLSetup."Enable GST (Australia)");
+    END;
+
+    LOCAL PROCEDURE ContactOnAfterValidate@19013243();
+    BEGIN
+      ActivateFields;
+    END;
+
+    LOCAL PROCEDURE ICPartnerCodeOnAfterValidate@19032922();
+    BEGIN
+      CurrPage.UPDATE;
+    END;
+
+    LOCAL PROCEDURE OnAfterGetCurrRecord@19077479();
+    BEGIN
+      xRec := Rec;
+      ActivateFields;
+    END;
+
+    BEGIN
+    {
+      //YIMMADG
+      1) CAPTION IS CHANGED (CUSTOMER DISCOIUNT GROUP) TO CUSTOMER GROUP CODE
+
+      //TBI1.0 field 'TBI' added to indicate TBI Customer
+
+      // UPG13C
+      Code added or edited to solve complation errors after migrating merged and customized objects to 2013 from 2009 R2
+
+      //YIMMDEVIP1.0
+      Issue 24 DF bank concep
+      DF Option is displayed on the card
+
+      //SMDEV1.0
+        a.Displayed Entity Type to General Tab.
+        b.Changed Caption on all over this Page So that We can replace Customer with Entity Caption.
+        c.Changed visibilty of some fields.
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,68 @@
+OBJECT Report 50098 Change Posting date on GlLine
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/29/15;
+    Time=[ 8:14:42];
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 1000000000;;DataItem;                  ;
+               DataItemTable=Table81;
+               OnPreDataItem=BEGIN
+
+                               IF PostingDate = 0D THEN
+                                 ERROR(Text001);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  "Gen. Journal Line"."Posting Date" := PostingDate;
+                                  "Gen. Journal Line".MODIFY(TRUE);
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1000000000;;Container;
+                  Name=Option;
+                  ContainerType=ContentArea }
+
+      { 1000000001;1;Field  ;
+                  Name=Posting Date;
+                  SourceExpr=PostingDate }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      PostingDate@1000000000 : Date;
+      Text001@1000000001 : TextConst 'ENU=Please Specify The Date';
+
+    BEGIN
+    {
+      //Report created to update Posting Date on Payment Journal.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

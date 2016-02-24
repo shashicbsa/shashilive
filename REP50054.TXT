@@ -1,0 +1,3888 @@
+OBJECT Report 50054 Tax Payment Aplication Sumary
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/10/15;
+    Time=17:24:24;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    OnPreReport=BEGIN
+
+                  num:=1;
+                END;
+
+    OnPostReport=BEGIN
+
+                   IF ExporttoExcel= TRUE THEN
+                   BEGIN
+                   //ExcelBuff.CreateBook;
+                    ExcelBuff.CreateBookAndOpenExcel('Data','TAX SUMMARY','Summary Data',USERID);
+                   //ExcelBuff.CreateSheet('Data','TAX SUMMARY','Summary Data',USERID);
+                   ExcelBuff.GiveUserControl;
+                   ERROR('');
+                   END;
+                   ExcelBuff.DELETEALL;
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table50017;
+               OnPreDataItem=BEGIN
+
+                                      // message('hi..');
+                               //=================================  Area Code - Header 1 OnPreSection
+
+
+
+                               IF NOT ExportedHdr1 THEN BEGIN
+                                 IF ExporttoExcel= TRUE THEN
+                                 BEGIN
+                                 ExcelBuff."Row No."+=1;
+                                 EnterCell(ExcelBuff."Row No.",1,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",2,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",3,FORMAT('ATTACHED SHEET FOR TAX PAYMENT APPLICATION'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",5,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",6,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",7,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",8,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",9,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",10,FORMAT(' '),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",11,FORMAT(' '),TRUE,FALSE,TRUE);
+                                   CurrReport.SHOWOUTPUT(FALSE);
+                                 END;
+                                 ExportedHdr1:= TRUE;
+                               END;
+
+
+
+
+
+                               //=================Area code Header - 2 OnPreSection
+
+                               IF NOT ExportedHdr2 THEN BEGIN
+                                 IF ExporttoExcel= TRUE THEN
+                                 BEGIN
+                                 ExcelBuff."Row No."+=1;
+                                 EnterCell(ExcelBuff."Row No.",1,FORMAT('No'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",2,FORMAT('Nama Wajib Pajak'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",3,FORMAT('NPWP'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",4,FORMAT('Customer/Dealer'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",5,FORMAT('Vendor'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",6,FORMAT('WHT Revenue Type'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",7,FORMAT('Masa Pajak'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",8,FORMAT('Tahun'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",9,FORMAT('Jumlah Pembayaran'),TRUE,FALSE,TRUE);
+                                 EnterCell(ExcelBuff."Row No.",10,FORMAT('Total Per Kpp'),TRUE,FALSE,TRUE);
+                                 CurrReport.SHOWOUTPUT(FALSE);
+                                 END;
+                                 ExportedHdr2 := TRUE;
+                               END;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                       // message('hi..');
+
+
+                                  AreaCode:="AREA CODE".No;
+
+                                  //=================WHT Posting Setup -Footer 2 -Onpresection
+
+                                  IF (arecode111="AREA CODE".No) THEN
+                                   CurrReport.SHOWOUTPUT(FALSE)
+                                  ELSE
+                                   grupTotalrevAmount:=0;
+
+
+
+
+                                    IF ((ExporttoExcel= TRUE) AND (arecode111<>"AREA CODE".No) )THEN
+                                      BEGIN
+
+                                    ExcelBuff."Row No."+=1;
+                                        CurrReport.SHOWOUTPUT(FALSE);
+                                      EnterCell(ExcelBuff."Row No.",1,FORMAT(num),TRUE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",2,FORMAT("AREA CODE".Name+"AREA CODE".Name2),TRUE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",3,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",5,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",6,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",7,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",8,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",9,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",10,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      ExcelBuff."Row No."+=1;
+                                      EnterCell(ExcelBuff."Row No.",1,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",2,FORMAT("AREA CODE".Address+' '+"AREA CODE".Address2),
+                                                                             TRUE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",3,FORMAT("AREA CODE"."NPWP No."),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",5,FORMAT("AREA CODE".No),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",6,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",7,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",8,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",9,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",10,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      END;
+                                END;
+
+               OnPostDataItem=BEGIN
+
+                                //===============Area Code -Footer 4- OnpreSection
+
+                                IF ExporttoExcel= TRUE THEN
+                                  BEGIN
+                                  ExcelBuff."Row No."+=1;
+                                    CurrReport.SHOWOUTPUT(FALSE);
+                                  EnterCell(ExcelBuff."Row No.",1,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",2,FORMAT('TOTAL'),TRUE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",3,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",5,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",6,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",7,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",8,FORMAT(' '),FALSE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",9,FORMAT(FinalTotal),TRUE,FALSE,TRUE);
+                                  EnterCell(ExcelBuff."Row No.",10,FORMAT(FinalTotal),TRUE,FALSE,TRUE);
+                                  END;
+                              END;
+
+               ReqFilterFields=No }
+
+    { 1102159008;1;Column;No_AREACODE        ;
+               SourceExpr="AREA CODE".No }
+
+    { 1102159017;1;Column;Name_AREACODE      ;
+               SourceExpr="AREA CODE".Name }
+
+    { 1102159018;1;Column;Name2_AREACODE     ;
+               SourceExpr="AREA CODE".Name2 }
+
+    { 1102159016;1;Column;Address_AREACODE   ;
+               SourceExpr="AREA CODE".Address }
+
+    { 1102159019;1;Column;Address2_AREACODE  ;
+               SourceExpr="AREA CODE".Address2 }
+
+    { 1102159020;1;Column;NPWPNo_AREACODE    ;
+               SourceExpr="AREA CODE"."NPWP No." }
+
+    { 1102159026;1;Column;FinalTotal         ;
+               SourceExpr=FinalTotal }
+
+    { 1102159015;1;Column;COMPANYNAME        ;
+               SourceExpr=COMPANYNAME }
+
+    { 1102159030;1;Column;num                ;
+               SourceExpr=num }
+
+    { 1102159002;1;DataItem;                 ;
+               DataItemTable=Table28042;
+               DataItemTableView=SORTING(GroupCode,Sequence,Code)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               LastRevNo:=1;
+
+                               FOR Int:=1 TO 10 DO
+                               HeaderValues[Int]:='';
+
+
+                               WHTPOSTINGSETUP.RESET;
+                               WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                               WHTPOSTINGSETUP.ASCENDING(FALSE);
+                               WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,FORMAT(LastRevNo));
+
+                               IF WHTPOSTINGSETUP.FINDFIRST THEN
+                               MAXSEQVALUE:=WHTPOSTINGSETUP.Sequence;
+
+
+
+                               FOR Int:=1 TO MAXSEQVALUE DO
+                                 BEGIN
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,FORMAT(LastRevNo));
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.Sequence,Int);
+
+                                  IF WHTPOSTINGSETUP.FINDSET THEN
+                                    BEGIN
+                                     WHTPOSTINGSETUP.CALCFIELDS(WHTPOSTINGSETUP.Description);
+                                     HeaderValues[Int]:=WHTPOSTINGSETUP.Description;
+                                    END;
+
+
+
+                                 END;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  EVALUATE(CurrRevNo,"WHT Revenue Types".GroupCode);
+                                  TotalRevAmount:=0;
+                                  IF (CurrRevNo<>LastRevNo) THEN
+                                  BEGIN
+                                  SNO:=0;
+
+
+                                  FOR Int:=1 TO 10 DO
+                                  HeaderValues[Int]:='';
+
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                  WHTPOSTINGSETUP.ASCENDING(FALSE);
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,"WHT Revenue Types".GroupCode);
+
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                  MAXSEQVALUE:=WHTPOSTINGSETUP.Sequence;
+
+
+                                  FOR Int:=1 TO MAXSEQVALUE DO
+                                    BEGIN
+                                     WHTPOSTINGSETUP.RESET;
+                                     WHTPOSTINGSETUP.SETCURRENTKEY(GroupCode,Sequence,"Revenue Type");
+                                     WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.GroupCode,"WHT Revenue Types".GroupCode);
+                                     WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP.Sequence,Int);
+
+                                     IF WHTPOSTINGSETUP.FINDSET THEN
+                                       BEGIN
+                                        WHTPOSTINGSETUP.CALCFIELDS(WHTPOSTINGSETUP.Description);
+                                        HeaderValues[Int]:=WHTPOSTINGSETUP.Description;
+                                       // MESSAGE('second value ...>> %1',WHTPOSTINGSETUP.Description);
+                                       END;
+
+
+
+                                    END;
+
+
+
+                                  END; // End of Curr and Last Value Comp Condition
+
+                                  EVALUATE(LastRevNo,"WHT Revenue Types".GroupCode);
+
+
+
+
+                                END;
+
+               OnPostDataItem=BEGIN
+                                          // MESSAGE('ff '+FORMAT(grupTotalrevAmount));
+
+                                //=====================WHT Revenue Types -Footr 2 -OnPreSection
+
+                                    IF ExporttoExcel= TRUE THEN
+                                      BEGIN
+                                      ExcelBuff."Row No."+=1;
+                                        CurrReport.SHOWOUTPUT(FALSE);
+                                      EnterCell(ExcelBuff."Row No.",1,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",2,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",3,FORMAT('Total for the Area Code'),TRUE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",5,FORMAT("AREA CODE".No),TRUE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",6,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",7,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",8,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",9,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",10,FORMAT(grupTotalrevAmount),TRUE,FALSE,TRUE);
+                                      END;
+
+
+
+                                     //=====================WHT Revenue Types -Footr 2 -OnPostSection
+
+
+                                num+=1;
+                              END;
+                               }
+
+    { 1102159009;2;Column;Code_WHTRevenueTypes;
+               SourceExpr="WHT Revenue Types".Code }
+
+    { 1102159021;2;Column;Description_WHTRevenueTypes;
+               SourceExpr="WHT Revenue Types".Description }
+
+    { 1102159025;2;Column;grupTotalrevAmount ;
+               SourceExpr=grupTotalrevAmount }
+
+    { 1102159022;2;Column;month              ;
+               SourceExpr=month }
+
+    { 1102159003;2;DataItem;                 ;
+               DataItemTable=Table28043;
+               DataItemTableView=SORTING(GroupCode,Sequence,Revenue Type)
+                                 ORDER(Ascending)
+                                 WHERE(Reason Code=FILTER(SALRT),
+                                       GroupCode=FILTER(>0));
+               OnAfterGetRecord=BEGIN
+                                   //=============================WHT Posting Setup - OnAfterGetRecord
+
+                                  "WHT Posting Setup".CALCFIELDS("WHT Posting Setup".Description);
+
+
+
+                                  //======================WHT Posting Setup -Footer 2 -OnpostSection
+                                     arecode111:="AREA CODE".No;
+
+
+
+
+
+                                   //deepa
+                                  {//==========================WHT pOSting Setup -Footer  3 -OnPostSection
+
+                                  grupTotalrevAmount+=TotalRevAmount;
+
+                                  //Message('wHT pos  '+format(grupTotalrevAmount) +'    '+format(TotalRevAmount));
+
+                                  FinalTotal+=TotalRevAmount;
+                                  }
+                                END;
+
+               OnPostDataItem=BEGIN
+                                //=========================WHT Posting Setup - Footer 3 -OnPreSection
+
+                                 IF (TotalRevAmount = 0) THEN
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                    IF ((ExporttoExcel = TRUE) AND (TotalRevAmount <> 0)) THEN
+                                      BEGIN
+                                        CurrReport.SHOWOUTPUT(FALSE);
+                                      ExcelBuff."Row No."+=1;
+                                      EnterCell(ExcelBuff."Row No.",1,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",2,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",3,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",4,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",5,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",6,FORMAT("WHT Revenue Types".Description),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",7,FORMAT(month),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",8,FORMAT(year),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",9,FORMAT(TotalRevAmount),FALSE,FALSE,TRUE);
+                                      EnterCell(ExcelBuff."Row No.",10,FORMAT(' '),FALSE,FALSE,TRUE);
+                                      END;
+
+
+                                //Message('wHT on after   '+'   '+format("AREA CODE".No)+'    '+format("WHT Posting Setup"."Revenue Type")+'    '+format(TotalRevAmount));
+
+
+
+
+                                //==========================WHT pOSting Setup -Footer  3 -OnPostSection
+
+                                grupTotalrevAmount+=TotalRevAmount;
+
+                                //Message('wHT on Post...............................   '+format("AREA CODE".No)+'   '+format("WHT Posting Setup"."Revenue Type")+'    '+format(TotalRevAmount));
+
+
+
+                                FinalTotal+=TotalRevAmount;
+                              END;
+
+               DataItemLink=Revenue Type=FIELD(Code) }
+
+    { 1102159010;3;Column;RevenueType_WHTPostingSetup;
+               SourceExpr="WHT Posting Setup"."Revenue Type" }
+
+    { 1102159023;3;Column;year               ;
+               SourceExpr=year }
+
+    { 1102159024;3;Column;TotalRevAmount     ;
+               SourceExpr=TotalRevAmount }
+
+    { 1102159004;3;DataItem;                 ;
+               DataItemTable=Table113;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Sell-to Customer No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               "Sales Invoice Line".SETRANGE("Sales Invoice Line"."Area Code",AreaCode);
+
+                               datemin:="Sales Invoice Line".GETRANGEMIN("Sales Invoice Line"."Posting Date");
+
+                               curmon:=DATE2DMY(datemin,2);
+                               year:=DATE2DMY(datemin,3);
+
+
+
+
+                               IF (curmon=1) THEN
+                                month:='Jan';
+                               IF (curmon=2) THEN
+                                month:='Feb';
+                               IF (curmon=3) THEN
+                                month:='Mar';
+                               IF (curmon=4) THEN
+                                month:='Apr';
+                               IF (curmon=5) THEN
+                                month:='May';
+                               IF (curmon=6) THEN
+                                month:='Jun';
+                               IF (curmon=7) THEN
+                                month:='Jul';
+                               IF (curmon=8) THEN
+                                month:='Aug';
+                               IF (curmon=9) THEN
+                                month:='Sep';
+                               IF (curmon=10) THEN
+                                month:='Oct';
+                               IF (curmon=11) THEN
+                                month:='Nov';
+                               IF (curmon=12) THEN
+                                month:='Dec';
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  whtentry1@1102159003 : Record 28044;
+                                  TXRATE1@1102159002 : Decimal;
+                                  BKRATE1@1102159001 : Decimal;
+                                BEGIN
+
+
+
+                                  //========================Sales Invoice LIne -Group Footer 1 OnPreSection
+
+
+
+                                  //deepa
+                                  Var_TotalAmt+="Sales Invoice Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Sales Invoice Line"."WHT Absorb Base";
+
+                                  Rec_SalesInvoiceLine.RESET;
+                                  Rec_SalesInvoiceLine.SETFILTER("WHT Business Posting Group",'=%1',"Sales Invoice Line"."WHT Business Posting Group");
+                                  Rec_SalesInvoiceLine.SETFILTER("WHT Product Posting Group",'=%1',"Sales Invoice Line"."WHT Product Posting Group");
+                                  Rec_SalesInvoiceLine.SETFILTER("Document No.",'=%1',"Sales Invoice Line"."Document No.");
+                                  Rec_SalesInvoiceLine.SETRANGE("Area Code",AreaCode);
+                                  Rec_SalesInvoiceLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_SalesInvoiceLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Sell-to Customer No.","Document No.");
+
+
+                                  IF (Rec_SalesInvoiceLine.FINDLAST) THEN
+                                   IF(Rec_SalesInvoiceLine."Document No."="Sales Invoice Line"."Document No.") AND (Rec_SalesInvoiceLine."Line No."="Sales Invoice Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+
+                                     SalesInvHeader.RESET;
+                                     IF SalesInvHeader.GET("Sales Invoice Line"."Document No.") THEN;
+                                       Narr:=SalesInvHeader."No.";
+
+                                      "vEND/cUST NO.":="Sales Invoice Line"."Sell-to Customer No.";
+                                      "vEND/cUST dOCMENT NO.":="Sales Invoice Line"."Document No.";
+
+                                      ShipTo.RESET;
+                                      IF ShipTo.GET("Sales Invoice Line"."Sell-to Customer No.","Sales Invoice Line"."New NPWP.") THEN
+                                                 NPWP:=ShipTo.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            NPWPName:=SalesInvHeader."Ship-to Name 2";
+                                            Address:=SalesInvHeader."Ship-to Address";
+                                            END;
+
+                                        IF (NPWPName='') THEN
+                                        NPWPName:=SalesInvHeader."Sell-to Customer Name";
+
+
+                                  IF ( SalesInvHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     whtentry1.RESET;
+                                     whtentry1.SETRANGE(whtentry1."Document No.",SalesInvHeader."No.");
+                                      IF whtentry1.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE1:=(whtentry1."Amount (LCY)"/whtentry1.Amount);
+                                         //BKRATE1:=(whtentry1."Base (LCY)" / whtentry1.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE1);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Sales Invoice Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Sales Invoice Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+
+
+
+
+
+                                  IF (Var_TotalWhtAbsorbBase = 0 ) THEN
+                                    BEGIN
+                                      IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt *  Var_TotalAmt) *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+
+                                     END
+
+                                  ELSE
+                                     BEGIN
+                                       IF ( SalesInvHeader."Currency Code" <> '') THEN
+
+                                         WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) *TXRATE1 )/100)
+                                      ELSE
+                                         WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+
+                                     END;
+
+
+
+                                    IF (SalesInvHeader."Reason Code" = 'SALRT') THEN
+                                     BEGIN
+                                        WHTAmt:= -WHTAmt;
+                                        TotAmt:= -TotAmt;
+                                     END;
+
+                                  //MESSAGE('%1',WHTAmt);
+                                  MakeExcelDataBody;
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+
+
+
+                                  END;
+                                END;
+
+               ReqFilterFields=Posting Date;
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159011;4;Column;DocumentNo_SalesInvoiceLine;
+               SourceExpr="Sales Invoice Line"."Document No." }
+
+    { 1102159005;3;DataItem;                 ;
+               DataItemTable=Table115;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Sell-to Customer No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               "Sales Cr.Memo Line".SETRANGE("Sales Cr.Memo Line"."Area Code",AreaCode);
+                               "Sales Cr.Memo Line".SETFILTER("Sales Cr.Memo Line"."Posting Date",
+                                         "Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  wHTENTRY2@1102159003 : Record 28044;
+                                  TXRATE2@1102159002 : Decimal;
+                                  BKRATE2@1102159001 : Decimal;
+                                BEGIN
+
+                                       //==================Sales Cr.Memo Line Grouop Footer 1 OnPreSection
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Sales Cr.Memo Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Sales Cr.Memo Line"."WHT Absorb Base";
+
+                                  //deepa
+                                  Rec_SalesCrMemoLine.RESET;
+                                  Rec_SalesCrMemoLine.SETFILTER("WHT Business Posting Group",'=%1',"Sales Cr.Memo Line"."WHT Business Posting Group");
+                                  Rec_SalesCrMemoLine.SETFILTER("WHT Product Posting Group",'=%1',"Sales Cr.Memo Line"."WHT Product Posting Group");
+                                  Rec_SalesCrMemoLine.SETFILTER("Document No.",'=%1',"Sales Cr.Memo Line"."Document No.");
+                                  Rec_SalesCrMemoLine.SETRANGE("Area Code",AreaCode);
+                                  Rec_SalesCrMemoLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_SalesCrMemoLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Sell-to Customer No.","Document No.");
+
+
+                                  IF (Rec_SalesCrMemoLine.FINDLAST) THEN
+                                   IF(Rec_SalesCrMemoLine."Document No."="Sales Cr.Memo Line"."Document No.") AND (Rec_SalesCrMemoLine."Line No."="Sales Cr.Memo Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+                                     SalesCrMemoHeader.RESET;
+                                     SalesCrMemoHeader.GET("Sales Cr.Memo Line"."Document No.");
+                                         Narr:=SalesCrMemoHeader."No.";
+
+                                      "vEND/cUST NO.":="Sales Cr.Memo Line"."Sell-to Customer No.";
+                                      "vEND/cUST dOCMENT NO.":="Sales Cr.Memo Line"."Document No.";
+
+
+
+                                      ShipTo.RESET;
+                                      IF ShipTo.GET("Sales Cr.Memo Line"."Sell-to Customer No.","Sales Cr.Memo Line"."New NPWP.") THEN
+                                                 NPWP:=ShipTo.Code;
+
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=ShipTo."Name 2";
+                                            Address:=ShipTo.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            NPWPName:=SalesCrMemoHeader."Ship-to Name 2";
+                                            Address:=SalesCrMemoHeader."Ship-to Address";
+
+                                            END;
+
+                                        IF (NPWPName='') THEN
+                                        NPWPName:=SalesCrMemoHeader."Sell-to Customer Name";
+
+                                  IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     wHTENTRY2.RESET;
+                                     wHTENTRY2.SETRANGE(wHTENTRY2."Document No.",SalesCrMemoHeader."No.");
+                                      IF wHTENTRY2.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE2:=(wHTENTRY2."Amount (LCY)"/wHTENTRY2.Amount);
+                                         BKRATE2:=(wHTENTRY2."Base (LCY)" / wHTENTRY2.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE2);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+
+
+
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Sales Cr.Memo Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Sales Cr.Memo Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+                                  IF ("Sales Cr.Memo Line"."WHT Absorb Base" = 0 ) THEN
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+                                    END
+
+                                  ELSE
+                                   BEGIN
+
+                                     IF ( SalesCrMemoHeader."Currency Code" <> '') THEN
+                                        WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE2) /100)
+                                      ELSE
+                                        WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+                                    END;
+
+
+                                  //MESSAGE('%1',WHTAmt);
+
+                                  MakeExcelDataBody;
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                  END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159012;4;Column;DocumentNo_SalesCrMemoLine;
+               SourceExpr="Sales Cr.Memo Line"."Document No." }
+
+    { 1102159006;3;DataItem;                 ;
+               DataItemTable=Table123;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Buy-from Vendor No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               "Purch. Inv. Line".SETRANGE("Purch. Inv. Line"."Area Code",AreaCode);
+                               "Purch. Inv. Line".SETFILTER("Purch. Inv. Line"."Posting Date"
+                                     ,"Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  WHTEntry3@1102159003 : Record 28044;
+                                  TXRATE3@1102159002 : Decimal;
+                                  BKRATE3@1102159001 : Decimal;
+                                BEGIN
+                                                        //============Purch. Inv. Line -group Footer 1 OnPreSection
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Purch. Inv. Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Purch. Inv. Line"."WHT Absorb Base";
+
+
+
+                                  //deepa
+                                  Rec_PurchInvLine.RESET;
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."WHT Business Posting Group",'=%1',"Purch. Inv. Line"."WHT Business Posting Group");
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."WHT Product Posting Group",'=%1',"Purch. Inv. Line"."WHT Product Posting Group");
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."Document No.",'=%1',"Purch. Inv. Line"."Document No.");
+                                  Rec_PurchInvLine.SETRANGE(Rec_PurchInvLine."Area Code",AreaCode);
+                                  Rec_PurchInvLine.SETFILTER(Rec_PurchInvLine."Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_PurchInvLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Buy-from Vendor No.","Document No.");
+
+
+                                  IF (Rec_PurchInvLine.FINDLAST) THEN
+                                   IF(Rec_PurchInvLine."Document No."="Purch. Inv. Line"."Document No.") AND (Rec_PurchInvLine."Line No."="Purch. Inv. Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+
+
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+                                  PurchInvHeader.RESET;
+                                   IF PurchInvHeader.GET("Purch. Inv. Line"."Document No.") THEN;
+                                      Narr:=PurchInvHeader."Vendor Invoice No.";
+
+                                  "vEND/cUST NO.":="Purch. Inv. Line"."Buy-from Vendor No.";
+                                  "vEND/cUST dOCMENT NO.":="Purch. Inv. Line"."Document No.";
+
+                                  OrderAddress.RESET;
+                                   IF OrderAddress.GET("Purch. Inv. Line"."Buy-from Vendor No.","Purch. Inv. Line"."New NPWP") THEN
+                                    NPWP:=OrderAddress.Code;
+
+                                  IF (NPWP<>'') THEN
+                                    BEGIN
+                                      NPWPName:=OrderAddress."Name 2";
+                                      Address:= OrderAddress.Address;
+                                    END
+                                   ELSE
+                                    BEGIN
+                                      NPWPName:=PurchInvHeader."Ship-to Name 2";
+                                      Address:=PurchInvHeader."Ship-to Address";
+                                    END;
+
+                                  IF (NPWPName='') THEN
+                                    NPWPName:=PurchInvHeader."Buy-from Vendor Name";
+
+
+                                  IF ( PurchInvHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     WHTEntry3.RESET;
+                                     WHTEntry3.SETRANGE(WHTEntry3."Document No.",PurchInvHeader."No.");
+                                      IF WHTEntry3.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE3:=(WHTEntry3."Amount (LCY)"/WHTEntry3.Amount);
+                                         BKRATE3:=(WHTEntry3."Base (LCY)" / WHTEntry3.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE3);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+                                  //MESSAGE("Purch. Inv. Line"."Document No.");
+                                  //MESSAGE('%1',"Purch. Inv. Line".Amount);
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Purch. Inv. Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Purch. Inv. Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+                                  IF ( "Purch. Inv. Line"."WHT Absorb Base" = 0 ) THEN
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                          WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE3) /100)
+                                        ELSE
+                                          WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+                                    END
+                                  ELSE IF ( "Purch. Inv. Line"."WHT Absorb Base" <> 0 ) THEN
+                                    BEGIN
+                                        IF (PurchInvHeader."Currency Code" <> '')  THEN
+                                          WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE3) /100)
+                                        ELSE
+                                          WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+                                    END;
+
+
+                                  //MESSAGE('%1',WHTAmt);
+                                  MakeExcelDataBody;
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                    END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159013;4;Column;DocumentNo_PurchInvLine;
+               SourceExpr="Purch. Inv. Line"."Document No." }
+
+    { 1102159007;3;DataItem;                 ;
+               DataItemTable=Table125;
+               DataItemTableView=SORTING(Area Code,WHT Business Posting Group,WHT Product Posting Group,Posting Date,Buy-from Vendor No.,Document No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               "Purch. Cr. Memo Line".SETRANGE("Purch. Cr. Memo Line"."Area Code",AreaCode);
+                               "Purch. Cr. Memo Line".SETFILTER("Purch. Cr. Memo Line"."Posting Date",
+                                    "Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  WHTENTRY4@1102159003 : Record 28044;
+                                  TXRATE4@1102159002 : Decimal;
+                                  BKRATE4@1102159001 : Decimal;
+                                BEGIN
+                                             //===============Purch. Cr.Memo Line -groupFooter 1 Onpresection
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt+="Purch. Cr. Memo Line".Amount;
+                                  Var_TotalWhtAbsorbBase+="Purch. Cr. Memo Line"."WHT Absorb Base";
+
+                                  //deepa
+                                  Rec_PurchCrMemoLine.RESET;
+                                  Rec_PurchCrMemoLine.SETFILTER("WHT Business Posting Group",'=%1',"Purch. Cr. Memo Line"."WHT Business Posting Group");
+                                  Rec_PurchCrMemoLine.SETFILTER("WHT Product Posting Group",'=%1',"Purch. Cr. Memo Line"."WHT Product Posting Group");
+                                  Rec_PurchCrMemoLine.SETFILTER("Document No.",'=%1',"Purch. Cr. Memo Line"."Document No.");
+                                  Rec_PurchCrMemoLine.SETRANGE("Area Code",AreaCode);
+                                  Rec_PurchCrMemoLine.SETFILTER("Posting Date","Sales Invoice Line".GETFILTER("Sales Invoice Line"."Posting Date"));
+                                  Rec_PurchCrMemoLine.SETCURRENTKEY("Area Code","WHT Business Posting Group","WHT Product Posting Group","Posting Date","Buy-from Vendor No.","Document No.");
+
+
+                                  IF (Rec_PurchCrMemoLine.FINDLAST) THEN
+                                   IF(Rec_PurchCrMemoLine."Document No."="Purch. Cr. Memo Line"."Document No.") AND (Rec_PurchCrMemoLine."Line No."="Purch. Cr. Memo Line"."Line No.") THEN
+                                    BEGIN
+                                  //UPG13R2DEV.end
+
+
+                                  SNO:=SNO+1;
+                                  NPWP:='';
+                                  NPWPName:='';
+                                  Address:='';
+                                  Narr:='';
+
+
+                                     PurchCrMemoHeader.RESET;
+                                     IF PurchCrMemoHeader.GET("Purch. Cr. Memo Line"."Document No.") THEN;
+                                        Narr:=PurchCrMemoHeader."No.";
+
+                                     "vEND/cUST NO.":="Purch. Cr. Memo Line"."Buy-from Vendor No.";
+                                     "vEND/cUST dOCMENT NO.":="Purch. Cr. Memo Line"."Document No.";
+
+
+                                         OrderAddress.RESET;
+                                         IF OrderAddress.GET("Purch. Cr. Memo Line"."Buy-from Vendor No.","Purch. Cr. Memo Line"."New NPWP") THEN
+                                            NPWP:=OrderAddress.Code;
+
+                                            IF (NPWP<>'') THEN
+                                            BEGIN
+                                            NPWPName:=OrderAddress."Name 2";
+                                            Address:=OrderAddress.Address;
+                                            END
+                                            ELSE
+                                            BEGIN
+                                            NPWPName:=PurchCrMemoHeader."Ship-to Name 2";
+                                            Address:=PurchCrMemoHeader."Ship-to Address";
+                                            END;
+
+                                         IF (NPWPName='') THEN
+                                          NPWPName:=PurchCrMemoHeader."Buy-from Vendor Name";
+
+
+                                  IF ( PurchCrMemoHeader."Currency Code" <> '') THEN
+                                    BEGIN
+                                     WHTENTRY4.RESET;
+                                     WHTENTRY4.SETRANGE(WHTENTRY4."Document No.",PurchCrMemoHeader."No.");
+                                      IF WHTENTRY4.FINDFIRST THEN
+                                        BEGIN
+                                         TXRATE4:=(WHTENTRY4."Amount (LCY)"/WHTENTRY4.Amount);
+                                         BKRATE4:=(WHTENTRY4."Base (LCY)" / WHTENTRY4.Base);
+                                        END;
+
+                                     TotAmt:=((Var_TotalAmt) * TXRATE4);
+                                    END
+                                  ELSE
+                                     TotAmt:=Var_TotalAmt;
+
+
+
+
+                                  CurrReport.SHOWOUTPUT(FALSE);
+
+                                  WHTPOSTINGSETUP.RESET;
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Business Posting Group","Purch. Cr. Memo Line"."WHT Business Posting Group");
+                                  WHTPOSTINGSETUP.SETRANGE(WHTPOSTINGSETUP."WHT Product Posting Group","Purch. Cr. Memo Line"."WHT Product Posting Group");
+                                  IF WHTPOSTINGSETUP.FINDFIRST THEN
+                                   WHTPercnt:=WHTPOSTINGSETUP."WHT %";
+
+
+                                  IF ("Purch. Cr. Memo Line"."WHT Absorb Base" = 0 ) THEN
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  Var_TotalAmt) * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt *  Var_TotalAmt) /100);
+                                   END
+                                  ELSE
+                                   BEGIN
+
+                                    IF (PurchCrMemoHeader."Currency Code"<>'') THEN
+                                      WHTAmt:=(((WHTPercnt *  Var_TotalWhtAbsorbBase) * TXRATE4) /100)
+                                    ELSE
+                                      WHTAmt:=((WHTPercnt *  Var_TotalWhtAbsorbBase) /100);
+
+                                   END;
+
+
+                                    IF (PurchCrMemoHeader."Reason Code" = 'NORMAL') THEN
+                                     BEGIN
+                                        WHTAmt:= -WHTAmt;
+                                        TotAmt:= -TotAmt;
+                                     END;
+                                  MakeExcelDataBody;
+
+
+
+
+                                  //UPG13R2DEV.begin
+                                  Var_TotalAmt:=0;
+                                  Var_TotalWhtAbsorbBase:=0;
+                                  //UPG13R2DEV.end
+
+                                  END;
+                                END;
+
+               DataItemLink=WHT Business Posting Group=FIELD(WHT Business Posting Group),
+                            WHT Product Posting Group=FIELD(WHT Product Posting Group) }
+
+    { 1102159014;4;Column;DocumentNo_PurchCrMemoLine;
+               SourceExpr="Purch. Cr. Memo Line"."Document No." }
+
+    { 1102159028;4;Column;USERID             ;
+               SourceExpr=USERID }
+
+    { 1102159029;4;Column;ExporttoExcel      ;
+               SourceExpr=ExporttoExcel }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1102159001;;Container;
+                  Name=a;
+                  ContainerType=ContentArea }
+
+      { 1102159002;1;Group  ;
+                  GroupType=Group }
+
+      { 1102159003;2;Field  ;
+                  Name=Export To Excel;
+                  SourceExpr=ExporttoExcel }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ExcelBuff@1102159045 : TEMPORARY Record 370;
+      RevenueType@1102159043 : Integer;
+      SNO@1102159042 : Integer;
+      CustVendNAme@1102159041 : Text[50];
+      Cust@1102159040 : Record 18;
+      Vend@1102159039 : Record 23;
+      PurchInvLine@1102159038 : Record 123;
+      PurchCrMemoLine@1102159037 : Record 125;
+      SalesInvLine@1102159036 : Record 113;
+      SalesCrMemoLine@1102159035 : Record 115;
+      PurchInvHeader@1102159034 : Record 122;
+      PurchCrMemoHeader@1102159033 : Record 124;
+      SalesInvHeader@1102159032 : Record 112;
+      SalesCrMemoHeader@1102159031 : Record 114;
+      OrderAddress@1102159030 : Record 224;
+      ShipTo@1102159029 : Record 222;
+      NPWP@1102159028 : Code[20];
+      NPWPName@1102159027 : Text[50];
+      Address@1102159026 : Text[50];
+      LastRevNo@1102159025 : Integer;
+      CurrRevNo@1102159024 : Integer;
+      WHTPOSTINGSETUP@1102159023 : Record 28043;
+      MAXSEQVALUE@1102159022 : Integer;
+      Int@1102159021 : Integer;
+      HeaderValues@1102159020 : ARRAY [10] OF Text[50];
+      Narr@1102159019 : Text[50];
+      TotAmt@1102159018 : Decimal;
+      WHTAmt@1102159017 : Decimal;
+      WHTPercnt@1102159016 : Decimal;
+      Whtentry@1102159015 : Record 28044;
+      "vEND/cUST NO."@1102159014 : Code[50];
+      "vEND/cUST dOCMENT NO."@1102159013 : Code[50];
+      TotalRevAmount@1102159012 : Decimal;
+      month@1102159010 : Code[10];
+      year@1102159009 : Integer;
+      grupTotalrevAmount@1102159008 : Decimal;
+      FinalTotal@1102159007 : Decimal;
+      num@1102159006 : Integer;
+      ExporttoExcel@1102159005 : Boolean;
+      datemin@1102159004 : Date;
+      curmon@1102159003 : Integer;
+      ExportedHdr1@1102159002 : Boolean;
+      ExportedHdr2@1102159001 : Boolean;
+      Text005@1102159046 : TextConst 'ENU=COMPANY NAME';
+      arecode111@1102159011 : Code[50];
+      AreaCode@1102159044 : Code[20];
+      Rec_PurchInvLine@1102159053 : Record 123;
+      Var_TotalAmt@1102159052 : Decimal;
+      Var_TotalWhtAbsorbBase@1102159051 : Decimal;
+      Rec_SalesInvoiceLine@1102159049 : Record 113;
+      Rec_SalesCrMemoLine@1102159048 : Record 115;
+      Rec_PurchCrMemoLine@1102159047 : Record 125;
+
+    PROCEDURE MakeExcelDataBody@4();
+    VAR
+      BlankFiller@1000 : Text[250];
+      I@1000000000 : Integer;
+      SpaceValue@1000000001 : Integer;
+      SpaceValueNarration@1000000002 : Integer;
+    BEGIN
+      TotalRevAmount:=TotalRevAmount+WHTAmt;
+    END;
+
+    PROCEDURE EnterCell@1000000001(rowno@1000000000 : Integer;colno@1000000001 : Integer;cellvalue@1000000002 : Text[150];bold@1000000003 : Boolean;italic@1000000004 : Boolean;underline@1000000005 : Boolean);
+    BEGIN
+         ExcelBuff.INIT;
+         ExcelBuff.VALIDATE(ExcelBuff."Row No.",rowno);
+         ExcelBuff.VALIDATE(ExcelBuff."Column No.",colno);
+         ExcelBuff."Cell Value as Text":=cellvalue;
+         ExcelBuff.Formula:='';
+         ExcelBuff.Bold:=bold;
+         ExcelBuff.Italic:=italic;
+         ExcelBuff.Underline:=underline;
+         ExcelBuff.INSERT;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+    <?xml version="1.0" encoding="utf-8"?>
+<Report xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:cl="http://schemas.microsoft.com/sqlserver/reporting/2010/01/componentdefinition" xmlns="http://schemas.microsoft.com/sqlserver/reporting/2010/01/reportdefinition">
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:DataSourceID>d79373a6-bdcd-4349-b493-a38b90fdb81b</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="No_AREACODE">
+          <DataField>No_AREACODE</DataField>
+        </Field>
+        <Field Name="Name_AREACODE">
+          <DataField>Name_AREACODE</DataField>
+        </Field>
+        <Field Name="Name2_AREACODE">
+          <DataField>Name2_AREACODE</DataField>
+        </Field>
+        <Field Name="Address_AREACODE">
+          <DataField>Address_AREACODE</DataField>
+        </Field>
+        <Field Name="Address2_AREACODE">
+          <DataField>Address2_AREACODE</DataField>
+        </Field>
+        <Field Name="NPWPNo_AREACODE">
+          <DataField>NPWPNo_AREACODE</DataField>
+        </Field>
+        <Field Name="FinalTotal">
+          <DataField>FinalTotal</DataField>
+        </Field>
+        <Field Name="FinalTotalFormat">
+          <DataField>FinalTotalFormat</DataField>
+        </Field>
+        <Field Name="COMPANYNAME">
+          <DataField>COMPANYNAME</DataField>
+        </Field>
+        <Field Name="num">
+          <DataField>num</DataField>
+        </Field>
+        <Field Name="Code_WHTRevenueTypes">
+          <DataField>Code_WHTRevenueTypes</DataField>
+        </Field>
+        <Field Name="Description_WHTRevenueTypes">
+          <DataField>Description_WHTRevenueTypes</DataField>
+        </Field>
+        <Field Name="grupTotalrevAmount">
+          <DataField>grupTotalrevAmount</DataField>
+        </Field>
+        <Field Name="grupTotalrevAmountFormat">
+          <DataField>grupTotalrevAmountFormat</DataField>
+        </Field>
+        <Field Name="month">
+          <DataField>month</DataField>
+        </Field>
+        <Field Name="RevenueType_WHTPostingSetup">
+          <DataField>RevenueType_WHTPostingSetup</DataField>
+        </Field>
+        <Field Name="year">
+          <DataField>year</DataField>
+        </Field>
+        <Field Name="TotalRevAmount">
+          <DataField>TotalRevAmount</DataField>
+        </Field>
+        <Field Name="TotalRevAmountFormat">
+          <DataField>TotalRevAmountFormat</DataField>
+        </Field>
+        <Field Name="DocumentNo_SalesInvoiceLine">
+          <DataField>DocumentNo_SalesInvoiceLine</DataField>
+        </Field>
+        <Field Name="DocumentNo_SalesCrMemoLine">
+          <DataField>DocumentNo_SalesCrMemoLine</DataField>
+        </Field>
+        <Field Name="DocumentNo_PurchInvLine">
+          <DataField>DocumentNo_PurchInvLine</DataField>
+        </Field>
+        <Field Name="DocumentNo_PurchCrMemoLine">
+          <DataField>DocumentNo_PurchCrMemoLine</DataField>
+        </Field>
+        <Field Name="USERID">
+          <DataField>USERID</DataField>
+        </Field>
+        <Field Name="ExporttoExcel">
+          <DataField>ExporttoExcel</DataField>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>DataSet</rd:DataSetName>
+        <rd:SchemaPath>Report.xsd</rd:SchemaPath>
+        <rd:TableName>Result</rd:TableName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="Tablix6">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>0.23799in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.79106in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.11148in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.56504in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.816in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.92017in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.42017in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.34725in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.95142in</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.94101in</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.19197in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox65">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>No</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox65</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox82">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Nama Wajib Pajak</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox82</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox90">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>NPWP</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox90</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox91">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Customer/ Dealer</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox91</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox105">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Vendor </Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox105</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox188">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>WHT Revenue TYPE</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox188</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox213">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Masa Pajak</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox213</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox214">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Tahun</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox214</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox215">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Jumlah Pembayaran</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox215</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox216">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Total Per Kpp</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox216</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.27524in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_AREACODE3">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!num.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_AREACODE1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Name_AREACODE4">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Name_AREACODE.Value+" "+Fields!Name2_AREACODE.Value</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Name_AREACODE3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1335">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1326</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1336">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1327</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1337">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1328</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1338">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1329</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1339">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1330</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1340">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1331</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1341">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1332</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox1342">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox1333</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <RightBorder>
+                              <Color>Black</Color>
+                              <Style>None</Style>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.28398in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox3">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox3</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox4">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Address_AREACODE.Value+" "+Fields!Address2_AREACODE.Value</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="NPWPNo_AREACODE">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!NPWPNo_AREACODE.Value</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>NPWPNo_AREACODE</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox7">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox7</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_AREACODE5">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!No_AREACODE.Value</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_AREACODE5</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox10">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox10</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox11">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox11</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox12">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox12</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox14">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox14</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox15">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox15</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <RightBorder>
+                              <Color>Black</Color>
+                              <Style>None</Style>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.19482in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox277">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox101</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox278">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox102</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox279">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox103</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox280">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style />
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox104</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="TotalRevAmount5">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>TotalRevAmount4</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox281">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!Description_WHTRevenueTypes.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox106</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox282">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!month.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox107</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox283">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Last(Fields!year.Value)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox108</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox284">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Last(Fields!TotalRevAmount.Value),2)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox109</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox285">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox110</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>None</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Style>None</Style>
+                            </BottomBorder>
+                            <RightBorder>
+                              <Color>Black</Color>
+                              <Style>None</Style>
+                              <Width>1pt</Width>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.25366in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox311">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox24</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="No_AREACODE4">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>No_AREACODE</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox313">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Total for the Area Code</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox26</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                        <ColSpan>2</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox315">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!No_AREACODE.Value</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox28</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox316">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox29</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox317">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox30</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox318">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox31</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox319">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox32</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <TopBorder>
+                              <Style>Solid</Style>
+                            </TopBorder>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox320">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Last(Fields!grupTotalrevAmount.Value),2)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox33</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BottomBorder>
+                              <Width>1.5pt</Width>
+                            </BottomBorder>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.42113in</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Textbox6">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontSize>7pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>Textbox6</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Style>Solid</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Rectangle Name="Rectangle1">
+                          <ReportItems>
+                            <Line Name="Line3">
+                              <Top>0.23958in</Top>
+                              <Left>1.06601in</Left>
+                              <Height>0in</Height>
+                              <Width>4.88191in</Width>
+                              <Style>
+                                <Border>
+                                  <Style>Solid</Style>
+                                </Border>
+                              </Style>
+                            </Line>
+                            <Textbox Name="Textbox1">
+                              <CanGrow>true</CanGrow>
+                              <KeepTogether>true</KeepTogether>
+                              <Paragraphs>
+                                <Paragraph>
+                                  <TextRuns>
+                                    <TextRun>
+                                      <Value>TOTAL</Value>
+                                      <Style>
+                                        <FontFamily>Segoe UI</FontFamily>
+                                        <FontSize>9pt</FontSize>
+                                        <FontWeight>Bold</FontWeight>
+                                      </Style>
+                                    </TextRun>
+                                  </TextRuns>
+                                  <Style />
+                                </Paragraph>
+                              </Paragraphs>
+                              <rd:DefaultName>Textbox1</rd:DefaultName>
+                              <Top>0.13542in</Top>
+                              <Left>0.11937in</Left>
+                              <Height>0.1875in</Height>
+                              <Width>0.66617in</Width>
+                              <ZIndex>1</ZIndex>
+                              <Style>
+                                <Border>
+                                  <Style>None</Style>
+                                </Border>
+                                <PaddingLeft>2pt</PaddingLeft>
+                                <PaddingRight>2pt</PaddingRight>
+                                <PaddingTop>2pt</PaddingTop>
+                                <PaddingBottom>2pt</PaddingBottom>
+                              </Style>
+                            </Textbox>
+                          </ReportItems>
+                          <KeepTogether>true</KeepTogether>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                          </Style>
+                        </Rectangle>
+                        <ColSpan>7</ColSpan>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell />
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FinalTotal">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Last(Fields!FinalTotal.Value),2)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>FinalTotal</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <RightBorder>
+                              <Style>None</Style>
+                            </RightBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="FinalTotal1">
+                          <CanGrow>true</CanGrow>
+                          <CanShrink>true</CanShrink>
+                          <KeepTogether>true</KeepTogether>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value />
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=FormatNumber(Last(Fields!FinalTotal.Value),2)</Value>
+                                  <Style>
+                                    <FontFamily>Segoe UI</FontFamily>
+                                    <FontSize>7pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                    <Format>#,0.00</Format>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <rd:DefaultName>FinalTotal1</rd:DefaultName>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <LeftBorder>
+                              <Style>None</Style>
+                            </LeftBorder>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingRight>2pt</PaddingRight>
+                            <PaddingTop>2pt</PaddingTop>
+                            <PaddingBottom>2pt</PaddingBottom>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <KeepWithGroup>After</KeepWithGroup>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="No_AREACODE5">
+                    <GroupExpressions>
+                      <GroupExpression>=Fields!No_AREACODE.Value</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <SortExpressions>
+                    <SortExpression>
+                      <Value>=Fields!No_AREACODE.Value</Value>
+                    </SortExpression>
+                  </SortExpressions>
+                  <TablixMembers>
+                    <TablixMember>
+                      <Visibility>
+                        <Hidden>=iif(last(Fields!ExporttoExcel.Value)="true",true,false)</Hidden>
+                      </Visibility>
+                    </TablixMember>
+                    <TablixMember>
+                      <Visibility>
+                        <Hidden>=iif(last(Fields!ExporttoExcel.Value)="true",true,false)</Hidden>
+                      </Visibility>
+                    </TablixMember>
+                    <TablixMember>
+                      <Group Name="Code_WHTRevenueTypes5">
+                        <GroupExpressions>
+                          <GroupExpression>=Fields!Code_WHTRevenueTypes.Value</GroupExpression>
+                        </GroupExpressions>
+                      </Group>
+                      <SortExpressions>
+                        <SortExpression>
+                          <Value>=Fields!Code_WHTRevenueTypes.Value</Value>
+                        </SortExpression>
+                      </SortExpressions>
+                      <TablixMembers>
+                        <TablixMember>
+                          <Group Name="RevenueType_WHTPostingSetup5">
+                            <GroupExpressions>
+                              <GroupExpression>=Fields!RevenueType_WHTPostingSetup.Value</GroupExpression>
+                            </GroupExpressions>
+                          </Group>
+                          <SortExpressions>
+                            <SortExpression>
+                              <Value>=Fields!RevenueType_WHTPostingSetup.Value</Value>
+                            </SortExpression>
+                          </SortExpressions>
+                          <TablixMembers>
+                            <TablixMember />
+                          </TablixMembers>
+                          <Visibility>
+                            <Hidden>=iif((Last(Fields!TotalRevAmount.Value)=0) or (Last(Fields!ExporttoExcel.Value)="true" and Last(Fields!TotalRevAmount.Value)&lt;&gt;"0"),true,false)</Hidden>
+                          </Visibility>
+                        </TablixMember>
+                      </TablixMembers>
+                    </TablixMember>
+                    <TablixMember />
+                  </TablixMembers>
+                </TablixMember>
+                <TablixMember>
+                  <Visibility>
+                    <Hidden>=iif(Last(Fields!ExporttoExcel.Value)="true",true,false)</Hidden>
+                  </Visibility>
+                  <KeepWithGroup>Before</KeepWithGroup>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Top>0.01042in</Top>
+            <Height>1.6208in</Height>
+            <Width>8.10159in</Width>
+            <Style>
+              <Border>
+                <Style>None</Style>
+              </Border>
+            </Style>
+          </Tablix>
+        </ReportItems>
+        <Height>1.63122in</Height>
+        <Style />
+      </Body>
+      <Width>8.10159in</Width>
+      <Page>
+        <PageHeader>
+          <Height>1.30208in</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <ReportItems>
+            <Textbox Name="Textbox84">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>WHT Entry</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Top>0.03417in</Top>
+              <Left>0.02353in</Left>
+              <Height>0.17in</Height>
+              <Width>1in</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox85">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Page No. " &amp; Globals!PageNumber</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Top>0.17in</Top>
+              <Left>6.75467in</Left>
+              <Height>0.17in</Height>
+              <Width>1.3365in</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox86">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Cdate(Globals!ExecutionTime).ToString("dd/MM/yyyy")</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>7pt</FontSize>
+                        <Format>D</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Left>6.75467in</Left>
+              <Height>0.17in</Height>
+              <Width>1.3365in</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox87">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Attached Sheet For Tax Payment Application</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>14pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Center</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Top>0.67431in</Top>
+              <Left>1.304in</Left>
+              <Height>0.30208in</Height>
+              <Width>5.22396in</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox88">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=First(Fields!COMPANYNAME.Value, "DataSet_Result")</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Top>0.20417in</Top>
+              <Left>0.02353in</Left>
+              <Height>0.17in</Height>
+              <Width>1in</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox89">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=User!UserID</Value>
+                      <Style>
+                        <FontFamily>Segoe UI</FontFamily>
+                        <FontSize>7pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox84</rd:DefaultName>
+              <Top>0.34in</Top>
+              <Left>6.75467in</Left>
+              <Height>0.17in</Height>
+              <Width>1.3365in</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageHeader>
+        <PageHeight>11.69in</PageHeight>
+        <PageWidth>8.27in</PageWidth>
+        <LeftMargin>0.1in</LeftMargin>
+        <TopMargin>0.1in</TopMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    if Value = 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankPos(ByVal Value As Decimal)
+    if Value &gt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankZeroAndPos(ByVal Value As Decimal)
+    if Value &gt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNeg(ByVal Value As Decimal)
+    if Value &lt; 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+
+Public Function BlankNegAndZero(ByVal Value As Decimal)
+    if Value &lt;= 0 then
+        Return ""
+    end if
+    Return Value
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>0eeb6585-38ae-40f1-885b-8d50088d51b4</rd:ReportID>
+</Report>
+    END_OF_RDLDATA
+  }
+}
+

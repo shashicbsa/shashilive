@@ -1,0 +1,224 @@
+OBJECT Page 60021 G/L Account Card- Assignment
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/30/14;
+    Time=12:12:33;
+    Modified=Yes;
+    Version List=NAVW15.00,NAVAP4.00,TBI1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=G/L Account Card;
+    SourceTable=Table15;
+    PageType=Card;
+    RefreshOnActivate=Yes;
+    OnNewRecord=BEGIN
+                  SetupNewGLAcc(xRec,BelowxRec);
+                END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 36      ;1   ;ActionGroup;
+                      CaptionML=ENU=A&ccount }
+      { 41      ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=ENU=Ledger E&ntries;
+                      RunObject=Page 20;
+                      RunPageView=SORTING(G/L Account No.);
+                      RunPageLink=G/L Account No.=FIELD(No.) }
+      { 38      ;2   ;Action    ;
+                      CaptionML=ENU=Co&mments;
+                      RunObject=Page 124;
+                      RunPageLink=Table Name=CONST(G/L Account),
+                                  No.=FIELD(No.);
+                      Image=ViewComments }
+      { 84      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=ENU=Dimensions;
+                      RunObject=Page 540;
+                      RunPageLink=Table ID=CONST(15),
+                                  No.=FIELD(No.);
+                      Image=Dimensions }
+      { 166     ;2   ;Action    ;
+                      CaptionML=ENU=E&xtended Texts;
+                      RunObject=Page 386;
+                      RunPageView=SORTING(Table Name,No.,Language Code,All Language Codes,Starting Date,Ending Date);
+                      RunPageLink=Table Name=CONST(G/L Account),
+                                  No.=FIELD(No.) }
+      { 40      ;2   ;Action    ;
+                      CaptionML=ENU=Receivables-Payables;
+                      RunObject=Page 159;
+                      Image=ReceivablesPayables }
+      { 47      ;2   ;Action    ;
+                      CaptionML=ENU=Where-Used List;
+                      OnAction=VAR
+                                 CalcGLAccWhereUsed@1000 : Codeunit 100;
+                               BEGIN
+                                 CalcGLAccWhereUsed.CheckGLAcc("No.");
+                               END;
+                                }
+      { 136     ;1   ;ActionGroup;
+                      CaptionML=ENU=&Balance }
+      { 46      ;2   ;Action    ;
+                      CaptionML=ENU=G/L &Account Balance;
+                      RunObject=Page 415;
+                      RunPageLink=No.=FIELD(No.),
+                                  Global Dimension 1 Filter=FIELD(Global Dimension 1 Filter),
+                                  Global Dimension 2 Filter=FIELD(Global Dimension 2 Filter),
+                                  Business Unit Filter=FIELD(Business Unit Filter);
+                      Image=GLAccountBalance }
+      { 154     ;2   ;Action    ;
+                      CaptionML=ENU=G/L &Balance;
+                      RunObject=Page 414;
+                      RunPageOnRec=Yes;
+                      Image=GLBalance }
+      { 138     ;2   ;Action    ;
+                      CaptionML=ENU=G/L Balance by &Dimension;
+                      RunObject=Page 408;
+                      Image=GLBalanceDimension }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 61      ;1   ;ActionGroup;
+                      CaptionML=ENU=F&unctions }
+      { 62      ;2   ;Action    ;
+                      Ellipsis=Yes;
+                      CaptionML=ENU=Apply Template;
+                      Image=ApplyTemplate;
+                      OnAction=VAR
+                                 TemplateMgt@1000 : Codeunit 8612;
+                                 RecRef@1001 : RecordRef;
+                               BEGIN
+                                 RecRef.GETTABLE(Rec);
+                                 TemplateMgt.UpdateFromTemplateSelection(RecRef);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=ENU=General }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Name }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Income/Balance" }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Debit/Credit" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr="Account Type" }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr=Totaling }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="No. of Blank Lines" }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="New Page" }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Search Name" }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr=Balance }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Reconciliation Account" }
+
+    { 57  ;2   ;Field     ;
+                SourceExpr="Automatic Ext. Texts" }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Direct Posting" }
+
+    { 30  ;2   ;Field     ;
+                SourceExpr=Blocked }
+
+    { 32  ;2   ;Field     ;
+                SourceExpr="Last Date Modified" }
+
+    { 1904784501;1;Group  ;
+                CaptionML=ENU=Posting }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Gen. Posting Type" }
+
+    { 55  ;2   ;Field     ;
+                SourceExpr="Gen. Bus. Posting Group" }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Gen. Prod. Posting Group" }
+
+    { 39  ;2   ;Field     ;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 54  ;2   ;Field     ;
+                SourceExpr="VAT Prod. Posting Group" }
+
+    { 59  ;2   ;Field     ;
+                SourceExpr="Default IC Partner G/L Acc. No" }
+
+    { 1500000;2;Field     ;
+                SourceExpr="WHT Business Posting Group" }
+
+    { 1500002;2;Field     ;
+                SourceExpr="WHT Product Posting Group" }
+
+    { 1904602201;1;Group  ;
+                CaptionML=ENU=Consolidation }
+
+    { 50  ;2   ;Field     ;
+                SourceExpr="Consol. Debit Acc." }
+
+    { 52  ;2   ;Field     ;
+                SourceExpr="Consol. Credit Acc." }
+
+    { 48  ;2   ;Field     ;
+                SourceExpr="Consol. Translation Method" }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="No. 2" }
+
+    { 1904488501;1;Group  ;
+                CaptionML=ENU=Reporting }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Exchange Rate Adjustment" }
+
+    { 1000000012;2;Field  ;
+                SourceExpr=YIMM }
+
+    { 1000000014;2;Field  ;
+                SourceExpr=YMKI }
+
+    { 1000000016;2;Field  ;
+                SourceExpr=YMMWJ }
+
+    { 1000000018;2;Field  ;
+                SourceExpr=TBI }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //TBI1.0 field 'TBI' added to indicate TBI G/L Account
+    }
+    END.
+  }
+}
+

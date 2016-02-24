@@ -1,0 +1,31 @@
+OBJECT Table 50041 Ready To Post Cr MEMO
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/04/09;
+    Time=10:35:08;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNO                 ;Code30         }
+    { 2   ;   ;DocNo               ;Code20         }
+  }
+  KEYS
+  {
+    {    ;DocNo                                   ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

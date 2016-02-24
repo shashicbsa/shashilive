@@ -1,0 +1,37 @@
+OBJECT Table 60028 QuarterBudgetBuffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/12/10;
+    Time=[ 7:59:14];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNo                 ;Integer        }
+    { 2   ;   ;Code                ;Code20         }
+    { 3   ;   ;Shop/Source         ;Code20         }
+    { 4   ;   ;Name                ;Code50         }
+    { 5   ;   ;Date-1              ;Decimal        }
+    { 6   ;   ;Date-2              ;Decimal        }
+    { 7   ;   ;Date-3              ;Decimal        }
+    { 8   ;   ;SourceNo            ;Code20         }
+  }
+  KEYS
+  {
+    {    ;SNo                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

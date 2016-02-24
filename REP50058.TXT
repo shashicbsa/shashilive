@@ -1,0 +1,250 @@
+OBJECT Report 50058 G-Port In-Transit Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/04/15;
+    Time=20:21:36;
+    Modified=Yes;
+    Version List=YIMMGinv1.0,CR#015;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+    { 4541;    ;DataItem;                    ;
+               DataItemTable=Table50020;
+               OnPreDataItem=BEGIN
+                               MasterSetup.GET;
+                               GenJournalLine.SETRANGE("Journal Template Name",MasterSetup."G-Port Template Name");
+                               GenJournalLine.SETRANGE("Journal Batch Name",MasterSetup."G-Port Batch In-Transit");
+                               IF GenJournalLine.FINDLAST THEN
+                               LineNo:=GenJournalLine."Line No.";
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  //LINE 1 FOR STOCK DEBIT
+
+                                  CurrCode:='';
+                                  CurrencyFactor:=1;
+
+                                  GetCurrencyCode("Document No.");
+
+                                  LineNo+=10000;
+                                  GenJournalLine.INIT;
+                                  GenJournalLine."Journal Template Name":=MasterSetup."G-Port Template Name";
+                                  GenJournalLine."Journal Batch Name":=MasterSetup."G-Port Batch In-Transit";
+                                  GenJournalLine."Line No.":=LineNo;
+                                  GenJournalLine.INSERT(TRUE);
+                                  GenJournalLine.VALIDATE("Document Type",GenJournalLine."Document Type"::" ");
+
+                                  GenJournalLine.VALIDATE("Document No.","G-Port In-Transit Interface"."Document No.");
+
+                                  GenJournalLine.VALIDATE("Posting Date","Posting Date");
+
+                                  GenJournalLine.VALIDATE(GenJournalLine."Source Code",Text002);
+
+
+                                  GenJournalLine.VALIDATE("Account Type",GenJournalLine."Account Type"::"G/L Account");
+                                  IF ("Commodity Code"='FREIGHT') OR ("Commodity Code"='INSURANCE') THEN BEGIN
+                                    GPortInTransitInterface.RESET;
+                                    GPortInTransitInterface.SETRANGE("Document No.","Document No.");
+                                    GPortInTransitInterface.SETFILTER("Commodity Code",'<>%1 & <>%2','FREIGHT','INSURANCE');
+                                    IF GPortInTransitInterface.FINDFIRST THEN BEGIN
+                                      CommodityCodeGPort.GET(GPortInTransitInterface."Commodity Code");
+                                      IF ("Commodity Code"='FREIGHT') THEN
+                                        COmmodityCode:=CommodityCodeGPort."Purch Frght Stock Acc No";
+                                      IF ("Commodity Code"='INSURANCE') THEN
+                                        COmmodityCode:=CommodityCodeGPort."Purch Insrnc Stock Acc No";
+                                    END;
+                                  END ELSE BEGIN
+                                    CommodityCodeGPort.GET("Commodity Code");
+                                    COmmodityCode:=CommodityCodeGPort."Purch. Stock Acc. No.";
+                                  END;
+                                  GenJournalLine.VALIDATE("Account No.",COmmodityCode);
+                                  IF "Debit Amount" <> 0 THEN BEGIN
+                                  GenJournalLine.VALIDATE(Amount,"Debit Amount");
+                                  GenJournalLine.VALIDATE("Debit Amount","Debit Amount");
+                                  CreditAmount:="Debit Amount";
+                                  END;
+
+                                  //GenJournalLine.VALIDATE("Shortcut Dimension 1 Code","Shop Code");
+                                  //GenJournalLine.VALIDATE("Shortcut Dimension 2 Code","Model Code");
+                                  GenJournalLine.Narration:="Document No."+'-'+"Model Code"+'-'+COPYSTR(Narration,1,15);
+                                  GenJournalLine.Interfaced:=TRUE;
+
+
+                                  //>>11042013/PC/CR#015
+                                  IF CurrCode <> '' THEN BEGIN
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Code",CurrCode);
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Factor",(1/CurrencyFactor));
+                                  END;
+                                  //<<11042013/PC/CR#015
+
+
+
+                                  GenJournalLine.MODIFY;
+
+                                  //LINE 2 FOR IN-TRANSIT CREDIT
+                                  LineNo+=10000;
+                                  GenJournalLine.INIT;
+                                  GenJournalLine."Journal Template Name":=MasterSetup."G-Port Template Name";
+                                  GenJournalLine."Journal Batch Name":=MasterSetup."G-Port Batch In-Transit";
+                                  GenJournalLine."Line No.":=LineNo;
+
+
+                                  GenJournalLine.INSERT(TRUE);
+                                  GenJournalLine.VALIDATE("Document Type",GenJournalLine."Document Type"::" ");
+                                  GenJournalLine.VALIDATE("Document No.","G-Port In-Transit Interface"."Document No.");
+                                  GenJournalLine.VALIDATE("Posting Date","Posting Date");
+                                  GenJournalLine.VALIDATE(GenJournalLine."Source Code",Text002);
+                                  GenJournalLine.VALIDATE("Account Type",GenJournalLine."Account Type"::"G/L Account");
+
+                                  //>>11042013/PC/CR#015
+                                  IF CurrCode <> '' THEN BEGIN
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Code",CurrCode);
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Factor",CurrencyFactor);
+                                  END;
+                                  //<<11042013/PC/CR#015
+
+
+
+                                  IF ("Commodity Code"='FREIGHT') OR ("Commodity Code"='INSURANCE') THEN BEGIN
+                                    GPortInTransitInterface.RESET;
+                                    GPortInTransitInterface.SETRANGE("Document No.","Document No.");
+                                    GPortInTransitInterface.SETFILTER("Commodity Code",'<>%1 & <>%2','FREIGHT','INSURANCE');
+                                    IF GPortInTransitInterface.FINDFIRST THEN BEGIN
+                                      CommodityCodeGPort.GET(GPortInTransitInterface."Commodity Code");
+                                      IF ("Commodity Code"='FREIGHT') THEN
+                                        COmmodityCode:=CommodityCodeGPort."Purch Frght InTrnst Acc No";
+                                      IF ("Commodity Code"='INSURANCE') THEN
+                                        COmmodityCode:=CommodityCodeGPort."Purch Insrnc InTrnst Acc No";
+                                    END;
+                                  END ELSE BEGIN
+                                    CommodityCodeGPort.GET("Commodity Code");
+                                    COmmodityCode:=CommodityCodeGPort."Purch. In-Transit Acc. No.";
+                                  END;
+                                  GenJournalLine.VALIDATE("Account No.",COmmodityCode);
+                                  IF CreditAmount <> 0 THEN BEGIN
+                                  GenJournalLine.VALIDATE(Amount,CreditAmount);
+                                  GenJournalLine.VALIDATE("Credit Amount",CreditAmount);
+                                  END;
+                                  //GenJournalLine.VALIDATE("Shortcut Dimension 1 Code","Shop Code");
+                                  //GenJournalLine.VALIDATE("Shortcut Dimension 2 Code","Model Code");
+                                  GenJournalLine.Narration:="Document No."+'-'+"Model Code"+'-'+COPYSTR(Narration,1,15);
+                                  GenJournalLine.Interfaced:=TRUE;
+
+                                  //>>11042013/PC/CR#015
+                                  IF CurrCode <> '' THEN BEGIN
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Code",CurrCode);
+                                  GenJournalLine.VALIDATE(GenJournalLine."Currency Factor",(1/CurrencyFactor));
+                                  END;
+                                  //<<11042013/PC/CR#015
+
+
+                                  GenJournalLine.MODIFY;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                DELETEALL;
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      MasterSetup@1000000000 : Record 50008;
+      GenJournalLine@1000000001 : Record 81;
+      LineNo@1000000002 : Integer;
+      GPortInTransitInterface@1000000003 : Record 50020;
+      CommodityCodeGPort@1000000004 : Record 50019;
+      COmmodityCode@1000000005 : Code[10];
+      CreditAmount@1000000006 : Decimal;
+      CurrencyFactor@1000000007 : Decimal;
+      CurrCode@1000000008 : Code[10];
+      IntransitData@1000000009 : Record 50033;
+      Text001@1000000010 : TextConst 'ENU=GPORT';
+      Text002@1000000011 : TextConst 'ENU=GENJNL';
+
+    PROCEDURE GetCurrencyCode@1000000001(InvoiceNo@1000000000 : Code[20]);
+    VAR
+      SalesHeader@1000000001 : Record 36;
+      SalesCrMeHeader@1000000002 : Record 114;
+    BEGIN
+      SalesHeader.RESET;
+      SalesHeader.SETRANGE("G-Port Ref No.",InvoiceNo);
+      SalesHeader.SETRANGE("Document Type",SalesHeader."Document Type"::"Credit Memo");
+      SalesHeader.SETRANGE("New or Cancel",SalesHeader."New or Cancel"::New);
+
+        IF SalesHeader.FINDLAST THEN
+           BEGIN
+                 CurrCode:= SalesHeader."Currency Code";
+                  IF (CurrCode<>'') AND (SalesHeader."Currency Factor"<>0) THEN
+                 CurrencyFactor:=1/SalesHeader."Currency Factor";
+           IF (CurrCode<>'') THEN
+           EXIT;
+           END
+        ELSE
+           BEGIN
+        SalesCrMeHeader.SETRANGE("G-Port Ref No.",InvoiceNo);
+            IF SalesCrMeHeader.FINDLAST THEN
+              BEGIN
+                 CurrCode:=SalesCrMeHeader."Currency Code";
+
+              IF (CurrCode<>'') AND (SalesCrMeHeader."Currency Factor"<>0) THEN
+                 CurrencyFactor:=1/SalesCrMeHeader."Currency Factor";
+
+
+
+               IF (CurrCode<>'') THEN
+                EXIT;
+              END;
+           END;
+
+      //>>11042013/PC/CR#015
+      {
+      IF (CurrCode='') THEN
+      BEGIN
+      IntransitData.RESET;
+      IntransitData.SETRANGE(IntransitData."Invoice No",InvoiceNo);
+
+      IF IntransitData.FINDFIRST THEN;
+
+      CurrCode:=IntransitData.CurrCode;
+      CurrencyFactor:=IntransitData.ExchRate;
+
+
+
+
+      END;
+      }
+      //<<11042013/PC/CR#015
+    END;
+
+    BEGIN
+    {
+      JnlGen."Source Code" := Master_Setup."Source Code";
+      JnlGen."Reason Code" := Gen_Batch."Reason Code";
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

@@ -1,0 +1,2771 @@
+OBJECT Codeunit 28070 TaxInvoiceManagement
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/31/15;
+    Time=14:52:29;
+    Modified=Yes;
+    Version List=NAVAPAC7.00,YIMMAVATO,YIMMRVATO,CR#014,UPG09R2,UPG13,UPG13R2,YIMMDEVIP1.0,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 21=rimd,
+                TableData 25=rimd,
+                TableData 45=rimd,
+                TableData 112=rimd,
+                TableData 114=rimd,
+                TableData 122=rimd,
+                TableData 124=rimd;
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text030@1500032 : TextConst 'ENU=Are you sure you wish to post the Tax Invoice(s)?;ENA=Are you sure you wish to post the Tax Invoice(s)?';
+      Text031@1500031 : TextConst 'ENU=Are you sure you wish to post and print the Tax Invoice(s)?;ENA=Are you sure you wish to post and print the Tax Invoice(s)?';
+      Text032@1500023 : TextConst 'ENU=Tax Invoice already posted for Invoice %1.;ENA=Tax Invoice already posted for Invoice %1.';
+      Text033@1500017 : TextConst 'ENU=Tax Invoice(s) %1 posted sucessfully.;ENA=Tax Invoice(s) %1 posted sucessfully.';
+      Text034@1500016 : TextConst 'ENU=Tax Invoice(s) %1 posted and printed sucessfully.;ENA=Tax Invoice(s) %1 posted and printed sucessfully.';
+      Text040@1500015 : TextConst 'ENU=Are you sure you wish to post the Tax Credit Memo(s)?;ENA=Are you sure you wish to post the Tax CR/Adj Note(s)?';
+      Text041@1500014 : TextConst 'ENU=Are you sure you wish to post and print the Tax Credit Memo(s)?;ENA=Are you sure you wish to post and print the Tax CR/Adj Note(s)?';
+      Text042@1500013 : TextConst 'ENU=Tax Credit Memo already posted for Credit Memo %1.;ENA=Tax CR/Adj Note already posted for CR/Adj Note %1.';
+      Text043@1500012 : TextConst 'ENU=Tax Credit Memo(s) %1 posted sucessfully.;ENA=Tax CR/Adj Note(s) %1 posted successfully.';
+      Text044@1500011 : TextConst 'ENU=Tax Credit Memo(s) %1 posted and printed sucessfully.;ENA=Tax CR/Adj Note(s) %1 posted and printed successfully.';
+      Text050@1500010 : TextConst 'ENU=Sales Invoice No. #1########\Document No.      #2########;ENA=Sales Invoice No. #1########\Document No.      #2########';
+      Text053@1500009 : TextConst 'ENU=Tax Invoice(s) posted sucessfully.;ENA=Tax Invoice(s) posted sucessfully.';
+      Text054@1500008 : TextConst 'ENU=Tax Invoice(s) posted and printed sucessfully.;ENA=Tax Invoice(s) posted and printed sucessfully.';
+      Text055@1500007 : TextConst 'ENU=Tax Invoice(s) already posted.;ENA=Tax Invoice(s) already posted.';
+      Text100@1500006 : TextConst;
+      SalesTaxInvoiceHeader@1500039 : Record 28071;
+      PurchTaxInvoiceHeader@1500038 : Record 28075;
+      SalesTaxCrMemoHeader@1500037 : Record 28073;
+      PurchTaxCrMemoHeader@1500036 : Record 28077;
+      PurchSetup@1500035 : Record 312;
+      SalesSetup@1500034 : Record 311;
+      GLSetup@1500033 : Record 98;
+      NoSeriesMgt@1500029 : Codeunit 396;
+      TempVendLedgEntry@1500028 : Record 25;
+      TempVendLedgEntry1@1500027 : Record 25;
+      TempCustLedgEntry@1500026 : Record 21;
+      TempCustLedgEntry1@1500025 : Record 21;
+      WHTAmount@1500024 : Decimal;
+      TotAmt@1500022 : Decimal;
+      Payment1@1500021 : Decimal;
+      Payment2@1500020 : Decimal;
+      ExpectedAmount@1500019 : Decimal;
+      RemainingAmt@1500018 : Decimal;
+      VATCrMemoAmt@1500005 : Decimal;
+      VATCrMemoBase@1500004 : Decimal;
+      GenLineAmount@1500003 : Decimal;
+      TotWHTAmount@1500040 : Decimal;
+      WHTUsed1@1500002 : Boolean;
+      InvNo@1500001 : Code[20];
+      LastTaxInvoice@1500000 : Code[20];
+      "Tax Inv No."@1000000000 : Code[20];
+      F1@1000000001 : Code[10];
+      F2@1000000003 : Code[10];
+      day@1000000004 : Integer;
+      month@1000000005 : Integer;
+      year@1000000006 : Integer;
+      year1@1000000007 : Code[10];
+      F3@1000000002 : Code[10];
+      F4@1000000008 : Code[10];
+      "Tax Inv No.1"@1000000009 : Code[20];
+      "Text-Error-VAT IN"@1102159001 : TextConst 'ENU=Tax Invoice No. ''%1'' already exists in VAT IN Entry Of Document No : ''%2''';
+      "Text-ErrorDuplicacy-Purchase"@1102159002 : TextConst 'ENU=Tax Invoice No. ''%1'' already exist in Purchase Invoice with Document No : ''%2 ''';
+      "Text-ErrorDuplicacy-PostedPur"@1102159003 : TextConst 'ENU=Tax Invoice No. ''%1'' already exist in Posted Purchase Invoice with Document No : ''%2 ''';
+      "Text-ErrorDuplicacy-Sales"@1102159004 : TextConst 'ENU=''Tax Invoice No. ''%1'' already exist in Sales Line No :'' %2''  Of Document No : ''%3 ''';
+      "Text-ErrorDuplicacy-PostedSale"@1102159005 : TextConst 'ENU=''Tax Invoice No. ''%1'' already exist in Posted Sales Cr. Memo Line No :'' %2''  Of Document No : ''%3 ''';
+
+    PROCEDURE ApplyVendInvoiceWHT@1500000(VAR VendLedgerEntry@1500003 : Record 25;VAR GenJnlLine@1500002 : Record 81);
+    VAR
+      PurchTaxInvHeader@1500001 : Record 28075;
+      TempPurchTaxInvLine@1500000 : Record 28076;
+    BEGIN
+      TempVendLedgEntry.RESET;
+      IF GenJnlLine."Applies-to Doc. No." = '' THEN BEGIN
+        TempVendLedgEntry1.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        IF TempVendLedgEntry1.FIND('-') THEN
+          REPEAT
+            TempVendLedgEntry1.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF TempVendLedgEntry1."Rem. Amt for WHT" = 0 THEN
+              TempVendLedgEntry1."Rem. Amt for WHT" := TempVendLedgEntry1."Remaining Amt. (LCY)";
+            RemainingAmt := RemainingAmt + TempVendLedgEntry1."Rem. Amt for WHT";
+            IF TempVendLedgEntry1."Document Type" = TempVendLedgEntry1."Document Type"::"Credit Memo" THEN
+              RemainingAmt := RemainingAmt + TempVendLedgEntry1."Rem. Amt for WHT";
+          UNTIL TempVendLedgEntry1.NEXT = 0;
+        TotAmt := ABS(GenJnlLine.Amount);
+        TempVendLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        TempVendLedgEntry.SETRANGE("Document Type",TempVendLedgEntry."Document Type"::"Credit Memo");
+        IF TempVendLedgEntry.FIND('-') THEN
+          REPEAT
+            TempVendLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF CheckPmtDisc(GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                 ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+            THEN
+              TotAmt := TotAmt - TempVendLedgEntry."Original Pmt. Disc. Possible";
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempVendLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                   ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN BEGIN
+                GenJnlLine.VALIDATE(
+                  Amount,-ABS(TempVendLedgEntry."Rem. Amt for WHT" + TempVendLedgEntry."Original Pmt. Disc. Possible"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt - TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT" + TempVendLedgEntry."Original Pmt. Disc. Possible";
+              END ELSE BEGIN
+                GenJnlLine.VALIDATE(Amount,-ABS(TempVendLedgEntry."Rem. Amt for WHT"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt - TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT";
+              END;
+            END ELSE BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                   ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN
+                GenJnlLine.VALIDATE(Amount,TotAmt + TempVendLedgEntry."Original Pmt. Disc. Possible")
+              ELSE
+                GenJnlLine.VALIDATE(Amount,TotAmt);
+              TotAmt := -1;
+            END;
+            IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE BEGIN
+              IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+              RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT";
+              TotAmt := TotAmt + TempVendLedgEntry."Rem. Amt for WHT";
+            END;
+            GenJnlLine."Applies-to Doc. No." := TempVendLedgEntry."Document No.";
+            TaxInvoicePurchase(GenJnlLine,FALSE);
+            GenJnlLine."WHT Payment" := TRUE;
+            VendLedgerEntry."Applies-to ID" := '';
+            VendLedgerEntry.MODIFY;
+          UNTIL (TempVendLedgEntry.NEXT = 0) OR (TotAmt = -1);
+
+        TempVendLedgEntry.RESET;
+        TempVendLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        TempVendLedgEntry.SETFILTER("Document Type",'<>%1',TempVendLedgEntry."Document Type"::"Credit Memo");
+        IF TempVendLedgEntry.FIND('-') THEN
+          REPEAT
+            TempVendLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF CheckPmtDisc(GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                 ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+            THEN
+              TotAmt := TotAmt - TempVendLedgEntry."Original Pmt. Disc. Possible";
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempVendLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                   ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN BEGIN
+                GenJnlLine.VALIDATE(
+                  Amount,ABS(TempVendLedgEntry."Rem. Amt for WHT" - TempVendLedgEntry."Original Pmt. Disc. Possible"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt + TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT" + TempVendLedgEntry."Original Pmt. Disc. Possible";
+              END ELSE BEGIN
+                GenJnlLine.VALIDATE(Amount,ABS(TempVendLedgEntry."Rem. Amt for WHT"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt + TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT";
+              END;
+            END ELSE BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempVendLedgEntry."Pmt. Discount Date",ABS(TempVendLedgEntry."Rem. Amt for WHT"),
+                   ABS(TempVendLedgEntry."Rem. Amt"),ABS(TempVendLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN
+                GenJnlLine.VALIDATE(Amount,TotAmt + TempVendLedgEntry."Original Pmt. Disc. Possible")
+              ELSE
+                GenJnlLine.VALIDATE(Amount,TotAmt);
+              TotAmt := -1;
+            END;
+
+            IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE BEGIN
+              IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+              RemainingAmt := RemainingAmt + TempVendLedgEntry."Rem. Amt for WHT";
+              TotAmt := TotAmt + TempVendLedgEntry."Rem. Amt for WHT";
+            END;
+            GenJnlLine."Applies-to Doc. No." := TempVendLedgEntry."Document No.";
+            TaxInvoicePurchase(GenJnlLine,FALSE);
+            GenJnlLine."WHT Payment" := TRUE;
+            VendLedgerEntry."Applies-to ID" := '';
+            VendLedgerEntry.MODIFY;
+          UNTIL (TempVendLedgEntry.NEXT = 0) OR (TotAmt = -1);
+      END ELSE
+        TaxInvoicePurchase(GenJnlLine,FALSE);
+      IF InvNo <> '' THEN BEGIN
+        TempPurchTaxInvLine.SETRANGE("Document No.",InvNo);
+        IF NOT TempPurchTaxInvLine.FINDFIRST THEN
+          IF PurchTaxInvHeader.GET(InvNo) THEN BEGIN
+            PurchTaxInvHeader.DELETE;
+            PurchSetup.GET;
+            IF CheckTaxableNoSeries(VendLedgerEntry."Vendor No.",0) THEN
+              NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Non Tax Invoice Nos.",PurchTaxInvHeader."Posting Date",TRUE)
+            ELSE
+              NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Tax Invoice Nos.",PurchTaxInvHeader."Posting Date",TRUE);
+          END;
+      END;
+      PurchTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+      IF PurchTaxInvHeader.FINDFIRST THEN
+        BuildTaxPostBuffer(PurchTaxInvHeader."No.",PurchTaxInvHeader."Posting Description",0);
+    END;
+
+    PROCEDURE ApplyCustInvoiceWHT@1500001(VAR CustLedgerEntry@1500003 : Record 21;VAR GenJnlLine@1500002 : Record 81);
+    VAR
+      SalesTaxInvHeader@1500000 : Record 28071;
+      TempSalesTaxInvLine@1500001 : Record 28072;
+      WHTEntry@1500004 : Record 28044;
+    BEGIN
+      TempCustLedgEntry.RESET;
+      WHTUsed1 := FALSE;
+      TotAmt := ABS(GenJnlLine.Amount);
+      IF GenJnlLine."Applies-to Doc. No." = '' THEN BEGIN
+        IF GenJnlLine."Applies-to ID" <> '' THEN
+          IF GenJnlLine."Document No." = GenJnlLine."Applies-to ID" THEN
+            TempCustLedgEntry1.SETRANGE("Applies-to ID",GenJnlLine."Document No.")
+          ELSE
+            TempCustLedgEntry1.SETRANGE("Applies-to ID",GenJnlLine."Applies-to ID");
+        IF TempCustLedgEntry1.FIND('-') THEN
+          REPEAT
+            TempCustLedgEntry1.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF TempCustLedgEntry1."Rem. Amt for WHT" = 0 THEN
+              TempCustLedgEntry1."Rem. Amt for WHT" := TempCustLedgEntry1."Remaining Amt. (LCY)";
+            IF GenJnlLine."Posting Date" <= TempCustLedgEntry1."Pmt. Discount Date" THEN BEGIN
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT" - TempCustLedgEntry1."Original Pmt. Disc. Possible";
+            END ELSE
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT";
+
+            IF TempCustLedgEntry1."Document Type" = TempCustLedgEntry1."Document Type"::"Credit Memo" THEN
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT";
+          UNTIL TempCustLedgEntry1.NEXT = 0;
+
+        TempCustLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        TempCustLedgEntry.SETRANGE("Document Type",TempCustLedgEntry."Document Type"::"Credit Memo");
+        IF TempCustLedgEntry.FIND('-') THEN
+          REPEAT
+            TempCustLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF CheckPmtDisc(GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT")
+                 ,
+                 ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+            THEN
+              TotAmt := TotAmt + TempCustLedgEntry."Original Pmt. Disc. Possible";
+            GLSetup.GET;
+            WHTAmount := 0;
+            IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+              WHTEntry.RESET;
+              WHTEntry.SETRANGE("Document No.",TempCustLedgEntry."Document No.");
+              WHTEntry.SETFILTER("Applies-to Entry No.",'%1',0);
+              IF WHTEntry.FIND('-') THEN
+                REPEAT
+                  WHTAmount := WHTAmount + WHTEntry."Unrealized Amount";
+                UNTIL WHTEntry.NEXT = 0;
+            END;
+            IF ABS(TempCustLedgEntry."Rem. Amt for WHT") <= ABS(TempCustLedgEntry."Rem. Amt") THEN
+              WHTAmount := 0;
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempCustLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT")
+                   ,
+                   ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN BEGIN
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt :=
+                    -(TotAmt - TempCustLedgEntry."Rem. Amt for WHT" + TempCustLedgEntry."Original Pmt. Disc. Possible" - WHTAmount);
+
+                GenJnlLine.VALIDATE(Amount,
+                  -ABS(TempCustLedgEntry."Rem. Amt for WHT" - TempCustLedgEntry."Original Pmt. Disc. Possible") + ABS(WHTAmount));
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT"
+                  + TempCustLedgEntry."Original Pmt. Disc. Possible" - WHTAmount;
+              END ELSE BEGIN
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := -(TotAmt - TempCustLedgEntry."Rem. Amt for WHT" - WHTAmount);
+
+                GenJnlLine.VALIDATE(Amount,-ABS(TempCustLedgEntry."Rem. Amt for WHT") + ABS(WHTAmount));
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT" - WHTAmount;
+              END;
+            END ELSE BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT")
+                   ,
+                   ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN
+                GenJnlLine.VALIDATE(Amount,ABS(TotAmt - TempCustLedgEntry."Original Pmt. Disc. Possible") - ABS(WHTAmount))
+              ELSE
+                GenJnlLine.VALIDATE(Amount,ABS(TotAmt) - ABS(WHTAmount));
+              TotAmt := -1;
+            END;
+            IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE
+              IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::"Credit Memo" THEN BEGIN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT";
+                TotAmt := TotAmt - TempCustLedgEntry."Rem. Amt for WHT";
+              END;
+            GenJnlLine."Applies-to Doc. No." := TempCustLedgEntry."Document No.";
+            TaxInvoiceSales(GenJnlLine,WHTUsed1,FALSE);
+            WHTUsed1 := TRUE;
+            CustLedgerEntry."Applies-to ID" := '';
+            CustLedgerEntry.MODIFY;
+          UNTIL (TempCustLedgEntry.NEXT = 0) OR (TotAmt = -1);
+
+        TempCustLedgEntry.RESET;
+        IF GenJnlLine."Document No." = GenJnlLine."Applies-to ID" THEN
+          TempCustLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.")
+        ELSE
+          TempCustLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Applies-to ID");
+        TempCustLedgEntry.SETFILTER("Document Type",'<>%1',TempCustLedgEntry."Document Type"::"Credit Memo");
+        IF TempCustLedgEntry.FIND('-') THEN
+          REPEAT
+            TempCustLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF CheckPmtDisc(GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT"),
+                 ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+            THEN
+              TotAmt := TotAmt + TempCustLedgEntry."Original Pmt. Disc. Possible";
+            GLSetup.GET;
+            WHTAmount := 0;
+            IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+              WHTEntry.RESET;
+              WHTEntry.SETRANGE("Document No.",TempCustLedgEntry."Document No.");
+              WHTEntry.SETFILTER("Applies-to Entry No.",'%1',0);
+              IF WHTEntry.FIND('-') THEN
+                REPEAT
+                  WHTAmount := WHTAmount + WHTEntry."Unrealized Amount";
+                UNTIL WHTEntry.NEXT = 0;
+            END;
+            IF ABS(TempCustLedgEntry."Rem. Amt for WHT") <= ABS(TempCustLedgEntry."Rem. Amt") THEN
+              WHTAmount := 0;
+
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempCustLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT")
+                   ,
+                   ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN BEGIN
+                GenJnlLine.VALIDATE(
+                  Amount,-ABS(TempCustLedgEntry."Rem. Amt for WHT" - TempCustLedgEntry."Original Pmt. Disc. Possible"));
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT" + TempCustLedgEntry."Original Pmt. Disc. Possible";
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := (TotAmt - TempCustLedgEntry."Rem. Amt for WHT" - WHTAmount);
+              END ELSE BEGIN
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT" - WHTAmount;
+                GenJnlLine.VALIDATE(Amount,-ABS(TempCustLedgEntry."Rem. Amt for WHT") + ABS(WHTAmount));
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := (TotAmt - TempCustLedgEntry."Rem. Amt for WHT" - WHTAmount);
+              END;
+            END ELSE BEGIN
+              IF CheckPmtDisc(
+                   GenJnlLine."Posting Date",TempCustLedgEntry."Pmt. Discount Date",ABS(TempCustLedgEntry."Rem. Amt for WHT")
+                   ,
+                   ABS(TempCustLedgEntry."Rem. Amt"),ABS(TempCustLedgEntry."Original Pmt. Disc. Possible"),ABS(TotAmt))
+              THEN
+                GenJnlLine.VALIDATE(Amount,-ABS(TotAmt - TempCustLedgEntry."Original Pmt. Disc. Possible") + ABS(WHTAmount))
+              ELSE
+                GenJnlLine.VALIDATE(Amount,-ABS(TotAmt) + ABS(WHTAmount));
+              TotAmt := -1;
+            END;
+            IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE
+              IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::"Credit Memo" THEN BEGIN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT";
+                TotAmt := TotAmt - TempCustLedgEntry."Rem. Amt for WHT";
+              END;
+            GenJnlLine."Applies-to Doc. No." := TempCustLedgEntry."Document No.";
+            TaxInvoiceSales(GenJnlLine,WHTUsed1,FALSE);
+            WHTUsed1 := TRUE;
+            CustLedgerEntry."Applies-to ID" := '';
+            CustLedgerEntry.MODIFY;
+          UNTIL (TempCustLedgEntry.NEXT = 0) OR (TotAmt = -1);
+      END ELSE
+        TaxInvoiceSales(GenJnlLine,WHTUsed1,FALSE);
+      IF InvNo <> '' THEN BEGIN
+        TempSalesTaxInvLine.SETRANGE("Document No.",InvNo);
+        IF NOT TempSalesTaxInvLine.FINDFIRST THEN
+          IF SalesTaxInvHeader.GET(InvNo) THEN BEGIN
+            SalesTaxInvHeader.DELETE;
+            SalesSetup.GET;
+            IF CheckTaxableNoSeries(CustLedgerEntry."Customer No.",1) THEN
+              NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Non Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE)
+            ELSE
+              NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE);
+          END;
+      END;
+      SalesTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+      IF SalesTaxInvHeader.FINDFIRST THEN
+        BuildTaxPostBuffer(SalesTaxInvHeader."No.",SalesTaxInvHeader."Posting Description",1);
+    END;
+
+    PROCEDURE ApplyVendCreditWHT@1500002(VAR VendLedgerEntry@1500003 : Record 25;VAR GenJnlLine@1500002 : Record 81);
+    VAR
+      PurchTaxCrMemoHeader@1500000 : Record 28077;
+      TempPurchTaxCrMemoLine@1500001 : Record 28078;
+    BEGIN
+      TempVendLedgEntry.RESET;
+      WHTUsed1 := FALSE;
+      IF GenJnlLine."Applies-to Doc. No." = '' THEN BEGIN
+        TempVendLedgEntry1.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        IF TempVendLedgEntry1.FIND('-') THEN
+          REPEAT
+            TempVendLedgEntry1.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF TempVendLedgEntry1."Rem. Amt for WHT" = 0 THEN
+              TempVendLedgEntry1."Rem. Amt for WHT" := TempVendLedgEntry1."Remaining Amt. (LCY)";
+            RemainingAmt := RemainingAmt + TempVendLedgEntry1."Rem. Amt for WHT";
+            IF TempVendLedgEntry1."Document Type" = TempVendLedgEntry1."Document Type"::"Credit Memo" THEN
+              RemainingAmt := RemainingAmt + TempVendLedgEntry1."Rem. Amt for WHT";
+          UNTIL TempVendLedgEntry1.NEXT = 0;
+        TotAmt := ABS(GenJnlLine.Amount);
+        TempVendLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        TempVendLedgEntry.SETRANGE("Document Type",TempVendLedgEntry."Document Type"::"Credit Memo");
+        IF TempVendLedgEntry.FIND('-') THEN
+          REPEAT
+            TempVendLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF ABS(TempVendLedgEntry."Rem. Amt for WHT") >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                                               TempVendLedgEntry."Original Pmt. Disc. Possible"))
+            THEN
+              IF (GenJnlLine."Posting Date" <= TempVendLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                    TempVendLedgEntry."Original Pmt. Disc. Possible")))
+              THEN
+                TotAmt := TotAmt - TempVendLedgEntry."Original Pmt. Disc. Possible";
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempVendLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF (GenJnlLine."Posting Date" <= TempVendLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                    TempVendLedgEntry."Original Pmt. Disc. Possible"))) AND
+                 (ABS(TempVendLedgEntry."Rem. Amt for WHT") >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                                                  TempVendLedgEntry."Original Pmt. Disc. Possible")))
+              THEN BEGIN
+                GenJnlLine.VALIDATE(
+                  Amount,-ABS(TempVendLedgEntry."Rem. Amt for WHT" + TempVendLedgEntry."Original Pmt. Disc. Possible"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt - TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT" + TempVendLedgEntry."Original Pmt. Disc. Possible";
+              END ELSE BEGIN
+                GenJnlLine.VALIDATE(Amount,-ABS(TempVendLedgEntry."Rem. Amt for WHT"));
+                IF TempVendLedgEntry."Document Type" <> TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := TotAmt - TempVendLedgEntry."Rem. Amt for WHT";
+                RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT";
+              END;
+            END ELSE BEGIN
+              IF (GenJnlLine."Posting Date" <= TempVendLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                    TempVendLedgEntry."Original Pmt. Disc. Possible"))) AND
+                 (ABS(TempVendLedgEntry."Rem. Amt for WHT") >= (ABS(TempVendLedgEntry."Rem. Amt") - ABS(
+                                                                  TempVendLedgEntry."Original Pmt. Disc. Possible")))
+              THEN
+                GenJnlLine.VALIDATE(Amount,TotAmt + TempVendLedgEntry."Original Pmt. Disc. Possible")
+              ELSE
+                GenJnlLine.VALIDATE(Amount,TotAmt);
+              TotAmt := -1;
+            END;
+            IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE BEGIN
+              IF TempVendLedgEntry."Document Type" = TempVendLedgEntry."Document Type"::"Credit Memo" THEN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+              RemainingAmt := RemainingAmt - TempVendLedgEntry."Rem. Amt for WHT";
+              TotAmt := TotAmt + TempVendLedgEntry."Rem. Amt for WHT";
+            END;
+            GenJnlLine."Applies-to Doc. No." := TempVendLedgEntry."Document No.";
+            TaxInvoicePurchaseCrMemo(GenJnlLine,WHTUsed1,FALSE);
+            WHTUsed1 := TRUE;
+            VendLedgerEntry."Applies-to ID" := '';
+            VendLedgerEntry.MODIFY;
+          UNTIL (TempVendLedgEntry.NEXT = 0) OR (TotAmt = -1);
+      END ELSE
+        TaxInvoicePurchaseCrMemo(GenJnlLine,WHTUsed1,FALSE);
+      IF InvNo <> '' THEN BEGIN
+        TempPurchTaxCrMemoLine.SETRANGE("Document No.",InvNo);
+        IF NOT TempPurchTaxCrMemoLine.FINDFIRST THEN
+          IF PurchTaxCrMemoHeader.GET(InvNo) THEN BEGIN
+            PurchTaxCrMemoHeader.DELETE;
+            PurchSetup.GET;
+            IF CheckTaxableNoSeries(VendLedgerEntry."Vendor No.",0) THEN
+              NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Non Tax Credit Memo Nos",PurchTaxCrMemoHeader."Posting Date",TRUE)
+            ELSE
+              NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Tax Credit Memo Nos",PurchTaxCrMemoHeader."Posting Date",TRUE);
+          END;
+      END;
+      PurchTaxCrMemoHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+      IF PurchTaxCrMemoHeader.FINDFIRST THEN
+        BuildTaxPostBuffer(PurchTaxCrMemoHeader."No.",PurchTaxCrMemoHeader."Posting Description",2);
+    END;
+
+    PROCEDURE ApplyCustCreditWHT@1500003(VAR CustLedgerEntry@1500003 : Record 21;VAR GenJnlLine@1500002 : Record 81);
+    VAR
+      SalesTaxCrMemoHeader@1500000 : Record 28073;
+      TempSalesTaxCrMemoLine@1500001 : Record 28074;
+    BEGIN
+      TempCustLedgEntry.RESET;
+      WHTUsed1 := FALSE;
+      TotAmt := ABS(GenJnlLine.Amount);
+      IF GenJnlLine."Applies-to Doc. No." = '' THEN BEGIN
+        TempCustLedgEntry1.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        IF TempCustLedgEntry1.FIND('-') THEN
+          REPEAT
+            TempCustLedgEntry1.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF TempCustLedgEntry1."Rem. Amt for WHT" = 0 THEN
+              TempCustLedgEntry1."Rem. Amt for WHT" := TempCustLedgEntry1."Remaining Amt. (LCY)";
+            IF GenJnlLine."Posting Date" <= TempCustLedgEntry1."Pmt. Discount Date" THEN BEGIN
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT" - TempCustLedgEntry1."Original Pmt. Disc. Possible";
+            END ELSE
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT";
+
+            IF TempCustLedgEntry1."Document Type" = TempCustLedgEntry1."Document Type"::"Credit Memo" THEN
+              RemainingAmt := RemainingAmt + TempCustLedgEntry1."Rem. Amt for WHT";
+          UNTIL TempCustLedgEntry1.NEXT = 0;
+
+        TempCustLedgEntry.SETRANGE("Applies-to ID",GenJnlLine."Document No.");
+        TempCustLedgEntry.SETRANGE("Document Type",TempCustLedgEntry."Document Type"::"Credit Memo");
+        IF TempCustLedgEntry.FIND('-') THEN
+          REPEAT
+            TempCustLedgEntry.CALCFIELDS(
+              Amount,"Amount (LCY)","Remaining Amount","Remaining Amt. (LCY)",
+              "Original Amount","Original Amt. (LCY)");
+            IF (ABS(TempCustLedgEntry."Rem. Amt for WHT") >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                                                TempCustLedgEntry."Original Pmt. Disc. Possible")))
+            THEN
+              IF (GenJnlLine."Posting Date" <= TempCustLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                    TempCustLedgEntry."Original Pmt. Disc. Possible")))
+              THEN
+                TotAmt := TotAmt + TempCustLedgEntry."Original Pmt. Disc. Possible";
+            IF (ABS(RemainingAmt) <= ABS(TotAmt)) OR (ABS(TempCustLedgEntry."Rem. Amt for WHT") < ABS(TotAmt)) THEN BEGIN
+              IF (GenJnlLine."Posting Date" <= TempCustLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                    TempCustLedgEntry."Original Pmt. Disc. Possible"))) AND
+                 (ABS(TempCustLedgEntry."Rem. Amt for WHT") >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                                                  TempCustLedgEntry."Original Pmt. Disc. Possible")))
+              THEN BEGIN
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := -(TotAmt - TempCustLedgEntry."Rem. Amt for WHT" + TempCustLedgEntry."Original Pmt. Disc. Possible");
+
+                GenJnlLine.VALIDATE(
+                  Amount,-ABS(TempCustLedgEntry."Rem. Amt for WHT" - TempCustLedgEntry."Original Pmt. Disc. Possible"));
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT" + TempCustLedgEntry."Original Pmt. Disc. Possible";
+              END ELSE BEGIN
+                IF TempCustLedgEntry."Document Type" <> TempCustLedgEntry."Document Type"::"Credit Memo" THEN
+                  TotAmt := -(TotAmt - TempCustLedgEntry."Rem. Amt for WHT");
+
+                GenJnlLine.VALIDATE(Amount,-ABS(TempCustLedgEntry."Rem. Amt for WHT"));
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT";
+              END;
+            END ELSE BEGIN
+              IF (GenJnlLine."Posting Date" <= TempCustLedgEntry."Pmt. Discount Date") AND
+                 (ABS(TotAmt) >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                    TempCustLedgEntry."Original Pmt. Disc. Possible"))) AND
+                 (ABS(TempCustLedgEntry."Rem. Amt for WHT") >= (ABS(TempCustLedgEntry."Rem. Amt") - ABS(
+                                                                  TempCustLedgEntry."Original Pmt. Disc. Possible")))
+              THEN
+                GenJnlLine.VALIDATE(Amount,ABS(TotAmt - TempCustLedgEntry."Original Pmt. Disc. Possible"))
+              ELSE
+                GenJnlLine.VALIDATE(Amount,ABS(TotAmt));
+              TotAmt := -1;
+            END;
+            IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::Invoice THEN BEGIN
+              GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::Invoice;
+            END ELSE
+              IF TempCustLedgEntry."Document Type" = TempCustLedgEntry."Document Type"::"Credit Memo" THEN BEGIN
+                GenJnlLine."Applies-to Doc. Type" := GenJnlLine."Applies-to Doc. Type"::"Credit Memo";
+                RemainingAmt := RemainingAmt - TempCustLedgEntry."Rem. Amt for WHT";
+                TotAmt := TotAmt - TempCustLedgEntry."Rem. Amt for WHT";
+              END;
+            GenJnlLine."Applies-to Doc. No." := TempCustLedgEntry."Document No.";
+            TaxInvoiceSalesCrMemo(GenJnlLine,WHTUsed1,FALSE);
+            WHTUsed1 := TRUE;
+            CustLedgerEntry."Applies-to ID" := '';
+            CustLedgerEntry.MODIFY;
+          UNTIL (TempCustLedgEntry.NEXT = 0) OR (TotAmt = -1);
+      END ELSE
+        TaxInvoiceSalesCrMemo(GenJnlLine,WHTUsed1,FALSE);
+      IF InvNo <> '' THEN BEGIN
+        TempSalesTaxCrMemoLine.SETRANGE("Document No.",InvNo);
+        IF NOT TempSalesTaxCrMemoLine.FINDFIRST THEN
+          IF SalesTaxCrMemoHeader.GET(InvNo) THEN BEGIN
+            SalesTaxCrMemoHeader.DELETE;
+            SalesSetup.GET;
+            IF CheckTaxableNoSeries(CustLedgerEntry."Customer No.",1) THEN
+              NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Non Tax Credit Memo Nos",SalesTaxCrMemoHeader."Posting Date",TRUE)
+            ELSE
+              NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Tax Credit Memo Nos",SalesTaxCrMemoHeader."Posting Date",TRUE);
+          END;
+      END;
+      SalesTaxCrMemoHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+      IF SalesTaxCrMemoHeader.FINDFIRST THEN
+        BuildTaxPostBuffer(SalesTaxCrMemoHeader."No.",SalesTaxCrMemoHeader."Posting Description",3);
+    END;
+
+    PROCEDURE SalesTaxInvPost@1500004(SalesInvHeader@1500005 : Record 112) TaxInvNo : Code[20];
+    VAR
+      SalesTaxInvHeader@1500009 : Record 28071;
+      SalesInvHeader2@1500007 : Record 112;
+      SalesInvLine@1500006 : Record 113;
+      SalesTaxInvLine@1500004 : Record 28072;
+      VATPostingSetup@1500003 : Record 325;
+      TempSalesTaxInvLine@1500002 : Record 28072;
+    BEGIN
+      SalesInvHeader2.RESET;
+      SalesInvHeader2.SETRANGE("No.",SalesInvHeader."No.");
+      SalesInvHeader2.FINDFIRST;
+      SalesInvLine.RESET;
+      SalesInvLine.SETRANGE("Document No.",SalesInvHeader."No.");
+      SalesInvLine.FIND('-');
+      SalesTaxInvHeader.INIT;
+      SalesTaxInvHeader.TRANSFERFIELDS(SalesInvHeader2);
+      SalesTaxInvHeader."No." := '';
+      SalesTaxInvHeader."Posting Date" := WORKDATE;
+      SalesTaxInvHeader.INSERT(TRUE);
+      REPEAT
+        SalesTaxInvLine.INIT;
+        IF VATPostingSetup.GET(SalesInvLine."VAT Bus. Posting Group",SalesInvLine."VAT Prod. Posting Group") THEN
+          IF VATPostingSetup."Unrealized VAT Type" = VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+            SalesTaxInvLine.TRANSFERFIELDS(SalesInvLine);
+            SalesTaxInvLine."Document No." := SalesTaxInvHeader."No.";
+            SalesTaxInvLine."External Document No." := SalesInvHeader."No.";
+            SalesTaxInvLine."Paid Amount Incl. VAT" := SalesTaxInvLine."Amount Including VAT";
+            SalesTaxInvLine."Paid VAT" := SalesTaxInvLine."Amount Including VAT" - SalesTaxInvLine."VAT Base Amount";
+            SalesTaxInvLine.INSERT;
+          END;
+      UNTIL SalesInvLine.NEXT = 0;
+      TempSalesTaxInvLine.RESET;
+      TempSalesTaxInvLine.SETRANGE("Document No.",SalesTaxInvHeader."No.");
+      IF NOT TempSalesTaxInvLine.FINDFIRST THEN BEGIN
+        SalesTaxInvHeader.DELETE;
+        SalesSetup.GET;
+        IF CheckTaxableNoSeries(SalesInvHeader."Sell-to Customer No.",1) THEN
+          NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Non Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE)
+        ELSE
+          NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE);
+      END ELSE BEGIN
+        BuildTaxPostBuffer(SalesTaxInvHeader."No.",SalesTaxInvHeader."Posting Description",1);
+        SalesInvHeader2."Printed Tax Document" := TRUE;
+        SalesInvHeader2.MODIFY;
+      END;
+    END;
+
+    PROCEDURE PurchTaxInvPost@1500005(PurchInvHeader@1500005 : Record 122) TaxInvNo : Code[20];
+    VAR
+      PurchTaxInvHeader@1500009 : Record 28075;
+      PurchInvHeader2@1500007 : Record 122;
+      PurchInvLine@1500006 : Record 123;
+      PurchTaxInvLine@1500004 : Record 28076;
+      VATPostingSetup@1500003 : Record 325;
+      TempPurchTaxInvLine@1500002 : Record 28076;
+    BEGIN
+      PurchInvHeader2.RESET;
+      PurchInvHeader2.SETRANGE("No.",PurchInvHeader."No.");
+      PurchInvHeader2.FINDFIRST;
+      PurchInvLine.RESET;
+      PurchInvLine.SETRANGE("Document No.",PurchInvHeader."No.");
+      PurchInvLine.FIND('-');
+      PurchTaxInvHeader.INIT;
+      PurchTaxInvHeader.TRANSFERFIELDS(PurchInvHeader2);
+      PurchTaxInvHeader."No." := '';
+      PurchTaxInvHeader."Posting Date" := WORKDATE;
+      PurchTaxInvHeader.INSERT(TRUE);
+      REPEAT
+        IF VATPostingSetup.GET(PurchInvLine."VAT Bus. Posting Group",PurchInvLine."VAT Prod. Posting Group") THEN
+          IF VATPostingSetup."Unrealized VAT Type" = VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+            PurchTaxInvLine.INIT;
+            PurchTaxInvLine.TRANSFERFIELDS(PurchInvLine);
+            PurchTaxInvLine."Document No." := PurchTaxInvHeader."No.";
+            PurchTaxInvLine."Paid Amount Incl. VAT" := PurchTaxInvLine."Amount Including VAT";
+            PurchTaxInvLine."Paid VAT" := PurchTaxInvLine."Amount Including VAT" - PurchTaxInvLine."VAT Base Amount";
+            PurchTaxInvLine."External Document No." := PurchInvHeader."No.";
+            PurchTaxInvLine.INSERT;
+          END;
+      UNTIL PurchInvLine.NEXT = 0;
+      TempPurchTaxInvLine.RESET;
+      TempPurchTaxInvLine.SETRANGE("Document No.",PurchTaxInvHeader."No.");
+      IF NOT TempPurchTaxInvLine.FINDFIRST THEN BEGIN
+        PurchTaxInvHeader.DELETE;
+        PurchSetup.GET;
+        IF CheckTaxableNoSeries(PurchInvHeader."Buy-from Vendor No.",0) THEN
+          NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Non Tax Invoice Nos.",PurchTaxInvHeader."Posting Date",TRUE)
+        ELSE
+          NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Tax Invoice Nos.",PurchTaxInvHeader."Posting Date",TRUE);
+      END ELSE BEGIN
+        BuildTaxPostBuffer(PurchTaxInvHeader."No.",PurchTaxInvHeader."Posting Description",0);
+        PurchInvHeader2."Printed Tax Document" := TRUE;
+        PurchInvHeader2.MODIFY;
+      END;
+    END;
+
+    PROCEDURE SalesTaxCrMemoPost@1500006(SalesCrMemoHeader@1500005 : Record 114) TaxInvNo : Code[20];
+    VAR
+      SalesTaxCrMemoHeader@1500009 : Record 28073;
+      SalesCrMemoHeader2@1500007 : Record 114;
+      SalesCrMemoLine@1500006 : Record 115;
+      SalesTaxCrMemoLine@1500004 : Record 28074;
+      VATPostingSetup@1500003 : Record 325;
+      TempSalesTaxCrMemoLine@1500002 : Record 28074;
+    BEGIN
+      SalesCrMemoHeader2.RESET;
+      SalesCrMemoHeader2.SETRANGE("No.",SalesCrMemoHeader."No.");
+      SalesCrMemoHeader2.FINDFIRST;
+      SalesCrMemoLine.RESET;
+      SalesCrMemoLine.SETRANGE("Document No.",SalesCrMemoHeader."No.");
+      SalesCrMemoLine.FIND('-');
+      SalesTaxCrMemoHeader.INIT;
+      SalesTaxCrMemoHeader.TRANSFERFIELDS(SalesCrMemoHeader2);
+      SalesTaxCrMemoHeader."No." := '';
+      SalesTaxCrMemoHeader."Posting Date" := WORKDATE;
+      SalesTaxCrMemoHeader.INSERT(TRUE);
+      REPEAT
+        SalesTaxCrMemoLine.INIT;
+        IF VATPostingSetup.GET(SalesCrMemoLine."VAT Bus. Posting Group",SalesCrMemoLine."VAT Prod. Posting Group") THEN
+          IF VATPostingSetup."Unrealized VAT Type" = VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+            SalesTaxCrMemoLine.TRANSFERFIELDS(SalesCrMemoLine);
+            SalesTaxCrMemoLine."Document No." := SalesTaxCrMemoHeader."No.";
+            SalesTaxCrMemoLine."Paid Amount Incl. VAT" := SalesTaxCrMemoLine."Amount Including VAT";
+            SalesTaxCrMemoLine."Paid VAT" := SalesTaxCrMemoLine."Amount Including VAT" - SalesTaxCrMemoLine."VAT Base Amount";
+            SalesTaxCrMemoLine."External Document No." := SalesCrMemoHeader."No.";
+            SalesTaxCrMemoLine.INSERT;
+          END;
+      UNTIL SalesCrMemoLine.NEXT = 0;
+      TempSalesTaxCrMemoLine.RESET;
+      TempSalesTaxCrMemoLine.SETRANGE("Document No.",SalesTaxCrMemoHeader."No.");
+      IF NOT TempSalesTaxCrMemoLine.FINDFIRST THEN BEGIN
+        SalesTaxCrMemoHeader.DELETE;
+        SalesSetup.GET;
+        IF CheckTaxableNoSeries(SalesCrMemoHeader."Sell-to Customer No.",1) THEN
+          NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Non Tax Credit Memo Nos",SalesTaxCrMemoHeader."Posting Date",TRUE)
+        ELSE
+          NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Tax Credit Memo Nos",SalesTaxCrMemoHeader."Posting Date",TRUE);
+      END ELSE BEGIN
+        BuildTaxPostBuffer(SalesTaxCrMemoHeader."No.",SalesTaxCrMemoHeader."Posting Description",3);
+        SalesCrMemoHeader2."Printed Tax Document" := TRUE;
+        SalesCrMemoHeader2.MODIFY;
+      END;
+    END;
+
+    PROCEDURE PurchTaxCrMemoPost@1500007(PurchCrMemoHeader@1500005 : Record 124) TaxInvNo : Code[20];
+    VAR
+      PurchTaxCrMemoHeader@1500009 : Record 28077;
+      PurchCrMemoHeader2@1500007 : Record 124;
+      PurchCrMemoLine@1500006 : Record 125;
+      PurchTaxCrMemoLine@1500004 : Record 28078;
+      VatPostingSetup@1500003 : Record 325;
+      TempPurchTaxCrMemoLine@1500002 : Record 28078;
+    BEGIN
+      PurchCrMemoHeader2.RESET;
+      PurchCrMemoHeader2.SETRANGE("No.",PurchCrMemoHeader."No.");
+      PurchCrMemoHeader2.FINDFIRST;
+      PurchCrMemoLine.RESET;
+      PurchCrMemoLine.SETRANGE("Document No.",PurchCrMemoHeader."No.");
+      PurchCrMemoLine.FIND('-');
+      PurchTaxCrMemoHeader.INIT;
+      PurchTaxCrMemoHeader.TRANSFERFIELDS(PurchCrMemoHeader2);
+      PurchTaxCrMemoHeader."No." := '';
+      PurchTaxCrMemoHeader."Posting Date" := WORKDATE;
+      PurchTaxCrMemoHeader.INSERT(TRUE);
+      REPEAT
+        PurchTaxCrMemoLine.INIT;
+        IF VatPostingSetup.GET(PurchCrMemoLine."VAT Bus. Posting Group",PurchCrMemoLine."VAT Prod. Posting Group") THEN
+          IF VatPostingSetup."Unrealized VAT Type" = VatPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+            PurchTaxCrMemoLine.TRANSFERFIELDS(PurchCrMemoLine);
+            PurchTaxCrMemoLine."Document No." := PurchTaxCrMemoHeader."No.";
+            PurchTaxCrMemoLine."External Document No." := PurchCrMemoHeader."No.";
+            PurchTaxCrMemoLine.INSERT;
+          END;
+      UNTIL PurchCrMemoLine.NEXT = 0;
+      TempPurchTaxCrMemoLine.RESET;
+      TempPurchTaxCrMemoLine.SETRANGE("Document No.",PurchTaxCrMemoHeader."No.");
+      IF NOT TempPurchTaxCrMemoLine.FINDFIRST THEN BEGIN
+        PurchTaxCrMemoHeader.DELETE;
+        PurchSetup.GET;
+        IF CheckTaxableNoSeries(PurchCrMemoHeader."Buy-from Vendor No.",0) THEN
+          NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Non Tax Credit Memo Nos",PurchTaxCrMemoHeader."Posting Date",TRUE)
+        ELSE
+          NoSeriesMgt.ReverseGetNextNo(PurchSetup."Posted Tax Credit Memo Nos",PurchTaxCrMemoHeader."Posting Date",TRUE);
+      END ELSE BEGIN
+        BuildTaxPostBuffer(PurchTaxCrMemoHeader."No.",PurchTaxCrMemoHeader."Posting Description",2);
+        PurchCrMemoHeader2."Printed Tax Document" := TRUE;
+        PurchCrMemoHeader2.MODIFY;
+      END;
+    END;
+
+    PROCEDURE SalesTaxInvPosted@1500008(SalesInvHeader@1500002 : Record 112;Print@1500001 : Boolean) TaxInvNo : Code[20];
+    VAR
+      SalesTaxInvHeader@1500007 : Record 28071;
+      ReportSelection@1500005 : Record 77;
+      SalesSetup@1500004 : Record 311;
+      TaxInvoiceNo@1500003 : Code[20];
+    BEGIN
+      IF SalesInvHeader."Posted Tax Document" THEN
+        ERROR(Text032,SalesInvHeader."No.");
+      IF Print THEN
+        IF NOT CONFIRM(Text031) THEN
+          EXIT;
+      IF NOT Print THEN
+        IF NOT CONFIRM(Text030) THEN
+          EXIT;
+      TaxInvoiceNo := SalesTaxInvPost(SalesInvHeader);
+      SalesInvHeader."Posted Tax Document" := TRUE;
+      IF Print THEN BEGIN
+        SalesTaxInvoiceHeader.GET(TaxInvoiceNo);
+        ReportSelection.RESET;
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"S.TaxInvoice");
+        IF ReportSelection.FIND('-') THEN
+          REPEAT
+            REPORT.RUN(ReportSelection."Report ID",SalesSetup."Print Dialog",FALSE,SalesTaxInvHeader);
+          UNTIL ReportSelection.NEXT = 0;
+        SalesInvHeader."Printed Tax Document" := TRUE;
+        MESSAGE(Text034,TaxInvoiceNo);
+      END ELSE
+        MESSAGE(Text033,TaxInvoiceNo);
+      SalesInvHeader.MODIFY;
+    END;
+
+    PROCEDURE PurchTaxInvPosted@1500009(PurchInvHeader@1500002 : Record 122;Print@1500001 : Boolean) TaxInvNo : Code[20];
+    VAR
+      PurchTaxInvHeader@1500007 : Record 28075;
+      ReportSelection@1500005 : Record 77;
+      PurchSetup@1500004 : Record 312;
+      TaxInvoiceNo@1500003 : Code[20];
+    BEGIN
+      IF PurchInvHeader."Posted Tax Document" THEN
+        ERROR(Text032,PurchInvHeader."No.");
+      IF Print THEN
+        IF NOT CONFIRM(Text031) THEN
+          EXIT;
+      IF NOT Print THEN
+        IF NOT CONFIRM(Text030) THEN
+          EXIT;
+      TaxInvoiceNo := PurchTaxInvPost(PurchInvHeader);
+      PurchInvHeader."Posted Tax Document" := TRUE;
+      IF Print THEN BEGIN
+        PurchTaxInvoiceHeader.GET(TaxInvoiceNo);
+        ReportSelection.RESET;
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"P.TaxInvoice");
+        IF ReportSelection.FIND('-') THEN
+          REPEAT
+            REPORT.RUN(ReportSelection."Report ID",PurchSetup."Print Dialog",FALSE,PurchTaxInvHeader);
+          UNTIL ReportSelection.NEXT = 0;
+        PurchInvHeader."Printed Tax Document" := TRUE;
+        MESSAGE(Text034,TaxInvoiceNo);
+      END ELSE
+        MESSAGE(Text033,TaxInvoiceNo);
+      PurchInvHeader.MODIFY;
+    END;
+
+    PROCEDURE SalesTaxCrMemoPosted@1500010(SalesCrMemoHeader@1500002 : Record 114;Print@1500001 : Boolean) TaxInvNo : Code[20];
+    VAR
+      SalesTaxCrMemoHeader@1500007 : Record 28073;
+      ReportSelection@1500005 : Record 77;
+      SalesSetup@1500004 : Record 311;
+      TaxInvoiceNo@1500003 : Code[20];
+    BEGIN
+      IF SalesCrMemoHeader."Posted Tax Document" THEN
+        ERROR(Text042,SalesCrMemoHeader."No.");
+      IF Print THEN
+        IF NOT CONFIRM(Text041) THEN
+          EXIT;
+      IF NOT Print THEN
+        IF NOT CONFIRM(Text040) THEN
+          EXIT;
+      TaxInvoiceNo := SalesTaxCrMemoPost(SalesCrMemoHeader);
+      SalesCrMemoHeader."Posted Tax Document" := TRUE;
+      IF Print THEN BEGIN
+        SalesTaxCrMemoHeader.GET(TaxInvoiceNo);
+        ReportSelection.RESET;
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"S.TaxCreditMemo");
+        IF ReportSelection.FIND('-') THEN
+          REPEAT
+            REPORT.RUN(ReportSelection."Report ID",SalesSetup."Print Dialog",FALSE,SalesTaxCrMemoHeader);
+          UNTIL ReportSelection.NEXT = 0;
+        SalesCrMemoHeader."Printed Tax Document" := TRUE;
+        MESSAGE(Text044,TaxInvoiceNo);
+      END ELSE
+        MESSAGE(Text043,TaxInvoiceNo);
+      SalesCrMemoHeader.MODIFY;
+    END;
+
+    PROCEDURE PurchTaxCrMemoPosted@1500011(PurchCrMemoHeader@1500002 : Record 124;Print@1500001 : Boolean) TaxInvNo : Code[20];
+    VAR
+      PurchTaxCrMemoHeader@1500007 : Record 28077;
+      ReportSelection@1500005 : Record 77;
+      PurchSetup@1500004 : Record 312;
+      TaxInvoiceNo@1500003 : Code[20];
+    BEGIN
+      IF PurchCrMemoHeader."Posted Tax Document" THEN
+        ERROR(Text042,PurchCrMemoHeader."No.");
+      IF Print THEN
+        IF NOT CONFIRM(Text041) THEN
+          EXIT;
+      IF NOT Print THEN
+        IF NOT CONFIRM(Text040) THEN
+          EXIT;
+      TaxInvoiceNo := PurchTaxCrMemoPost(PurchCrMemoHeader);
+      PurchCrMemoHeader."Posted Tax Document" := TRUE;
+      IF Print THEN BEGIN
+        SalesTaxCrMemoHeader.GET(TaxInvoiceNo);
+        ReportSelection.RESET;
+        ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"P.TaxCreditMemo");
+        IF ReportSelection.FIND('-') THEN
+          REPEAT
+            REPORT.RUN(ReportSelection."Report ID",PurchSetup."Print Dialog",FALSE,PurchTaxCrMemoHeader);
+          UNTIL ReportSelection.NEXT = 0;
+        PurchCrMemoHeader."Printed Tax Document" := TRUE;
+        MESSAGE(Text044,TaxInvoiceNo);
+      END ELSE
+        MESSAGE(Text043,TaxInvoiceNo);
+      PurchCrMemoHeader.MODIFY;
+    END;
+
+    PROCEDURE TaxInvoiceSales@1500012(VAR GenJnlLine@1500002 : Record 81;WHTUsed@1500001 : Boolean;AmountWithDisc@1500000 : Boolean);
+    VAR
+      WHTEntry@1410011 : Record 28044;
+      WHTEntry1@1410012 : Record 28044;
+      SalesInvHeader@1410013 : Record 112;
+      SalesTaxInvHeader@1410014 : Record 28071;
+      SalesInvoiceLine@1410015 : Record 113;
+      SalesTaxInvLine@1410016 : Record 28072;
+      LineNo@1410018 : Integer;
+      CustLedgEntry@1410019 : Record 21;
+      CustLedgEntry1@1410020 : Record 21;
+      SalesCrMemoHeader@1410021 : Record 114;
+      SalesCrMemoLine@1410022 : Record 115;
+      WHTAmount1@1410023 : Decimal;
+      VATPostingSetup@1500020 : Record 325;
+    BEGIN
+      LineNo := 10000;
+      WHTAmount := 0;
+      CustLedgEntry1.RESET;
+      IF GenJnlLine."WHT Payment" THEN
+        EXIT;
+      IF GenJnlLine."Applies-to Doc. Type" = GenJnlLine."Applies-to Doc. Type"::"Credit Memo" THEN BEGIN
+        IF NOT SalesCrMemoHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT SalesCrMemoHeader."Tax Document Marked" THEN
+          EXIT;
+        IF NOT WHTUsed THEN BEGIN
+          SalesTaxInvHeader.INIT;
+          SalesTaxInvHeader.TRANSFERFIELDS(SalesCrMemoHeader);
+          SalesTaxInvLine."External Document No." := SalesCrMemoHeader."No.";
+          SalesTaxInvHeader."Posting Description" := GenJnlLine."Document No.";
+          SalesTaxInvHeader."No." := '';
+          SalesTaxInvHeader.INSERT(TRUE);
+        END;
+        SalesCrMemoLine.RESET;
+        SalesCrMemoLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF SalesCrMemoLine.FIND('-') THEN
+          REPEAT
+            WHTAmount := 0;
+            WHTEntry.RESET;
+            WHTEntry.SETRANGE("Document No.",SalesCrMemoLine."Document No.");
+            WHTEntry.SETFILTER("Applies-to Entry No.",'%1',0);
+            IF WHTEntry.FIND('-') THEN
+              REPEAT
+                WHTAmount := WHTAmount + WHTEntry."Unrealized Amount";
+              UNTIL WHTEntry.NEXT = 0;
+            Payment1 := 0;
+            Payment2 := 0;
+            CustLedgEntry.RESET;
+            CustLedgEntry.SETRANGE("Document Type",CustLedgEntry."Document Type"::"Credit Memo");
+            CustLedgEntry.SETRANGE("Document No.",SalesCrMemoLine."Document No.");
+            IF CustLedgEntry.FINDFIRST THEN
+              CustLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+
+            SalesTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+            IF SalesTaxInvHeader.FINDFIRST THEN BEGIN
+              SalesTaxInvLine.SETRANGE("Document No.",SalesTaxInvHeader."No.");
+              IF SalesTaxInvLine.FINDLAST THEN
+                LineNo := SalesTaxInvLine."Line No." + 10000;
+            END;
+            IF LineNo = 0 THEN
+              LineNo := 10000;
+            SalesTaxInvLine.INIT;
+            IF VATPostingSetup.GET(SalesCrMemoLine."VAT Bus. Posting Group",SalesCrMemoLine."VAT Prod. Posting Group") THEN
+              IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                SalesTaxInvLine.TRANSFERFIELDS(SalesCrMemoLine);
+                SalesTaxInvLine."Line No." := LineNo;
+                SalesTaxInvLine."Document No." := SalesTaxInvHeader."No.";
+                SalesTaxInvLine."Unit Price" := -SalesTaxInvLine."Unit Price";
+                SalesTaxInvLine."Line Amount" := -SalesTaxInvLine."Line Amount";
+                SalesTaxInvLine.Amount := -SalesTaxInvLine.Amount;
+                SalesTaxInvLine."Amount Including VAT" := -SalesTaxInvLine."Amount Including VAT";
+                SalesTaxInvLine."VAT Base Amount" := -SalesTaxInvLine."VAT Base Amount";
+                SalesTaxInvLine."External Document No." := SalesCrMemoHeader."No.";
+                GLSetup.GET;
+                IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+                  IF NOT GenJnlLine."WHT Payment" THEN BEGIN
+                    ExpectedAmount := CustLedgEntry.Amount + WHTAmount;
+                    IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND
+                       ((ABS(GenJnlLine.Amount) + ABS(WHTAmount)) >= (ABS(CustLedgEntry."Rem. Amt" + CustLedgEntry1."Rem. Amt") -
+                                                                      ABS(CustLedgEntry."Original Pmt. Disc. Possible"))) AND
+                       (NOT AmountWithDisc)
+                    THEN
+                      GenLineAmount := GenJnlLine.Amount - CustLedgEntry."Original Pmt. Disc. Possible" + WHTAmount
+                    ELSE
+                      GenLineAmount := GenJnlLine.Amount + WHTAmount;
+                    IF ABS(GenJnlLine.Amount) < ABS(CustLedgEntry.Amount) THEN
+                      GenLineAmount := GenLineAmount - WHTAmount;
+                    SalesTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                        SalesCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                    SalesTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                        * (SalesCrMemoLine."Amount Including VAT" - SalesCrMemoLine."VAT Base Amount")
+                        / ExpectedAmount);
+                    TotWHTAmount := TotWHTAmount + WHTAmount;
+                  END;
+                END ELSE BEGIN
+                  IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND
+                     (ABS(GenJnlLine.Amount) >= (ABS(CustLedgEntry."Rem. Amt" + CustLedgEntry1."Rem. Amt") - ABS(
+                                                   CustLedgEntry."Original Pmt. Disc. Possible"))) AND (NOT AmountWithDisc)
+                  THEN
+                    GenLineAmount := GenJnlLine.Amount - CustLedgEntry."Original Pmt. Disc. Possible"
+                  ELSE
+                    GenLineAmount := GenJnlLine.Amount;
+                  ExpectedAmount := CustLedgEntry.Amount;
+                  SalesTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                      SalesCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                  SalesTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                      * (SalesCrMemoLine."Amount Including VAT" - SalesCrMemoLine."VAT Base Amount")
+                      / ExpectedAmount);
+                END;
+                IF (GenJnlLine."Currency Code" <> WHTEntry."Currency Code") AND (WHTAmount <> 0) THEN
+                  ERROR(Text100);
+                IF SalesTaxInvLine."Paid VAT" <> 0 THEN
+                  SalesTaxInvLine.INSERT;
+                LineNo := LineNo + 10000;
+              END;
+          UNTIL SalesCrMemoLine.NEXT = 0;
+        SalesCrMemoHeader."Posted Tax Document" := TRUE;
+        SalesCrMemoHeader.MODIFY;
+      END ELSE BEGIN
+        IF NOT SalesInvHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT SalesInvHeader."Tax Document Marked" THEN
+          EXIT;
+        IF NOT WHTUsed THEN BEGIN
+          SalesTaxInvHeader.INIT;
+          SalesTaxInvHeader.TRANSFERFIELDS(SalesInvHeader);
+          SalesTaxInvLine."External Document No." := SalesInvHeader."No.";
+          SalesTaxInvHeader."Posting Description" := GenJnlLine."Document No.";
+          SalesTaxInvHeader."No." := '';
+          SalesTaxInvHeader.INSERT(TRUE);
+        END;
+        SalesInvoiceLine.RESET;
+        SalesInvoiceLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF SalesInvoiceLine.FIND('-') THEN
+          REPEAT
+            WHTAmount := 0;
+            WHTEntry.RESET;
+            WHTEntry.SETRANGE("Document No.",SalesInvoiceLine."Document No.");
+            WHTEntry.SETFILTER("Applies-to Entry No.",'%1',0);
+            IF WHTEntry.FIND('-') THEN
+              REPEAT
+                WHTAmount := WHTAmount + WHTEntry."Unrealized Amount";
+              UNTIL WHTEntry.NEXT = 0;
+            Payment1 := 0;
+            Payment2 := 0;
+            CustLedgEntry.RESET;
+            CustLedgEntry.SETRANGE("Document Type",CustLedgEntry."Document Type"::Invoice);
+            CustLedgEntry.SETRANGE("Document No.",SalesInvoiceLine."Document No.");
+            IF CustLedgEntry.FINDFIRST THEN BEGIN
+              CustLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+              SalesCrMemoHeader.SETRANGE("Applies-to Doc. Type",SalesCrMemoHeader."Applies-to Doc. Type"::Invoice);
+              SalesCrMemoHeader.SETRANGE("Applies-to Doc. No.",SalesInvoiceLine."Document No.");
+              IF SalesCrMemoHeader.FINDFIRST THEN BEGIN
+                CustLedgEntry1.SETRANGE("Document Type",CustLedgEntry1."Document Type"::"Credit Memo");
+                CustLedgEntry1.SETRANGE("Document No.",SalesCrMemoHeader."No.");
+                IF CustLedgEntry1.FINDFIRST THEN
+                  CustLedgEntry1.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+                WHTAmount1 := 0;
+                WHTEntry1.RESET;
+                WHTEntry1.SETRANGE("Document No.",SalesCrMemoHeader."No.");
+                WHTEntry1.SETFILTER("Applies-to Entry No.",'%1',0);
+                IF WHTEntry1.FIND('-') THEN
+                  REPEAT
+                    WHTAmount1 := WHTAmount1 + WHTEntry1."Unrealized Amount";
+                  UNTIL WHTEntry1.NEXT = 0;
+                WHTAmount := WHTAmount + WHTAmount1;
+              END;
+              SalesTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+              IF SalesTaxInvHeader.FINDFIRST THEN BEGIN
+                SalesTaxInvLine.SETRANGE("Document No.",SalesTaxInvHeader."No.");
+                IF SalesTaxInvLine.FINDLAST THEN
+                  LineNo := SalesTaxInvLine."Line No." + 10000;
+              END;
+              IF LineNo = 0 THEN
+                LineNo := 10000;
+              SalesTaxInvLine.INIT;
+              IF VATPostingSetup.GET(SalesInvoiceLine."VAT Bus. Posting Group",SalesInvoiceLine."VAT Prod. Posting Group") THEN
+                IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                  SalesTaxInvLine.TRANSFERFIELDS(SalesInvoiceLine);
+                  SalesTaxInvLine."Line No." := LineNo;
+                  SalesTaxInvLine."Document No." := SalesTaxInvHeader."No.";
+                  SalesTaxInvLine."External Document No." := SalesInvHeader."No.";
+                  SalesCrMemoLine.SETRANGE("Document No.",SalesCrMemoHeader."No.");
+                  SalesCrMemoLine.SETRANGE(Type,SalesInvoiceLine.Type);
+                  SalesCrMemoLine.SETRANGE("No.",SalesInvoiceLine."No.");
+                  IF SalesCrMemoLine.FIND('-') THEN BEGIN
+                    VATCrMemoAmt := SalesCrMemoLine."Amount Including VAT" - SalesCrMemoLine."VAT Base Amount";
+                    VATCrMemoBase := SalesCrMemoLine."Amount Including VAT";
+                  END;
+                  GLSetup.GET;
+                  IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+                    IF NOT GenJnlLine."WHT Payment" THEN BEGIN
+                      IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND
+                         ((ABS(GenJnlLine.Amount) + ABS(WHTAmount)) >= (ABS(CustLedgEntry."Rem. Amt" + CustLedgEntry1."Rem. Amt") -
+                                                                        ABS(CustLedgEntry."Original Pmt. Disc. Possible"))) AND
+                         (NOT AmountWithDisc)
+                      THEN
+                        GenLineAmount := GenJnlLine.Amount - CustLedgEntry."Original Pmt. Disc. Possible"
+                      ELSE
+                        GenLineAmount := GenJnlLine.Amount;
+                      TotWHTAmount := TotWHTAmount + WHTAmount;
+                      ExpectedAmount := CustLedgEntry.Amount + CustLedgEntry1.Amount;
+                      IF ABS(GenJnlLine.Amount) < ABS(CustLedgEntry.Amount + CustLedgEntry1.Amount) THEN
+                        ExpectedAmount := ExpectedAmount + WHTAmount;
+
+                      SalesTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                          (SalesInvoiceLine."Amount Including VAT" - VATCrMemoAmt) / ExpectedAmount);
+                      SalesTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                          * (SalesInvoiceLine."Amount Including VAT" - SalesInvoiceLine."VAT Base Amount" - VATCrMemoAmt)
+                          / ExpectedAmount);
+                    END;
+                  END ELSE BEGIN
+                    IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND
+                       ((ABS(GenJnlLine.Amount) + ABS(WHTAmount)) >= (ABS(CustLedgEntry."Rem. Amt" + CustLedgEntry1."Rem. Amt") -
+                                                                      ABS(CustLedgEntry."Original Pmt. Disc. Possible"))) AND
+                       (NOT AmountWithDisc)
+                    THEN
+                      GenLineAmount := GenJnlLine.Amount - CustLedgEntry."Original Pmt. Disc. Possible"
+                    ELSE
+                      GenLineAmount := GenJnlLine.Amount;
+                    ExpectedAmount := CustLedgEntry.Amount + CustLedgEntry1.Amount;
+                    SalesTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                        (SalesInvoiceLine."Amount Including VAT" - VATCrMemoBase) / ExpectedAmount);
+                    SalesTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                        * (SalesInvoiceLine."Amount Including VAT" - SalesInvoiceLine."VAT Base Amount" - VATCrMemoAmt)
+                        / ExpectedAmount);
+                  END;
+                  IF (GenJnlLine."Currency Code" <> WHTEntry."Currency Code") AND (WHTAmount <> 0) THEN
+                    ERROR(Text100);
+                  IF SalesTaxInvLine."Paid VAT" <> 0 THEN
+                    SalesTaxInvLine.INSERT;
+                  LineNo := LineNo + 10000;
+                END;
+            END;
+          UNTIL SalesInvoiceLine.NEXT = 0;
+        InvNo := SalesTaxInvHeader."No.";
+        SalesInvHeader."Printed Tax Document" := TRUE;
+        SalesInvHeader."Posted Tax Document" := TRUE;
+        SalesInvHeader.MODIFY;
+      END;
+    END;
+
+    PROCEDURE TaxInvoiceSalesCrMemo@1500013(VAR GenJnlLine@1500017 : Record 81;WHTUsed@1500016 : Boolean;AmountWithDisc@1500000 : Boolean);
+    VAR
+      WHTEntry@1500015 : Record 28044;
+      SalesTaxCrMemoLine@1500010 : Record 28074;
+      LineNo@1500008 : Integer;
+      CustLedgEntry@1500007 : Record 21;
+      CustLedgEntry1@1500006 : Record 21;
+      SalesCrMemoHeader@1500005 : Record 114;
+      SalesCrMemoLine@1500004 : Record 115;
+      VATPostingSetup@1500001 : Record 325;
+    BEGIN
+      LineNo := 10000;
+      WHTAmount := 0;
+      CustLedgEntry1.RESET;
+      IF GenJnlLine."Applies-to Doc. Type" = GenJnlLine."Applies-to Doc. Type"::"Credit Memo" THEN BEGIN
+        IF NOT SalesCrMemoHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT SalesCrMemoHeader."Tax Document Marked" THEN
+          EXIT;
+        IF NOT WHTUsed THEN BEGIN
+          SalesTaxCrMemoHeader.INIT;
+          SalesTaxCrMemoHeader.TRANSFERFIELDS(SalesCrMemoHeader);
+          SalesTaxCrMemoLine."External Document No." := SalesCrMemoHeader."No.";
+          SalesTaxCrMemoHeader."Posting Description" := GenJnlLine."Document No.";
+          SalesTaxCrMemoHeader."No." := '';
+          SalesTaxCrMemoHeader.INSERT(TRUE);
+        END;
+        SalesCrMemoLine.RESET;
+        SalesCrMemoLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF SalesCrMemoLine.FIND('-') THEN
+          REPEAT
+            WHTAmount := 0;
+            WHTEntry.RESET;
+            WHTEntry.SETRANGE("Document No.",SalesCrMemoLine."Document No.");
+            WHTEntry.SETFILTER("Applies-to Entry No.",'<>%1',0);
+            IF WHTEntry.FIND('-') THEN
+              REPEAT
+                WHTAmount := WHTAmount + WHTEntry.Amount;
+              UNTIL WHTEntry.NEXT = 0;
+            Payment1 := 0;
+            Payment2 := 0;
+
+            CustLedgEntry.SETRANGE("Document Type",CustLedgEntry."Document Type"::"Credit Memo");
+            CustLedgEntry.SETRANGE("Document No.",SalesCrMemoLine."Document No.");
+            IF CustLedgEntry.FINDFIRST THEN
+              CustLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+
+            SalesTaxCrMemoHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+            IF SalesTaxCrMemoHeader.FINDFIRST THEN BEGIN
+              SalesTaxCrMemoLine.SETRANGE("Document No.",SalesTaxCrMemoHeader."No.");
+              IF SalesTaxCrMemoLine.FINDLAST THEN
+                LineNo := SalesTaxCrMemoLine."Line No." + 10000;
+            END;
+            IF LineNo = 0 THEN
+              LineNo := 10000;
+
+            SalesTaxCrMemoLine.INIT;
+            IF VATPostingSetup.GET(SalesCrMemoLine."VAT Bus. Posting Group",SalesCrMemoLine."VAT Prod. Posting Group") THEN
+              IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                SalesTaxCrMemoLine.TRANSFERFIELDS(SalesCrMemoLine);
+                SalesTaxCrMemoLine."Line No." := LineNo;
+                SalesTaxCrMemoLine."Document No." := SalesTaxCrMemoHeader."No.";
+                SalesTaxCrMemoLine."External Document No." := SalesCrMemoHeader."No.";
+                GLSetup.GET;
+                IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+                  IF GenJnlLine."WHT Payment" THEN BEGIN
+                    IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND (NOT AmountWithDisc) THEN
+                      ExpectedAmount := CustLedgEntry.Amount - WHTAmount - CustLedgEntry."Original Pmt. Disc. Possible"
+                    ELSE
+                      ExpectedAmount := CustLedgEntry.Amount - WHTAmount;
+                    SalesTaxCrMemoLine."Paid Amount Incl. VAT" := ROUND(ABS(GenJnlLine.Amount) *
+                        SalesCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                    SalesTaxCrMemoLine."Paid VAT" := ROUND(ABS(GenJnlLine.Amount)
+                        * (SalesCrMemoLine."Amount Including VAT" - SalesCrMemoLine."VAT Base Amount")
+                        / ExpectedAmount);
+                  END;
+                END ELSE BEGIN
+                  IF (GenJnlLine."Posting Date" <= CustLedgEntry."Pmt. Discount Date") AND (NOT AmountWithDisc) THEN
+                    ExpectedAmount := CustLedgEntry.Amount - CustLedgEntry."Original Pmt. Disc. Possible"
+                  ELSE
+                    ExpectedAmount := CustLedgEntry.Amount;
+                  SalesTaxCrMemoLine."Paid Amount Incl. VAT" := ROUND(ABS(GenJnlLine.Amount) *
+                      SalesCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                  SalesTaxCrMemoLine."Paid VAT" := ROUND(ABS(GenJnlLine.Amount)
+                      * (SalesCrMemoLine."Amount Including VAT" - SalesCrMemoLine."VAT Base Amount")
+                      / ExpectedAmount);
+                END;
+                IF (GenJnlLine."Currency Code" <> WHTEntry."Currency Code") AND (WHTAmount <> 0) THEN
+                  ERROR(Text100);
+                IF SalesTaxCrMemoLine."Paid VAT" <> 0 THEN
+                  SalesTaxCrMemoLine.INSERT;
+                LineNo := LineNo + 10000;
+              END;
+          UNTIL SalesCrMemoLine.NEXT = 0;
+      END;
+      IF GenJnlLine."Applies-to Doc. Type" = GenJnlLine."Applies-to Doc. Type"::"Credit Memo" THEN BEGIN
+        InvNo := SalesTaxCrMemoHeader."No.";
+        SalesCrMemoHeader."Printed Tax Document" := TRUE;
+        SalesCrMemoHeader."Posted Tax Document" := TRUE;
+        SalesCrMemoHeader.MODIFY;
+      END;
+    END;
+
+    PROCEDURE TaxInvoicePurchase@1500014(VAR GenJnlLine@1500001 : Record 81;AmountWithDisc@1500000 : Boolean);
+    VAR
+      WHTEntry@1500016 : Record 28044;
+      WHTEntry1@1500015 : Record 28044;
+      PurchInvHeader@1500014 : Record 122;
+      PurchTaxInvHeader@1500013 : Record 28075;
+      PurchInvoiceLine@1500012 : Record 123;
+      PurchTaxInvLine@1500011 : Record 28076;
+      LineNo@1500009 : Integer;
+      VendLedgEntry@1500008 : Record 25;
+      VendLedgEntry1@1500007 : Record 25;
+      PurchCrMemoHeader@1500006 : Record 124;
+      PurchCrMemoLine@1500005 : Record 125;
+      WHTAmount1@1500004 : Decimal;
+      VATPostingSetup@1500002 : Record 325;
+    BEGIN
+      WHTAmount := 0;
+      IF GenJnlLine."Applies-to Doc. Type" = GenJnlLine."Applies-to Doc. Type"::"Credit Memo" THEN BEGIN
+        IF NOT PurchCrMemoHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT PurchCrMemoHeader."Posted Tax Document" THEN
+          EXIT;
+        IF NOT GenJnlLine."WHT Payment" THEN BEGIN
+          PurchTaxInvHeader.INIT;
+          PurchTaxInvHeader.TRANSFERFIELDS(PurchCrMemoHeader);
+          PurchTaxInvHeader."Posting Date" := GenJnlLine."Posting Date";
+          PurchTaxInvHeader."Posting Description" := GenJnlLine."Document No.";
+          PurchTaxInvLine."External Document No." := PurchCrMemoHeader."No.";
+          PurchTaxInvHeader."No." := '';
+          PurchTaxInvHeader.INSERT(TRUE);
+        END;
+        PurchCrMemoLine.RESET;
+        PurchCrMemoLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF PurchCrMemoLine.FIND('-') THEN
+          REPEAT
+            WHTAmount := 0;
+            WHTEntry.RESET;
+            WHTEntry.SETRANGE("Document No.",PurchCrMemoLine."Document No.");
+            WHTEntry.SETRANGE("Applies-to Entry No.",0);
+            IF WHTEntry.FIND('-') THEN
+              REPEAT
+                WHTAmount := WHTAmount + WHTEntry.Amount;
+              UNTIL WHTEntry.NEXT = 0;
+            Payment1 := 0;
+            Payment2 := 0;
+
+            PurchTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+            IF PurchTaxInvHeader.FINDFIRST THEN BEGIN
+              PurchTaxInvLine.SETRANGE("Document No.",PurchTaxInvHeader."No.");
+              IF PurchTaxInvLine.FINDLAST THEN
+                LineNo := PurchTaxInvLine."Line No." + 10000;
+            END;
+            IF LineNo = 0 THEN
+              LineNo := 10000;
+            VendLedgEntry.RESET;
+            VendLedgEntry.SETRANGE("Document Type",VendLedgEntry."Document Type"::"Credit Memo");
+            VendLedgEntry.SETRANGE("Document No.",PurchCrMemoLine."Document No.");
+            IF VendLedgEntry.FINDFIRST THEN BEGIN
+              VendLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+
+              PurchTaxInvLine.INIT;
+              IF VATPostingSetup.GET(PurchCrMemoLine."VAT Bus. Posting Group",PurchCrMemoLine."VAT Prod. Posting Group") THEN
+                IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                  PurchTaxInvLine.TRANSFERFIELDS(PurchCrMemoLine);
+                  PurchTaxInvLine."Line No." := LineNo;
+                  PurchTaxInvLine."Document No." := PurchTaxInvHeader."No.";
+                  PurchTaxInvLine.Amount := -PurchTaxInvLine.Amount;
+                  PurchTaxInvLine."Amount Including VAT" := -PurchTaxInvLine."Amount Including VAT";
+                  PurchTaxInvLine."Direct Unit Cost" := -PurchTaxInvLine."Direct Unit Cost";
+                  PurchTaxInvLine."Unit Cost (LCY)" := -PurchTaxInvLine."Unit Cost (LCY)";
+                  PurchTaxInvLine."Line Amount" := -PurchTaxInvLine."Line Amount";
+                  PurchTaxInvLine."VAT Base Amount" := -PurchTaxInvLine."VAT Base Amount";
+                  PurchTaxInvLine."External Document No." := PurchCrMemoHeader."No.";
+                  IF (GenJnlLine."Posting Date" <= VendLedgEntry."Pmt. Discount Date") AND
+                     (ABS(GenJnlLine.Amount) >= (ABS(VendLedgEntry."Rem. Amt") -
+                                                 ABS(VendLedgEntry."Original Pmt. Disc. Possible"))) AND (NOT AmountWithDisc)
+                  THEN
+                    GenLineAmount := GenJnlLine.Amount + VendLedgEntry."Original Pmt. Disc. Possible"
+                  ELSE
+                    GenLineAmount := GenJnlLine.Amount;
+                  ExpectedAmount := -VendLedgEntry.Amount;
+                  PurchTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                      PurchCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                  PurchTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                      * (PurchCrMemoLine."Amount Including VAT" - PurchCrMemoLine."VAT Base Amount")
+                      / ExpectedAmount);
+                  IF PurchTaxInvLine."Paid VAT" <> 0 THEN
+                    PurchTaxInvLine.INSERT;
+                  LineNo := LineNo + 10000;
+                END;
+            END;
+          UNTIL PurchCrMemoLine.NEXT = 0;
+      END ELSE BEGIN
+        IF NOT PurchInvHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT PurchInvHeader."Posted Tax Document" THEN
+          EXIT;
+        IF NOT GenJnlLine."WHT Payment" THEN BEGIN
+          PurchTaxInvHeader.INIT;
+          PurchTaxInvHeader.TRANSFERFIELDS(PurchInvHeader);
+          PurchTaxInvHeader."Posting Date" := GenJnlLine."Posting Date";
+          PurchTaxInvHeader."Posting Description" := GenJnlLine."Document No.";
+          PurchTaxInvLine."External Document No." := PurchInvHeader."No.";
+          PurchTaxInvHeader."No." := '';
+          PurchTaxInvHeader.INSERT(TRUE);
+        END;
+        PurchInvoiceLine.RESET;
+        PurchInvoiceLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF PurchInvoiceLine.FIND('-') THEN
+          REPEAT
+            WHTAmount := 0;
+            WHTEntry.RESET;
+            WHTEntry.SETRANGE("Document No.",PurchInvoiceLine."Document No.");
+            WHTEntry.SETRANGE("Applies-to Entry No.",0);
+            IF WHTEntry.FIND('-') THEN
+              REPEAT
+                WHTAmount := WHTAmount + WHTEntry.Amount;
+              UNTIL WHTEntry.NEXT = 0;
+            Payment1 := 0;
+            Payment2 := 0;
+
+            PurchCrMemoHeader.SETRANGE("Applies-to Doc. Type",PurchCrMemoHeader."Applies-to Doc. Type"::Invoice);
+            PurchCrMemoHeader.SETRANGE("Applies-to Doc. No.",PurchInvoiceLine."Document No.");
+            IF PurchCrMemoHeader.FINDFIRST THEN BEGIN
+              VendLedgEntry1.SETRANGE("Document Type",VendLedgEntry1."Document Type"::"Credit Memo");
+              VendLedgEntry1.SETRANGE("Document No.",PurchCrMemoHeader."No.");
+              IF VendLedgEntry1.FINDFIRST THEN
+                VendLedgEntry1.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+
+              WHTAmount1 := 0;
+              WHTEntry1.RESET;
+              WHTEntry1.SETRANGE("Document No.",PurchCrMemoHeader."No.");
+              WHTEntry1.SETRANGE("Applies-to Entry No.",0);
+              IF WHTEntry1.FIND('-') THEN
+                REPEAT
+                  WHTAmount1 := WHTAmount1 + WHTEntry1.Amount;
+                UNTIL WHTEntry1.NEXT = 0;
+              WHTAmount := WHTAmount + WHTAmount1;
+            END;
+            PurchTaxInvHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+            IF PurchTaxInvHeader.FINDFIRST THEN BEGIN
+              PurchTaxInvLine.SETRANGE("Document No.",PurchTaxInvHeader."No.");
+              IF PurchTaxInvLine.FINDLAST THEN
+                LineNo := PurchTaxInvLine."Line No." + 10000;
+            END;
+            IF LineNo = 0 THEN
+              LineNo := 10000;
+            VendLedgEntry.RESET;
+            VendLedgEntry.SETRANGE("Document Type",VendLedgEntry."Document Type"::Invoice);
+            VendLedgEntry.SETRANGE("Document No.",PurchInvoiceLine."Document No.");
+            IF VendLedgEntry.FINDFIRST THEN BEGIN
+              VendLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+              PurchTaxInvLine.INIT;
+              IF VATPostingSetup.GET(PurchInvoiceLine."VAT Bus. Posting Group",PurchInvoiceLine."VAT Prod. Posting Group") THEN
+                IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                  PurchTaxInvLine.TRANSFERFIELDS(PurchInvoiceLine);
+                  PurchTaxInvLine."Line No." := LineNo;
+                  PurchTaxInvLine."Document No." := PurchTaxInvHeader."No.";
+                  PurchTaxInvLine."External Document No." := PurchInvHeader."No.";
+                  IF VendLedgEntry1."Amount (LCY)" = 0 THEN
+                    VendLedgEntry1."Rem. Amt" := 0;
+                  IF (GenJnlLine."Posting Date" <= VendLedgEntry."Pmt. Discount Date") AND
+                     (ABS(GenJnlLine.Amount) >= (ABS(VendLedgEntry."Rem. Amt" + VendLedgEntry1."Rem. Amt") -
+                                                 ABS(VendLedgEntry."Original Pmt. Disc. Possible"))) AND (NOT AmountWithDisc)
+                  THEN
+                    GenLineAmount := GenJnlLine.Amount - VendLedgEntry."Original Pmt. Disc. Possible"
+                  ELSE
+                    GenLineAmount := GenJnlLine.Amount;
+                  ExpectedAmount := -(VendLedgEntry.Amount + VendLedgEntry1.Amount);
+                  PurchCrMemoLine.SETRANGE("Document No.",PurchCrMemoHeader."No.");
+                  PurchCrMemoLine.SETRANGE(Type,PurchInvoiceLine.Type);
+                  PurchCrMemoLine.SETRANGE("No.",PurchInvoiceLine."No.");
+                  IF PurchCrMemoLine.FIND('-') THEN BEGIN
+                    PurchTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                        (PurchInvoiceLine."Amount Including VAT" - PurchCrMemoLine."Amount Including VAT") / ExpectedAmount);
+                    PurchTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                        *
+                        (PurchInvoiceLine."Amount Including VAT" -
+                         PurchInvoiceLine."VAT Base Amount" - PurchCrMemoLine."Amount Including VAT" +
+                         PurchCrMemoLine."VAT Base Amount") / ExpectedAmount);
+                  END ELSE BEGIN
+                    PurchTaxInvLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                        PurchInvoiceLine."Amount Including VAT" / ExpectedAmount);
+                    PurchTaxInvLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                        * (PurchInvoiceLine."Amount Including VAT" - PurchInvoiceLine."VAT Base Amount")
+                        / ExpectedAmount);
+                  END;
+                  IF (GenJnlLine."Currency Code" <> WHTEntry."Currency Code") AND (WHTAmount <> 0) THEN
+                    ERROR(Text100);
+                  IF PurchTaxInvLine."Paid VAT" <> 0 THEN
+                    PurchTaxInvLine.INSERT;
+                  LineNo := LineNo + 10000;
+                END;
+            END;
+          UNTIL PurchInvoiceLine.NEXT = 0;
+        InvNo := PurchTaxInvHeader."No.";
+        PurchInvHeader."Printed Tax Document" := TRUE;
+        PurchInvHeader.MODIFY;
+      END;
+    END;
+
+    PROCEDURE TaxInvoicePurchaseCrMemo@1500015(VAR GenJnlLine@1500018 : Record 81;WHTUsed@1500017 : Boolean;AmountWithDisc@1500000 : Boolean);
+    VAR
+      PurchTaxCrMemoHeader@1500013 : Record 28077;
+      PurchTaxCrMemoLine@1500011 : Record 28078;
+      LineNo@1500009 : Integer;
+      VendLedgEntry@1500008 : Record 25;
+      PurchCrMemoHeader@1500006 : Record 124;
+      PurchCrMemoLine@1500005 : Record 125;
+      WHTAmount1@1500004 : Decimal;
+      VATPostingSetup@1500002 : Record 325;
+      TempWHTEntry@1500001 : Record 28044;
+    BEGIN
+      IF GenJnlLine."Applies-to Doc. Type" = GenJnlLine."Applies-to Doc. Type"::"Credit Memo" THEN BEGIN
+        IF NOT PurchCrMemoHeader.GET(GenJnlLine."Applies-to Doc. No.") THEN
+          EXIT;
+        IF NOT PurchCrMemoHeader."Posted Tax Document" THEN
+          EXIT;
+        IF GenJnlLine."WHT Payment" THEN
+          EXIT;
+        IF NOT WHTUsed THEN BEGIN
+          PurchTaxCrMemoHeader.INIT;
+          PurchTaxCrMemoHeader.TRANSFERFIELDS(PurchCrMemoHeader);
+          PurchTaxCrMemoHeader."Posting Date" := GenJnlLine."Posting Date";
+          PurchTaxCrMemoHeader."Posting Description" := GenJnlLine."Document No.";
+          PurchTaxCrMemoLine."External Document No." := PurchCrMemoHeader."No.";
+          PurchTaxCrMemoHeader."No." := '';
+          PurchTaxCrMemoHeader.INSERT(TRUE);
+        END;
+        PurchCrMemoLine.RESET;
+        PurchCrMemoLine.SETRANGE("Document No.",GenJnlLine."Applies-to Doc. No.");
+        IF PurchCrMemoLine.FIND('-') THEN
+          REPEAT
+            Payment1 := 0;
+            Payment2 := 0;
+
+            PurchTaxCrMemoHeader.SETRANGE("Posting Description",GenJnlLine."Document No.");
+            IF PurchTaxCrMemoHeader.FINDFIRST THEN BEGIN
+              PurchTaxCrMemoLine.RESET;
+              PurchTaxCrMemoLine.SETRANGE("Document No.",PurchTaxCrMemoHeader."No.");
+              IF PurchTaxCrMemoLine.FINDLAST THEN
+                LineNo := PurchTaxCrMemoLine."Line No." + 10000;
+            END;
+            IF LineNo = 0 THEN
+              LineNo := 10000;
+            VendLedgEntry.RESET;
+            VendLedgEntry.SETRANGE("Document Type",VendLedgEntry."Document Type"::"Credit Memo");
+            VendLedgEntry.SETRANGE("Document No.",PurchCrMemoLine."Document No.");
+            IF VendLedgEntry.FINDFIRST THEN BEGIN
+              VendLedgEntry.CALCFIELDS("Amount (LCY)","Remaining Amt. (LCY)",Amount,"Remaining Amount");
+
+              PurchTaxCrMemoLine.INIT;
+              IF VATPostingSetup.GET(PurchCrMemoLine."VAT Bus. Posting Group",PurchCrMemoLine."VAT Prod. Posting Group") THEN
+                IF VATPostingSetup."Unrealized VAT Type" <> VATPostingSetup."Unrealized VAT Type"::" " THEN BEGIN
+                  PurchTaxCrMemoLine.TRANSFERFIELDS(PurchCrMemoLine);
+                  PurchTaxCrMemoLine."Line No." := LineNo;
+                  PurchTaxCrMemoLine."Document No." := PurchTaxCrMemoHeader."No.";
+                  PurchTaxCrMemoLine."External Document No." := PurchCrMemoHeader."No.";
+                  WHTAmount := 0;
+                  WHTAmount1 := 0;
+                  TempWHTEntry.RESET;
+                  TempWHTEntry.SETRANGE("Document No.",PurchCrMemoHeader."No.");
+                  TempWHTEntry.SETFILTER("Applies-to Entry No.",'%1',0);
+                  IF TempWHTEntry.FIND('-') THEN
+                    REPEAT
+                      WHTAmount1 := WHTAmount1 + TempWHTEntry."Unrealized Amount (LCY)";
+                    UNTIL TempWHTEntry.NEXT = 0;
+                  WHTAmount := WHTAmount - WHTAmount1;
+
+                  GLSetup.GET;
+                  IF GLSetup."Manual Sales WHT Calc." THEN BEGIN
+                    IF NOT GenJnlLine."WHT Payment" THEN BEGIN
+                      IF (GenJnlLine."Posting Date" <= VendLedgEntry."Pmt. Discount Date") AND
+                         ((ABS(GenJnlLine.Amount) + ABS(WHTAmount)) >= (ABS(VendLedgEntry."Rem. Amt") -
+                                                                        ABS(VendLedgEntry."Original Pmt. Disc. Possible"))) AND
+                         (NOT AmountWithDisc)
+                      THEN
+                        GenLineAmount := GenJnlLine.Amount - VendLedgEntry."Original Pmt. Disc. Possible"
+                      ELSE
+                        GenLineAmount := GenJnlLine.Amount;
+                      ExpectedAmount := -VendLedgEntry.Amount + WHTAmount;
+                    END;
+                  END ELSE BEGIN
+                    IF (GenJnlLine."Posting Date" <= VendLedgEntry."Pmt. Discount Date") AND
+                       (ABS(GenJnlLine.Amount) >= (ABS(VendLedgEntry."Rem. Amt") -
+                                                   ABS(VendLedgEntry."Original Pmt. Disc. Possible"))) AND (NOT AmountWithDisc)
+                    THEN
+                      GenLineAmount := GenJnlLine.Amount - VendLedgEntry."Original Pmt. Disc. Possible"
+                    ELSE
+                      GenLineAmount := GenJnlLine.Amount;
+                    ExpectedAmount := -VendLedgEntry.Amount;
+                  END;
+                  PurchTaxCrMemoLine."Paid Amount Incl. VAT" := ROUND(ABS(GenLineAmount) *
+                      PurchCrMemoLine."Amount Including VAT" / ExpectedAmount);
+                  PurchTaxCrMemoLine."Paid VAT" := ROUND(ABS(GenLineAmount)
+                      * (PurchCrMemoLine."Amount Including VAT" - PurchCrMemoLine."VAT Base Amount")
+                      / ExpectedAmount);
+
+                  IF PurchTaxCrMemoLine."Paid VAT" <> 0 THEN
+                    PurchTaxCrMemoLine.INSERT;
+                  LineNo := LineNo + 10000;
+                END;
+            END;
+          UNTIL PurchCrMemoLine.NEXT = 0;
+      END;
+      InvNo := PurchTaxCrMemoHeader."No.";
+      PurchCrMemoHeader."Printed Tax Document" := TRUE;
+      PurchCrMemoHeader.MODIFY;
+    END;
+
+    PROCEDURE GroupSalesTaxInvPosted@1500016(VAR SalesInvHeader@1500006 : Record 112;Print@1500005 : Boolean;TaxInvDate@1000000003 : Date);
+    VAR
+      Window@1500017 : Dialog;
+      SalesSetup@1500016 : Record 311;
+      SalesInvHeader2@1500015 : Record 112;
+      SalesTaxInvHeader@1500012 : Record 28071;
+      SalesTaxInvHeader2@1500011 : Record 28071;
+      SalesInvLine@1500010 : Record 113;
+      SalesTaxInvLine@1500009 : Record 28072;
+      ReportSelection@1500008 : Record 77;
+      LineNumber@1500007 : Integer;
+      TaxDocBufferBuild@1500004 : Record 28079;
+      TaxDocBuffer@1500003 : Record 28080;
+      TaxDocBufferNew@1000000000 : Record 50014;
+      TaxDocBuffer2@1500002 : Record 28080;
+      TaxDocBufferNew2@1000000001 : Record 50014;
+      TempSalesTaxInvLine@1500000 : Record 28072;
+      ShiptoCode@1000000002 : Record 222;
+      VatOutHeader@1000000004 : Record 50030;
+      Cust@1000000005 : Record 18;
+      MasterSetup@1102159001 : Record 50008;
+    BEGIN
+      SalesSetup.GET;
+      // UPG09R2.begin
+      //IF Print THEN
+      //  IF NOT CONFIRM(Text031) THEN
+      //    EXIT;
+      //IF NOT Print THEN
+      //  IF NOT CONFIRM(Text030) THEN
+      //    EXIT;
+      //IF SalesInvHeader."Posted Tax Document" THEN
+      //  EXIT;
+      MasterSetup.GET;
+      // UPG09R2.end
+      Window.OPEN(Text050);
+
+      { // UPG09R2
+      IF SalesInvHeader.FIND('-') THEN
+        IF SalesInvHeader."Tax Document Marked" THEN
+          ERROR(Text055);
+
+      SalesInvHeader2.RESET;
+      // UPG09R2.begin
+      //YIMMAVATO
+      //SalesInvHeader2.SETCURRENTKEY(
+      //  "Printed Tax Document","Bill-to Customer No.","Currency Code","Payment Discount %","Posted Tax Document",
+      //  "Tax Document Marked");
+      SalesInvHeader2.SETCURRENTKEY("Tax Invoice Date");
+      // UPG09R2.end
+      SalesInvHeader2.COPYFILTERS(SalesInvHeader);
+
+      TaxDocBufferBuild.LOCKTABLE;
+      TaxDocBufferBuild.DELETEALL;
+      TaxDocBuffer.LOCKTABLE;
+      TaxDocBuffer.DELETEALL;
+      // UPG09R2.begin
+      //YIMMAVATOST
+      TaxDocBufferNew.LOCKTABLE;
+      TaxDocBufferNew.DELETEALL;
+      //YIMMAVATOEN
+      // UPG09R2.end
+      IF NOT SalesInvHeader2.FIND('-') THEN
+        EXIT;
+      oupsales // UPG09R2
+      REPEAT
+        TaxDocBufferBuild.INIT;
+        TaxDocBufferBuild."Document No." := SalesInvHeader2."No.";
+        TaxDocBufferBuild."Bill-to Customer No." := SalesInvHeader2."Bill-to Customer No.";
+        TaxDocBufferBuild."Currency Code" := SalesInvHeader2."Currency Code";
+        TaxDocBufferBuild."Payment Discount %" := SalesInvHeader2."Payment Discount %";
+      // UPG09R2.begin
+        //YIMMAVATO
+        TaxDocBufferBuild."Tax Invoice Date" := SalesInvHeader2."Tax Invoice Date";
+      // UPG09R2.end
+        TaxDocBufferBuild.INSERT;
+      UNTIL SalesInvHeader2.NEXT = 0;
+
+      TaxDocBufferBuild.RESET;
+      // UPG09R2.begin
+      //YIMMAVATO
+      //TaxDocBufferBuild.SETCURRENTKEY("Bill-to Customer No.","Currency Code","Payment Discount %");
+      TaxDocBufferBuild.SETCURRENTKEY("Tax Invoice Date");
+      // UPG09R2.end
+      TaxDocBufferBuild.FIND('-');
+      REPEAT
+      // UPG09R2.begin
+        //IF NOT TaxDocBuffer2.GET(
+        //     TaxDocBufferBuild."Bill-to Customer No.",TaxDocBufferBuild."Currency Code",TaxDocBufferBuild."Payment Discount %")
+        //THEN BEGIN
+      //YIMMAVATOST
+      {
+       IF NOT TaxDocBufferNew.GET(
+          TaxDocBufferBuild."Bill-to Customer No.",TaxDocBufferBuild."Currency Code",TaxDocBufferBuild."Payment Discount %") THEN BEGIN
+      // UPG09R2.end
+          TaxDocBuffer.INIT;
+          TaxDocBuffer."Bill-to Customer No." := TaxDocBufferBuild."Bill-to Customer No.";
+          TaxDocBuffer."Currency Code" := TaxDocBufferBuild."Currency Code";
+          TaxDocBuffer."Payment Discount %" := TaxDocBufferBuild."Payment Discount %";
+          TaxDocBuffer.INSERT;
+        END;
+      // UPG09R2.begin
+      }
+      // IF NOT TaxDocBufferNew2.GET(
+      //    TaxDocBufferBuild."Bill-to Customer No.",TaxDocBufferBuild."Tax Invoice Date") THEN BEGIN
+      //YIMMAVATOEN
+          TaxDocBufferNew.INIT;
+          TaxDocBufferNew."Document No." := TaxDocBufferBuild."Document No.";
+          TaxDocBufferNew."Bill-to Customer No." := TaxDocBufferBuild."Bill-to Customer No.";
+          TaxDocBufferNew."Currency Code" := TaxDocBufferBuild."Currency Code";
+          TaxDocBufferNew."Payment Discount %" := TaxDocBufferBuild."Payment Discount %";
+          TaxDocBufferNew."Tax Invoice Date" := TaxDocBufferBuild."Tax Invoice Date";
+          TaxDocBufferNew.INSERT;
+      //  END;     YIMMAVATO
+      // UPG09R2.end
+      UNTIL TaxDocBufferBuild.NEXT = 0;
+
+      // UPG09R2.begin
+      //TaxDocBuffer.FIND('-');
+      //YIMMAVATO
+
+      TaxDocBufferNew.FIND('-');
+
+      //REPEAT
+      // UPG09R2.end
+        TaxDocBufferBuild.RESET;
+        //TaxDocBufferBuild.SETRANGE("Bill-to Customer No.",TaxDocBuffer."Bill-to Customer No.");
+        //TaxDocBufferBuild.SETRANGE("Currency Code",TaxDocBuffer."Currency Code");
+        //TaxDocBufferBuild.SETRANGE("Payment Discount %",TaxDocBuffer."Payment Discount %");
+        TaxDocBufferBuild.SETRANGE("Document No.",TaxDocBufferNew."Document No.");
+        TaxDocBufferBuild.SETRANGE("Bill-to Customer No.",TaxDocBufferNew."Bill-to Customer No.");
+        TaxDocBufferBuild.SETRANGE("Currency Code",TaxDocBufferNew."Currency Code");
+        TaxDocBufferBuild.SETRANGE("Payment Discount %",TaxDocBufferNew."Payment Discount %");
+        TaxDocBufferBuild.SETRANGE("Tax Invoice Date",TaxDocBufferNew."Tax Invoice Date");
+        // UPG09R2.end
+        TaxDocBufferBuild.FIND('-');
+        SalesInvHeader2.GET(TaxDocBufferBuild."Document No.");
+        SalesTaxInvHeader.RESET;
+        SalesTaxInvHeader.INIT;
+        SalesTaxInvHeader.TRANSFERFIELDS(SalesInvHeader2);
+
+      // UPG09R2.begin
+        //YIMMAVATOST
+      }
+
+        Cust.RESET;
+        IF Cust.GET(SalesInvHeader."Sell-to Customer No.") THEN;
+
+
+
+        VatOutHeader.RESET;
+        VatOutHeader.SETRANGE(VatOutHeader."Entry Type",VatOutHeader."Entry Type"::Sale);
+        VatOutHeader.SETRANGE(VatOutHeader."Document No.",SalesInvHeader."No.");
+
+        IF VatOutHeader.FINDSET THEN;
+
+
+        SalesTaxInvHeader.TRANSFERFIELDS(SalesInvHeader);
+
+
+
+        IF VatOutHeader.NPWP<> '' THEN BEGIN
+          SalesSetup.TESTFIELD(SalesSetup."Posted Nppkp Tax Nos");
+          "Tax Inv No." := NoSeriesMgt.GetNextNo(SalesSetup."Posted Nppkp Tax Nos",WORKDATE,TRUE);
+
+          //>>02042013/PC/CR#014   Code commented for CR#014
+            {IF (SalesInvHeader2."Type Of Transaction"=SalesInvHeader."Type Of Transaction"::FA) THEN
+              F1:='090.000-'
+            ELSE
+              F1:='010.000-';
+            IF (Cust.TaxExampted) THEN
+              F1:='070.000-';
+            Date_dmy(TaxInvDate);
+            F2:=(year1 +'.');
+            SalesTaxInvHeader."No.":= F1 + F2 + "Tax Inv No." ;    }
+          //<<02042013/PC/CR#014   Code commented for CR#014
+
+
+          //>>02042013/PC/CR#014
+          IF MasterSetup."Enable New Tax Inv. No. Rule" THEN BEGIN
+            //IF (SalesInvHeader2."Type Of Transaction" = SalesInvHeader."Type Of Transaction"::FA) THEN  //YIMMDEVIP1.0
+            IF (SalesInvHeader."Type Of Transaction" = SalesInvHeader."Type Of Transaction"::FA) THEN    //YIMMDEVIP1.0
+              F1 := '090.'
+            ELSE
+              F1 := '010.';
+
+            IF (Cust.TaxExampted) THEN
+              F1 := '070.';
+
+            IF TaxInvDate > DMY2DATE(31,3,2013) THEN
+              "CheckDuplicacyTaxInvNo."(FORMAT(F1 + "Tax Inv No."));
+
+            SalesTaxInvHeader."No." := F1 + "Tax Inv No." ;
+          END
+          ELSE BEGIN
+            //IF (SalesInvHeader2."Type Of Transaction" = SalesInvHeader."Type Of Transaction"::FA) THEN  //YIMMDEVIP1.0
+            IF (SalesInvHeader."Type Of Transaction" = SalesInvHeader."Type Of Transaction"::FA) THEN    //YIMMDEVIP1.0
+              F1 := '090.000-'
+            ELSE
+              F1 := '010.000-';
+            IF (Cust.TaxExampted) THEN
+              F1 := '070.000-';
+            Date_dmy(TaxInvDate);
+            F2 := (year1 +'.');
+            SalesTaxInvHeader."No." := F1 + F2 + "Tax Inv No." ;
+
+          END;
+          //<<02042013/PC/CR#014
+
+
+
+        END ELSE BEGIN
+          "Tax Inv No." := NoSeriesMgt.GetNextNo(SalesSetup."Posted Tax Invoice Nos.",WORKDATE,TRUE);
+          IF (SalesInvHeader2."Type Of Transaction"=SalesInvHeader."Type Of Transaction"::FA) THEN
+            F1:='090.000-'
+          ELSE
+            F1:='010.000-';
+
+          Date_dmy(TaxInvDate);
+
+          F2:=('.'+year1);
+
+          //SalesTaxInvHeader."No.":= F1 + F2 + "Tax Inv No.";
+
+           IF (month<10) THEN
+           SalesTaxInvHeader."No.":="Tax Inv No."+'.0'+FORMAT(month)+F2
+           ELSE
+           SalesTaxInvHeader."No.":="Tax Inv No."+'.'+FORMAT(month)+F2;
+
+        END;
+
+        //SalesTaxInvHeader."No." := '';
+      //YIMMAVATOEN
+      // UPG09R2.end
+
+        SalesTaxInvHeader.INSERT(TRUE);
+        SalesTaxInvHeader."Posting Date" := WORKDATE;
+        // UPG09R2.begin
+
+        SalesTaxInvHeader."Tax Invoice Date":=TaxInvDate;
+
+        //PPNPPHDEV.begin
+        //SalesTaxInvHeader."New NPWP No.":= VatOutHeader.NPWP;
+        SalesTaxInvHeader."Ship-to Code" := VatOutHeader.NPWP;
+        SalesTaxInvHeader."New NPWP No." := VatOutHeader."PPH NPWP No.";
+        //PPNPPHDEV.end
+
+        SalesTaxInvHeader."Ship-to Name 2":=VatOutHeader."NPWP Name";
+        SalesTaxInvHeader."Ship-to Address" :=VatOutHeader."NPWP Address";
+        SalesTaxInvHeader."Ship-to Address 2":=VatOutHeader."NPWP Address 2";
+        SalesTaxInvHeader."Ship-to City":=VatOutHeader."NPWP City";
+
+        // UPG09R2.end
+        SalesTaxInvHeader.MODIFY;
+        SalesTaxInvLine.INIT;
+        LineNumber := 10000;
+        //Window.UPDATE(1,TaxDocBuffer."Bill-to Customer No.");
+        //Window.UPDATE(2,SalesInvHeader2."No.");
+        //REPEAT
+
+         Window.UPDATE(1,SalesInvHeader."Bill-to Customer No.");
+         Window.UPDATE(2,SalesInvHeader."No.");
+
+      //Rajesh   REPEAT
+        // UPG09R2.end
+          SalesInvLine.RESET;
+          //SalesInvLine.SETRANGE("Document No.",TaxDocBufferBuild."Document No.");// UPG09R2
+          SalesInvLine.SETRANGE("Document No.",SalesInvHeader."No."); // UPG09R2
+          SalesInvLine.FIND('-');
+          REPEAT
+            SalesTaxInvLine.TRANSFERFIELDS(SalesInvLine);
+            SalesTaxInvLine."Paid Amount Incl. VAT" := SalesTaxInvLine."Amount Including VAT";
+            SalesTaxInvLine."Paid VAT" := SalesTaxInvLine."Amount Including VAT" - SalesTaxInvLine."VAT Base Amount";
+            SalesTaxInvLine."Line No." := LineNumber;
+            SalesTaxInvLine."Document No." := SalesTaxInvHeader."No.";
+            SalesTaxInvLine."External Document No." := TaxDocBufferBuild."Document No.";
+
+            SalesTaxInvLine."New NPWP.":=VatOutHeader.NPWP; // UPG09R2
+            //PPNPPHDEV.begin
+            SalesTaxInvLine."PPH NPWP No." := VatOutHeader."PPH NPWP No.";
+            //PPNPPHDEV.end
+            SalesTaxInvLine.INSERT;
+            LineNumber := LineNumber + 10000;
+          // UPG09R2.begin
+
+            IF (SalesInvLine."VAT %"<>0) OR (Cust.TaxExampted) THEN
+            CreateVatDetails(SalesTaxInvLine,SalesInvHeader."Type Of Transaction",
+                              SalesInvHeader."Posting Date",TaxInvDate,SalesInvLine."New NPWP.",VatOutHeader);//YIMMCH
+          // UPG09R2.end
+          UNTIL SalesInvLine.NEXT = 0;
+        // UPG09R2.begin
+        //UNTIL TaxDocBufferBuild.NEXT = 0;
+        //TempSalesTaxInvLine.SETRANGE("Document No.",SalesTaxInvHeader."No.");
+        //IF NOT TempSalesTaxInvLine.FINDFIRST THEN BEGIN
+        //  SalesTaxInvHeader.DELETE;
+        //  SalesSetup.GET;
+        //  IF CheckTaxableNoSeries(SalesInvHeader."Sell-to Customer No.",1) THEN
+        //    NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Non Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE)
+        //  ELSE
+        //    NoSeriesMgt.ReverseGetNextNo(SalesSetup."Posted Tax Invoice Nos.",SalesTaxInvHeader."Posting Date",TRUE);
+        //END;
+        //IF Print THEN BEGIN
+        //  SalesTaxInvHeader2.RESET;
+        //  SalesTaxInvHeader2.SETRANGE("No.",SalesTaxInvHeader."No.");
+        //  SalesTaxInvHeader2.FINDFIRST;
+        //  ReportSelection.RESET;
+        //  ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"S.TaxInvoice");
+        //  IF ReportSelection.FIND('-') THEN
+        //    REPEAT
+        //      REPORT.RUN(ReportSelection."Report ID",SalesSetup."Print Dialog",FALSE,SalesTaxInvHeader2);
+        //    UNTIL ReportSelection.NEXT = 0;
+        //END;
+        //TaxDocBufferBuild.FIND('-');
+        //REPEAT
+        //  SalesInvHeader2.GET(TaxDocBufferBuild."Document No.");
+        //  SalesInvHeader2."Posted Tax Document" := TRUE;
+        //  IF Print THEN
+        //    SalesInvHeader2."Printed Tax Document" := TRUE;
+        //  SalesInvHeader2.MODIFY;
+        //UNTIL TaxDocBufferBuild.NEXT = 0;
+      //UNTIL TaxDocBuffer.NEXT = 0;
+      //IF Print THEN
+        //MESSAGE(Text054)
+      //ELSE
+        //MESSAGE(Text053);
+        // UPG09R2.end
+    END;
+
+    PROCEDURE BuildTaxPostBuffer@1500017(SourceNo@1500002 : Code[20];OrigNo@1500001 : Text[30];Type@1500000 : 'Purchase Invoice,Sales Invoice,Purchase Credit Memo,Sales Credit Memo');
+    VAR
+      TaxPostBuffer@1500003 : Record 28070;
+    BEGIN
+      TaxPostBuffer.DELETEALL;
+      TaxPostBuffer.INIT;
+      TaxPostBuffer."Tax Invoice No." := SourceNo;
+      TaxPostBuffer."Invoice No." := OrigNo;
+      CASE Type OF
+        Type::"Purchase Invoice":
+          TaxPostBuffer.Type := TaxPostBuffer.Type::"Purchase Invoice";
+        Type::"Sales Invoice":
+          TaxPostBuffer.Type := TaxPostBuffer.Type::"Sales Invoice";
+        Type::"Purchase Credit Memo":
+          TaxPostBuffer.Type := TaxPostBuffer.Type::"Purchase Credit Memo";
+        Type::"Sales Credit Memo":
+          TaxPostBuffer.Type := TaxPostBuffer.Type::"Sales Credit Memo";
+      END;
+      TaxPostBuffer.INSERT;
+    END;
+
+    PROCEDURE PrintTaxInvoices@1500018();
+    VAR
+      TaxInvBuffer@1500003 : Record 28070;
+      ReportSelection@1500002 : Record 77;
+      PurchSetup@1500001 : Record 312;
+      SalesSetup@1500000 : Record 311;
+    BEGIN
+      GLSetup.GET;
+      IF NOT GLSetup."Print Tax Invoices on Posting" THEN
+        EXIT;
+      PurchSetup.GET;
+      SalesSetup.GET;
+      LastTaxInvoice := '';
+      TaxInvBuffer.RESET;
+      TaxInvBuffer.SETRANGE(Type,TaxInvBuffer.Type::"Purchase Invoice");
+      IF TaxInvBuffer.FIND('-') THEN
+        REPEAT
+          IF TaxInvBuffer."Tax Invoice No." <> LastTaxInvoice THEN BEGIN
+            PurchTaxInvoiceHeader.RESET;
+            PurchTaxInvoiceHeader.SETRANGE("No.",TaxInvBuffer."Tax Invoice No.");
+            IF PurchTaxInvoiceHeader.FINDFIRST THEN BEGIN
+              ReportSelection.RESET;
+              ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"P.TaxInvoice");
+              IF ReportSelection.FIND('-') THEN
+                REPEAT
+                  REPORT.RUN(ReportSelection."Report ID",PurchSetup."Print Dialog",FALSE,PurchTaxInvoiceHeader);
+                UNTIL ReportSelection.NEXT = 0;
+            END;
+          END;
+          LastTaxInvoice := TaxInvBuffer."Tax Invoice No.";
+        UNTIL TaxInvBuffer.NEXT = 0;
+
+      LastTaxInvoice := '';
+      TaxInvBuffer.RESET;
+      TaxInvBuffer.SETRANGE(Type,TaxInvBuffer.Type::"Sales Invoice");
+      IF TaxInvBuffer.FIND('-') THEN
+        REPEAT
+          IF TaxInvBuffer."Tax Invoice No." <> LastTaxInvoice THEN BEGIN
+            SalesTaxInvoiceHeader.RESET;
+            SalesTaxInvoiceHeader.SETRANGE("No.",TaxInvBuffer."Tax Invoice No.");
+            IF SalesTaxInvoiceHeader.FINDFIRST THEN BEGIN
+              ReportSelection.RESET;
+              ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"S.TaxInvoice");
+              IF ReportSelection.FIND('-') THEN
+                REPEAT
+                  REPORT.RUN(ReportSelection."Report ID",SalesSetup."Print Dialog",FALSE,SalesTaxInvoiceHeader);
+                UNTIL ReportSelection.NEXT = 0;
+            END;
+          END;
+          LastTaxInvoice := TaxInvBuffer."Tax Invoice No.";
+        UNTIL TaxInvBuffer.NEXT = 0;
+
+      LastTaxInvoice := '';
+      TaxInvBuffer.RESET;
+      TaxInvBuffer.SETRANGE(Type,TaxInvBuffer.Type::"Purchase Credit Memo");
+      IF TaxInvBuffer.FIND('-') THEN
+        REPEAT
+          IF TaxInvBuffer."Tax Invoice No." <> LastTaxInvoice THEN BEGIN
+            PurchTaxCrMemoHeader.RESET;
+            PurchTaxCrMemoHeader.SETRANGE("No.",TaxInvBuffer."Tax Invoice No.");
+            IF PurchTaxCrMemoHeader.FINDFIRST THEN BEGIN
+              ReportSelection.RESET;
+              ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"P.TaxCreditMemo");
+              IF ReportSelection.FIND('-') THEN
+                REPEAT
+                  REPORT.RUN(ReportSelection."Report ID",PurchSetup."Print Dialog",FALSE,PurchTaxCrMemoHeader);
+                UNTIL ReportSelection.NEXT = 0;
+            END;
+          END;
+          LastTaxInvoice := TaxInvBuffer."Tax Invoice No.";
+        UNTIL TaxInvBuffer.NEXT = 0;
+
+      LastTaxInvoice := '';
+      TaxInvBuffer.RESET;
+      TaxInvBuffer.SETRANGE(Type,TaxInvBuffer.Type::"Sales Credit Memo");
+      IF TaxInvBuffer.FIND('-') THEN
+        REPEAT
+          IF TaxInvBuffer."Tax Invoice No." <> LastTaxInvoice THEN BEGIN
+            SalesTaxCrMemoHeader.RESET;
+            SalesTaxCrMemoHeader.SETRANGE("No.",TaxInvBuffer."Tax Invoice No.");
+            IF SalesTaxCrMemoHeader.FINDFIRST THEN BEGIN
+              ReportSelection.RESET;
+              ReportSelection.SETRANGE(Usage,ReportSelection.Usage::"S.TaxCreditMemo");
+              IF ReportSelection.FIND('-') THEN
+                REPEAT
+                  REPORT.RUN(ReportSelection."Report ID",SalesSetup."Print Dialog",FALSE,SalesTaxCrMemoHeader);
+                UNTIL ReportSelection.NEXT = 0;
+            END;
+          END;
+          LastTaxInvoice := TaxInvBuffer."Tax Invoice No.";
+        UNTIL TaxInvBuffer.NEXT = 0;
+    END;
+
+    PROCEDURE CheckPmtDisc@1500028(PostingDate@1500000 : Date;PmtDiscDate@1500001 : Date;Amount1@1500002 : Decimal;Amount2@1500003 : Decimal;Amount3@1500004 : Decimal;Amount4@1500005 : Decimal) : Boolean;
+    BEGIN
+      IF (PostingDate <= PmtDiscDate) AND (Amount1 >= (Amount2 - Amount3)) AND (Amount4 >= (Amount2 - Amount3)) THEN
+        EXIT(TRUE);
+
+      EXIT(FALSE);
+    END;
+
+    PROCEDURE CheckTaxableNoSeries@1500019("No."@1500000 : Code[20];"Vend/Cust"@1500001 : 'Vendor,Customer') : Boolean;
+    VAR
+      Vendor@1500002 : Record 23;
+      VendorPostingGroup@1500004 : Record 93;
+      Customer@1500003 : Record 18;
+      CustomerPostingGroup@1500005 : Record 92;
+    BEGIN
+      CASE "Vend/Cust" OF
+        "Vend/Cust"::Vendor:
+          BEGIN
+            Vendor.RESET;
+            Vendor.SETFILTER("No.","No.");
+            IF Vendor.FINDFIRST THEN
+              VendorPostingGroup.SETFILTER(Code,Vendor."Vendor Posting Group");
+            IF VendorPostingGroup.FINDFIRST THEN
+              EXIT(VendorPostingGroup."Non-Taxable");
+          END;
+        "Vend/Cust"::Customer:
+          BEGIN
+            Customer.RESET;
+            Customer.SETFILTER("No.","No.");
+            IF Customer.FINDFIRST THEN
+              CustomerPostingGroup.SETFILTER(Code,Customer."Customer Posting Group");
+            IF CustomerPostingGroup.FINDFIRST THEN
+              EXIT(CustomerPostingGroup."Non-Taxable");
+          END;
+      END;
+    END;
+
+    PROCEDURE YMSLI@1000000004();
+    BEGIN
+      // UPG09R2
+    END;
+
+    PROCEDURE CreateVatDetails@1000000001(SalesTaxInvLine@1000000001 : Record 28072;Type@1000000002 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_date@1000000003 : Date;Tax_Date@1000000004 : Date;Npwp@1000000005 : Code[20];VATOutHeader@1000000016 : Record 50030);
+    VAR
+      VatDetails@1000000000 : Record 50015;
+      SalesTaxInvHeader@1000000006 : Record 28071;
+      Base_Amount@1000000007 : Decimal;
+      VAT_Amount@1000000008 : Decimal;
+      Base_Amount_LCY@1000000009 : Decimal;
+      VAT_Amount_LCY@1000000010 : Decimal;
+      TaxInvMgt@1000000011 : Codeunit 28070;
+      MasterSetup@1000000012 : Record 50008;
+      SIHeader@1000000013 : Record 112;
+      ShipTo@1000000015 : Record 222;
+      Cust@1000000017 : Record 18;
+    BEGIN
+      // UPG09R2.begin
+      VatDetails.RESET;
+      VatDetails.LOCKTABLE;
+      VatDetails.INIT;
+      VatDetails."Document Type" := VatDetails."Document Type"::Invoice;
+      VatDetails."Line No." := SalesTaxInvLine."Line No.";
+      VatDetails."Document No." := SalesTaxInvLine."Document No.";
+      VatDetails.INSERT;
+      VatDetails."Entry Type" := VatDetails."Entry Type"::Sale;
+      VatDetails."Transaction Type" := Type;
+      VatDetails."Posting Date" := Trans_date;
+      VatDetails."Source Type" := VatDetails."Source Type"::Customer;
+      VatDetails.VALIDATE(VatDetails."Source No.",SalesTaxInvLine."Sell-to Customer No.");
+      VatDetails.NPWP := VATOutHeader.NPWP;
+      VatDetails."Tax Invoice No.":=SalesTaxInvLine."Document No.";
+      VatDetails."Tax Invoice Date" := Tax_Date;
+
+      VatDetails.Base := -SalesTaxInvLine."VAT Base Amount";
+      VatDetails.Amount := -SalesTaxInvLine."Paid VAT";
+
+      SalesTaxInvHeader.RESET;
+      IF SalesTaxInvHeader.GET(SalesTaxInvLine."Document No.") THEN;
+
+      IF (SalesTaxInvHeader."Currency Code"<>'') THEN
+
+       BEGIN
+
+       MasterSetup.GET;
+
+
+       IF (SalesTaxInvoiceHeader."Gen. Bus. Posting Group"=MasterSetup.Foreign_Bus_Posting_Group) THEN
+       BEGIN
+       Base_Amount_LCY:=TaxInvMgt.CALC_BASE_LCY(SalesTaxInvoiceHeader."Document Date",SalesTaxInvLine."VAT Base Amount",
+       SalesTaxInvHeader."Currency Code");
+
+       VAT_Amount_LCY:=TaxInvMgt.CALC_VAT_LCY(SalesTaxInvoiceHeader."Document Date",SalesTaxInvLine."Paid VAT",
+       SalesTaxInvHeader."Currency Code");
+
+       END;
+
+
+       IF (SalesTaxInvHeader."Gen. Bus. Posting Group"=MasterSetup.Domestic_Bus_Posting_Group) THEN
+       BEGIN
+       Base_Amount_LCY:=CALC_BASE_LCY(SalesTaxInvHeader."Tax Invoice Date",SalesTaxInvLine."VAT Base Amount",
+       SalesTaxInvHeader."Currency Code");
+
+       VAT_Amount_LCY:=CALC_VAT_LCY(SalesTaxInvHeader."Tax Invoice Date",SalesTaxInvLine."Paid VAT",
+       SalesTaxInvHeader."Currency Code");
+
+       END;
+
+       END;
+
+      Cust.RESET;
+      IF Cust.GET(SalesTaxInvHeader."Sell-to Customer No.") THEN;
+
+
+      IF (SalesTaxInvHeader."Currency Code"='') THEN
+      BEGIN
+      Base_Amount_LCY:=SalesTaxInvLine."VAT Base Amount";
+      VAT_Amount_LCY:= SalesTaxInvLine."Paid VAT";
+      END;
+
+
+      IF (Cust.TaxExampted) THEN
+           VAT_Amount_LCY:=(SalesTaxInvLine.Amount*0.1);
+
+
+
+      VatDetails."Currency Code":=SalesTaxInvHeader."Currency Code";
+
+      VatDetails."Base LCY":=-Base_Amount_LCY;
+      VatDetails."Amount LCY":=-VAT_Amount_LCY;
+
+
+
+      VatDetails."VAT Calculation Type" := SalesTaxInvLine."VAT Calculation Type";
+      VatDetails."VAT Bus. Posting Group" := SalesTaxInvLine."VAT Bus. Posting Group";
+      VatDetails."VAT Prod. Posting Group" := SalesTaxInvLine."VAT Prod. Posting Group";
+      VatDetails."VAT %" := SalesTaxInvLine."VAT %";
+      VatDetails."Vat Type" := VatDetails."Vat Type"::Out;
+      VatDetails.Approved := TRUE;
+
+      //YIMMCH
+      IF SIHeader.GET(SalesTaxInvLine."External Document No.") THEN BEGIN
+        VatDetails."User ID" := SIHeader.UID;
+        //UPG13C.begin
+        //IF UserName.GET(SIHeader.UID) THEN;
+        //VatDetails."User Name" := UserName.Name;
+        //UPG13C.end
+      END;
+
+      {
+      ShipTo.RESET;
+      IF ShipTo.GET(SIHeader."Sell-to Customer No.",SIHeader."Ship-to Code") THEN BEGIN
+        VatDetails."NPWP Name" := ShipTo."Name 2";
+        VatDetails."NPWP Address" := ShipTo.Address;
+        VatDetails."NPWP Address 2" := ShipTo."Address 2";
+        VatDetails."NPWP City" := ShipTo.City;
+      END ELSE BEGIN
+        VatDetails."NPWP Name" := SIHeader."Sell-to Customer Name";
+        VatDetails."NPWP Address" := SIHeader."Sell-to Address";
+        VatDetails."NPWP Address 2" := SIHeader."Sell-to Address 2";
+        VatDetails."NPWP City" := SIHeader."Sell-to City";
+      END;
+      }
+
+        VatDetails."NPWP Name" :=VATOutHeader."NPWP Name" ;
+        VatDetails."NPWP Address" := VATOutHeader."NPWP Address";
+        VatDetails."NPWP Address 2" :=VATOutHeader."NPWP Address 2";
+        VatDetails."NPWP City" := VATOutHeader."NPWP City";
+
+
+      //YIMMCH
+
+      VatDetails.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CreateVatDetailsCr@1000000002(SalesTaxInvLine@1000000001 : Record 125;Type@1000000002 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_date@1000000003 : Date;Tax_Date@1000000004 : Date;Npwp@1000000005 : Code[20];DocNo@1000000015 : Code[20];VatOutHeader@1000000016 : Record 50030);
+    VAR
+      VatDetails@1000000000 : Record 50015;
+      PurchCreditMemoLine@1000000006 : Record 125;
+      VAT_Base@1000000007 : Decimal;
+      VAT_Amount@1000000008 : Decimal;
+      PurchCreditMemoHeader@1000000009 : Record 124;
+      VAT_BASE_LCY@1000000011 : Decimal;
+      VAT_Amount_LCY@1000000012 : Decimal;
+      MasterSetup@1000000013 : Record 50008;
+      OrderAdd@1000000014 : Record 224;
+    BEGIN
+      // UPG09R2.begin
+      MasterSetup.GET;
+
+      VatDetails.RESET;
+      VatDetails.LOCKTABLE;
+      VatDetails.INIT;
+      VatDetails."Document Type" := VatDetails."Document Type"::"Credit Memo";
+      VatDetails."Line No." := SalesTaxInvLine."Line No.";
+      VatDetails."Document No." := DocNo;
+      VatDetails.INSERT;
+
+
+      VatDetails."Entry Type" := VatDetails."Entry Type"::Purchase;
+      VatDetails."Transaction Type" := Type;
+      VatDetails."Posting Date" := Trans_date;
+      VatDetails."Source Type" := VatDetails."Source Type"::Vendor;
+      VatDetails.VALIDATE(VatDetails."Source No.",SalesTaxInvLine."Buy-from Vendor No.");
+      VatDetails.NPWP := VatOutHeader.NPWP;
+      VatDetails."Tax Invoice No.":=DocNo;
+      VatDetails."Tax Invoice Date" := Tax_Date;
+
+      PurchCreditMemoHeader.RESET;
+      IF PurchCreditMemoHeader.GET(SalesTaxInvLine."Document No.") THEN;
+
+      PurchCreditMemoLine.RESET;
+      PurchCreditMemoLine.SETRANGE(PurchCreditMemoLine."Document No.",SalesTaxInvLine."Document No.");
+      PurchCreditMemoLine.SETFILTER(PurchCreditMemoLine."VAT %",'<>%1',0);
+
+      VAT_Base:=0;
+      VAT_Amount:=0;
+      VAT_BASE_LCY:=0;
+      VAT_Amount_LCY:=0;
+
+      IF PurchCreditMemoLine.FINDSET THEN
+       REPEAT
+        VAT_Base :=VAT_Base+PurchCreditMemoLine."VAT Base Amount";
+        VAT_Amount:=VAT_Amount+(PurchCreditMemoLine."Amount Including VAT"-PurchCreditMemoLine.Amount);
+
+
+              IF (PurchCreditMemoHeader."Currency Code"<>'') THEN
+                     BEGIN
+                         IF (PurchCreditMemoHeader."Gen. Bus. Posting Group"=MasterSetup.Domestic_Bus_Posting_Group) THEN
+                         BEGIN
+                         VAT_BASE_LCY:= VAT_BASE_LCY+ CALC_BASE_LCY(PurchCreditMemoLine."Tax Invoice Date",
+                         PurchCreditMemoLine."VAT Base Amount",PurchCreditMemoHeader."Currency Code");
+
+                         VAT_Amount_LCY:=VAT_Amount_LCY +CALC_VAT_LCY(PurchCreditMemoLine."Tax Invoice Date",
+                         (PurchCreditMemoLine."Amount Including VAT"-PurchCreditMemoLine.Amount),
+                         PurchCreditMemoHeader."Currency Code");
+
+                         END;
+
+                         IF (PurchCreditMemoHeader."Gen. Bus. Posting Group"=MasterSetup.Foreign_Bus_Posting_Group) THEN
+                         BEGIN
+                         VAT_BASE_LCY:= VAT_BASE_LCY+ CALC_BASE_LCY(PurchCreditMemoHeader."Document Date",
+                         PurchCreditMemoLine."VAT Base Amount",PurchCreditMemoHeader."Currency Code");
+
+                         VAT_Amount_LCY:=VAT_Amount_LCY +CALC_VAT_LCY(PurchCreditMemoHeader."Posting Date",
+                         (PurchCreditMemoLine."Amount Including VAT"-PurchCreditMemoLine.Amount),
+                         PurchCreditMemoHeader."Currency Code");
+                         END;
+
+                     END;
+
+
+       UNTIL (PurchCreditMemoLine.NEXT=0);
+
+
+      IF (PurchCreditMemoHeader."Currency Code"='') THEN
+      BEGIN
+      VAT_BASE_LCY:= VAT_Base;
+      VAT_Amount_LCY:=VAT_Amount;
+      END;
+
+
+
+      VatDetails.Base := -(VAT_Base);
+      VatDetails.Amount := -(VAT_BASE_LCY);
+      VatDetails."Base LCY":=-VAT_BASE_LCY;
+      VatDetails."Amount LCY":=-VAT_Amount_LCY;
+
+
+      VatDetails."VAT Calculation Type" := SalesTaxInvLine."VAT Calculation Type";
+      VatDetails."VAT Bus. Posting Group" := SalesTaxInvLine."VAT Bus. Posting Group";
+      VatDetails."VAT Prod. Posting Group" := SalesTaxInvLine."VAT Prod. Posting Group";
+
+      //YIMM
+      VatDetails."Original Tax Inv. No." := SalesTaxInvLine."Area Code";
+
+      VatDetails."VAT %" := SalesTaxInvLine."VAT %";
+      VatDetails."Vat Type" := VatDetails."Vat Type"::Out;
+      VatDetails.Approved := TRUE;
+
+      //YIMMCH
+        VatDetails."User ID" := PurchCreditMemoHeader.UID;
+        //UPG13C.begin
+        //IF UserName.GET(PurchCreditMemoHeader.UID) THEN
+        //VatDetails."User Name" := UserName.Name;
+        //UPG13C.end
+
+
+        VatDetails."NPWP Name" := VatOutHeader."NPWP Name";
+        VatDetails."NPWP Address" :=VatOutHeader."NPWP Address";
+        VatDetails."NPWP Address 2" := VatOutHeader."NPWP Address 2";
+        VatDetails."NPWP City" := VatOutHeader."NPWP City";
+
+
+      //YIMMCH
+
+
+      VatDetails.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CreateVatDetailsSalesCr@1000000006(SalesCrMemoLine@1000000001 : Record 115;Type@1000000002 : ' ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS';Trans_date@1000000003 : Date;Tax_Date@1000000004 : Date;Npwp@1000000005 : Code[20];PPHNpwpNo@1102159001 : Code[20]);
+    VAR
+      VatDetails@1000000000 : Record 50015;
+      MasterSetup@1000000006 : Record 50008;
+      VAT_Amount@1000000007 : Decimal;
+      Base_Amount@1000000008 : Decimal;
+      Base_Amount_LCY@1000000009 : Decimal;
+      VAT_Amount_LCY@1000000010 : Decimal;
+      SalesCreditMemoHeader@1000000011 : Record 114;
+      ShipTo@1000000013 : Record 222;
+    BEGIN
+      // UPG09R2.begin
+      VatDetails.RESET;
+      VatDetails.LOCKTABLE;
+      VatDetails.INIT;
+      VatDetails."Document Type" := VatDetails."Document Type"::"Credit Memo";
+      VatDetails."Line No." := SalesCrMemoLine."Line No.";
+      VatDetails."Document No." := SalesCrMemoLine."Document No.";
+      VatDetails.INSERT;
+      VatDetails."Entry Type" := VatDetails."Entry Type"::Sale;
+      VatDetails."Transaction Type" := Type;
+      VatDetails."Posting Date" := Trans_date;
+      VatDetails."Source Type" := VatDetails."Source Type"::Vendor;
+      VatDetails.VALIDATE(VatDetails."Source No.",SalesCrMemoLine."Sell-to Customer No.");
+      VatDetails.NPWP := Npwp;
+      VatDetails."PPH NPWP No." := VatDetails."PPH NPWP No."; //PPNPPHDEV
+      VatDetails."Tax Invoice Date" := Tax_Date;
+      VatDetails.Base := SalesCrMemoLine."VAT Base Amount";
+      VatDetails.Amount := SalesCrMemoLine."Amount Including VAT"-SalesCrMemoLine."VAT Base Amount";
+
+
+      //RajeshYadav
+      SalesCreditMemoHeader.RESET;
+      IF (SalesCreditMemoHeader.GET(SalesCrMemoLine."Document No.")) THEN;
+
+
+      IF (SalesCreditMemoHeader."Currency Code"<>'') THEN
+        BEGIN
+
+        MasterSetup.GET;
+
+           IF (SalesCreditMemoHeader."Gen. Bus. Posting Group"=MasterSetup.Domestic_Bus_Posting_Group) THEN
+            BEGIN
+            Base_Amount_LCY :=CALC_BASE_LCY(SalesCrMemoLine."Tax Invoice Date",VatDetails.Base,SalesCreditMemoHeader."Currency Code");
+            VAT_Amount_LCY:=CALC_VAT_LCY(SalesCrMemoLine."Tax Invoice Date",VatDetails.Amount,SalesCreditMemoHeader."Currency Code");
+            END;
+
+           IF (SalesCreditMemoHeader."Gen. Bus. Posting Group"=MasterSetup.Foreign_Bus_Posting_Group) THEN
+            BEGIN
+            Base_Amount_LCY :=CALC_BASE_LCY(SalesCreditMemoHeader."Document Date",VatDetails.Base,SalesCreditMemoHeader."Currency Code")
+      ;
+            VAT_Amount_LCY:=CALC_VAT_LCY(SalesCreditMemoHeader."Document Date",VatDetails.Amount,SalesCreditMemoHeader."Currency Code");
+            END;
+
+
+       END;
+
+
+      IF (SalesCreditMemoHeader."Currency Code"='') THEN
+      BEGIN
+      Base_Amount_LCY:=VatDetails.Base;
+      VAT_Amount_LCY:= VatDetails.Amount;
+      END;
+
+      VatDetails."Base LCY":= Base_Amount_LCY;
+      VatDetails."Amount LCY":=VAT_Amount_LCY;
+
+
+
+      VatDetails."VAT Calculation Type" := SalesCrMemoLine."VAT Calculation Type";
+      VatDetails."VAT Bus. Posting Group" := SalesCrMemoLine."VAT Bus. Posting Group";
+      VatDetails."VAT Prod. Posting Group" := SalesCrMemoLine."VAT Prod. Posting Group";
+
+      //YIMM
+      VatDetails."Original Tax Inv. No." :=SalesCrMemoLine."Original Tax Inv. No.";
+
+      VatDetails."VAT %" := SalesCrMemoLine."VAT %";
+      VatDetails."Vat Type" := VatDetails."Vat Type"::Out;
+      VatDetails.Approved := TRUE;
+
+      //YIMMCH
+        VatDetails."User ID" := SalesCreditMemoHeader.UID;
+        //UPG13C.begin
+        //IF UserName.GET(SalesCreditMemoHeader.UID) THEN
+        //VatDetails."User Name" := UserName.Name;
+        //UPG13C.end
+
+        ShipTo.RESET;
+        IF ShipTo.GET(SalesCreditMemoHeader."Sell-to Customer No.",SalesCreditMemoHeader."Ship-to Code") THEN BEGIN
+          VatDetails."NPWP Name" := ShipTo."Name 2";
+          VatDetails."NPWP Address" := ShipTo.Address;
+          VatDetails."NPWP Address 2" := ShipTo."Address 2";
+          VatDetails."NPWP City" := ShipTo.City;
+        END ELSE BEGIN
+          VatDetails."NPWP Name" := SalesCreditMemoHeader."Sell-to Customer Name";
+          VatDetails."NPWP Address" := SalesCreditMemoHeader."Sell-to Address";
+          VatDetails."NPWP Address 2" := SalesCreditMemoHeader."Sell-to Address 2";
+          VatDetails."NPWP City" := SalesCreditMemoHeader."Sell-to City";
+       END;
+
+      //YIMMCH
+
+
+      VatDetails.MODIFY;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE Date_dmy@1000000003(Wrkdate@1000000000 : Date);
+    BEGIN
+      // UPG09R2.begin
+      day:=DATE2DMY(Wrkdate,1);
+      month:=DATE2DMY(Wrkdate,2);
+      year:=DATE2DMY(Wrkdate,3);
+      year1:=FORMAT(COPYSTR(FORMAT(year),3,2));
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CALC_BASE_LCY@1000000007(TransDate@1000000000 : Date;Amount@1000000001 : Decimal;Curr@1000000003 : Code[10]) LCYAmount : Decimal;
+    VAR
+      CurrxNGrATE@1000000002 : Record 330;
+    BEGIN
+      // UPG09R2.begin
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Starting Date",TransDate);
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Currency Code",Curr);
+
+      IF CurrxNGrATE.FINDFIRST THEN
+        LCYAmount:= Amount * CurrxNGrATE."Rel Tax Rate Amount";
+      EXIT(LCYAmount);
+      // UPG09R2.end
+    END;
+
+    PROCEDURE CALC_VAT_LCY@1000000008(TransDate@1000000001 : Date;Amount@1000000000 : Decimal;Curr@1000000003 : Code[10]) LCYAmount : Decimal;
+    VAR
+      CurrxNGrATE@1000000002 : Record 330;
+    BEGIN
+      // UPG09R2.begin
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Starting Date",TransDate);
+      CurrxNGrATE.SETRANGE(CurrxNGrATE."Currency Code",Curr);
+
+
+      IF CurrxNGrATE.FINDFIRST THEN
+        LCYAmount:= Amount * CurrxNGrATE."Rel Tax Rate Amount";
+      EXIT(LCYAmount);
+      // UPG09R2.end
+    END;
+
+    PROCEDURE GroupSalesTaxInvPostedCr@1000000000(VAR PurCrHead@1000000000 : Record 124;VAR TaxInvDate@1000000012 : Date);
+    VAR
+      TaxPurCrHeader@1000000001 : Record 28077;
+      TaxPurCrLine@1000000002 : Record 28078;
+      Ssetup@1000000003 : Record 311;
+      OrderAdd@1000000004 : Record 224;
+      PurCrHeader@1000000005 : Record 124;
+      DocNo@1000000006 : Code[20];
+      NosSeries@1000000007 : Codeunit 396;
+      PurchaseCrMemoLine@1000000008 : Record 125;
+      Window@1000000009 : Dialog;
+      Text001@1000000010 : TextConst;
+      PurchInvHeader@1000000011 : Record 122;
+      VATOutHeader@1000000013 : Record 50030;
+      MasterSetup@1102159001 : Record 50008;
+    BEGIN
+      // UPG09R2.begin
+      Ssetup.GET;
+      MasterSetup.GET;  //>>15042013/PC/CR#014
+      //REPEAT //Rajesh
+
+        Window.OPEN(Text050);
+
+
+
+        PurCrHeader.RESET;
+        IF PurCrHeader.GET(PurCrHead."No.") THEN;
+
+        VATOutHeader.RESET;
+        VATOutHeader.SETRANGE(VATOutHeader."Entry Type",VATOutHeader."Entry Type"::Purchase);
+        VATOutHeader.SETRANGE(VATOutHeader."Document No.",PurCrHead."No.");
+
+        IF (VATOutHeader.FINDSET ) THEN;
+
+
+        IF VATOutHeader.NPWP= '' THEN
+        BEGIN
+          "Tax Inv No.1" := NosSeries.GetNextNo(Ssetup."Posted Tax Invoice Nos.",WORKDATE,TRUE);
+          IF (PurCrHeader."Type Of Transaction"=PurCrHeader."Type Of Transaction"::FA) THEN
+            F3:='090.000-'
+          ELSE
+            F3:='010.000-';
+
+        Date_dmy(TaxInvDate);
+
+        F4:=('.'+year1);
+
+        //DocNo := F3 + F4 + "Tax Inv No.1";
+
+         IF (month<10) THEN
+               DocNo := "Tax Inv No.1"+'.0'+FORMAT(month)+F4
+          ELSE
+               DocNo := "Tax Inv No.1"+'.'+FORMAT(month)+F4;
+
+        END
+         ELSE
+         BEGIN
+           "Tax Inv No.1" := NosSeries.GetNextNo(Ssetup."Posted Nppkp Tax Nos",WORKDATE,TRUE);
+
+
+           //>>02042013/PC/CR#014   Code commented for CR#014
+           {IF (PurCrHeader."Type Of Transaction"=PurCrHeader."Type Of Transaction"::FA) THEN
+             F3:='090.000-'
+           ELSE
+             F3:='010.000-';
+           Date_dmy(TaxInvDate);
+
+           F4:=(year1 +'.');
+
+           DocNo:= F3 + F4 + "Tax Inv No.1";}
+           //<<02042013/PC/CR#014
+
+
+           //>>02042013/PC/CR#014
+           IF MasterSetup."Enable New Tax Inv. No. Rule" THEN BEGIN
+             IF (PurCrHeader."Type Of Transaction"=PurCrHeader."Type Of Transaction"::FA) THEN
+               F3 := '090.'
+             ELSE
+               F3 := '010.';
+             DocNo := F3 + "Tax Inv No.1";
+             IF TaxInvDate > DMY2DATE(31,3,2013) THEN
+               "CheckDuplicacyTaxInvNo."(DocNo);
+
+           END
+           ELSE BEGIN
+             IF (PurCrHeader."Type Of Transaction"=PurCrHeader."Type Of Transaction"::FA) THEN
+               F3 := '090.000-'
+             ELSE
+               F3 := '010.000-';
+             Date_dmy(TaxInvDate);
+             F4 := (year1 +'.');
+             DocNo := F3 + F4 + "Tax Inv No.1";
+           END;
+           //<<02042013/PC/CR#014
+
+         END;
+
+        TaxPurCrHeader.RESET;
+        TaxPurCrHeader.INIT;
+        TaxPurCrHeader.TRANSFERFIELDS(PurCrHeader);
+        TaxPurCrHeader."No." := DocNo;
+        TaxPurCrHeader."Posting Date" := WORKDATE;
+        TaxPurCrHeader."Pre-Assigned No." := PurCrHeader."No.";
+        TaxPurCrHeader."Ship-to Code":=VATOutHeader.NPWP;
+        TaxPurCrHeader."Ship-to Name":=VATOutHeader."NPWP Name";
+        TaxPurCrHeader."Ship-to Name 2":=VATOutHeader."NPWP Name";
+        TaxPurCrHeader."Ship-to Address":=VATOutHeader."NPWP Address";
+        TaxPurCrHeader."Ship-to Address 2":=VATOutHeader."NPWP Address 2";
+        TaxPurCrHeader."Ship-to City":=VATOutHeader."NPWP City";
+        TaxPurCrHeader."New NPWP No":=VATOutHeader.NPWP;
+        TaxPurCrHeader."Tax Invoice Date":=VATOutHeader."Tax Invoice Date";
+
+        TaxPurCrHeader.INSERT(TRUE);
+
+        PurchaseCrMemoLine.RESET;
+        PurchaseCrMemoLine.SETRANGE(PurchaseCrMemoLine."Document No.",PurCrHead."No.");
+        PurchaseCrMemoLine.SETFILTER(PurchaseCrMemoLine."VAT %",'<>%1',0);
+
+        IF PurchaseCrMemoLine.FINDSET THEN REPEAT
+          TaxPurCrLine.RESET;
+          TaxPurCrLine.INIT;
+          TaxPurCrLine.TRANSFERFIELDS(PurchaseCrMemoLine);
+
+          TaxPurCrLine."Tax Invoice Date":=VATOutHeader."Tax Invoice Date";    /// this line added by nitin om 03-march-2010
+
+      // the above line is added, because some times the user by mistake filled the wrong date, and the date is corrected at the approval
+      // end but not updated at Pur Tx Crm Line.
+
+
+          TaxPurCrLine."Document No." := DocNo ;
+          TaxPurCrLine.INSERT(TRUE);
+
+          //PurchaseCrMemoLine."Posted Tax Document" := TRUE;
+
+
+          TaxPurCrLine."New NPWP":=VATOutHeader.NPWP;
+
+
+
+
+
+
+          //PurchaseCrMemoLine.MODIFY;
+        UNTIL(PurchaseCrMemoLine.NEXT=0);
+
+        PurchaseCrMemoLine.RESET;
+        PurchaseCrMemoLine.SETRANGE(PurchaseCrMemoLine."Document No.",PurCrHead."No.");
+        PurchaseCrMemoLine.SETFILTER(PurchaseCrMemoLine."VAT %",'<>%1',0);
+
+       CreateVatDetailsCr(PurchaseCrMemoLine,PurCrHeader."Type Of Transaction",
+              PurCrHeader."Posting Date",VATOutHeader."Tax Invoice Date",PurCrHeader."New NPWP No",DocNo,VATOutHeader);//YIMMCH
+
+
+
+
+        Window.UPDATE(1,PurCrHeader."Buy-from Vendor No.");
+        Window.UPDATE(2,PurCrHeader."No.");
+      // UPG09R2.end
+    END;
+
+    PROCEDURE "//>> CR#014"@1102159002();
+    BEGIN
+      // UPG09R2
+    END;
+
+    PROCEDURE "CheckDuplicacyTaxInvNo."@1102159001("Tax Inv No."@1102159004 : Code[20]);
+    VAR
+      "Tax Inv No.Copy"@1102159003 : Code[20];
+      "Tax Inv No.Orig."@1102159001 : Code[20];
+      "Master Setup"@1102159005 : Record 50008;
+      PurchLine@1102159006 : Record 39;
+      "PurchInv Line"@1102159007 : Record 123;
+      SalesLine@1102159002 : Record 37;
+      "SalesCr.MemoLine"@1102159008 : Record 115;
+      Vat_Details@1102159009 : Record 50015;
+      PurchCrMemoHeader@1102159010 : Record 124;
+      Sale_Inv_hdr@1102159011 : Record 112;
+      Sales_Hdr@1102159012 : Record 36;
+      PurchHeader1@1102159013 : Record 38;
+    BEGIN
+      // UPG09R2.begin
+      CLEAR("Tax Inv No.Copy");
+      CLEAR("Tax Inv No.Orig.");
+      "Tax Inv No.Orig." := "Tax Inv No.";
+      "Tax Inv No.Copy" := "Tax Inv No.";
+
+      "Tax Inv No.Copy" := DELCHR("Tax Inv No.Copy",'=','.');
+      "Tax Inv No.Copy" := DELCHR("Tax Inv No.Copy",'=','-');
+      "Tax Inv No.Copy" := INSSTR("Tax Inv No.Copy",'.',4);
+      "Tax Inv No.Copy" := INSSTR("Tax Inv No.Copy",'.',8);
+      "Tax Inv No.Copy" := INSSTR("Tax Inv No.Copy",'-',11);
+
+      //Purchase Invoices
+      PurchLine.RESET;
+      PurchLine.SETRANGE(PurchLine."Document Type",PurchLine."Document Type"::Invoice);
+      PurchLine.SETCURRENTKEY(PurchLine."Tax Invoice No.");
+      PurchLine.SETFILTER(PurchLine."Tax Invoice No.",'%1 |%2',"Tax Inv No.Orig.","Tax Inv No.Copy");
+      IF PurchLine.FINDFIRST THEN
+      REPEAT
+        PurchHeader1.RESET;
+        IF PurchHeader1.GET(PurchHeader1."Document Type"::Invoice,PurchLine."Document No.") THEN
+        BEGIN
+          IF PurchHeader1."Reason Code" = 'NORMAL' THEN
+            MESSAGE("Text-ErrorDuplicacy-Purchase","Tax Inv No.",PurchLine."Document No.");
+        END;
+      UNTIL PurchLine.NEXT = 0;
+
+
+
+      //Posted Purchase invoices
+      "PurchInv Line".RESET;
+      "PurchInv Line".SETCURRENTKEY("PurchInv Line"."Tax Invoice No.");
+      "PurchInv Line".SETFILTER("PurchInv Line"."Tax Invoice No.",'%1 |%2',"Tax Inv No.Orig.","Tax Inv No.Copy");
+      IF "PurchInv Line".FINDFIRST THEN
+      BEGIN
+        PurchCrMemoHeader.RESET;
+        PurchCrMemoHeader.SETRANGE(PurchCrMemoHeader."Applies-to Doc. Type",PurchCrMemoHeader."Applies-to Doc. Type"::Invoice);
+        PurchCrMemoHeader.SETRANGE(PurchCrMemoHeader."Applies-to Doc. No.","PurchInv Line"."Document No.");
+        PurchCrMemoHeader.SETRANGE(PurchCrMemoHeader.ActualCreditMemo,FALSE);
+        IF NOT (PurchCrMemoHeader.FINDFIRST) THEN
+          MESSAGE("Text-ErrorDuplicacy-PostedPur","Tax Inv No.","PurchInv Line"."Document No.");
+      END;
+
+      //Cust acc payable
+      SalesLine.RESET;
+      SalesLine.SETFILTER(SalesLine."Document Type",'%1',SalesLine."Document Type"::"Credit Memo");
+      SalesLine.SETCURRENTKEY(SalesLine."Tax Invoice No.");
+      SalesLine.SETFILTER(SalesLine."Tax Invoice No.",'%1 |%2',"Tax Inv No.Orig.","Tax Inv No.Copy");
+      IF SalesLine.FINDFIRST THEN
+      REPEAT
+        Sales_Hdr.RESET;
+        IF Sales_Hdr.GET(Sales_Hdr."Document Type"::"Credit Memo",SalesLine."Document No.") THEN
+        BEGIN
+          IF (Sales_Hdr."Reason Code" = 'SALRT') THEN
+            MESSAGE("Text-ErrorDuplicacy-Sales","Tax Inv No.",SalesLine."Line No.",SalesLine."Document No.");
+        END;
+      UNTIL SalesLine.NEXT = 0;
+
+
+      //Posted Cust acc payable
+      "SalesCr.MemoLine".RESET;
+      "SalesCr.MemoLine".SETCURRENTKEY("SalesCr.MemoLine"."Tax Invoice No.");
+      "SalesCr.MemoLine".SETFILTER("SalesCr.MemoLine"."Tax Invoice No.",'%1 |%2',"Tax Inv No.Orig.","Tax Inv No.Copy");
+      IF "SalesCr.MemoLine".FINDFIRST THEN
+      BEGIN
+        Sale_Inv_hdr.RESET;
+        Sale_Inv_hdr.SETRANGE(Sale_Inv_hdr."Applies-to Doc. Type",Sale_Inv_hdr."Applies-to Doc. Type"::"Credit Memo");
+        Sale_Inv_hdr.SETRANGE(Sale_Inv_hdr."Applies-to Doc. No.","SalesCr.MemoLine"."Document No.");
+        Sale_Inv_hdr.SETRANGE(Sale_Inv_hdr.ActualCreditMemo,FALSE);
+        IF NOT (Sale_Inv_hdr.FINDFIRST) THEN
+          MESSAGE("Text-ErrorDuplicacy-PostedSale","Tax Inv No.","SalesCr.MemoLine"."Line No.","SalesCr.MemoLine"."Document No.");
+      END;
+      // UPG09R2.end
+    END;
+
+    PROCEDURE "//<< CR#014"@1102159003();
+    BEGIN
+      //UPG09R2
+    END;
+
+    BEGIN
+    {
+      Date               Sign                 Ref_ID                 Description
+      02042013            PC                  CR#014                 Implementation of New Tax Inv. No. Series Rule
+
+      //YIMMAVATO //YIMMRVATO
+      a) Code Write to use different number series for npwp/Nppkp
+      b) code commented and new code write to post the sales tax Invoice on the basis on Tax invoice date;
+      c) For Entry In VAT Detail Table On Posting Sales Credit Memo//AKS200309
+      d) New functions added to map the Vat out and VAT in process
+
+      //YIMM
+      FOR FLOATING THE VALUE OF ORGINAL TAX INVOICE NO.
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      NAV2009 R2 to NAV13 Merged Code in objects identification.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+      //YIMMDEVIP1.0
+      Code Corrected for VAT OUT-Tax Invoice Generation (FA and Special case).
+    }
+    END.
+  }
+}
+

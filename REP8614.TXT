@@ -1,0 +1,95 @@
+OBJECT Report 8614 Get Config. Tables
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Get Config. Tables;
+               ENA=Get Config. Tables];
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 1   ;    ;DataItem;                    ;
+               DataItemTable=Table2000000001;
+               DataItemTableView=WHERE(Type=CONST(Table),
+                                       ID=FILTER(..99000999|2000000004|2000000005));
+               OnPreDataItem=BEGIN
+                               ConfigMgt.GetConfigTables(
+                                 Object,IncludeWithDataOnly,IncludeRelatedTables,IncludeDimensionTables,IncludeLicensedTablesOnly,TRUE);
+                               CurrReport.BREAK;
+                             END;
+
+               ReqFilterFields=ID,Name,Modified,Date,Version List }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 5   ;0   ;Container ;
+                  ContainerType=ContentArea }
+
+      { 4   ;1   ;Group     ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 3   ;2   ;Field     ;
+                  CaptionML=[ENU=Include With Data Only;
+                             ENA=Include With Data Only];
+                  SourceExpr=IncludeWithDataOnly }
+
+      { 1   ;2   ;Field     ;
+                  CaptionML=[ENU=Include Related Tables;
+                             ENA=Include Related Tables];
+                  OptionCaptionML=[ENU=Purchase,Sale,Positive Adjmt.,Negative Adjmt.;
+                                   ENA=Purchase,Sale,Positive Adjmt.,Negative Adjmt.];
+                  SourceExpr=IncludeRelatedTables }
+
+      { 2   ;2   ;Field     ;
+                  CaptionML=[ENU=Include Dimension Tables;
+                             ENA=Include Dimension Tables];
+                  SourceExpr=IncludeDimensionTables }
+
+      { 6   ;2   ;Field     ;
+                  CaptionML=[ENU=Include Licensed Tables Only;
+                             ENA=Include Licensed Tables Only];
+                  SourceExpr=IncludeLicensedTablesOnly }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      ConfigMgt@1000 : Codeunit 8616;
+      IncludeRelatedTables@1001 : Boolean;
+      IncludeDimensionTables@1002 : Boolean;
+      IncludeWithDataOnly@1003 : Boolean;
+      IncludeLicensedTablesOnly@1004 : Boolean;
+
+    PROCEDURE InitializeRequest@1(NewIncludeWithDataOnly@1000 : Boolean;NewIncludeRelatedTables@1002 : Boolean;NewIncludeDimensionTables@1001 : Boolean;NewIncludeLicensedTablesOnly@1003 : Boolean);
+    BEGIN
+      IncludeWithDataOnly := NewIncludeWithDataOnly;
+      IncludeRelatedTables := NewIncludeRelatedTables;
+      IncludeDimensionTables := NewIncludeDimensionTables;
+      IncludeLicensedTablesOnly := NewIncludeLicensedTablesOnly;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

@@ -1,0 +1,112 @@
+OBJECT Page 985 Document Search
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Document Search;
+               ENA=Document Search];
+    PageType=Card;
+    ShowFilter=No;
+    ActionList=ACTIONS
+    {
+      { 1       ;    ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 12      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Search;
+                                 ENA=Search] }
+      { 4       ;2   ;Action    ;
+                      Name=Search;
+                      CaptionML=[ENU=Search;
+                                 ENA=Search];
+                      ToolTipML=[ENU=Search for unposted document(s) with the specified number(s) or amount.;
+                                 ENA=Search for unposted document(s) with the specified number(s) or amount.];
+                      Promoted=Yes;
+                      PromotedIsBig=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 PaymentRegistrationMgt.FindRecords(TempDocumentSearchResult,DocumentNo,Amount,AmountTolerance);
+                                 PAGE.RUN(PAGE::"Document Search Result",TempDocumentSearchResult);
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 3   ;    ;Container ;
+                Name=Content1;
+                ContainerType=ContentArea }
+
+    { 7   ;1   ;Group     ;
+                CaptionML=[ENU=Search Criteria;
+                           ENA=Search Criteria];
+                GroupType=Group }
+
+    { 5   ;2   ;Field     ;
+                Name=DocumentNo;
+                CaptionML=[ENU=Document No.;
+                           ENA=Document No.];
+                SourceExpr=DocumentNo }
+
+    { 6   ;2   ;Field     ;
+                Name=Amount;
+                CaptionML=[ENU=Amount;
+                           ENA=Amount];
+                BlankZero=Yes;
+                SourceExpr=Amount;
+                OnValidate=BEGIN
+                             Warning := PaymentRegistrationMgt.SetToleranceLimits(Amount,AmountTolerance,ToleranceTxt);
+                           END;
+                            }
+
+    { 2   ;2   ;Field     ;
+                Name=AmountTolerance;
+                CaptionML=[ENU=Amount Tolerance %;
+                           ENA=Amount Tolerance %];
+                BlankZero=Yes;
+                SourceExpr=AmountTolerance;
+                MinValue=0;
+                MaxValue=100;
+                OnValidate=BEGIN
+                             Warning := PaymentRegistrationMgt.SetToleranceLimits(Amount,AmountTolerance,ToleranceTxt)
+                           END;
+                            }
+
+    { 10  ;1   ;Group     ;
+                CaptionML=[ENU=Information;
+                           ENA=Information];
+                GroupType=Group }
+
+    { 9   ;2   ;Group     ;
+                GroupType=FixedLayout }
+
+    { 8   ;3   ;Group     ;
+                GroupType=Group }
+
+    { 11  ;4   ;Field     ;
+                SourceExpr=Warning;
+                Editable=FALSE;
+                Style=Strong }
+
+  }
+  CODE
+  {
+    VAR
+      TempDocumentSearchResult@1003 : TEMPORARY Record 983;
+      PaymentRegistrationMgt@1002 : Codeunit 980;
+      Warning@1001 : Text;
+      DocumentNo@1004 : Code[20];
+      Amount@1005 : Decimal;
+      AmountTolerance@1000 : Decimal;
+      ToleranceTxt@1006 : TextConst 'ENU=The program will search for documents with amounts between %1 and %2.;ENA=The program will search for documents with amounts between %1 and %2.';
+
+    BEGIN
+    END.
+  }
+}
+

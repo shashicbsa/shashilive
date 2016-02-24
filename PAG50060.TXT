@@ -1,0 +1,221 @@
+OBJECT Page 50060 VAT Detail Information
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/25/14;
+    Time=13:44:16;
+    Modified=Yes;
+    Version List=YIMMACH,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    Editable=No;
+    SourceTable=Table50015;
+    PageType=List;
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000000;1;Group  ;
+                GroupType=Repeater }
+
+    { 1000000001;2;Field  ;
+                SourceExpr="Entry Type" }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Transaction Type" }
+
+    { 1000000005;2;Field  ;
+                Width=30;
+                SourceExpr="Document No." }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Document Type" }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Posting Date" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="B/L Date" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Source Type" }
+
+    { 1000000013;2;Field  ;
+                Width=30;
+                SourceExpr="Source No." }
+
+    { 1000000072;2;Field  ;
+                Width=50;
+                SourceExpr="NPWP Name" }
+
+    { 1000000015;2;Field  ;
+                Width=30;
+                SourceExpr=NPWP }
+
+    { 1102159011;2;Field  ;
+                SourceExpr="PPH NPWP No." }
+
+    { 1000000017;2;Field  ;
+                Width=20;
+                SourceExpr="Currency Code" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="Due Date" }
+
+    { 1000000021;2;Field  ;
+                Width=20;
+                SourceExpr="Global Dimension 1 Code" }
+
+    { 1000000023;2;Field  ;
+                Width=20;
+                SourceExpr="Global Dimension 2 Code" }
+
+    { 1000000025;2;Field  ;
+                Width=30;
+                SourceExpr="Kwitansi No." }
+
+    { 1000000027;2;Field  ;
+                Width=30;
+                SourceExpr="Commercial Invoice No." }
+
+    { 1000000029;2;Field  ;
+                SourceExpr="Commercial Invoice Date" }
+
+    { 1000000031;2;Field  ;
+                Width=30;
+                SourceExpr="Tax Invoice No." }
+
+    { 1000000033;2;Field  ;
+                SourceExpr="Tax Invoice Date" }
+
+    { 1000000035;2;Field  ;
+                Width=20;
+                SourceExpr=Base }
+
+    { 1000000037;2;Field  ;
+                SourceExpr=Amount }
+
+    { 1000000039;2;Field  ;
+                SourceExpr="VAT Calculation Type" }
+
+    { 1000000041;2;Field  ;
+                Width=20;
+                SourceExpr="Reason Code" }
+
+    { 1000000043;2;Field  ;
+                SourceExpr="Base LCY" }
+
+    { 1000000045;2;Field  ;
+                SourceExpr="Amount LCY" }
+
+    { 1000000047;2;Field  ;
+                Width=10;
+                SourceExpr="VAT Bus. Posting Group" }
+
+    { 1102159002;2;Field  ;
+                Width=10;
+                SourceExpr="VAT Prod. Posting Group" }
+
+    { 1000000049;2;Field  ;
+                SourceExpr=Approved }
+
+    { 1000000051;2;Field  ;
+                Width=50;
+                SourceExpr="Buy-from Vendor Name" }
+
+    { 1000000053;2;Field  ;
+                Width=50;
+                SourceExpr="Buy-from Vendor Name 2" }
+
+    { 1000000055;2;Field  ;
+                Width=70;
+                SourceExpr="Buy-from Address" }
+
+    { 1000000057;2;Field  ;
+                Width=70;
+                SourceExpr="Buy-from Address 2" }
+
+    { 1000000059;2;Field  ;
+                Width=30;
+                SourceExpr="Buy-from City" }
+
+    { 1000000061;2;Field  ;
+                SourceExpr="Vat Type" }
+
+    { 1000000063;2;Field  ;
+                Width=30;
+                SourceExpr="Original Tax Inv. No." }
+
+    { 1000000065;2;Field  ;
+                SourceExpr=Updated }
+
+    { 1102159003;2;Field  ;
+                Width=20;
+                SourceExpr=Base_UPdate }
+
+    { 1102159004;2;Field  ;
+                Width=20;
+                SourceExpr=Amount_Update }
+
+    { 1102159005;2;Field  ;
+                Width=20;
+                SourceExpr=BaseLCY_Update }
+
+    { 1102159006;2;Field  ;
+                Width=20;
+                SourceExpr=AmountLCY_UPdate }
+
+    { 1102159007;2;Field  ;
+                SourceExpr="Update Approve" }
+
+    { 1102159008;2;Field  ;
+                SourceExpr="Update Approved" }
+
+    { 1000000067;2;Field  ;
+                SourceExpr=Hold }
+
+    { 1102159009;2;Field  ;
+                Width=20;
+                SourceExpr="User ID" }
+
+    { 1102159010;2;Field  ;
+                Width=50;
+                SourceExpr="User Name" }
+
+    { 1102159012;2;Field  ;
+                Width=90;
+                SourceExpr="NPWP Address" }
+
+    { 1102159013;2;Field  ;
+                Width=90;
+                SourceExpr="NPWP Address 2" }
+
+    { 1102159014;2;Field  ;
+                Width=30;
+                SourceExpr="NPWP City" }
+
+    { 1102159015;2;Field  ;
+                SourceExpr=CorrectionEntry }
+
+    { 1102159016;2;Field  ;
+                SourceExpr=Seq }
+
+    { 1102159017;2;Field  ;
+                SourceExpr=Status }
+
+    { 1102159018;2;Field  ;
+                Width=250;
+                SourceExpr=Comment }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

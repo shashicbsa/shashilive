@@ -1,0 +1,58 @@
+OBJECT Table 11609 EFT Register
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    OnDelete=BEGIN
+               VendLedgerEntry.SETCURRENTKEY("EFT Register No.");
+               VendLedgerEntry.SETRANGE("EFT Register No.","No.");
+               IF VendLedgerEntry.FINDFIRST THEN
+                 ERROR(Text11000,TABLECAPTION,FIELDCAPTION("No."),VendLedgerEntry.TABLECAPTION);
+             END;
+
+    CaptionML=[ENU=EFT Register;
+               ENA=EFT Register];
+    LookupPageID=Page11615;
+    DrillDownPageID=Page11615;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Integer       ;CaptionML=[ENU=No.;
+                                                              ENA=No.];
+                                                   NotBlank=Yes }
+    { 2   ;   ;EFT Payment         ;Boolean       ;CaptionML=[ENU=EFT Payment;
+                                                              ENA=EFT Payment] }
+    { 3   ;   ;File Created        ;Date          ;CaptionML=[ENU=File Created;
+                                                              ENA=File Created] }
+    { 4   ;   ;Total Amount (LCY)  ;Decimal       ;CaptionML=[ENU=Total Amount (LCY);
+                                                              ENA=Total Amount (LCY)] }
+    { 5   ;   ;Time                ;Time          ;CaptionML=[ENU=Time;
+                                                              ENA=Time] }
+    { 6   ;   ;File Description    ;Text12        ;CaptionML=[ENU=File Description;
+                                                              ENA=File Description] }
+    { 7   ;   ;Bank Account Code   ;Code20        ;CaptionML=[ENU=Bank Account Code;
+                                                              ENA=Bank Account Code] }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      VendLedgerEntry@1500000 : Record 25;
+      Text11000@1500001 : TextConst '@@@="%1=table caption, %2=field value, %3=table caption";ENU=You cannot delete %1 %2 because there is at least one %3 associated with it.;ENA=You cannot delete %1 %2 because there is at least one %3 associated with it.';
+
+    BEGIN
+    END.
+  }
+}
+

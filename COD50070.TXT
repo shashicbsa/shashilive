@@ -1,0 +1,206 @@
+OBJECT Codeunit 50070 Calc_AP_AR_ELI_KI
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/27/10;
+    Time=13:39:05;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    TableNo=60021;
+    OnRun=BEGIN
+            //*************************************************************************************
+
+            StartDate:=0D;
+            EndDate:=EndD;
+
+
+            MasterSetup.GET;
+            Cnt:=0;
+
+
+            VLE_YIMM.RESET;
+            VLE_YIMM.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+            VLE_YIMM.SETCURRENTKEY("Vendor Posting Group","Vendor No.");
+            VLE_YIMM.SETRANGE(VLE_YIMM."Vendor No.",MasterSetup."YMKI Code");
+            VLE_YIMM.SETRANGE(VLE_YIMM."Date Filter",0D,EndDate);
+
+            IF (VLE_YIMM.FINDFIRST) THEN
+
+             REPEAT
+
+             VLE_YIMM.CALCFIELDS(VLE_YIMM."Original Amt. (LCY)",VLE_YIMM."Remaining Amt. (LCY)");
+
+            //   IF (VLE_YIMM."Remaining Amt. (LCY)"<>0) THEN
+
+            //    BEGIN
+
+                   IF (Cnt=0)  THEN
+                   BEGIN
+                   CalcAmt:=CalcAmt+VLE_YIMM."Remaining Amt. (LCY)";
+                   LastPG:=VLE_YIMM."Vendor Posting Group";
+                   Cnt:=Cnt+1;
+                   END
+                     ELSE
+                       IF ((LastPG<>VLE_YIMM."Vendor Posting Group"))  THEN
+                        BEGIN
+
+                         InsertYIMMWJELIData(LastPG,CalcAmt,MasterSetup."Company Name YIMM",StartDate,EndDate);
+
+                         CalcAmt:=0;
+                         CalcAmt:=CalcAmt+VLE_YIMM."Remaining Amt. (LCY)";
+                         LastPG:=VLE_YIMM."Vendor Posting Group";
+                         Cnt:=Cnt+1;
+                        END
+                     ELSE
+                     BEGIN
+                         Cnt:=Cnt+1;
+                         //CalcAmt:=0;
+                         CalcAmt:=CalcAmt+VLE_YIMM."Remaining Amt. (LCY)";
+                         LastPG:=VLE_YIMM."Vendor Posting Group";
+
+                     END;
+
+
+            //    END;
+
+              UNTIL(VLE_YIMM.NEXT=0);
+
+              InsertYIMMWJELIData(LastPG,CalcAmt,MasterSetup."Company Name YIMM",StartDate,EndDate);
+
+            //*************************************************************************************
+
+
+
+            LastPG:='';
+            CalcAmt:=0;
+            Cnt:=0;
+
+            CLE_YIMM.RESET;
+            CLE_YIMM.CHANGECOMPANY(MasterSetup."Company Name YMKI");
+            CLE_YIMM.SETCURRENTKEY("Customer Posting Group","Customer No.");
+            CLE_YIMM.SETRANGE(CLE_YIMM."Customer No.",MasterSetup."YIMM Code");
+            CLE_YIMM.SETRANGE(CLE_YIMM."Date Filter",0D,EndDate);
+
+            IF (CLE_YIMM.FINDFIRST) THEN
+             REPEAT
+
+            // LastPG:=CLE_YIMM."Customer Posting Group";
+
+             CLE_YIMM.CALCFIELDS(CLE_YIMM."Original Amt. (LCY)",CLE_YIMM."Remaining Amt. (LCY)");
+
+              // IF (CLE_YIMM."Remaining Amt. (LCY)"<>0) THEN
+
+              //  BEGIN
+                   IF (Cnt=0)  THEN
+                    BEGIN
+                    CalcAmt:=CalcAmt+CLE_YIMM."Remaining Amt. (LCY)";
+                    LastPG:=CLE_YIMM."Customer Posting Group";
+                    Cnt:=Cnt+1;
+                    END
+                     ELSE
+                      IF ((LastPG<>CLE_YIMM."Customer Posting Group"))  THEN
+                        BEGIN
+                        InsertYIMMWJELIData(LastPG,CalcAmt,MasterSetup."Company Name YMKI",StartDate,EndDate);
+                        CalcAmt:=0;
+                        Cnt:=Cnt+1;
+                        LastPG:=CLE_YIMM."Customer Posting Group";
+                        CalcAmt:=CalcAmt+CLE_YIMM."Remaining Amt. (LCY)";
+                        END
+                       ELSE
+                        BEGIN
+                         Cnt:=Cnt+1;
+                         //CalcAmt:=0;
+                         CalcAmt:=CalcAmt+CLE_YIMM."Remaining Amt. (LCY)";
+                         LastPG:=CLE_YIMM."Customer Posting Group";
+                        END;
+
+              //  END;
+
+              UNTIL(CLE_YIMM.NEXT=0);
+
+              InsertYIMMWJELIData(LastPG,CalcAmt,MasterSetup."Company Name YMKI",StartDate,EndDate);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      VLE_YIMM@1000000000 : Record 25;
+      CLE_YIMM@1000000001 : Record 21;
+      MasterSetup@1000000002 : Record 50008;
+      StartDate@1000000003 : Date;
+      EndDate@1000000007 : Date;
+      CalcAmt@1000000004 : Decimal;
+      Cnt@1000000005 : Integer;
+      LastPG@1000000006 : Code[20];
+      YIMMWJEliData@1000000008 : Record 60033;
+      SerNo@1000000009 : Integer;
+
+    PROCEDURE InsertYIMMWJELIData@1000000000(AccCode@1000000000 : Code[20];Amt@1000000001 : Decimal;ComCode@1000000002 : Code[20];StartDateELi@1000000003 : Date;EndDateEli@1000000004 : Date);
+    VAR
+      VendPostGrp@1000000005 : Record 93;
+      CustPostGrp@1000000006 : Record 92;
+    BEGIN
+
+      IF (Amt<>0) THEN
+
+      BEGIN
+
+      YIMMWJEliData.RESET;
+      YIMMWJEliData.SETCURRENTKEY(YIMMWJEliData.Sno);
+
+      IF (YIMMWJEliData.FINDLAST) THEN
+         SerNo:=YIMMWJEliData.Sno+1
+      ELSE
+         SerNo:=1;
+
+      IF (ComCode=MasterSetup."Company Name YIMM") THEN
+      BEGIN
+
+      CLEAR(VendPostGrp);
+      VendPostGrp.RESET;
+      VendPostGrp.CHANGECOMPANY(ComCode);
+      IF (VendPostGrp.GET(AccCode)) THEN;
+
+      YIMMWJEliData.Sno:=SerNo;
+      YIMMWJEliData.AccountCode:=VendPostGrp."Payables Account";
+      YIMMWJEliData.Amount:=Amt;
+      YIMMWJEliData.CompCode:=ComCode;
+      YIMMWJEliData.StDate:=StartDateELi;
+      YIMMWJEliData.EnDate:=EndDateEli;
+      YIMMWJEliData.INSERT(TRUE);
+
+      END;
+
+
+      IF (ComCode=MasterSetup."Company Name YMMWJ") OR
+         (ComCode=MasterSetup."Company Name YMKI")
+      THEN
+      BEGIN
+
+      CLEAR(CustPostGrp);
+      CustPostGrp.RESET;
+      CustPostGrp.CHANGECOMPANY(ComCode);
+      IF (CustPostGrp.GET(AccCode)) THEN;
+
+      YIMMWJEliData.Sno:=SerNo;
+      YIMMWJEliData.AccountCode:=CustPostGrp."Receivables Account";
+      YIMMWJEliData.Amount:=Amt;
+      YIMMWJEliData.CompCode:=ComCode;
+      YIMMWJEliData.StDate:=StartDateELi;
+      YIMMWJEliData.EnDate:=EndDateEli;
+      YIMMWJEliData.INSERT(TRUE);
+
+      END;
+
+
+      END;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

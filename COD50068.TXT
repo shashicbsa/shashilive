@@ -1,0 +1,945 @@
+OBJECT Codeunit 50068 Sale-Purchase From WJ-OLD
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/19/10;
+    Time=18:02:00;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+    TableNo=60021;
+    OnRun=BEGIN
+            //***************************************YIMM ******************************************
+
+            TempDocBuffDELETE;
+
+            "Sales-PurchaseWJ".GET;
+            MasterSetup.GET;
+
+            StDate:=StartD;
+            EnDate:=EndD;
+
+
+            RESET_ALL;
+
+                AccountingPeriod.RESET;
+                AccountingPeriod.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                AccountingPeriod.SETCURRENTKEY(Closed);
+                AccountingPeriod.SETRANGE(Closed,FALSE);
+                AccountingPeriod.FINDFIRST;
+
+                FiscalYearStartDate := AccountingPeriod."Starting Date";
+
+
+
+
+                LastFiscalYearEnd:=CLOSINGDATE(FiscalYearStartDate-1);
+
+            //FiscalYearStartDate:=0D;
+
+
+            GLENTRY.RESET;
+            GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+            GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+            GLENTRY.SETRANGE(GLENTRY."G/L Account No.","Sales-PurchaseWJ"."Sales OTH LOC - RP");
+            GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EndD);
+            GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YMWJ Code");
+
+             IF GLENTRY.FINDFIRST THEN
+              REPEAT
+
+               "Sales OTH LOC - RP-YIMM":="Sales OTH LOC - RP-YIMM"+GLENTRY.Amount;
+
+               TempDocBuffINSERT(GLENTRY."Document No.");
+
+              UNTIL(GLENTRY.NEXT=0);
+
+
+              TempDocBuff.RESET;
+              TempDocBuff.SETCURRENTKEY(DocNo);
+
+              IF TempDocBuff.FINDFIRST THEN
+              REPEAT
+
+                    "GLENTRY-1".RESET;
+                    "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                    "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."VAT-Sales");
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+
+                      IF "GLENTRY-1".FINDFIRST THEN
+                        REPEAT
+                        "VAT-Sales-YIMM":="VAT-Sales-YIMM"+"GLENTRY-1".Amount;
+                      UNTIL("GLENTRY-1".NEXT=0);
+
+
+                    "GLENTRY-1".RESET;
+                    "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                    "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade Account Rec Oth Loc RP");
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+                    "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+
+                      IF "GLENTRY-1".FINDFIRST THEN
+                        REPEAT
+                        "Trade Acc Rec Oth Loc RP-YIMM":="Trade Acc Rec Oth Loc RP-YIMM"+"GLENTRY-1".Amount;
+                      UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+               UNTIL(TempDocBuff.NEXT=0);
+
+            MESSAGE('%1-AR',"Trade Acc Rec Oth Loc RP-YIMM");
+            MESSAGE('%1-VAT',"VAT-Sales-YIMM");
+            MESSAGE('%1-Sales',"Sales OTH LOC - RP-YIMM");
+
+
+
+
+
+            //***********************************************************************************************
+
+
+            GLENTRY.RESET;
+            GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+            GLENTRY.SETCURRENTKEY("G/L Account No.","Posting Date","Entry Type");
+            GLENTRY.SETRANGE(GLENTRY."G/L Account No.","Sales-PurchaseWJ"."Material Cost OTH YMMWJ");
+            GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EndD);
+
+            IF GLENTRY.FINDFIRST THEN
+            REPEAT
+             "Material Cost OTH YMMWJ":="Material Cost OTH YMMWJ"+GLENTRY.Amount;
+            UNTIL(GLENTRY.NEXT=0);
+
+            MESSAGE('%1-Material',"Material Cost OTH YMMWJ");
+
+            //************************************************************************************************
+
+            TempDocBuffDELETE;
+
+            GLENTRY.RESET;
+            GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+            GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+            GLENTRY.SETRANGE(GLENTRY."G/L Account No.","Sales-PurchaseWJ"."Local Part-Purchase");
+            GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EndD);
+            GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YMWJ Code");
+
+            IF GLENTRY.FINDFIRST THEN
+            REPEAT
+
+            "Local Part-PURCHASE":="Local Part-PURCHASE"+GLENTRY.Amount;
+
+            TempDocBuffINSERT(GLENTRY."Document No.");
+
+
+            UNTIL(GLENTRY.NEXT=0);
+
+
+            TempDocBuff.RESET;
+            TempDocBuff.SETCURRENTKEY(DocNo);
+
+              IF TempDocBuff.FINDFIRST THEN
+               REPEAT
+
+
+
+                   "GLENTRY-1".RESET;
+                   "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                   "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."VAT-Purchase");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+                   IF "GLENTRY-1".FINDFIRST THEN
+                   REPEAT
+
+                   "VAT-PURCHASE":="VAT-PURCHASE"+"GLENTRY-1".Amount;
+
+                   UNTIL("GLENTRY-1".NEXT=0);
+
+
+                   "GLENTRY-1".RESET;
+                   "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                   "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade Acc Payable domestic RP");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+                   IF "GLENTRY-1".FINDFIRST THEN
+                   REPEAT
+
+                   "Trade Acc Payable domestic RP":="Trade Acc Payable domestic RP"+"GLENTRY-1".Amount;
+
+                   UNTIL("GLENTRY-1".NEXT=0);
+
+             UNTIL(TempDocBuff.NEXT=0);
+
+            MESSAGE('%1-VAT',"VAT-PURCHASE");
+            MESSAGE('%1-AP',"Trade Acc Payable domestic RP");
+            MESSAGE('%1-LOCAL PArt',"Local Part-PURCHASE");
+
+
+            //*********************************************************************************************
+
+            TempDocBuffDELETE;
+
+            GLENTRY.RESET;
+
+            GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YIMM");
+            GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+            GLENTRY.SETRANGE(GLENTRY."G/L Account No.","Sales-PurchaseWJ"."Finished goods WJ");
+            GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EndD);
+            GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YMWJ Code");
+
+            IF GLENTRY.FINDFIRST THEN
+            REPEAT
+
+            "Finished goods WJ":="Finished goods WJ"+GLENTRY.Amount;
+
+            TempDocBuffINSERT(GLENTRY."Document No.");
+
+            UNTIL(GLENTRY.NEXT=0);
+
+
+            TempDocBuff.RESET;
+            TempDocBuff.SETCURRENTKEY(DocNo);
+
+              IF TempDocBuff.FINDFIRST THEN
+               REPEAT
+
+
+                   "GLENTRY-1".RESET;
+                   "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                   "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."VAT-FG");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+                   IF "GLENTRY-1".FINDFIRST THEN
+                   REPEAT
+
+                   "VAT-PURCH":="VAT-PURCH"+"GLENTRY-1".Amount;
+
+                   UNTIL("GLENTRY-1".NEXT=0);
+
+
+                   "GLENTRY-1".RESET;
+                   "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                   "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade AP domestic RP-FG");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+                   IF "GLENTRY-1".FINDFIRST THEN
+                   REPEAT
+
+                   "Trade Acc Payable dom. RP-PURC":="Trade Acc Payable dom. RP-PURC"+"GLENTRY-1".Amount;
+
+                   UNTIL("GLENTRY-1".NEXT=0);
+
+
+                   "GLENTRY-1".RESET;
+                   "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YIMM");
+                   "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Prepaid income tax");
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EndD);
+                   "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+                   IF "GLENTRY-1".FINDFIRST THEN
+                   REPEAT
+
+                   "Prepaid income tax":="Prepaid income tax"+"GLENTRY-1".Amount;
+
+                   UNTIL("GLENTRY-1".NEXT=0);
+
+            UNTIL(TempDocBuff.NEXT=0);
+
+
+            MESSAGE('%1-Prepaid',"Prepaid income tax");
+            MESSAGE('%1-AP',"Trade Acc Payable dom. RP-PURC");
+            MESSAGE('%1-VAT',"VAT-PURCH");
+            MESSAGE('%1-FG',"Finished goods WJ");
+
+
+
+
+
+            //*******************************************************************************************
+
+            //fUNCTION cALL FOR THE wj dATa
+
+             YMMWJ;
+
+            //fUNCTION cALL FOR THE wj dATa
+
+            //Insert Value in Table
+
+            InsertInvestmentData;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      AccountingPeriod@1000000000 : Record 50;
+      FiscalYearStartDate@1000000001 : Date;
+      LastFiscalYearEnd@1000000002 : Date;
+      MasterSetup@1000000003 : Record 50008;
+      GLENTRY@1000000004 : Record 17;
+      "GLENTRY-1"@1000000011 : Record 17;
+      "GLENTRY-2"@1000000012 : Record 17;
+      StDate@1000000005 : Date;
+      EnDate@1000000006 : Date;
+      "Sales-PurchaseWJ"@1000000007 : Record 60016;
+      "Sales OTH LOC - RP-YIMM"@1000000008 : Decimal;
+      "Trade Acc Rec Oth Loc RP-YIMM"@1000000009 : Decimal;
+      "VAT-Sales-YIMM"@1000000010 : Decimal;
+      "Raw Material import"@1000000013 : Decimal;
+      "IKD Part"@1000000014 : Decimal;
+      "Local Part"@1000000015 : Decimal;
+      "R/M Local"@1000000016 : Decimal;
+      "Material Cost OTH YMMWJ"@1000000017 : Decimal;
+      "Local Part-PURCHASE"@1000000018 : Decimal;
+      "VAT-PURCHASE"@1000000019 : Decimal;
+      "Trade Acc Payable domestic RP"@1000000020 : Decimal;
+      "Finished goods WJ"@1000000021 : Decimal;
+      "VAT-PURCH"@1000000022 : Decimal;
+      "Prepaid income tax"@1000000023 : Decimal;
+      "Trade Acc Payable dom. RP-PURC"@1000000024 : Decimal;
+      "Local Part-WJ"@1000000025 : Decimal;
+      "VAT-WJ"@1000000026 : Decimal;
+      "Trade Acc pay Domestic TP-WJ"@1000000027 : Decimal;
+      "Sales Oth Loc - RP-WJ"@1000000029 : Decimal;
+      "Accrued tax-WJ"@1000000030 : Decimal;
+      "Local Parts-WJ"@1000000031 : Decimal;
+      "R/M Local-WJ"@1000000032 : Decimal;
+      "Material Cost Oth Loc - Oth-WJ"@1000000033 : Decimal;
+      TempDocBuff@1000000028 : TEMPORARY Record 60018;
+      "Trade Acc pay Domestic T"@1000000034 : Decimal;
+      "SalesOTHLoc-RP"@1000000035 : Decimal;
+      "Trade Acc pay Dom TP-WJ"@1000000036 : Decimal;
+      MatCostOthLoc@1000000037 : Decimal;
+      "LocalParts-WJ"@1000000038 : Decimal;
+      "RMLocal-WJ"@1000000039 : Decimal;
+      TradeAccRecMCLocRP@1000000040 : Decimal;
+      SalesMCLocal@1000000041 : Decimal;
+      AccuTax22@1000000042 : Decimal;
+      AccPPN@1000000043 : Decimal;
+      MainMatMCLoc@1000000044 : Decimal;
+      MainMatMCLocRM@1000000045 : Decimal;
+      "RMLocal-MatCost"@1000000046 : Decimal;
+      "LocalParts-MarCost"@1000000047 : Decimal;
+      EndingStock@1000000048 : Decimal;
+      WIP@1000000049 : Decimal;
+      InvestmentData@1000000050 : Record 60017;
+      "WIP-BBEGIN"@1000000051 : Decimal;
+      "WIP-HAND"@1000000052 : Decimal;
+      "FG-BEGIN"@1000000053 : Decimal;
+      "FG-HAND"@1000000054 : Decimal;
+
+    PROCEDURE RESET_ALL@1000000000();
+    BEGIN
+
+      //*******************************************************************************************************
+      "Sales OTH LOC - RP-YIMM":=0;
+      "Trade Acc Rec Oth Loc RP-YIMM":=0;
+      "VAT-Sales-YIMM":=0;
+
+      //******************************************************************************************************
+
+      "Raw Material import":=0;
+      "IKD Part":=0;
+      "Local Part":=0;
+      "R/M Local":=0;
+      "Material Cost OTH YMMWJ":=0;
+
+      //******************************************************************************************************
+
+      "Local Part-PURCHASE":=0;
+      "VAT-PURCHASE":=0;
+      "Trade Acc Payable domestic RP":=0;
+      "Finished goods WJ":=0;
+      "VAT-PURCH":=0;
+      "Prepaid income tax":=0;
+      "Trade Acc Payable dom. RP-PURC":=0;
+
+      //**********************************************************************************************
+    END;
+
+    PROCEDURE YMMWJ@1000000001();
+    BEGIN
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1..%2',"Sales-PurchaseWJ"."Local Part-WJ-ST","Sales-PurchaseWJ"."Local Part-WJ-EN");
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EnDate);
+      GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         "Local Part-WJ":="Local Part-WJ"+GLENTRY.Amount;
+
+         TempDocBuffINSERT(GLENTRY."Document No.");
+
+        UNTIL(GLENTRY.NEXT=0);
+
+
+
+
+      TempDocBuff.RESET;
+      TempDocBuff.SETCURRENTKEY(DocNo);
+
+        IF TempDocBuff.FINDFIRST THEN
+        REPEAT
+
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."VAT-Sales-WJ");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "VAT-WJ":="VAT-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade Acc pay Domestic TP");
+
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "Trade Acc pay Domestic TP-WJ":="Trade Acc pay Domestic TP-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+      UNTIL(TempDocBuff.NEXT=0);
+
+      MESSAGE('%1-AP',"Trade Acc pay Domestic TP-WJ");
+      MESSAGE('%1-VAT',"VAT-WJ");
+      MESSAGE('%1-LocalPart',"Local Part-WJ");
+
+      //********************************************************************************************
+
+
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',"Sales-PurchaseWJ"."Sales Oth Loc - RP-WJ");
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EnDate);
+      GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         "Sales Oth Loc - RP-WJ":="Sales Oth Loc - RP-WJ"+GLENTRY.Amount;
+
+         TempDocBuffINSERT(GLENTRY."Document No.");
+
+        UNTIL(GLENTRY.NEXT=0);
+
+      TempDocBuff.RESET;
+      TempDocBuff.SETCURRENTKEY(DocNo);
+
+        IF TempDocBuff.FINDFIRST THEN
+        REPEAT
+
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Accrued tax");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                 "Accrued tax-WJ":="Accrued tax-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade acc rec oth loc RP");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "Trade Acc pay Dom TP-WJ":="Trade Acc pay Dom TP-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+      UNTIL(TempDocBuff.NEXT=0);
+
+      MESSAGE('%1-AP',"Trade Acc pay Dom TP-WJ");
+      MESSAGE('%1-accru',"Accrued tax-WJ");
+      MESSAGE('%1-sales',"Sales Oth Loc - RP-WJ");
+
+      //*********************************************************************************************
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',"Sales-PurchaseWJ"."Material Cost Oth Loc - Oth");
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EnDate);
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         MatCostOthLoc:=MatCostOthLoc+GLENTRY.Amount;
+
+         TempDocBuffINSERT(GLENTRY."Document No.");
+
+        UNTIL(GLENTRY.NEXT=0);
+
+      TempDocBuff.RESET;
+      TempDocBuff.SETCURRENTKEY(DocNo);
+
+        IF TempDocBuff.FINDFIRST THEN
+        REPEAT
+
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Local Parts-WJ");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                 "LocalParts-WJ":="LocalParts-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."R/M Local-WJ");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "RMLocal-WJ":="RMLocal-WJ"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+      UNTIL(TempDocBuff.NEXT=0);
+
+      MESSAGE('%1-MAT',MatCostOthLoc);
+      MESSAGE('%1-Parts',"LocalParts-WJ");
+      MESSAGE('%1-RM',"RMLocal-WJ");
+
+      //**********************************************************************************************
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',"Sales-PurchaseWJ"."Sales M/C Loc");
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EnDate);
+      GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         SalesMCLocal:=SalesMCLocal+GLENTRY.Amount;
+
+         TempDocBuffINSERT(GLENTRY."Document No.");
+
+        UNTIL(GLENTRY.NEXT=0);
+
+      TempDocBuff.RESET;
+      TempDocBuff.SETCURRENTKEY(DocNo);
+
+        IF TempDocBuff.FINDFIRST THEN
+        REPEAT
+
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Accrued Tax 22");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                 AccuTax22:=AccuTax22+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Accrued Tax PPN");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  AccPPN:=AccPPN+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Trade acc rec MC loc RP-Sales");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  TradeAccRecMCLocRP:=TradeAccRecMCLocRP+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+
+
+
+      UNTIL(TempDocBuff.NEXT=0);
+
+      MESSAGE('%1-AR',TradeAccRecMCLocRP);
+      MESSAGE('%1-accruPPN',AccPPN);
+      MESSAGE('%1-ACCTAX',AccuTax22);
+      MESSAGE('%1-SalesMC',SalesMCLocal);
+
+      //*********************************************************************************************
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1',"Sales-PurchaseWJ"."Main Material M/C Loc Loc");
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",FiscalYearStartDate,EnDate);
+      //GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         MainMatMCLoc:=MainMatMCLoc+GLENTRY.Amount;
+
+         TempDocBuffINSERT(GLENTRY."Document No.");
+
+        UNTIL(GLENTRY.NEXT=0);
+
+      //TempDocBuff.RESET;
+      //TempDocBuff.SETCURRENTKEY(DocNo);
+
+      //  IF TempDocBuff.FINDFIRST THEN
+       // REPEAT
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Main Material M/C Loc R/M");
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                MainMatMCLocRM:=MainMatMCLocRM+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."R/M Local-MatCost");
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "RMLocal-MatCost":="RMLocal-MatCost"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."Local Parts");
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Document No.",TempDocBuff.DocNo);
+              //"GLENTRY-1".SETRANGE("GLENTRY-1"."Source No.",MasterSetup."YIMM Code");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "LocalParts-MarCost":="LocalParts-MarCost"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+
+
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."WIP-BEG");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "WIP-BBEGIN":="WIP-BBEGIN"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."WIP-ONHAND");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "WIP-HAND":="WIP-HAND"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."FG-BEG");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "FG-BEGIN":="FG-BEGIN"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+              "GLENTRY-1".RESET;
+              "GLENTRY-1".CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+              "GLENTRY-1".SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."G/L Account No.","Sales-PurchaseWJ"."FG-ONHAND");
+              "GLENTRY-1".SETRANGE("GLENTRY-1"."Posting Date",FiscalYearStartDate,EnDate);
+
+                IF "GLENTRY-1".FINDFIRST THEN
+                  REPEAT
+                  "FG-HAND":="FG-HAND"+"GLENTRY-1".Amount;
+                UNTIL("GLENTRY-1".NEXT=0);
+
+
+
+
+
+
+
+
+      //UNTIL(TempDocBuff.NEXT=0);
+
+      MESSAGE('%1-MatMCLOC',MainMatMCLoc);
+      MESSAGE('%1-RM MATCOST',MainMatMCLocRM);
+      MESSAGE('%1-RM',"RMLocal-MatCost");
+      MESSAGE('%1-Local Parts',"LocalParts-MarCost");
+
+      //*********************************************************************************************
+
+
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1..%2',
+      "Sales-PurchaseWJ"."Ending stock in YMMWJ-ST",
+      "Sales-PurchaseWJ"."Ending stock in YMMWJ-EN");
+
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,EnDate);
+
+      //GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         EndingStock:=EndingStock+GLENTRY.Amount;
+
+        UNTIL(GLENTRY.NEXT=0);
+
+
+
+
+      //***********************************************************************************
+
+      TempDocBuffDELETE;
+
+      GLENTRY.RESET;
+      GLENTRY.CHANGECOMPANY(MasterSetup."Company Name YMMWJ");
+      GLENTRY.SETCURRENTKEY("Source Type","Source No.","G/L Account No.","Posting Date","Entry No.");
+
+      GLENTRY.SETFILTER(GLENTRY."G/L Account No.",'%1..%2',
+      "Sales-PurchaseWJ"."WIP-ST",
+      "Sales-PurchaseWJ"."WIP-EN");
+
+      GLENTRY.SETRANGE(GLENTRY."Posting Date",0D,EnDate);
+      //GLENTRY.SETRANGE(GLENTRY."Source No.",MasterSetup."YIMM Code");
+
+       IF GLENTRY.FINDFIRST THEN
+        REPEAT
+
+         WIP:=WIP+GLENTRY.Amount;
+
+        UNTIL(GLENTRY.NEXT=0);
+
+
+
+      //************************************************************************************************
+
+      MESSAGE('%1',EndingStock);
+      MESSAGE('%1',WIP);
+    END;
+
+    PROCEDURE TempDocBuffINSERT@1000000002(DocNuM@1000000000 : Code[50]);
+    BEGIN
+      TempDocBuff.RESET;
+      TempDocBuff.SETCURRENTKEY(DocNo);
+
+      IF NOT (TempDocBuff.GET(DocNuM)) THEN
+         BEGIN
+         TempDocBuff.DocNo:=DocNuM;
+         TempDocBuff.INSERT;
+        END;
+    END;
+
+    PROCEDURE TempDocBuffDELETE@1000000003();
+    BEGIN
+      TempDocBuff.DELETEALL;
+    END;
+
+    PROCEDURE InsertInvestmentData@1000000008();
+    VAR
+      SerNo@1000000000 : Integer;
+    BEGIN
+      InvestmentData.RESET;
+
+
+      InvestmentData.RESET;
+      InvestmentData.SETCURRENTKEY(InvestmentData.SNO);
+      InvestmentData.SETRANGE(InvestmentData.StarDate,StDate);
+      InvestmentData.SETRANGE(InvestmentData.EndDate,EnDate);
+
+      IF InvestmentData.FINDFIRST THEN
+           InvestmentData.DELETE(TRUE);
+
+
+      InvestmentData.RESET;
+      InvestmentData.SETCURRENTKEY(InvestmentData.SNO);
+
+
+      IF NOT (InvestmentData.FINDLAST) THEN
+           SerNo:=1
+      ELSE
+           SerNo:=InvestmentData.SNO+1;
+
+
+      InvestmentData.SNO:=SerNo;
+      InvestmentData."Trade Account Rec Oth Loc RP":="Trade Acc Rec Oth Loc RP-YIMM";
+      InvestmentData."Sales OTH LOC - RP":="Sales OTH LOC - RP-YIMM";
+      InvestmentData."VAT-Sales":="VAT-Sales-YIMM";
+      InvestmentData."Raw Material import":="Raw Material import";
+      InvestmentData."IKD Part":="IKD Part";
+      InvestmentData."Local Part":="Local Part";
+      InvestmentData."R/M Local":="R/M Local";
+      InvestmentData."Material Cost OTH YMMWJ":="Material Cost OTH YMMWJ";
+      InvestmentData."Local Part-Purchase":="Local Part-PURCHASE";
+      InvestmentData."VAT-Purchase":="VAT-PURCHASE";
+      InvestmentData."Trade Acc Payable domestic RP":="Trade Acc Payable domestic RP";
+      InvestmentData."Finished goods WJ":="Finished goods WJ";
+      InvestmentData."VAT-FG":="VAT-PURCH";
+      InvestmentData."Prepaid income tax":="Prepaid income tax";
+      InvestmentData."Trade AP domestic RP-FG":="Trade Acc Payable dom. RP-PURC";
+      InvestmentData."Local Part-WJ-ST":="Local Part-WJ";
+      InvestmentData."VAT-Sales-WJ":="VAT-WJ";
+      InvestmentData."Trade Acc pay Domestic TP":="Trade Acc pay Domestic TP-WJ";
+      InvestmentData."Trade acc rec oth loc RP":="Trade Acc pay Dom TP-WJ";
+      InvestmentData."Sales Oth Loc - RP-WJ":="Sales Oth Loc - RP-WJ";
+      InvestmentData."Accrued tax" :="Accrued tax-WJ";
+      InvestmentData."Local Parts-WJ":="LocalParts-WJ";
+      InvestmentData."R/M Local-WJ":="RMLocal-WJ";
+      InvestmentData."Material Cost Oth Loc - Oth" :=MatCostOthLoc;
+      InvestmentData."Trade acc rec MC loc RP-Sales":=TradeAccRecMCLocRP;
+      InvestmentData."Sales M/C Loc":=SalesMCLocal;
+      InvestmentData."Accrued Tax 22":=AccuTax22;
+      InvestmentData."Accrued Tax PPN":=AccPPN;
+
+
+      {
+      InvestmentData."Local Parts" :="LocalParts-MarCost";
+      InvestmentData."R/M Local-MatCost":="RMLocal-MatCost";
+      InvestmentData."Main Material M/C Loc R/M" :=MainMatMCLocRM;
+      InvestmentData."Main Material M/C Loc Loc":=MainMatMCLoc;
+
+      }
+
+      // Previous
+      InvestmentData."Local Parts" :=MainMatMCLoc;
+      InvestmentData."R/M Local-MatCost":=MainMatMCLocRM;
+      InvestmentData."Main Material M/C Loc R/M" :="RMLocal-MatCost";
+      InvestmentData."Main Material M/C Loc Loc":="LocalParts-MarCost";
+
+
+
+
+
+
+      InvestmentData."Ending stock in YMMWJ":=EndingStock;
+      InvestmentData.WIP:=WIP;
+      InvestmentData.StarDate:=StDate;
+      InvestmentData.EndDate:=EnDate;
+      InvestmentData."WIP-Begin":="WIP-BBEGIN";
+      InvestmentData."WIP-OnHand":="WIP-HAND";
+      InvestmentData."FG-BEGIN":="FG-BEGIN";
+      InvestmentData."FG-OnHand":="FG-HAND";
+
+
+
+      InvestmentData.INSERT(TRUE);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

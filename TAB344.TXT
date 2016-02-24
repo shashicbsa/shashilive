@@ -1,0 +1,142 @@
+OBJECT Table 344 Setup Checklist Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/31/15;
+    Time=16:12:46;
+    Modified=Yes;
+    Version List=Upgrade Toolkit Table - marked for deletion.,UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    DataCaptionFields=Table Name;
+    OnDelete=BEGIN
+               //CommentLine.SETRANGE("Table ID","Table ID"); //UPG13R2DEV
+               //CommentLine.DELETEALL;                       //UPG13R2DEV
+             END;
+
+    CaptionML=ENU=Setup Checklist Line;
+    LookupPageID=Page531;
+    DrillDownPageID=Page531;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Line No.            ;Integer       ;CaptionML=ENU=Line No.;
+                                                   Editable=No }
+    { 2   ;   ;Table ID            ;Integer       ;TableRelation=AllObj."Object ID" WHERE (Object Type=CONST(Table));
+                                                   CaptionML=ENU=Table ID;
+                                                   Editable=No }
+    { 3   ;   ;Table Name          ;Text80        ;CaptionML=ENU=Table Name;
+                                                   Editable=No }
+    { 4   ;   ;Company Filter      ;Text30        ;FieldClass=FlowFilter;
+                                                   TableRelation=Company;
+                                                   CaptionML=ENU=Company Filter }
+    { 6   ;   ;Company Filter (Source Table);Text30;
+                                                   FieldClass=FlowFilter;
+                                                   TableRelation=Company;
+                                                   CaptionML=ENU=Company Filter (Source Table) }
+    { 8   ;   ;No. of Records      ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup("Table Information"."No. of Records" WHERE (Company Name=FIELD(Company Filter),
+                                                                                                                  Table No.=FIELD(Table ID),
+                                                                                                                  No. of Records=FILTER(<>0)));
+                                                   CaptionML=ENU=No. of Records;
+                                                   BlankZero=Yes;
+                                                   Editable=No }
+    { 9   ;   ;No. of Records (Source Table);Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Lookup("Table Information"."No. of Records" WHERE (Company Name=FIELD("Company Filter (Source Table)"),
+                                                                                                                  Table No.=FIELD(Table ID),
+                                                                                                                  No. of Records=FILTER(<>0)));
+                                                   CaptionML=ENU=No. of Records (Source Table);
+                                                   BlankZero=Yes;
+                                                   Editable=No }
+    { 10  ;   ;Licensed Table      ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("License Permission" WHERE (Object Type=CONST(TableData),
+                                                                                                 Object Number=FIELD(License Table ID),
+                                                                                                 Read Permission=CONST(Yes),
+                                                                                                 Insert Permission=CONST(Yes),
+                                                                                                 Modify Permission=CONST(Yes),
+                                                                                                 Delete Permission=CONST(Yes)));
+                                                   CaptionML=ENU=Licensed Table;
+                                                   BlankZero=Yes;
+                                                   Editable=No }
+    { 13  ;   ;Copying Available   ;Boolean       ;CaptionML=ENU=Copying Available;
+                                                   Editable=No }
+    { 14  ;   ;Form ID             ;Integer       ;TableRelation=AllObj."Object ID" WHERE (Object Type=CONST(2));
+                                                   CaptionML=ENU=Form ID;
+                                                   Editable=No }
+    { 15  ;   ;Form Name           ;Text80        ;CaptionML=ENU=Form Name;
+                                                   Editable=No }
+    { 16  ;   ;License Table ID    ;Integer       ;TableRelation=AllObj."Object ID" WHERE (Object Type=CONST(Table));
+                                                   CaptionML=ENU=License Table ID;
+                                                   Editable=No }
+    { 17  ;   ;License Table Name  ;Text80        ;CaptionML=ENU=License Table Name;
+                                                   Editable=No }
+    { 18  ;   ;Starting Date       ;Date          ;OnValidate=BEGIN
+                                                                IF ("Starting Date" <> 0D) AND (xRec."Starting Date" <> 0D) AND ("Ending Date" <> 0D) THEN
+                                                                  "Ending Date" := "Ending Date" + ("Starting Date" - xRec."Starting Date");
+                                                              END;
+
+                                                   CaptionML=ENU=Starting Date }
+    { 19  ;   ;Ending Date         ;Date          ;CaptionML=ENU=Ending Date }
+    { 20  ;   ;Responsible ID      ;Code20        ;TableRelation=Table2000000002;
+                                                   OnValidate=VAR
+                                                                LoginMgt@1000 : Codeunit 418;
+                                                              BEGIN
+                                                                LoginMgt.ValidateUserID("Responsible ID");
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              LoginMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              LoginMgt.LookupUserID("Responsible ID");
+                                                            END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=ENU=Responsible ID }
+    { 21  ;   ;Status              ;Option        ;CaptionML=ENU=Status;
+                                                   OptionCaptionML=ENU=" ,Planning,Started,Completed,Not Used";
+                                                   OptionString=[ ,Planning,Started,Completed,Not Used] }
+    { 22  ;   ;Comments            ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist(Table345 WHERE (Field2=FIELD(Table ID)));
+                                                   CaptionML=ENU=Comments;
+                                                   BlankZero=Yes;
+                                                   Editable=No }
+    { 23  ;   ;Application Area ID ;Integer       ;TableRelation="Application Area Line";
+                                                   CaptionML=ENU=Application Area ID;
+                                                   Editable=No }
+    { 24  ;   ;Application Area Name;Text80       ;FieldClass=FlowField;
+                                                   CalcFormula=Lookup("Application Area Line".Name WHERE (ID=FIELD(Application Area ID)));
+                                                   CaptionML=ENU=Application Area Name;
+                                                   Editable=No }
+    { 25  ;   ;Vertical Sorting    ;Integer       ;CaptionML=ENU=Vertical Sorting }
+    { 26  ;   ;Data Origin         ;Text50        ;CaptionML=ENU=Data Origin }
+    { 30  ;   ;Licensed Form       ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("License Permission" WHERE (Object Type=CONST(2),
+                                                                                                 Object Number=FIELD(Form ID),
+                                                                                                 Execute Permission=CONST(Yes)));
+                                                   CaptionML=ENU=Licensed Form;
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Table ID                                ;Clustered=Yes }
+    {    ;Line No.                                 }
+    {    ;Table Name                               }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      Table 345 does not exist in 2013R2
+    }
+    END.
+  }
+}
+

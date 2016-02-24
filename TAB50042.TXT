@@ -1,0 +1,106 @@
+OBJECT Table 50042 Human Hr.Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/08/11;
+    Time=16:21:48;
+    Version List=Mel1.0;
+  }
+  PROPERTIES
+  {
+    OnInsert=BEGIN
+               HumnLne.RESET;
+               HumnLne.SETRANGE(NPK,NPK);
+               HumnLne.SETRANGE(Date,Date);
+               IF HumnLne.FINDSET THEN REPEAT
+                 RemainingHours += HumnLne.Hour;
+               UNTIL HumnLne.NEXT = 0;
+               IF HumanHrHeader.GET(NPK,Date) THEN
+                 RemainingHours := HumanHrHeader."Total Hours" - RemainingHours;
+               IF Hour > RemainingHours THEN
+                 ERROR('Greater than total defined hours.....Should be less than that...!!!!');
+               IF HumanHrHeader.Status = HumanHrHeader.Status::Approved THEN
+                  ERROR('%1',Text1);
+             END;
+
+    OnModify=BEGIN
+               HumnLne.RESET;
+               HumnLne.SETRANGE(NPK,NPK);
+               HumnLne.SETRANGE(Date,Date);
+               IF HumnLne.FINDSET THEN REPEAT
+                 RemainingHours += HumnLne.Hour;
+               UNTIL HumnLne.NEXT = 0;
+               IF HumnLne.GET(NPK,Date,"Shop Code","Line No.") THEN
+                 RemainingHours -= HumnLne.Hour;
+               IF HumanHrHeader.GET(NPK,Date) THEN
+                 RemainingHours := HumanHrHeader."Total Hours" - RemainingHours;
+               IF Hour > RemainingHours THEN
+                 ERROR('Greater than total defined hours.....Should be less than that...!!!!');
+               IF HumanHrHeader.Status = HumanHrHeader.Status::Approved THEN
+                  ERROR('%1',Text1);
+             END;
+
+    OnDelete=BEGIN
+               IF HumanHrHeader.GET(NPK,Date) THEN
+                 BEGIN
+                   IF HumanHrHeader.Status = HumanHrHeader.Status::Approved THEN
+                      ERROR('%1',Text2);
+                 END;
+             END;
+
+    OnRename=BEGIN
+               IF HumanHrHeader.GET(NPK,Date) THEN
+                 BEGIN
+                   IF HumanHrHeader.Status = HumanHrHeader.Status::Approved THEN
+                      ERROR('%1',Text1);
+                 END;
+             END;
+
+  }
+  FIELDS
+  {
+    { 1   ;   ;NPK                 ;Code20        ;TableRelation="Human Hr.Header".NPK }
+    { 2   ;   ;Date                ;Date          ;TableRelation="Human Hr.Header".Date }
+    { 3   ;   ;Line No.            ;Integer        }
+    { 4   ;   ;Quote No.           ;Code20        ;TableRelation="All Quotes"."Quote No." WHERE (Invoice Posted=FILTER(No));
+                                                   OnValidate=VAR
+                                                                HumanHrHdr@1000000000 : Record 50028;
+                                                              BEGIN
+                                                                HumanHrHdr.RESET;
+                                                                IF HumanHrHdr.GET(NPK,Date) THEN
+                                                                 "Shop Code":=HumanHrHdr."Shop Code"
+                                                              END;
+                                                               }
+    { 5   ;   ;Hour                ;Decimal        }
+    { 6   ;   ;Description         ;Text250        }
+    { 7   ;   ;Shop Code           ;Code10        ;TableRelation="Dimension Value".Code }
+  }
+  KEYS
+  {
+    {    ;NPK,Date,Shop Code,Line No.             ;SumIndexFields=Hour;
+                                                   Clustered=Yes }
+    {    ;NPK,Date,Quote No.,Shop Code,Line No.   ;SumIndexFields=Hour }
+    {    ;Date,Quote No.,Shop Code                ;SumIndexFields=Hour }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      TotalHrs@1000000000 : Decimal;
+      RemainingHours@1000000001 : Decimal;
+      HumanHrHeader@1000000003 : Record 50028;
+      HumnLne@1000000002 : Record 50042;
+      Text1@1000000004 : TextConst 'ENU=Approved Documents Can not be modified.';
+      Text2@1000000005 : TextConst 'ENU=You can delete any line from an approved document.';
+
+    PROCEDURE HourValidation@1000000000();
+    BEGIN
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

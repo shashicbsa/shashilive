@@ -1,0 +1,122 @@
+OBJECT Page 63149 User Transaction Details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/29/15;
+    Time=11:02:11;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    SourceTable=Table60064;
+    PageType=List;
+    OnOpenPage=BEGIN
+                 B.RUN;
+
+                 IF UTD.FINDSET THEN
+                 REPEAT
+                  UTD.Date := TODAY;
+                  UTD.Batch := COPYSTR(UTD."User ID",7,15);
+                  UTD.MODIFY;
+                 UNTIL UTD.NEXT=0;
+               END;
+
+  }
+  CONTROLS
+  {
+    { 1000000000;0;Container;
+                ContainerType=ContentArea }
+
+    { 1000000001;1;Group  ;
+                Name=Group;
+                GroupType=Repeater }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="User ID" }
+
+    { 1000000028;2;Field  ;
+                SourceExpr=Date;
+                Visible=false }
+
+    { 1000000003;2;Field  ;
+                SourceExpr="Sales Invoices-Open" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Sales Credit Memos-Open" }
+
+    { 1000000005;2;Field  ;
+                SourceExpr="Purchase Invoice-Open" }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Purchase Invoice Return-Open" }
+
+    { 1000000007;2;Field  ;
+                SourceExpr="Sales Invoices-Released" }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Sales Credit Memos-Released" }
+
+    { 1000000009;2;Field  ;
+                SourceExpr="Purchase Invoice-Released" }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Purchase Invoice Return-Rel" }
+
+    { 1000000011;2;Field  ;
+                SourceExpr="Posted Sales Invoices" }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Posted Sales Credit Memos" }
+
+    { 1000000013;2;Field  ;
+                SourceExpr="Posted Purchase Invoices" }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Posted Purchase Return" }
+
+    { 1000000015;2;Field  ;
+                SourceExpr="Journals-Open" }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="Posted Journals" }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="VAT In-Approved" }
+
+    { 1000000019;2;Field  ;
+                SourceExpr="VAT Out-Open" }
+
+    { 1000000020;2;Field  ;
+                SourceExpr="VAT Out-Approved" }
+
+    { 1000000021;2;Field  ;
+                SourceExpr="Vat In-ESPT" }
+
+    { 1000000022;2;Field  ;
+                SourceExpr="Vat Out-ESPT" }
+
+    { 1000000023;2;Field  ;
+                SourceExpr="Journal Pay" }
+
+    { 1000000024;2;Field  ;
+                SourceExpr="Journal Rec" }
+
+    { 1000000025;2;Field  ;
+                SourceExpr="Journal Pay Posted" }
+
+    { 1000000026;2;Field  ;
+                SourceExpr="Journal Rec Posted" }
+
+  }
+  CODE
+  {
+    VAR
+      UTD@1000000000 : Record 60064;
+      B@1000000001 : Report 60080;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,261 @@
+OBJECT Report 60088 Temp Vend NPWP Upload
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/18/15;
+    Time=14:32:48;
+    Modified=Yes;
+    Version List=CR001;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Temp Vend NPWP Upload;
+               ENA=Temp Vend NPWP Upload];
+    ProcessingOnly=Yes;
+    OnPreReport=VAR
+                  BusUnit@1000 : Record 220;
+                BEGIN
+                  ExcelBuf.LOCKTABLE;
+
+                  ExcelBuf.OpenBook(ServerFileName,SheetName);
+                  ExcelBuf.ReadSheet;
+                  AnalyzeData2;
+                END;
+
+    OnPostReport=BEGIN
+                   ExcelBuf.DELETEALL;
+                   MESSAGE('Done');
+                 END;
+
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnOpenPage=BEGIN
+                   Description := Text005 + FORMAT(WORKDATE);
+                 END;
+
+      OnQueryClosePage=VAR
+                         FileMgt@1001 : Codeunit 419;
+                       BEGIN
+                         IF CloseAction = ACTION::OK THEN BEGIN
+                           ServerFileName := FileMgt.UploadFile(Text006,ExcelFileExtensionTok);
+                           IF ServerFileName = '' THEN
+                             EXIT(FALSE);
+
+                           SheetName := ExcelBuf.SelectSheetsName(ServerFileName);
+                           IF SheetName = '' THEN
+                             EXIT(FALSE);
+                         END;
+                       END;
+
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text005@1005 : TextConst 'ENU="Imported from Excel ";ENA="Imported from Excel "';
+      Text006@1006 : TextConst 'ENU=Import Excel File;ENA=Import Excel File';
+      Text007@1007 : TextConst 'ENU=Analyzing Data...\\;ENA=Analysing Data...\\';
+      ExcelBuf@1027 : Record 370;
+      ServerFileName@1033 : Text;
+      SheetName@1038 : Text[250];
+      TotalRecNo@1044 : Integer;
+      RecNo@1045 : Integer;
+      Window@1046 : Dialog;
+      ImportOption@1054 : 'Replace entries,Add entries';
+      ExcelFileExtensionTok@1037 : TextConst '@@@={Locked};ENU=.xlsx;ENA=.xlsx';
+      LineNo@1102159007 : Integer;
+      AccNo@1000000000 : Code[20];
+      Npwp@1000000001 : Code[20];
+      Description@1000000002 : Text[250];
+
+    LOCAL PROCEDURE AnalyzeData2@1102159005();
+    VAR
+      TempExcelBuf@1000 : Record 370;
+      HeaderRowNo@1003 : Integer;
+      CountDim@1004 : Integer;
+      TestDateTime@1005 : DateTime;
+      OldRowNo@1006 : Integer;
+      DimRowNo@1007 : Integer;
+      DimCode3@1008 : Code[20];
+      Ship2Add@1102159001 : Record 222;
+    BEGIN
+      Window.OPEN(
+        Text007 +
+        '@1@@@@@@@@@@@@@@@@@@@@@@@@@\');
+      Window.UPDATE(1,0);
+      TotalRecNo := ExcelBuf.COUNT;
+      RecNo := 0;
+      ExcelBuf.RESET;
+      HeaderRowNo := 0;
+
+      IF ExcelBuf.FIND('-') THEN BEGIN
+
+        REPEAT
+
+      IF (HeaderRowNo = 0) OR (HeaderRowNo <> ExcelBuf."Row No.") THEN BEGIN
+          Ship2Add.INIT;
+          RecNo := RecNo + 1;
+          Window.UPDATE(1,ROUND(RecNo / TotalRecNo * 10000,1));
+
+          TempExcelBuf.RESET;
+          TempExcelBuf.SETRANGE("Row No.",ExcelBuf."Row No.");
+          IF TempExcelBuf.FINDSET THEN
+
+          REPEAT
+
+                Ship2Add."Customer No." := 'VDRL-09-01-1182';
+                Ship2Add.VALIDATE("Customer No.");
+              IF TempExcelBuf."Column No." = 1 THEN BEGIN
+                Ship2Add.Code := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE(Code);
+                END;
+              IF TempExcelBuf."Column No." = 2 THEN BEGIN
+                Ship2Add.Name := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE(Name);
+                END;
+              IF TempExcelBuf."Column No." = 3 THEN BEGIN
+                Ship2Add."Name 2" := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Name 2");
+                END;
+              IF TempExcelBuf."Column No." = 4 THEN BEGIN
+                Ship2Add.Address :=  TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE(Address);
+                END;
+              IF TempExcelBuf."Column No." = 5 THEN BEGIN
+                Ship2Add."Address 2" := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Address 2");
+                END;
+              IF TempExcelBuf."Column No." = 6 THEN BEGIN
+                Ship2Add.City:=  TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE(City);
+                END;
+
+              IF TempExcelBuf."Column No." = 7 THEN BEGIN
+                Ship2Add.Contact:=  TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE(Contact);
+                END;
+
+              IF TempExcelBuf."Column No." = 8 THEN BEGIN
+                Ship2Add."Phone No." := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Phone No.");
+                END;
+              IF TempExcelBuf."Column No." = 9 THEN BEGIN
+                Ship2Add."Country/Region Code" := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Country/Region Code");
+                END;
+              IF TempExcelBuf."Column No." = 10 THEN BEGIN
+                Ship2Add."Post Code" := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Post Code");
+                END;
+              IF TempExcelBuf."Column No." = 11 THEN BEGIN
+                EVALUATE(Ship2Add."NpPkp No.",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("NpPkp No.");
+                END;
+              IF TempExcelBuf."Column No." = 12 THEN BEGIN
+                Ship2Add."Territory Code" := TempExcelBuf."Cell Value as Text";
+                Ship2Add.VALIDATE("Territory Code");
+                END;
+              IF TempExcelBuf."Column No." = 13 THEN BEGIN
+                EVALUATE(Ship2Add.SpecialNPWP,TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE(SpecialNPWP);
+                END;
+
+              IF TempExcelBuf."Column No." = 14 THEN BEGIN
+                EVALUATE(Ship2Add.Blocked,TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE(Blocked);
+                END;
+
+              IF TempExcelBuf."Column No." = 15 THEN BEGIN
+                EVALUATE(Ship2Add.PPN,TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE(PPN);
+                END;
+              IF TempExcelBuf."Column No." = 16 THEN BEGIN
+                EVALUATE(Ship2Add.PPH,TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE(PPH);
+                END;
+              IF TempExcelBuf."Column No." = 17 THEN BEGIN
+                EVALUATE(Ship2Add.SpecialVendor,TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE(SpecialVendor);
+                END;
+              IF TempExcelBuf."Column No." = 18 THEN BEGIN
+                EVALUATE(Ship2Add."PPN M/C",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPN M/C");
+                END;
+
+              IF TempExcelBuf."Column No." = 19 THEN BEGIN
+                EVALUATE(Ship2Add."PPN S/P",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPN S/P");
+                END;
+
+              IF TempExcelBuf."Column No." = 20 THEN BEGIN
+                EVALUATE(Ship2Add."PPN Service",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPN Service");
+                END;
+              IF TempExcelBuf."Column No." = 21 THEN BEGIN
+                EVALUATE(Ship2Add."PPN Non Dealer",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPN Non Dealer");
+                END;
+              IF TempExcelBuf."Column No." = 21 THEN BEGIN
+                EVALUATE(Ship2Add."PPH M/C",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPH M/C");
+                END;
+              IF TempExcelBuf."Column No." = 22 THEN BEGIN
+                EVALUATE(Ship2Add."PPH S/P",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPH S/P");
+                END;
+              IF TempExcelBuf."Column No." = 23 THEN BEGIN
+                EVALUATE(Ship2Add."PPH Service",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPH Service");
+                END;
+              IF TempExcelBuf."Column No." = 24 THEN BEGIN
+                EVALUATE(Ship2Add."PPH Non Dealer",TempExcelBuf."Cell Value as Text");
+                Ship2Add.VALIDATE("PPH Non Dealer");
+                END;
+
+
+          UNTIL TempExcelBuf.NEXT =0;
+
+         IF ( Ship2Add."Customer No." = 'VDRL-09-01-1182') AND ( Ship2Add.Code = Npwp ) THEN
+          ERROR('Duplicate Entry in excel file')
+         ELSE
+         Ship2Add.INSERT(TRUE);
+
+         AccNo := 'VDRL-09-01-1182';
+         Npwp := Ship2Add.Code
+         END;
+
+
+        HeaderRowNo := ExcelBuf."Row No.";
+
+
+        UNTIL ExcelBuf.NEXT = 0;
+      END;
+
+      Window.CLOSE;
+      TempExcelBuf.RESET;
+    END;
+
+    BEGIN
+    {
+      //CR001/VK/As per new requirement,Report created to import ship to address for temporary vendor.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

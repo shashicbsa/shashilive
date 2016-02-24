@@ -1,0 +1,147 @@
+OBJECT Report 62070 E-FAKTUR DETAIL INVOICE
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/01/15;
+    Time=10:05:30;
+    Modified=Yes;
+    Version List=E-FAKTUR1.0;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+
+                   IF NOT GUIALLOWED THEN
+                     VatOutReport.USEREQUESTPAGE := FALSE;
+
+                   VatOutReport.SetCalledFromOtherReport;
+                   VatOutReport.RUNMODAL;
+                 END;
+
+    OnPreReport=BEGIN
+
+                  Master_setup_2.GET;
+                  ch:=9;
+
+
+                  InterfaceFile := Master_setup_2."E-FAKTUR Interface File Path" + '\'+ Master_setup_2."E-FAKTUR INVOICE DETAILS";
+
+                  F1.CREATE(InterfaceFile);
+                  F1.CREATEOUTSTREAM(Outstreamobj);
+                  F1.TEXTMODE(TRUE);
+                END;
+
+    OnPostReport=VAR
+                   DownloadFileName@1000000000 : Text;
+                 BEGIN
+
+                   IF GUIALLOWED THEN;
+
+
+                   F1.CLOSE;
+                   "E-FAKTUR Detail Invoice".DELETEALL;
+                   IF GUIALLOWED THEN BEGIN
+                     DownloadFileName :=  Master_setup_2."E-FAKTUR INVOICE DETAILS";
+                     DOWNLOAD(InterfaceFile, 'Download Vat Details', '', '', DownloadFileName);
+                   END;
+                 END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+    { 1000000000;;DataItem;                  ;
+               DataItemTable=Table60056;
+               DataItemTableView=SORTING(Entry No)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               FromDate := VatOutReport.GetFromDate;
+                               ToDate := VatOutReport.GetToDate;
+                               SETRANGE("Tax Invoice Date", FromDate, ToDate);
+                             END;
+
+               OnAfterGetRecord=VAR
+                                  Cust@1000000000 : Record 18;
+                                BEGIN
+
+                                  Cust.RESET;
+                                  IF Cust.GET("Customer/Entity Code") THEN;
+
+                                  Outstreamobj.WRITETEXT(FORMAT("Invoice No."));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT("Reference No."));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT("Customer/Entity Code"));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT("Object Code/Item No"));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT("Object/Item Name"));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND("Unit Price",1,'<')));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT("Total Quantity"));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  //Outstreamobj.WRITETEXT(FORMAT(round("Total Price",1,'<'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND("Total Quantity"*"Unit Price",1,'<')));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND(Discount,1,'<')));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  //Outstreamobj.WRITETEXT(FORMAT(round("Base Amount Before Tax",1,'<'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND("Total Quantity"*"Unit Price",1,'<')));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+
+                                  IF (Cust.TaxExampted) THEN                                                              //new
+                                    Outstreamobj.WRITETEXT(FORMAT(ROUND((("Total Quantity" * "Unit Price") * 0.1),1,'<')))
+                                  ELSE
+                                    Outstreamobj.WRITETEXT(FORMAT(ROUND("VAT/PPN",1,'<')));
+
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND("PPNBM Tariff",1,'<')));
+                                  Outstreamobj.WRITETEXT(FORMAT('|'));
+                                  Outstreamobj.WRITETEXT(FORMAT(ROUND(PPNBM,1,'<')));
+                                  Outstreamobj.WRITETEXT();
+                                END;
+                                 }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Master_setup_2@1000000010 : Record 60053;
+      ch@1000000009 : Char;
+      InterfaceFile@1000000008 : Text[100];
+      F1@1000000007 : File;
+      Outstreamobj@1000000006 : OutStream;
+      "Sales Invoice Line"@1000000005 : Record 113;
+      "Sales Invoice Header"@1000000004 : Record 112;
+      FromDate@1000000003 : Date;
+      ToDate@1000000002 : Date;
+      Window@1000000001 : Dialog;
+      VatOutReport@1000000000 : Report 62071;
+
+    BEGIN
+    {
+
+      //E-FAKTUR1.0 New Report created to export Invoice Details file for E-FAKTUR
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

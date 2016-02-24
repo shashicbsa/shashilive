@@ -1,0 +1,440 @@
+OBJECT Page 8625 Config. Package Subform
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/16/14;
+    Time=[ 6:00:00];
+    Modified=Yes;
+    Version List=NAVW17.10.00.36035,S-003;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Tables;
+    SourceTable=Table8613;
+    DelayedInsert=Yes;
+    PageType=ListPart;
+    OnOpenPage=BEGIN
+                 SETFILTER("Company Filter (Source Table)",'%1',COMPANYNAME);
+               END;
+
+    OnAfterGetRecord=BEGIN
+                       NoOfErrorsStyleTxt := SetFieldStyle(FIELDNO("No. of Package Errors"));
+                     END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 23      ;1   ;ActionGroup;
+                      CaptionML=ENU=Table }
+      { 32      ;2   ;Action    ;
+                      Name=PackageRecords;
+                      CaptionML=ENU=Package Data;
+                      Image=Grid;
+                      OnAction=BEGIN
+                                 ShowPackageRecords(Show::Records,"Dimensions as Columns");
+                               END;
+                                }
+      { 30      ;2   ;Action    ;
+                      Name=DatabaseRecords;
+                      CaptionML=ENU=Database Data;
+                      Image=Database;
+                      OnAction=BEGIN
+                                 ShowDatabaseRecords;
+                               END;
+                                }
+      { 29      ;2   ;Action    ;
+                      Name=PackageErrors;
+                      CaptionML=ENU=Errors;
+                      Image=ErrorLog;
+                      OnAction=BEGIN
+                                 ShowPackageRecords(Show::Errors,"Dimensions as Columns");
+                               END;
+                                }
+      { 24      ;2   ;Action    ;
+                      Name=PackageFields;
+                      CaptionML=ENU=Fields;
+                      Image=CheckList;
+                      OnAction=BEGIN
+                                 ShowPackageFields;
+                               END;
+                                }
+      { 7       ;2   ;Action    ;
+                      Name=PackageFilters;
+                      CaptionML=ENU=Filters;
+                      Image=Filter;
+                      OnAction=BEGIN
+                                 ShowFilters;
+                               END;
+                                }
+      { 26      ;1   ;ActionGroup;
+                      CaptionML=ENU=F&unctions;
+                      Image=Action }
+      { 34      ;2   ;Action    ;
+                      Name=GetRelatedTables;
+                      CaptionML=ENU=Get Related Tables;
+                      Image=GetLines;
+                      OnAction=VAR
+                                 ConfigPackageTable@1000 : Record 8613;
+                                 ConfigPackageMgt@1004 : Codeunit 8611;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(ConfigPackageTable);
+                                 ConfigPackageMgt.GetRelatedTables(ConfigPackageTable);
+                               END;
+                                }
+      { 9       ;2   ;Action    ;
+                      Name=ValidateRelations;
+                      CaptionML=ENU=Validate Relations;
+                      Image=CheckRulesSyntax;
+                      OnAction=VAR
+                                 TempConfigPackageTable@1001 : TEMPORARY Record 8613;
+                                 ConfigPackageMgt@1002 : Codeunit 8611;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(ConfigPackageTable);
+                                 IF CONFIRM(Text005,TRUE,ConfigPackageTable.COUNT) THEN
+                                   ConfigPackageMgt.ValidatePackageRelations(ConfigPackageTable,TempConfigPackageTable,TRUE);
+                               END;
+                                }
+      { 8       ;2   ;Action    ;
+                      Name=ApplyData;
+                      CaptionML=ENU=Apply Data;
+                      Image=Apply;
+                      OnAction=VAR
+                                 ConfigPackage@1000 : Record 8623;
+                                 ConfigPackageMgt@1001 : Codeunit 8611;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(ConfigPackageTable);
+                                 IF CONFIRM(Text005,TRUE,ConfigPackageTable.COUNT) THEN BEGIN
+                                   ConfigPackage.GET("Package Code");
+                                   ConfigPackageMgt.ApplyPackage(ConfigPackage,ConfigPackageTable,TRUE);
+                                 END;
+                               END;
+                                }
+      { 19      ;1   ;ActionGroup;
+                      CaptionML=ENU=E&xcel }
+      { 21      ;2   ;Action    ;
+                      Name=ExportToExcel;
+                      CaptionML=ENU=Export to Excel;
+                      Image=ExportToExcel;
+                      OnAction=VAR
+                                 ConfigExcelExchange@1001 : Codeunit 8618;
+                               BEGIN
+                                 CurrPage.SETSELECTIONFILTER(ConfigPackageTable);
+                                 IF CONFIRM(Text005,TRUE,ConfigPackageTable.COUNT) THEN
+                                   ConfigExcelExchange.ExportExcelFromTables(ConfigPackageTable);
+                               END;
+                                }
+      { 20      ;2   ;Action    ;
+                      Name=ImportFromExcel;
+                      CaptionML=ENU=Import from Excel;
+                      Image=ImportExcel;
+                      OnAction=VAR
+                                 ConfigExcelExchange@1000 : Codeunit 8618;
+                               BEGIN
+                                 ConfigExcelExchange.ImportExcelFromPackage;
+                               END;
+                                }
+      { 55      ;1   ;ActionGroup;
+                      Name=T&ext }
+      { 54      ;2   ;Action    ;
+                      Name=Export Tables Data to XML;
+                      Image=UpdateXML;
+                      OnAction=VAR
+                                 lRec_CPTable@1000 : Record 8613;
+                               BEGIN
+                                 //S-003{
+                                 CurrPage.SETSELECTIONFILTER(lRec_CPTable);
+                                 gCoU_ConfigXMLExchange.ExportTablesDataToXML(lRec_CPTable);
+                                 //S-003}
+                               END;
+                                }
+      { 53      ;2   ;Action    ;
+                      Name=Import Tables Data from XML;
+                      Image=UpdateXML;
+                      OnAction=VAR
+                                 lRec_CPTable@1000 : Record 8613;
+                               BEGIN
+                                 //S-003{
+                                 CurrPage.SETSELECTIONFILTER(lRec_CPTable);
+                                 gCoU_ConfigXMLExchange.ImportTablesDataFromXML(lRec_CPTable);
+                                 //S-003}
+                               END;
+                                }
+      { 52      ;2   ;Separator  }
+      { 51      ;2   ;Action    ;
+                      Name=Export Table Data to Text;
+                      Image=Export;
+                      OnAction=BEGIN
+                                 //S-003{
+                                 gCoU_ConfigExcelExchange.TextExport(Rec);
+                                 //S-003}
+                               END;
+                                }
+      { 50      ;2   ;Action    ;
+                      Name=Import Table Data from Text;
+                      Image=Import;
+                      OnAction=BEGIN
+                                 //S-003{
+                                 gCoU_ConfigExcelExchange.TextImport(Rec);
+                                 //S-003}
+                               END;
+                                }
+      { 49      ;2   ;Action    ;
+                      Name=Set Table Fields from Text;
+                      Image=SuggestField;
+                      OnAction=BEGIN
+                                 //S-003{
+                                 gCoU_ConfigExcelExchange.TextSetFields(Rec);
+                                 //S-003}
+                               END;
+                                }
+      { 48      ;2   ;Separator  }
+      { 47      ;2   ;Action    ;
+                      Name=Suggest Format for Tables;
+                      Image=SuggestNumber;
+                      OnAction=VAR
+                                 lRec_CPTable@1000 : Record 8613;
+                               BEGIN
+                                 //S-003{
+                                 //Get Confirmation
+                                 IF NOT CONFIRM('[4Bz] Number and Date Time Format of selected Tables will be overwritten by Suggested Format. Do you want to continue?', TRUE) THEN
+                                   EXIT;
+
+                                 //Set Current Format
+                                 CurrPage.SETSELECTIONFILTER(lRec_CPTable);
+                                 IF lRec_CPTable.FINDSET THEN
+                                   WITH lRec_CPTable DO BEGIN
+                                     MODIFYALL("Number Group Separator", gCoU_NAVMgmt.NumberGroupSeparator_Txt, TRUE);
+                                     MODIFYALL("Number Decimal Separator", gCoU_NAVMgmt.NumberDecimalSeparator_Txt, TRUE);
+                                     MODIFYALL("Number Negative Pattern", gCoU_NAVMgmt.NumberNegativePattern_Int, TRUE);
+                                     MODIFYALL("Time Format", 'HH:mm:ss', TRUE);
+                                     MODIFYALL("Date Format", 'yyyy-MM-dd', TRUE);
+                                     MODIFYALL("Date Time Format", 'yyyy-MM-dd HH:mm:ss', TRUE);
+                                   END;
+                                 //S-003}
+                               END;
+                                }
+      { 46      ;2   ;Action    ;
+                      Name=Clear Format of Tables;
+                      Image=DeleteQtyToHandle;
+                      OnAction=VAR
+                                 lRec_CPTable@1000 : Record 8613;
+                               BEGIN
+                                 //S-003{
+                                 //Get Confirmation
+                                 IF NOT CONFIRM('[4Bz] Number and Date Time Format of selected Tables will be cleared. Do you want to continue?', TRUE) THEN
+                                   EXIT;
+
+                                 //Clear Format
+                                 CurrPage.SETSELECTIONFILTER(lRec_CPTable);
+                                 IF lRec_CPTable.FINDSET THEN
+                                   WITH lRec_CPTable DO BEGIN
+                                     MODIFYALL("Number Group Separator", '', TRUE);
+                                     MODIFYALL("Number Decimal Separator", '', TRUE);
+                                     MODIFYALL("Number Negative Pattern", "Number Negative Pattern"::"(Number)", TRUE);
+                                     MODIFYALL("Time Format", '', TRUE);
+                                     MODIFYALL("Date Format", '', TRUE);
+                                     MODIFYALL("Date Time Format", '', TRUE);
+                                   END;
+                                 //S-003}
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Table ID";
+                StyleExpr=NoOfErrorsStyleTxt;
+                OnValidate=BEGIN
+                             CALCFIELDS("Table Name");
+                           END;
+
+                OnLookup=VAR
+                           lPag_Object@1002 : Page 358;
+                           lRec_Object@1001 : Record 2000000001;
+                           lRec_CPTable@1000 : Record 8613;
+                         BEGIN
+                           //S-003{
+                           lRec_Object.FILTERGROUP(2);
+                           lRec_Object.SETRANGE(Type, lRec_Object.Type::Table);
+                           lRec_Object.FILTERGROUP(0);
+                           lPag_Object.SETTABLEVIEW(lRec_Object);
+                           lPag_Object.LOOKUPMODE(TRUE);
+                           IF lPag_Object.RUNMODAL <> ACTION::LookupOK THEN
+                             EXIT;
+
+                           lPag_Object.GetSelection(lRec_Object);
+                           IF lRec_Object.FINDSET THEN
+                           REPEAT
+                             IF NOT lRec_CPTable.GET("Package Code", lRec_Object.ID) THEN BEGIN
+                               lRec_CPTable.INIT;
+                               lRec_CPTable.VALIDATE("Package Code", "Package Code");
+                               lRec_CPTable.VALIDATE("Table ID", lRec_Object.ID);
+                               lRec_CPTable.INSERT(TRUE);
+                             END;
+                           UNTIL lRec_Object.NEXT = 0;
+                           //S-003}
+                         END;
+                          }
+
+    { 4   ;2   ;Field     ;
+                DrillDown=No;
+                SourceExpr="Table Name";
+                StyleExpr=NoOfErrorsStyleTxt }
+
+    { 13  ;2   ;Field     ;
+                DrillDown=No;
+                SourceExpr="Table Caption";
+                Visible=FALSE }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr="Data Template";
+                OnLookup=VAR
+                           ConfigTemplateHeader@1001 : Record 8618;
+                         BEGIN
+                           ConfigTemplateHeader.SETRANGE("Table ID","Table ID");
+                           IF PAGE.RUNMODAL(PAGE::"Config. Template List",ConfigTemplateHeader,ConfigTemplateHeader.Code) = ACTION::LookupOK THEN
+                             "Data Template" := ConfigTemplateHeader.Code;
+                         END;
+                          }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Processing Order";
+                Visible=FALSE }
+
+    { 17  ;2   ;Field     ;
+                SourceExpr="Skip Table Triggers" }
+
+    { 6   ;2   ;Field     ;
+                DrillDown=Yes;
+                SourceExpr="No. of Package Records";
+                Editable=FALSE;
+                OnDrillDown=BEGIN
+                              ShowPackageRecords(Show::All,"Dimensions as Columns");
+                              CurrPage.UPDATE;
+                            END;
+                             }
+
+    { 11  ;2   ;Field     ;
+                DrillDown=Yes;
+                SourceExpr="No. of Fields Available";
+                DrillDownPageID=Config. Package Fields }
+
+    { 15  ;2   ;Field     ;
+                DrillDown=Yes;
+                SourceExpr="No. of Fields Included";
+                DrillDownPageID=Config. Package Fields }
+
+    { 25  ;2   ;Field     ;
+                DrillDown=Yes;
+                SourceExpr="No. of Fields to Validate";
+                DrillDownPageID=Config. Package Fields }
+
+    { 31  ;2   ;Field     ;
+                DrillDown=Yes;
+                SourceExpr="No. of Package Errors";
+                Editable=FALSE;
+                StyleExpr=NoOfErrorsStyleTxt;
+                OnDrillDown=BEGIN
+                              ShowPackageRecords(Show::Errors,"Dimensions as Columns");
+                              CurrPage.UPDATE;
+                            END;
+                             }
+
+    { 10  ;2   ;Field     ;
+                Name=NoOfDatabaseRecords;
+                DrillDown=Yes;
+                CaptionML=ENU=No. of Database Records;
+                SourceExpr=GetNoOfDatabaseRecords;
+                OnDrillDown=BEGIN
+                              ShowDatabaseRecords;
+                            END;
+                             }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr=Filtered }
+
+    { 39  ;2   ;Field     ;
+                SourceExpr="Page ID" }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr=Comments }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="Created Date and Time" }
+
+    { 27  ;2   ;Field     ;
+                SourceExpr="Created by User ID" }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Imported Date and Time";
+                Editable=FALSE }
+
+    { 33  ;2   ;Field     ;
+                SourceExpr="Imported by User ID" }
+
+    { 45  ;2   ;Field     ;
+                SourceExpr="Import Destination" }
+
+    { 44  ;2   ;Field     ;
+                SourceExpr="Text File Header Excluded" }
+
+    { 43  ;2   ;Field     ;
+                SourceExpr="Text File Type" }
+
+    { 42  ;2   ;Field     ;
+                SourceExpr="Delimiter Type" }
+
+    { 41  ;2   ;Field     ;
+                SourceExpr="Other Delimiter" }
+
+    { 40  ;2   ;Field     ;
+                SourceExpr="Text Qualifier" }
+
+    { 38  ;2   ;Field     ;
+                SourceExpr="Number Group Separator" }
+
+    { 37  ;2   ;Field     ;
+                SourceExpr="Number Decimal Separator" }
+
+    { 36  ;2   ;Field     ;
+                SourceExpr="Number Negative Pattern" }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr="Time Format" }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr="Date Format" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Date Time Format" }
+
+  }
+  CODE
+  {
+    VAR
+      Text005@1003 : TextConst 'ENU=%1 tables have been selected. Do you want to continue?';
+      ConfigPackageTable@1005 : Record 8613;
+      Show@1000 : 'Records,Errors,All';
+      NoOfErrorsStyleTxt@1001 : Text INDATASET;
+      gCoU_NAVMgmt@1006 : Codeunit 44;
+      gCoU_ConfigExcelExchange@1004 : Codeunit 8618;
+      gCoU_ConfigXMLExchange@1002 : Codeunit 8614;
+
+    BEGIN
+    {
+      Code  | Version | Author      | Description
+      -----------------------------------------------------------------------------------------------------------------------------------
+      S-003   140412    4BzSoftware   Universal Data Import Export.
+    }
+    END.
+  }
+}
+

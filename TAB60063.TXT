@@ -1,0 +1,39 @@
+OBJECT Table 60063 Session Details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/29/15;
+    Time=[ 8:18:59];
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;S.No                ;Integer        }
+    { 2   ;   ;User ID             ;Text30         }
+    { 3   ;   ;Date                ;Date           }
+    { 5   ;   ;Session ID          ;Integer        }
+    { 6   ;   ;Login Date & Time   ;DateTime       }
+    { 7   ;   ;Logoff Date & Time  ;DateTime       }
+    { 8   ;   ;Client Type         ;Option        ;OptionCaptionML=ENU=Windows Client,SharePoint Client,Web Service,Client Service,NAS,Background,Management Client,Web Client,Unknown;
+                                                   OptionString=Windows Client,SharePoint Client,Web Service,Client Service,NAS,Background,Management Client,Web Client,Unknown }
+    { 9   ;   ;Date1               ;Date           }
+  }
+  KEYS
+  {
+    {    ;S.No                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

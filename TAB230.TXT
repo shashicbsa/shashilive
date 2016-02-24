@@ -1,0 +1,61 @@
+OBJECT Table 230 Source Code
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    OnDelete=BEGIN
+               IF Simulation THEN
+                 CheckSimulationEntries;
+             END;
+
+    CaptionML=[ENU=Source Code;
+               ENA=Source Code];
+    LookupPageID=Page257;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code10        ;CaptionML=[ENU=Code;
+                                                              ENA=Code];
+                                                   NotBlank=Yes }
+    { 2   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 28160;  ;Simulation          ;Boolean       ;OnValidate=BEGIN
+                                                                IF Simulation <> xRec.Simulation THEN
+                                                                  CheckSimulationEntries;
+                                                              END;
+
+                                                   CaptionML=[ENU=Simulation;
+                                                              ENA=Simulation] }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      GenJnlLine@1500001 : Record 81;
+      GLEntry@1500000 : Record 17;
+      Text28160@1500002 : TextConst 'ENU="This source code is used on posted entries. ";ENA="This source code is used on posted entries. ";ENZ="This source code is used on posted entries. "';
+
+    PROCEDURE CheckSimulationEntries@1500000();
+    BEGIN
+      GenJnlLine.SETRANGE(GenJnlLine."Source Code",Code);
+      GLEntry.SETRANGE(GLEntry."Source Code",Code);
+      IF GenJnlLine.FINDFIRST OR GLEntry.FINDFIRST THEN
+        ERROR(Text28160);
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

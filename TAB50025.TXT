@@ -1,0 +1,48 @@
+OBJECT Table 50025 Consumption1
+{
+  OBJECT-PROPERTIES
+  {
+    Date=03/17/15;
+    Time=13:16:40;
+    Modified=Yes;
+    Version List=EPROC1.0,EPROCII;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;SNO                 ;Integer        }
+    { 2   ;   ;AccNo               ;Code20         }
+    { 3   ;   ;FLAG                ;Code20         }
+    { 4   ;   ;Amount              ;Decimal        }
+    { 5   ;   ;CC                  ;Code20         }
+    { 6   ;   ;Narration           ;Text250        }
+    { 7   ;   ;EPROC_NO            ;Code90         }
+    { 8   ;   ;WHCode              ;Code20         }
+    { 9   ;   ;Stock               ;Code20         }
+    { 10  ;   ;Received            ;Boolean       ;Description=YEID-VK }
+  }
+  KEYS
+  {
+    {    ;SNO                                     ;Clustered=Yes }
+    {    ;CC,EPROC_NO                              }
+    {    ;CC,AccNo,EPROC_NO                        }
+    {    ;CC,WHCode                                }
+    {    ;CC,AccNo,EPROC_NO,WHCode                 }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      Date      Sign    REF      Description
+      25062013  PC/VK   EprocII  Changes done to skip the Mapping Table.
+    }
+    END.
+  }
+}
+

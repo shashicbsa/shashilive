@@ -1,0 +1,53 @@
+OBJECT Page 11605 BAS ATO Receipt
+{
+  OBJECT-PROPERTIES
+  {
+    Date=06/05/03;
+    Time=12:00:00;
+    Version List=NAVAU3.70;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 11601=rm;
+    CaptionML=[ENU=BAS ATO Receipt;
+               ENA=BAS ATO Receipt];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table11601;
+    PageType=List;
+    OnInit=VAR
+             GLSetup@1450000 : Record 98;
+           BEGIN
+             GLSetup.GET;
+             GLSetup.TESTFIELD("Enable GST (Australia)",TRUE);
+           END;
+
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=A1;
+                Editable=FALSE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="BAS Version";
+                Editable=FALSE }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="ATO Receipt No." }
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

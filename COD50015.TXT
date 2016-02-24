@@ -1,0 +1,449 @@
+OBJECT Codeunit 50015 Imacs Collection Batch
+{
+  OBJECT-PROPERTIES
+  {
+    Date=12/02/15;
+    Time=11:36:12;
+    Modified=Yes;
+    Version List=Imcoll1.0,YIMMIAFP,CR#019,YIMMDEVIP1.0,UPG13R2DEV,CR001;
+  }
+  PROPERTIES
+  {
+    TableNo=472;
+    OnRun=VAR
+            Doc_No@1000000000 : Code[20];
+            Trans_Date@1000000004 : Date;
+            Dim1@1000000010 : Code[10];
+            Dim2@1000000011 : Code[10];
+            Dim3@1000000026 : Code[10];
+            GenLed_Setup@1000000012 : Record 98;
+            Dim_Value@1000000013 : Record 349;
+            Curr_Code@1000000014 : Code[10];
+            Curry@1000000015 : Record 4;
+            "G/L_Account"@1000000017 : Code[20];
+            "G/L"@1000000018 : Record 15;
+            Amount@1000000019 : Decimal;
+            Bl_date@1000000021 : Date;
+            Account_Type@1000000022 : 'G/L Account,Customer,Vendor,Bank Account,Fixed Asset,IC Partner';
+            Account_No@1000000023 : Code[20];
+            Credit_Amt@1000000024 : Decimal;
+            Debit_Amt@1000000025 : Decimal;
+            Bank_Acc@1000000001 : Record 270;
+            CurrExc@1000000002 : Record 330;
+            "Amount(Lcy)"@1000000006 : Decimal;
+            CheNo@1000000003 : Code[20];
+            RecDate@1000000005 : Date;
+            BAnk@1000000007 : Code[20];
+            Description@1000000008 : Code[50];
+          BEGIN
+            //YIMMIAFPST -1
+
+            //IF ISCLEAR(DateformatCheck) THEN
+            //UPG13C.begin
+            //CREATE(DateformatCheck);
+            //CREATE(DateformatCheck,FALSE,TRUE);
+            //UPG13C.end
+
+            DateformatCheck := DateformatCheck.DateTimeFormatCheck; //UPG13R2DEV
+            Ch:=9;
+            Master_Setup.GET;
+            ssetup.GET;
+
+            //FileName := CommonDialogMgt.OpenFile(text006,'',1,'',0);
+            FileName := Master_Setup."Interface File Path" + '\' + Master_Setup."Imacs Collection";
+            IF FileName = '' THEN
+              EXIT;
+
+            //LogFile := 'C:\Documents and Settings\ATUL\Desktop\test.txt';
+            LogFile := Master_Setup."Interface File Path" + '\' + 'LOG-' + Master_Setup."Imacs Collection";
+            F1.CREATE(LogFile);
+            F1.CREATEOUTSTREAM(Outstreamobj);
+            F1.TEXTMODE(TRUE);
+
+
+            Entry_No := 1;
+
+
+            IF NOT (F.OPEN(FileName)) THEN
+            BEGIN
+             F1.CLOSE;
+             EXIT;
+            END;
+
+
+
+            F.CREATEINSTREAM(Instreamobj);
+
+            WHILE NOT Instreamobj.EOS DO BEGIN
+
+              Instreamobj.READTEXT(B,10);
+              IF EVALUATE(Line_No,B) THEN BEGIN
+                IF FORMAT(Line_No) = '' THEN
+                  Error_Line := TRUE;
+              END ELSE
+                Error_Line := TRUE;
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              EVALUATE(Doc_No,B);
+                IF Doc_No = '' THEN
+                  Error_Doc := TRUE;
+            //YIMMIAFPST -2
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              EVALUATE(Account_No,B);
+                IF Account_No = '' THEN
+                  Error_Cust := TRUE
+                ELSE BEGIN
+                 //YIMMDEVIP1.0 Issue 24
+                  Cust.RESET;
+                  Cust.SETRANGE(Cust."Imacs Code",Account_No);
+                  IF Cust.FINDFIRST THEN
+                   BEGIN
+                    IF NOT Cust_Master.GET(Cust.NAV) THEN
+                      Error_Cust := TRUE
+                    ELSE
+                      BEGIN
+                        IF (Cust_Master.DF=TRUE) THEN
+                         BEGIN
+                          IF(Cust_Master."Bank Account"='') THEN
+                          Error_Cust_Acc:= TRUE;
+                         END;
+                      END;
+                   END;
+                 //YIMMDEVIP1.0 Issue 24
+
+                  Cust.RESET;
+                  Cust.SETRANGE(Cust."Imacs Code",Account_No);
+                  IF Cust.FINDFIRST THEN BEGIN
+                    IF NOT Cust_Master.GET(Cust.NAV) THEN
+                      Error_Cust := TRUE
+                    ELSE
+                      BEGIN
+                        IF ((Cust_Master."Customer Type"=Cust_Master."Customer Type"::" ") OR
+                            (Cust_Master."Type of Dealer"=Cust_Master."Type of Dealer"::" ") OR
+                            (Cust_Master."Gen. Bus. Posting Group"='') OR
+                            (Cust_Master."VAT Bus. Posting Group"='') OR
+                            (Cust_Master."WHT Business Posting Group"='') OR
+                            (Cust_Master."Customer Posting Group"='') {OR
+                            (Cust_Master."Customer Disc. Group"='')} ) THEN
+                            Error_Cust_Setup := TRUE;
+                      END;
+                  END ELSE
+                    Error_Cust := TRUE;
+                  END;
+            //YIMMIAFPEN -2
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,11);
+              //B_Date := B;
+
+              IF EVALUATE(Trans_Date,B) THEN BEGIN
+                //OK:=DateformatCheck.CHECK(B);  // UPG13R2DEV
+                OK := DateformatCheck.checkDateTime(DateTrim(B)); //UPG13R2DEV
+                IF NOT (OK) THEN
+                  Error_TransDate := TRUE;
+              END ;
+              // ELSE
+              //  Error_TransDate := TRUE;
+
+              //Instreamobj.READTEXT(B,1);
+              //Instreamobj.READTEXT(B,1);
+              //EVALUATE(Dummy,B);
+
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              EVALUATE(CheNo,B);
+                IF CheNo = '' THEN
+                  Error_CheNo := TRUE;
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,10);
+              EVALUATE(Curr_Code,B);
+                IF Curr_Code <> '' THEN BEGIN
+                  Curry.RESET;
+                  IF NOT Curry.GET(Curr_Code) THEN
+                    Error_Curr := TRUE;
+                END ELSE
+                  Error_CurrBlank := TRUE;
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,11);
+             // B_Date := B;
+             // T_Date := COPYSTR(B,1,10);
+
+              IF EVALUATE(RecDate,B) THEN BEGIN
+                //OK:=DateformatCheck.CHECK(B);// UPG13R2DEV
+                OK := DateformatCheck.checkDateTime(DateTrim(B)); //UPG13R2DEV
+                IF NOT (OK) THEN
+                  Error_RecDate := TRUE;
+              END;
+              //ELSE
+                //Error_RecDate := TRUE;
+
+              //Instreamobj.READTEXT(B,1);
+              //Instreamobj.READTEXT(B,1);
+
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              IF EVALUATE(Amount,B) THEN BEGIN
+                IF FORMAT(Amount) = '' THEN
+                  Error_Amt := TRUE;
+              END ELSE
+                Error_Amt := TRUE;
+
+             //CR001-Start
+              PDC.RESET;
+              PDC.SETRANGE(PDC."Document No.",Doc_No);
+              PDC.SETRANGE(PDC."Account No.",Account_No);
+              PDC.SETRANGE(PDC."Check No.",CheNo);
+              PDC.SETRANGE(PDC.Amount,-Amount);
+              IF PDC.FINDFIRST THEN
+               Error_Doc10 := TRUE;
+             //CR001-End
+
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              EVALUATE(BAnk,B);
+              {
+                IF BAnk <> '' THEN BEGIN
+                  Bank_Acc.RESET;
+                  IF NOT Bank_Acc.GET(BAnk) THEN
+                    Error_Bank := TRUE;
+                END ELSE
+                  Error_Bank := TRUE;
+              }
+
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,50);
+              EVALUATE(Description,B);
+
+            //>>09092013/VK/CR#019
+              Instreamobj.READTEXT(B,1);
+              Instreamobj.READTEXT(B,20);
+              EVALUATE("G/L_Account",B);
+                IF "G/L_Account" <> '' THEN BEGIN
+                  "G/L".RESET;
+                  IF NOT "G/L".GET("G/L_Account") THEN
+                    "Error_G/L" := TRUE;
+                END ELSE
+                  "Error_G/L" := TRUE;
+            //>>09092013/VK/CR#019
+
+
+
+            //YIMMIAFPEN -1
+
+            //  IF NOT (Error_Curr or Error_CurrBlank) then;
+            // Check with multiple Condition of Currency and BlDate
+            // we need to check if currecny code is defined then there must bo BL exits for that record.
+
+            //YIMMIAFPST -2
+
+              IF (Error_Doc OR Error_Doc10 OR Error_TransDate OR Error_RecDate OR Error_Amt OR Error_Acc
+                  OR Error_Curr OR Error_CheNo OR Error_Cust_Setup OR Error_Cust OR "Error_G/L" OR Error_Cust_Acc) THEN BEGIN //09092013/VK/CR#019     //YIMMDEVIP1.0 Issue 24
+                Flag := TRUE;
+
+                Outstreamobj.WRITETEXT(FORMAT(Entry_No));
+                Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+
+                IF Error_Doc THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Document No.');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+                IF Error_TransDate THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Cheque Date');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+                IF Error_Acc THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Customer code');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                END;
+                IF Error_Cust_Setup THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Setup Value is Missing for the Customer.');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+            //YIMMIAFPEN -2
+                {
+                IF Error_Bank THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Bank Code');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                END;
+                }
+
+                IF Error_Amt THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Amount');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                END;
+                IF Error_Curr THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Currency');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                END;
+                IF Error_RecDate THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Cheque Receipt Date');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+                IF Error_CheNo THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In Cheque number');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+                IF Error_Cust THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Customer Not Exist');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+               //YIMMDEVIP1.0 Issue 24
+                IF Error_Cust_Acc THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Customer is DF but Bank Account is blank');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+               //YIMMDEVIP1.0 Issue 24
+
+
+                //>>09092013/VK/CR#019
+                IF "Error_G/L" THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Error In G/L Account');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<CHAR>'));
+                END;
+                //>>09092013/VK/CR#019
+
+                //CR001-Start
+                IF Error_Doc10 THEN BEGIN
+                  Outstreamobj.WRITETEXT('! Entry already Exist');
+                  Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                END;
+                //CR001-End
+
+              END ELSE
+               BEGIN
+                Outstreamobj.WRITETEXT(FORMAT(Entry_No));
+                Outstreamobj.WRITETEXT(FORMAT(Ch,2,'<char>'));
+                Outstreamobj.WRITETEXT('! Process Sucessfully');
+               END;
+
+
+              Entry_No := Entry_No +1;
+              Instreamobj.READTEXT(B,1);
+              Outstreamobj.WRITETEXT();
+              ResetAll();
+            END;
+            F1.CLOSE;
+
+
+            IF NOT Flag THEN BEGIN
+              Master_Setup.UploadDataColl(FileName,ssetup."Post Dated Check Imacs Batch");
+              MCReport.RUN;
+            END;
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Instreamobj@1000000001 : InStream;
+      Outstreamobj@1000000034 : OutStream;
+      B@1000000004 : Text[250];
+      Flag@1000000006 : Boolean;
+      FileName@1102201000 : Text[250];
+      text006@1102201002 : TextConst 'ENU=Import Text File';
+      F@1000000000 : File;
+      F1@1000000033 : File;
+      Error_Doc@1000000002 : Boolean;
+      Sales_interface@1000000010 : Record 50010;
+      Entry_No@1000000013 : Integer;
+      Error_TransDate@1000000017 : Boolean;
+      Error_Dim1@1000000020 : Boolean;
+      Error_Dim2@1000000021 : Boolean;
+      Error_Dim3@1000000047 : Boolean;
+      Error_Curr@1000000022 : Boolean;
+      Error_Amount@1000000025 : Boolean;
+      Error_BL@1000000027 : Boolean;
+      Error_BLBlank@1000000005 : Boolean;
+      Master_Setup@1000000030 : Record 50008;
+      LogFile@1000000031 : Text[250];
+      Ch@1000000032 : Char;
+      Error_Doc1@1000000038 : Boolean;
+      Line_No@1000000039 : Integer;
+      Error_Line@1000000040 : Boolean;
+      Error_Opt@1000000041 : Boolean;
+      Error_Acc@1000000042 : Boolean;
+      GL_Acc@1000000043 : Record 15;
+      Error_Credit@1000000044 : Boolean;
+      Error_Debit@1000000045 : Boolean;
+      Error_Amt@1000000046 : Boolean;
+      Error_CurrBlank@1000000003 : Boolean;
+      "Debit_Amt(Lcy)"@1000000008 : Decimal;
+      "Credit_Amt(Lcy)"@1000000007 : Decimal;
+      Error_CheNo@1000000009 : Boolean;
+      Error_RecDate@1000000011 : Boolean;
+      Error_Bank@1000000012 : Boolean;
+      Cust@1000000014 : Record 50004;
+      MCReport@1000000015 : Report 50028;
+      DateformatCheck@1000000016 : DotNet "'DateTimeFun, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'.DateTimeFun.DateTimeFormatCheck";
+      OK@1000000018 : Boolean;
+      Cust_Master@1000000019 : Record 18;
+      Error_Cust@1000000023 : Boolean;
+      Error_Cust_Setup@1000000024 : Boolean;
+      ssetup@1000000028 : Record 311;
+      "Error_G/L"@1102159001 : Boolean;
+      Error_Cust_Acc@1102159002 : Boolean;
+      T_Date@1102159003 : Text[250];
+      Dummy@1102159004 : Text;
+      PDC@1000000026 : Record 28090;
+      Error_Doc10@1000000029 : Boolean;
+
+    PROCEDURE ResetAll@1000000000();
+    BEGIN
+      Error_Doc := FALSE;
+      Error_TransDate := FALSE;
+      Error_Dim1 := FALSE;
+      Error_Dim2 := FALSE;
+      Error_Dim3 := FALSE;
+      Error_Curr := FALSE;
+      Error_BL := FALSE;
+      Error_BLBlank := FALSE;
+      Error_CurrBlank := FALSE;
+      "Debit_Amt(Lcy)" := 0;
+      "Credit_Amt(Lcy)" := 0;
+      Error_Acc := FALSE;
+      Error_Line := FALSE;
+      Error_Opt := FALSE;
+      Error_Cust_Setup := FALSE;
+      Error_Cust := FALSE;
+      "Error_G/L" := FALSE; //09092013/VK/CR#019
+      Error_Cust_Acc:=FALSE;//YIMMDEVIP1.0 Issue 24
+      Error_Doc10 := FALSE; //UPG13R2DEV-1
+    END;
+
+    PROCEDURE DateTrim@1102159001(ADate@1102159001 : Text) : Text[250];
+    BEGIN
+      EXIT(DELSTR(ADate,STRLEN(ADate),1));
+    END;
+
+    BEGIN
+    {
+      Date               Sign                 Ref_ID                 Description
+      09092013            VK                  CR#019                 Imacs IF Modification(Coll IF)
+
+      //YIMMIAFP
+      1) Insert Date Check (Automation for date Check is included)
+      2) INSERT CUSTOMER MASTER CHECK IN LOG FILE
+
+      //YIMMDEVIP1.0 Issue 24 DF Concept
+      Variable added
+      Name           DataType Subtype Length
+      Error_Cust_Acc Boolean
+
+      //UPG13R2DEV
+      Modifications for 2013R2DB. Dotnet variable "DateFormatCheck" is modified. Also "DateTrim" function is created to remove a space in Date fields in interface files.
+
+      //CR001/ND
+      Modify code to remove the duplicate entries.
+    }
+    END.
+  }
+}
+

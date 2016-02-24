@@ -1,0 +1,61 @@
+OBJECT Table 60001 AccPac Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/09/12;
+    Time=15:32:32;
+    Version List=TBI1.0,TBI1.1;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer        }
+    { 2   ;   ;Kwitansi No.        ;Code20        ;Description=AccPac Order On. }
+    { 3   ;   ;Receipt No.         ;Code20        ;Description=Receipt No. from AccPac }
+    { 4   ;   ;Vendor Invoice Date ;Date          ;Description=[Commercial Invoice Date From AccPac System; Document Date] }
+    { 5   ;   ;Vendor Code         ;Code20        ;Description=[AccPac Vendor Code; Buy- from Vendor Code] }
+    { 6   ;   ;Transaction Type    ;Option        ;OptionString=[ ,Direct,Indirect,Others];
+                                                   Description=[Direct/Indirect/Others; Grouping to be done by AccPac (Category)] }
+    { 7   ;   ;Transaction Date    ;Date          ;Description=[Transaction Date From AccPac System; Posting Date] }
+    { 8   ;   ;Vendor Invoice No.  ;Code20        ;Description=Vendor Invoice No.,Commercial Invoice No. on Line }
+    { 9   ;   ;Npwp No.            ;Code20        ;Description=[To be created by AccPac; Ship - to Code] }
+    { 10  ;   ;Payment Date        ;Date          ;Description=[Due Date From AccPac System; Due Date] }
+    { 11  ;   ;Dimension Code 1    ;Code10        ;Description=[Shop Code; Setup & List to be created by AccPac] }
+    { 12  ;   ;Dimension Code 2    ;Code10        ;Description=Blank }
+    { 13  ;   ;Dimension Code 3    ;Code10        ;Description=Blank }
+    { 14  ;   ;Currency            ;Code10        ;Description=[Currency Code; If "IDR" then keep it blank otherwise any defined value, International Standard Code, e.g. USD, JPY, SGD etc.] }
+    { 15  ;   ;Tax Invoice No.     ;Code20        ;Description=To be created by AccPac }
+    { 16  ;   ;Tax Invoice Date    ;Date          ;Description=To be created by AccPac }
+    { 17  ;   ;Account Code        ;Code20        ;Description=AccPac G/L Account Code }
+    { 18  ;   ;Amount              ;Decimal       ;Description=Consolidated Amount From AccPac System }
+    { 19  ;   ;VAT %               ;Decimal       ;Description=Vat Prod. Posting Group. 0=No VAT, 1=1% VAT,2=10% VAT,3=100% VAT }
+    { 20  ;   ;Description         ;Text250       ;Description=Narration Desc From AccPac If Any Field enable for capturing the Description of AccPac Data. TBI1.1 }
+    { 21  ;   ;B/L Date            ;Date          ;Description=[B/L Date for Import; To be created by AccPac] }
+    { 22  ;   ;Return              ;Boolean       ;Description=Whether purchase return }
+    { 23  ;   ;Applies To Doc No.  ;Code20        ;Description=Applies to Invoice No. in case of purchase return }
+    { 24  ;   ;Line No.            ;Integer        }
+    { 25  ;   ;WHT Area Code       ;Code10         }
+    { 26  ;   ;WHT Prod. Posting Group;Code10      }
+    { 27  ;   ;VAT Prod. Posting Group;Code10      }
+    { 28  ;   ;VAT Applicable      ;Boolean        }
+    { 29  ;   ;Nav Vendor Code     ;Code20        ;Description=Nav Vendor/Cust Code for checking Vendor Invoice No. duplicity }
+  }
+  KEYS
+  {
+    {    ;Entry No.                                }
+    {    ;Receipt No.,Line No.                    ;Clustered=Yes }
+    {    ;Vendor Invoice No.                       }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

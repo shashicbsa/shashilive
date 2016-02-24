@@ -1,0 +1,361 @@
+OBJECT Report 50014 Imacs Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=04/03/15;
+    Time=14:48:02;
+    Modified=Yes;
+    Version List=Imacs1.0,YIMMIAFP,YIMMNEW,CR#018,CR#022,CR#023,UPG13R2DEV,PPNPPHDEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnInitReport=BEGIN
+                   LineNo := 10000;
+                   //WHT_Amount := 0; //04122013/VK/CR#022
+                   DocNo := '';
+                   Master_Setup.GET;
+                 END;
+
+    OnPreReport=BEGIN
+                  Imcas_Interface.RESET;
+                  Imcas_Interface.SETCURRENTKEY(Imcas_Interface."No.",Imcas_Interface."Dealer Code");
+                  //>>31072013/VK/CR#018
+                  //Imcas_Interface.SETRANGE(Imcas_Interface."Sales Type",Imcas_Interface."Sales Type"::Imacs);
+                  Imcas_Interface.SETFILTER(Imcas_Interface."Sales Type",'%1|%2|%3|%4',Imcas_Interface."Sales Type"::Imacs,
+                                            Imcas_Interface."Sales Type"::"Imacs-ATV",Imcas_Interface."Sales Type"::"Imacs-Generator",
+                                            Imcas_Interface."Sales Type"::"Imacs-CBU");  //15012014/VK/CR#023
+                  //<<31072013/VK/CR#018
+                  IF Imcas_Interface.FINDFIRST THEN REPEAT
+                    IF DocNo <> Imcas_Interface."No." THEN BEGIN
+                      //CreateWHT(Sales_Header,Sales_Line,LineNo,WHT_Amount);  //04122013/VK/CR#022
+                      Sales_Header.RESET;
+                      Sales_Header.INIT;
+                      Sales_Header."Document Type" := Sales_Header."Document Type"::Invoice;
+                      Sales_Header."No." := Imcas_Interface."No.";
+                      Sales_Header."Reason Code" := Master_Setup."Reason (Normal)"; //YIMMNEW
+                      Sales_Header.INSERT(TRUE);
+                      //PPNPPHDEV.begin
+                      { Conversion_Cust.RESET;
+                      Conversion_Cust.SETRANGE(Conversion_Cust."Imacs Code",Imcas_Interface."Dealer Code");
+                      IF Imcas_Interface."Npwp no." <> '' THEN BEGIN
+                        Conversion_Cust.SETRANGE(Conversion_Cust.NPWP,Imcas_Interface."Npwp no.");
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                          Sales_Header.VALIDATE(Sales_Header."Ship-to Code",Conversion_Cust.NPWP);
+                        END;
+                      END ELSE BEGIN
+                        IF Conversion_Cust.FINDFIRST THEN BEGIN
+                          Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                          Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                          Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                        END;
+                      END;
+                      } //Previous code commented
+                      Conversion_Cust.RESET;
+                      Conversion_Cust.SETRANGE(Conversion_Cust."Imacs Code",Imcas_Interface."Dealer Code");
+                      IF Conversion_Cust.FINDSET THEN BEGIN
+                        Sales_Header.VALIDATE(Sales_Header."Posting Date",Imcas_Interface."Transaction Date");
+                        Sales_Header.VALIDATE(Sales_Header."Document Date",Imcas_Interface."Invoice Date");
+                        Sales_Header.VALIDATE(Sales_Header."Sell-to Customer No.",Conversion_Cust.NAV);
+                        ShipAdd.RESET;
+                        ShipAdd.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                        ShipAdd.SETRANGE(PPN,TRUE);
+                        ShipAdd.SETRANGE("PPN M/C",TRUE);
+                        IF ShipAdd.FINDSET THEN
+                          Sales_Header.VALIDATE("Ship-to Code",ShipAdd.Code);
+                        ShipAdd.RESET;
+                        ShipAdd.SETRANGE("Customer No.",Conversion_Cust.NAV);
+                        ShipAdd.SETRANGE(PPH,TRUE);
+                        ShipAdd.SETRANGE("PPH M/C",TRUE);
+                        IF ShipAdd.FINDSET THEN
+                          Sales_Header.VALIDATE("New NPWP No.",ShipAdd.Code);
+                      END;
+
+                      //PPNPPHDEV.end
+                      {//31072013/VK/CR#018-Code Commented for CR#018
+                      Cust.GET(Conversion_Cust.NAV);
+                      Cust_Posting.GET;
+                      CASE Cust."Type of Dealer" OF
+                        Cust."Type of Dealer"::DDS:
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C DDS");
+                        Cust."Type of Dealer"::"Main Dealer":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C MD");
+                      END;}
+
+                   //>>31072013/VK/CR#018
+                      Cust.GET(Conversion_Cust.NAV);
+                      Cust_Posting.GET;
+                      IF Imcas_Interface."Sales Type"=Imcas_Interface."Sales Type"::Imacs THEN BEGIN
+                      CASE Cust."Type of Dealer" OF
+                        Cust."Type of Dealer"::DDS:
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C DDS");
+                        Cust."Type of Dealer"::"Main Dealer":
+                          Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C MD");
+                      END;
+                      //>>15012014/VK/CR#023
+                      END ELSE IF Imcas_Interface."Sales Type"=Imcas_Interface."Sales Type"::"Imacs-CBU" THEN BEGIN
+                        CASE Cust."Type of Dealer" OF
+                          Cust."Type of Dealer"::DDS:
+                            Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C CBU DDS");
+                          Cust."Type of Dealer"::"Main Dealer":
+                            Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local M/C CBU MD");
+                        END;
+                      END
+                      //<<15012014/VK/CR#023
+                      ELSE
+                        Sales_Header.VALIDATE(Sales_Header."Customer Posting Group",Cust_Posting."Local Others Third Party");
+                  //<<31072013/VK/CR#018
+
+                      Master_Setup.GET;//YIMMNEW
+                      //Sales_Header."Type Of Transaction" := Sales_Header."Type Of Transaction"::Imacs; //31072013/VK/CR#018-Code Commented
+                      Sales_Header."Type Of Transaction":=Imcas_Interface."Sales Type";                  //31072013/VK/CR#018
+                      Sales_Header."Order Date" := Imcas_Interface."Transaction Date";
+                      Sales_Header.VALIDATE(Sales_Header."Shipment Date",Imcas_Interface."Transaction Date");
+                      Sales_Header.VALIDATE(Sales_Header."Due Date",Imcas_Interface."Due Date");
+                      Sales_Header.VALIDATE(Sales_Header."Currency Code",Imcas_Interface.Currency);
+                      Sales_Header."Posting No." := Imcas_Interface."No.";
+                      Sales_Header."Tax Invoice Date" := Imcas_Interface."Tax Invoice Date";
+                      Sales_Header."B/L Date" := Imcas_Interface."B/L Date";
+                      Sales_Header."External Document No." := Imcas_Interface."Ext.Doc.No.";
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Header.VALIDATE(Sales_Header."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      Sales_Header.Interfaced := TRUE;
+                      //WHT_Amount := 0;  //04122013/VK/CR#022
+                      Sales_Header.MODIFY;
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      Sales_Line.VALIDATE(Sales_Line."Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+                      IF (Imcas_Interface."VAT Required" = Imcas_Interface."VAT Required"::"1") THEN BEGIN
+                        Master_Setup.GET;
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      END;
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      //>>04122013/VK/CR#022
+                      { //UPG13R2dev.begin-Code Commented
+                      GLSetup.GET;
+                      IF (NOT DocDim.GET(DATABASE::"Sales Line",Sales_Line."Document Type"::Invoice,Sales_Line."Document No.",
+                        Sales_Line."Line No.",GLSetup."Shortcut Dimension 3 Code")) AND (Imcas_Interface."Shortcut Dimension 3 Code" <> '') THEN
+                       BEGIN
+                        DocDim.INIT;
+                        DocDim."Table ID" := DATABASE::"Sales Line";
+                        DocDim."Document Type" := Sales_Line."Document Type";
+                        DocDim."Document No." := Sales_Line."Document No.";
+                        DocDim."Line No." := Sales_Line."Line No.";
+                        DocDim."Dimension Code" := GLSetup."Shortcut Dimension 3 Code";
+                        DocDim."Dimension Value Code" := Imcas_Interface."Shortcut Dimension 3 Code";
+                        DocDim.INSERT;
+                       END;
+                       } //UPG13R2DEV.end
+                       { //code commented SV 12032015
+                       //UPG13R2DEV.begin-New Code
+                       GLSetup.GET;
+                       IF Imcas_Interface."Shortcut Dimension 3 Code" <> '' THEN BEGIN
+                        DimVal.SETRANGE(DimVal."Dimension Code",GLSetup."Shortcut Dimension 3 Code");
+                        DimVal.SETRANGE(DimVal.Code,Imcas_Interface."Shortcut Dimension 3 Code");
+                        IF DimVal.FINDFIRST THEN BEGIN
+                          DimSetEntry.SETRANGE(DimSetEntry."Dimension Set ID",Sales_Line."Dimension Set ID");
+                          IF DimSetEntry.FINDFIRST THEN BEGIN
+                            DimSetEntry1.INIT;
+                            DimSetEntry1."Dimension Set ID" := DimSetEntry."Dimension Set ID";
+                            DimSetEntry1."Dimension Code" := DimVal."Dimension Code";
+                            DimSetEntry1.INSERT;
+                            DimSetEntry1."Dimension Value Code" := DimVal.Code;
+                            DimSetEntry1."Dimension Value ID" := DimVal."Dimension Value ID";
+                            DimSetEntry1.MODIFY;
+                          END;
+                        END;
+                       END; } //code commented SV    12032015
+                       //UPG13R2DEV.end
+                      //<<04122013/VK/CR#022
+                    //>>SV start1 ---code wrtitten for replacement of above commented code     12032015
+                       IF Imcas_Interface."Shortcut Dimension 3 Code" <> '' THEN BEGIN
+                         DimensionManagement.ValidateShortcutDimValues(3,Imcas_Interface."Shortcut Dimension 3 Code",Sales_Line."Dimension Set ID");
+                       END;
+                    //<<SV end1   12032015
+
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.Narration := Imcas_Interface.Narration;//YIMMIAFP
+                      Sales_Line.AreaCode := Imcas_Interface."WHT Area Code";//YIMMIAFP
+                      //WHT_Amount := WHT_Amount + Imcas_Interface.Amount ; //04122013/VK/CR#022
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END ELSE BEGIN
+                      Sales_Line.RESET;
+                      Sales_Line.INIT;
+                      Sales_Line."Document Type" :=Sales_Line."Document Type"::Invoice;
+                      Sales_Line."Document No." := Sales_Header."No.";
+                      Sales_Line."Line No." := LineNo;
+                      Sales_Line.INSERT(TRUE);
+                      Sales_Line.Type := Sales_Line.Type::"G/L Account";
+                      Sales_Line.VALIDATE(Sales_Line."No.",Imcas_Interface."Account No.");
+                      Sales_Line.VALIDATE(Sales_Line."Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+                      IF (Imcas_Interface."VAT Required" = Imcas_Interface."VAT Required"::"1") THEN BEGIN
+                        Master_Setup.GET;
+                        Sales_Line.VALIDATE(Sales_Line."VAT Prod. Posting Group",Master_Setup."VAT Prod. Posting Gr");
+                      END;
+                      Sales_Line.VALIDATE(Sales_Line.Quantity,1);
+                      Sales_Line.VALIDATE(Sales_Line."Unit Price",Imcas_Interface.Amount);
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 1 Code", Imcas_Interface."Shortcut Dimension 1 Code");
+                      Sales_Line.VALIDATE(Sales_Line."Shortcut Dimension 2 Code" ,Imcas_Interface."Shortcut Dimension 2 Code");
+                      //>>04122013/VK/CR#022
+                      { //UPG13R2dev.begin-Code Commented
+                      GLSetup.GET;
+                      IF (NOT DocDim.GET(DATABASE::"Sales Line",Sales_Line."Document Type"::Invoice,Sales_Line."Document No.",
+                        Sales_Line."Line No.",GLSetup."Shortcut Dimension 3 Code")) AND (Imcas_Interface."Shortcut Dimension 3 Code" <> '') THEN
+                       BEGIN
+                        DocDim.INIT;
+                        DocDim."Table ID" := DATABASE::"Sales Line";
+                        DocDim."Document Type" := Sales_Line."Document Type";
+                        DocDim."Document No." := Sales_Line."Document No.";
+                        DocDim."Line No." := Sales_Line."Line No.";
+                        DocDim."Dimension Code" := GLSetup."Shortcut Dimension 3 Code";
+                        DocDim."Dimension Value Code" := Imcas_Interface."Shortcut Dimension 3 Code";
+                        DocDim.INSERT;
+                       END;
+                       } //UPG13R2DEV.end
+                          {   Code Commented SV   12032015
+                       //UPG13R2DEV.begin-New Code
+                       IF Imcas_Interface."Shortcut Dimension 3 Code" <> '' THEN BEGIN
+                        DimVal.SETRANGE(DimVal."Dimension Code",GLSetup."Shortcut Dimension 3 Code");
+                        DimVal.SETRANGE(DimVal.Code,Imcas_Interface."Shortcut Dimension 3 Code");
+                        IF DimVal.FINDFIRST THEN BEGIN
+                          DimSetEntry.SETRANGE(DimSetEntry."Dimension Set ID",Sales_Line."Dimension Set ID");
+                          IF DimSetEntry.FINDFIRST THEN BEGIN
+                            DimSetEntry1.INIT;
+                            DimSetEntry1."Dimension Set ID" := DimSetEntry."Dimension Set ID";
+                            DimSetEntry1."Dimension Code" := DimVal."Dimension Code";
+                            DimSetEntry1.INSERT;
+                            DimSetEntry1."Dimension Value Code" := DimVal.Code;
+                            DimSetEntry1."Dimension Value ID" := DimVal."Dimension Value ID";
+                            DimSetEntry1.MODIFY;
+                          END;
+                        END;
+                       END;  }  //code commented SV       12032015
+                       //UPG13R2DEV.end
+                      //<<04122013/VK/CR#022
+
+                    //>>SV start2 ---code wrtitten for replacement of above commented code  12032015
+                       IF Imcas_Interface."Shortcut Dimension 3 Code" <> '' THEN BEGIN
+                         DimensionManagement.ValidateShortcutDimValues(3,Imcas_Interface."Shortcut Dimension 3 Code",Sales_Line."Dimension Set ID");
+                       END;
+                    //<<SV end2  12032015
+
+
+                      Sales_Line.Interfaced := TRUE;
+                      Sales_Line.AreaCode := Imcas_Interface."WHT Area Code";//YIMMIAFP
+                      Sales_Line.Narration := Imcas_Interface.Narration;//YIMMIAFP
+                      //WHT_Amount := WHT_Amount + Imcas_Interface.Amount ;  //04122013/VK/CR#022
+                      Sales_Line.MODIFY;
+                      LineNo += 10000;
+                      DocNo := Imcas_Interface."No.";
+                    END;
+                   Imcas_Interface.DELETE;
+                  UNTIL Imcas_Interface.NEXT = 0;
+                  //CreateWHT(Sales_Header,Sales_Line,LineNo,WHT_Amount);  //04122013/VK/CR#022
+                END;
+
+    UseRequestPage=No;
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Sales_Header@1000000000 : Record 36;
+      Sales_Line@1000000001 : Record 37;
+      Conversion_Cust@1000000002 : Record 50004;
+      LineNo@1000000003 : Integer;
+      Imcas_Interface@1000000004 : Record 50009;
+      DocNo@1000000005 : Code[20];
+      Cust@1000000006 : Record 18;
+      Cust_Posting@1000000007 : Record 50012;
+      Master_Setup@1000000008 : Record 50008;
+      WHT_Amount@1000000009 : Decimal;
+      GLSetup@1102159002 : Record 98;
+      DimSetEntry@1102159001 : Record 480;
+      DimVal@1102159003 : Record 349;
+      DimSetEntry1@1102159004 : Record 480;
+      DimensionManagement@1102159005 : Codeunit 408;
+      ShipAdd@1102159006 : Record 222;
+
+    PROCEDURE CreateWHT@1000000001(Sheader@1000000003 : Record 36;SLineNew@1000000000 : Record 37;Line1@1000000001 : Integer;WHTAmount@1000000004 : Decimal);
+    VAR
+      SlineWHT@1000000002 : Record 37;
+    BEGIN
+      //>>04122013/VK/CR#022-Code Commented as Imacs will send WHT Lines in Imacs_Invoice file itself.
+      {IF Sheader.SalesLinesExist THEN BEGIN
+        IF Sheader."Type Of Transaction"<>Sheader."Type Of Transaction"::"Imacs-Generator" THEN BEGIN   //31072013/VK/CR#018
+        SlineWHT.INIT;
+        SlineWHT."Document Type" := SLineNew."Document Type";
+        SlineWHT."Document No." :=  SLineNew."Document No.";
+        SlineWHT."Line No." := LineNo;
+        SlineWHT.INSERT(TRUE);
+        SlineWHT.Type := SlineWHT.Type::"G/L Account";
+        SlineWHT.VALIDATE(SlineWHT."No.",Master_Setup."WHT Account For MC");
+        SlineWHT.VALIDATE(SlineWHT."Gen. Prod. Posting Group",Master_Setup."Default GPPG");//YIMMNEW
+        SlineWHT.VALIDATE(SlineWHT.Quantity,1);
+        IF SlineWHT."New NPWP." = '' THEN
+          SlineWHT.VALIDATE(SlineWHT."Unit Price",(WHTAmount*Master_Setup."WHT Prod. MC(%)")/100)
+        ELSE
+          SlineWHT.VALIDATE(SlineWHT."Unit Price",(WHTAmount*Master_Setup."WHT Prod. MC Npwp(%)")/100);
+        SlineWHT.VALIDATE(SlineWHT."Shortcut Dimension 1 Code", SLineNew."Shortcut Dimension 1 Code");
+        SlineWHT.VALIDATE(SlineWHT."Shortcut Dimension 2 Code" ,SLineNew."Shortcut Dimension 2 Code");
+        SlineWHT.Interfaced := TRUE;
+        SlineWHT.AreaCode := SLineNew.AreaCode;//YIMMIAFP
+        SlineWHT.MODIFY;
+      END;
+      END;
+      }//<<04122013/VK/CR#022
+    END;
+
+    BEGIN
+    {
+      Date               Sign                 Ref_ID                 Description
+      31072013            VK                  CR#018                 Imacs IF Modification
+      04122013            VK                  CR#022                 2nd Imacs IF Modification
+      15012014            VK                  CR#023                 Imacs-CBU Modification
+
+      //YIMMIAFP
+      1) CODE FOR INCLUDE WHT AREA CODE AND NARRATION
+      //YIMMNEW
+      1) CODE ADDED FOR ASSIGN DEFAULT G.P.P.G AND ASSIGN DEFAULT REASON CODE
+
+      //UPG13R2DEV
+      Code Modified for Dimension New Concept in 2013 R2.Here for inserting Shorcut Dimension 3.
+      Code again modified by SV and the previous code is commented ref_id SV 12032015
+      //PPNPPHDEV  SV
+      PPNPPH concept development
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

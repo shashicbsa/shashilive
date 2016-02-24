@@ -1,0 +1,711 @@
+OBJECT Codeunit 5618 Table Depr. Calculation
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/16/14;
+    Time=[ 6:00:00];
+    Modified=Yes;
+    Version List=NAVW17.00,S-000,S-002,S-003,S-004;
+  }
+  PROPERTIES
+  {
+    OnRun=BEGIN
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU="There are no lines defined for %1 %2 = %3."';
+      Text001@1001 : TextConst 'ENU="%1 = %2 and %3 %4 = %5 must not be different."';
+      Text002@1002 : TextConst 'ENU=must be an unbroken sequence';
+      Text003@1003 : TextConst 'ENU=Period must be specified in %1.';
+      Text004@1004 : TextConst 'ENU=The number of days in an accounting period must not be less than 5.';
+      AccountingPeriod@1005 : Record 50;
+      DeprBook@1006 : Record 5611;
+      DeprTableHeader@1007 : Record 5642;
+      DeprTableBufferTmp@1008 : TEMPORARY Record 5646;
+      DeprTableLine@1009 : Record 5643;
+      DepreciationCalc@1010 : Codeunit 5616;
+      DaysInFiscalYear@1011 : Integer;
+      StartingLimit@1012 : Integer;
+      EndingLimit@1013 : Integer;
+      FirstPointer@1014 : Integer;
+      LastPointer@1015 : Integer;
+      NumberOfDays@1016 : Integer;
+      Percentage@1017 : Decimal;
+      Year365Days@1018 : Boolean;
+      Text005@1019 : TextConst 'ENU=cannot be %1 when %2 is %3 in %4 %5';
+      gCod_ServiceID@1036 : Code[5];
+      gTxt_ServiceName@1035 : Text[40];
+      gBol_ServiceIsValid@1034 : Boolean;
+      gCoA_LicenseNumber@1033 : ARRAY [2] OF Code[20];
+      gDaA_LicenseDate@1032 : ARRAY [2] OF Date;
+      gInA_LicenseSession@1031 : ARRAY [2] OF Integer;
+      gCoU_NAVMgmt@1029 : Codeunit 44;
+      gDNe_DataTable@1028 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable";
+      gDNe_DataRow@1027 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRow";
+      gDNe_DataColumns@1026 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      gDNe_TableInfos@1025 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      gDNe_PKValuesArray10@1024 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      gDNe_ViewFilters@1023 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      gDNe_ViewSorts@1022 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      gInt_ViewCurrentRow@1021 : Integer;
+      gInt_ViewTotalRows@1020 : Integer;
+
+    PROCEDURE GetTablePercent@1(DeprBookCode@1000 : Code[10];DeprTableCode@1001 : Code[10];FirstUserDefinedDeprDate@1002 : Date;StartingDate@1003 : Date;EndingDate@1004 : Date) : Decimal;
+    BEGIN
+      CLEARALL;
+      IF (StartingDate = 0D) OR (EndingDate = 0D) THEN
+        EXIT(0);
+      IF (StartingDate > EndingDate) OR (FirstUserDefinedDeprDate > StartingDate) THEN
+        EXIT(0);
+      DeprBook.GET(DeprBookCode);
+      DaysInFiscalYear := DeprBook."No. of Days in Fiscal Year";
+      IF DaysInFiscalYear = 0 THEN
+        DaysInFiscalYear := 360;
+      DeprTableHeader.GET(DeprTableCode);
+      Year365Days := DeprBook."Fiscal Year 365 Days";
+      IF Year365Days THEN BEGIN
+        IF (DeprTableHeader."Period Length" = DeprTableHeader."Period Length"::Month) OR
+           (DeprTableHeader."Period Length" = DeprTableHeader."Period Length"::Quarter)
+        THEN
+          DeprTableHeader.FIELDERROR(
+            "Period Length",
+            STRSUBSTNO(
+              Text005,
+              DeprTableHeader."Period Length",
+              DeprBook.FIELDCAPTION("Fiscal Year 365 Days"),
+              DeprBook."Fiscal Year 365 Days",
+              DeprBook.TABLECAPTION,DeprBook.Code));
+        DaysInFiscalYear := 365;
+      END;
+      StartingLimit := DepreciationCalc.DeprDays(FirstUserDefinedDeprDate,StartingDate,Year365Days);
+      EndingLimit := DepreciationCalc.DeprDays(FirstUserDefinedDeprDate,EndingDate,Year365Days);
+      IF NOT Year365Days THEN BEGIN
+        IF DATE2DMY(StartingDate,2) = 2 THEN
+          IF DATE2DMY(StartingDate + 1,1) = 1 THEN
+            StartingLimit := StartingLimit - (30 - DATE2DMY(StartingDate,1));
+      END;
+      CreateTableBuffer(FirstUserDefinedDeprDate);
+      EXIT(CalculatePercent);
+    END;
+
+    LOCAL PROCEDURE CalculatePercent@12() : Decimal;
+    BEGIN
+      DeprTableBufferTmp.FIND('-');
+      LastPointer := 0;
+      Percentage := 0;
+
+      REPEAT
+        FirstPointer := LastPointer + 1;
+        LastPointer := FirstPointer + DeprTableBufferTmp."No. of Days in Period" - 1;
+        NumberOfDays := 0;
+        IF NOT ((StartingLimit > LastPointer) OR (EndingLimit < FirstPointer)) THEN BEGIN
+          IF (StartingLimit < FirstPointer) AND (EndingLimit <= LastPointer) THEN
+            NumberOfDays := EndingLimit - FirstPointer + 1;
+          IF (StartingLimit < FirstPointer) AND (EndingLimit > LastPointer) THEN
+            NumberOfDays := DeprTableBufferTmp."No. of Days in Period";
+          IF (StartingLimit >= FirstPointer) AND (EndingLimit <= LastPointer) THEN
+            NumberOfDays := EndingLimit - StartingLimit + 1;
+          IF (StartingLimit >= FirstPointer) AND (EndingLimit > LastPointer) THEN
+            NumberOfDays := LastPointer - StartingLimit + 1;
+          Percentage :=
+            Percentage + DeprTableBufferTmp."Period Depreciation %" * NumberOfDays /
+            DeprTableBufferTmp."No. of Days in Period";
+        END;
+      UNTIL DeprTableBufferTmp.NEXT = 0;
+      EXIT(Percentage / 100);
+    END;
+
+    LOCAL PROCEDURE CreateTableBuffer@8(FirstUserDefinedDeprDate@1000 : Date);
+    VAR
+      FADeprBook@1001 : Record 5612;
+      DepreciationCalc@1002 : Codeunit 5616;
+      DaysInPeriod@1003 : Integer;
+      TotalNoOfDays@1004 : Integer;
+      PeriodNo@1005 : Integer;
+    BEGIN
+      DeprTableLine.SETRANGE("Depreciation Table Code",DeprTableHeader.Code);
+      IF NOT DeprTableLine.FIND('-') THEN
+        ERROR(
+          Text000,
+          DeprTableHeader.TABLECAPTION,DeprTableHeader.FIELDCAPTION(Code),DeprTableHeader.Code);
+
+      IF DeprTableHeader."Period Length" = DeprTableHeader."Period Length"::Period THEN BEGIN
+        AccountingPeriod.SETFILTER("Starting Date",'>=%1',FirstUserDefinedDeprDate);
+        IF AccountingPeriod.FIND('-') THEN ;
+        IF AccountingPeriod."Starting Date" <> FirstUserDefinedDeprDate THEN
+          ERROR(
+            Text001,
+            FADeprBook.FIELDCAPTION("First User-Defined Depr. Date"),FirstUserDefinedDeprDate,
+            AccountingPeriod.TABLECAPTION,AccountingPeriod.FIELDCAPTION("Starting Date"),
+            AccountingPeriod."Starting Date");
+      END;
+      CASE DeprTableHeader."Period Length" OF
+        DeprTableHeader."Period Length"::Period:
+          DaysInPeriod := 0;
+        DeprTableHeader."Period Length"::Month:
+          DaysInPeriod := 30;
+        DeprTableHeader."Period Length"::Quarter:
+          DaysInPeriod := 90;
+        DeprTableHeader."Period Length"::Year:
+          DaysInPeriod := DaysInFiscalYear;
+      END;
+      REPEAT
+        PeriodNo := PeriodNo + 1;
+        IF PeriodNo <> DeprTableLine."Period No." THEN
+          DeprTableLine.FIELDERROR("Period No.",Text002);
+        IF DeprTableHeader."Period Length" = DeprTableHeader."Period Length"::Period THEN BEGIN
+          FirstUserDefinedDeprDate := AccountingPeriod."Starting Date";
+          IF AccountingPeriod.NEXT <> 0 THEN
+            DaysInPeriod :=
+              DepreciationCalc.DeprDays(
+                FirstUserDefinedDeprDate,
+                DepreciationCalc.Yesterday(AccountingPeriod."Starting Date",Year365Days),
+                Year365Days);
+          IF DaysInPeriod = 0 THEN
+            ERROR(Text003,AccountingPeriod.TABLECAPTION);
+          IF DaysInPeriod <= 5 THEN
+            ERROR(
+              Text004);
+        END;
+        InsertTableBuffer(DeprTableLine,TotalNoOfDays,DaysInPeriod,PeriodNo);
+      UNTIL (DeprTableLine.NEXT = 0) OR (TotalNoOfDays > EndingLimit);
+
+      WHILE TotalNoOfDays < EndingLimit DO BEGIN
+        DeprTableBufferTmp."Entry No." := DeprTableBufferTmp."Entry No." + 1;
+        DeprTableBufferTmp.INSERT;
+        TotalNoOfDays := TotalNoOfDays + DaysInPeriod;
+      END;
+    END;
+
+    LOCAL PROCEDURE InsertTableBuffer@4(VAR DeprTableLine@1000 : Record 5643;VAR TotalNoOfDays@1001 : Integer;DaysInPeriod@1002 : Integer;PeriodNo@1003 : Integer);
+    BEGIN
+      TotalNoOfDays := TotalNoOfDays + DaysInPeriod;
+      DeprTableBufferTmp."Entry No." := PeriodNo;
+      DeprTableBufferTmp."No. of Days in Period" := DaysInPeriod;
+      IF DeprTableHeader."Total No. of Units" > 0 THEN
+        DeprTableBufferTmp."Period Depreciation %" :=
+          DeprTableLine."No. of Units in Period" * 100 / DeprTableHeader."Total No. of Units"
+      ELSE
+        DeprTableBufferTmp."Period Depreciation %" := DeprTableLine."Period Depreciation %";
+      DeprTableBufferTmp.INSERT;
+    END;
+
+    PROCEDURE ServiceIsValid_Bol@49() Boolean : Boolean;
+    VAR
+      lRec_ActiveSession@1003 : Record 2000000110;
+    BEGIN
+    END;
+
+    PROCEDURE ServiceTextIsValid_Txt@46(pBol_IsValid@1000 : Boolean) Text_150 : Text[150];
+    BEGIN
+    END;
+
+    PROCEDURE ServiceTextInfo_Txt@44() Text_500 : Text[500];
+    BEGIN
+    END;
+
+    PROCEDURE Table_InitBlank@40(pTxt_TableName@1000 : Text);
+    BEGIN
+    END;
+
+    PROCEDURE Table_InitAsNav@20(pTxt_TableName@1000 : Text;pVar_NavTableNoOrName@1001 : Variant);
+    VAR
+      lRec_Field@1002 : Record 2000000041;
+    BEGIN
+    END;
+
+    PROCEDURE Table_IsInitialized_Bol@16() Boolean : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE Table_NavTableNo_Int@22(pVar_NavTableNameOrNo@1001 : Variant) Integer : Integer;
+    VAR
+      lRec_Object@1002 : Record 2000000001;
+      lRec_Field@1000 : Record 2000000041;
+      lDec_NavTableNo@1004 : Decimal;
+      lTxt_NavTableName@1003 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Table_AddColumn@3(pTxt_ColumnName@1000 : Text);
+    BEGIN
+    END;
+
+    PROCEDURE Table_AddColumnAsDNeType@52(pTxt_ColumnName@1000 : Text;pTxt_DNeColumnDataType@1001 : Text[50]);
+    VAR
+      lDNe_Type@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Type";
+    BEGIN
+    END;
+
+    PROCEDURE Table_AddColumnAsNavType@9(pTxt_ColumnName@1000 : Text;pCod_NavFieldDataType@1001 : Code[20]);
+    VAR
+      lDNe_Type@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Type";
+    BEGIN
+    END;
+
+    PROCEDURE Table_AddColumnAsNavField@19(pTxt_ColumnName@1000 : Text;pVar_NavTableNoOrName@1001 : Variant;pVar_NavFieldNoOrName@1003 : Variant);
+    VAR
+      lInt_NavTableNo@1004 : Integer;
+      lRec_Field@1002 : Record 2000000041;
+    BEGIN
+    END;
+
+    PROCEDURE Table_SetOrGetPrimaryKey@56(pBol_IsSet@1002 : Boolean;VAR vTxt_CSVColumnNameOrIndexFrom1@1000 : Text);
+    VAR
+      lDNe_Object@1010 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object";
+      lDNe_PKColumnsArray10@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      lDNe_ColumnNameOrIndexList@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+      lDNe_DataColums@1007 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumnCollection";
+      lDNe_DataColum@1005 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumn";
+      lTxt_ColumnName@1008 : Text;
+      lInt_ColumnIndex@1009 : Integer;
+      lInt_NoOfColumns@1006 : Integer;
+      i@1003 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Table_SetOrGetProperty@74(pBol_IsSet@1005 : Boolean;pTxt_Key@1001 : Text[50];VAR vDNe_Object@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object");
+    VAR
+      lDNe_PropertyCollection@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.PropertyCollection";
+    BEGIN
+    END;
+
+    PROCEDURE Table_TransferIn@62(VAR vReR_Record@1000 : RecordRef);
+    BEGIN
+    END;
+
+    PROCEDURE Table_SetOrGet@18(pBol_IsSet@1001 : Boolean;pBol_CopyWhenGet@1004 : Boolean;VAR vDNe_DataTable@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable");
+    VAR
+      lDNe_EnumDataColumns@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DataColumn@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumn";
+      lDNe_Object@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object";
+      lTxt_Type@1006 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Table_CopyTo@13(pBol_IsDataCopied@1002 : Boolean;VAR vCoU_TableDestination@1000 : Codeunit 5618);
+    VAR
+      lDNe_DataTable@1001 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable";
+    BEGIN
+    END;
+
+    PROCEDURE Table_Compute@23(pTxt_Expression@1000 : Text;pTxt_Filter@1001 : Text;VAR vDNe_Object@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object");
+    BEGIN
+    END;
+
+    PROCEDURE Table_Dispose@15();
+    BEGIN
+    END;
+
+    PROCEDURE Table_Name@26() Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Row_Init@7();
+    BEGIN
+    END;
+
+    PROCEDURE Row_SetDNeObject@75(pVar_ColumnNameOrIndexFrom1@1001 : Variant;pDNe_Object@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object");
+    BEGIN
+    END;
+
+    PROCEDURE Row_SetValue@2(pVar_ColumnNameOrIndexFrom1@1005 : Variant;pVar_Value@1001 : Variant);
+    VAR
+      lTxt_ColumnName@1000 : Text;
+      lTim_Time@1002 : Time;
+      lDTi_DateTime@1003 : DateTime;
+      lDNe_DateTime@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDNeRow@41(VAR vDNe_DataRow@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRow");
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDNeObject@64(pVar_ColumnNameOrIndexFrom1@1001 : Variant;VAR vDNe_Object@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object");
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetValue@65(pVar_ColumnNameOrIndexFrom1@1008 : Variant;pCod_NavFieldDataTypeOrBlank@1002 : Code[20];VAR vVar_Value@1000 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnDataType@1004 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetText@45(pVar_ColumnNameOrIndexFrom1@1003 : Variant;pInt_Length@1002 : Integer) Text : Text;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetInteger@47(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Integer : Integer;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetBigInteger@59(pVar_ColumnNameOrIndexFrom1@1002 : Variant) BigInteger : BigInteger;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDecimal@61(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Decimal : Decimal;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetTime@54(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Time : Time;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDate@57(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Date : Date;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDateTime@58(pVar_ColumnNameOrIndexFrom1@1002 : Variant) DateTime : DateTime;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetOption@80(pVar_ColumnNameOrIndexFrom1@1001 : Variant) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetBoolean@48(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Boolean : Boolean;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDateFormula@82(pVar_ColumnNameOrIndexFrom1@1001 : Variant) Text : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetDuration@85(pVar_ColumnNameOrIndexFrom1@1002 : Variant) Duration : Duration;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetGUID@87(pVar_ColumnNameOrIndexFrom1@1002 : Variant) GUID : GUID;
+    VAR
+      lVar_Value@1001 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_GetBLOB@6(pVar_ColumnNameOrIndexFrom1@1005 : Variant;VAR vVar_Value@1006 : Variant);
+    VAR
+      lDNe_Bytes@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      lDNe_MemStream@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.IO.MemoryStream";
+      lReT_TempBlob@1001 : TEMPORARY Record 99008535;
+      lOuS_OutStream@1000 : OutStream;
+      lTxt_ColumnName@1004 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Row_TransferInByPosition@24(pVar_NavTableNoOrName@1000 : Variant;pTxt_NavRowPosition@1001 : Text[250]);
+    VAR
+      lReR_Record@1002 : RecordRef;
+    BEGIN
+    END;
+
+    PROCEDURE Row_TransferIn@67(VAR vReR_Record@1000 : RecordRef);
+    VAR
+      lDNe_EnumDataColumns@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DataColumn@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnDataType@1003 : Text;
+      lInt_NavFieldNo@1006 : Integer;
+      lFdR_Field@1002 : FieldRef;
+    BEGIN
+    END;
+
+    PROCEDURE Row_TransferOut@60(VAR vReR_Record@1000 : RecordRef);
+    VAR
+      lCod_NavFieldDataType@1004 : Code[20];
+      lVar_Variant@1005 : Variant;
+      lFdR_Field@1003 : FieldRef;
+      lInt_FieldCount@1002 : Integer;
+      i@1001 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Row_TransferTo@51(pTxt_Prefix@1001 : Text[10];VAR vCoU_TableDestination@1000 : Codeunit 5618);
+    VAR
+      lDNe_DataColumnsDes@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      lDNe_EnumDataColumns@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DataColumn@1007 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+      lTxt_ColumnName@1002 : Text;
+      lVar_Value@1006 : Variant;
+    BEGIN
+    END;
+
+    PROCEDURE Row_Insert@11();
+    BEGIN
+    END;
+
+    PROCEDURE Row_Update@29();
+    BEGIN
+    END;
+
+    PROCEDURE Row_Delete@30();
+    BEGIN
+    END;
+
+    PROCEDURE Row_Clear@14();
+    BEGIN
+    END;
+
+    PROCEDURE Row_Count@37() Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Row_Find@66(pVar_PKValuesArray10@1000 : ARRAY [10] OF Variant) Boolean : Boolean;
+    VAR
+      lDNe_DataRow@1001 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRow";
+      lInt_NoOfColumns@1003 : Integer;
+      i@1002 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Col_ColumnName_Txt@77(pVar_ColumnNameOrIndexFrom1@1000 : Variant) Text : Text;
+    VAR
+      lDec_ColumnIndexFrom1@1002 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE Col_SetOrGetProperty@17(pBol_IsSet@1005 : Boolean;pVar_ColumnNameOrIndexFrom1@1004 : Variant;pTxt_Key@1001 : Text[50];VAR vDNe_Object@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object");
+    VAR
+      lTxt_FullKey@1003 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Col_DNeDataType_Txt@63(pCod_NavDataType@1000 : Code[20]) Text_20 : Text[20];
+    BEGIN
+    END;
+
+    PROCEDURE Col_NavDataType_Cod@5(pTxt_DNeDataType@1000 : Text[100]) Code_20 : Code[20];
+    BEGIN
+    END;
+
+    PROCEDURE Col_NavFieldNo_Int@28(pVar_NavTableNameOrNo@1001 : Variant;pVar_NavFieldNameOrNo@1000 : Variant) Integer : Integer;
+    VAR
+      lRec_Field@1002 : Record 2000000041;
+      lInt_NavTableNo@1005 : Integer;
+      lDec_NavFieldNo@1003 : Decimal;
+      lTxt_NavFieldName@1004 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE Col_GetCollection@68(VAR vDNe_DataColumnCollection@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumnCollection");
+    BEGIN
+    END;
+
+    PROCEDURE Col_Rename@73(pVar_ColumnNameOrIndexFrom1@1000 : Variant;pTxt_NewColumnName@1001 : Text);
+    VAR
+      lTxt_ColumnName@1002 : Text;
+      lTxt_Value@1003 : Text;
+      lInt_Value@1004 : Integer;
+      lDNe_Enum@1007 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_TableInfos@1006 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      lDNe_DataColumn@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+    BEGIN
+    END;
+
+    PROCEDURE Col_Remove@72(pVar_ColumnNameOrIndexFrom1@1000 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lDNe_Enum@1003 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_TableInfos@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      lDNe_DataColumn@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+    BEGIN
+    END;
+
+    PROCEDURE Col_Count@69() Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE View_SetFilter1@35(pVar_ColumnNameOrIndexFrom1@1004 : Variant;pTxt_FilterExpression@1000 : Text);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnFilter@1003 : Text;
+      lDNe_DataView@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataView";
+    BEGIN
+    END;
+
+    PROCEDURE View_SetFilter@25(pVar_ColumnNameOrIndexFrom1@1004 : Variant;pTxt_Operator@1000 : Text;pVar_Value@1005 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnFilter@1003 : Text;
+      lDNe_DataView@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataView";
+      lDNe_DateTime@1006 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE View_SetFilter3@10(pVar_ColumnNameOrIndexFrom1@1004 : Variant;pTxt_Operator1@1000 : Text;pVar_Value1@1005 : Variant;pTxt_Operator2@1007 : Text;pVar_Value2@1006 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnFilter@1003 : Text;
+      lDNe_DataView@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataView";
+      lDNe_DateTime1@1008 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+      lDNe_DateTime2@1009 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.DateTime";
+    BEGIN
+    END;
+
+    PROCEDURE View_GetFilters_Txt@42() Text : Text;
+    VAR
+      lDNe_EnumFilters@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DicEntryFilter@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+    BEGIN
+    END;
+
+    PROCEDURE View_RemoveFilter@50(pVar_ColumnNameOrIndexFrom1@1000 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE View_RemoveFilters@32();
+    BEGIN
+    END;
+
+    PROCEDURE View_SetSort@39(pVar_ColumnNameOrIndexFrom1@1004 : Variant;pBol_Descending@1000 : Boolean);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+      lTxt_ColumnSort@1003 : Text;
+      lDNe_DataView@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataView";
+    BEGIN
+    END;
+
+    PROCEDURE View_GetSorts_Txt@38() Text : Text;
+    VAR
+      lDNe_EnumSorts@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_DicEntrySort@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+    BEGIN
+    END;
+
+    PROCEDURE View_RemoveSort@55(pVar_ColumnNameOrIndexFrom1@1000 : Variant);
+    VAR
+      lTxt_ColumnName@1001 : Text;
+    BEGIN
+    END;
+
+    PROCEDURE View_RemoveSorts@43();
+    BEGIN
+    END;
+
+    PROCEDURE View_Reset@27();
+    BEGIN
+    END;
+
+    PROCEDURE View_KeepTop@70(pInt_NumberOfTopRows@1000 : Integer);
+    VAR
+      lDNe_DataView@1003 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataView";
+      lDNe_DataRowView@1002 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRowView";
+      lDNe_EnumRowView@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      i@1001 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE View_Aggregate@71();
+    VAR
+      lDNe_GroupColumns@1009 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.List`1";
+      lDNe_AggregateColumns@1010 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.Generic.Dictionary`2";
+      lDNe_AggregateColumn@1015 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+      lDNe_FunctionName@1002 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.String";
+      lDNe_Enum@1005 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.IEnumerator";
+      lDNe_Array@1001 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Array";
+      lDNe_Object@1014 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Object";
+      lDNe_DataColumn@1004 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Collections.DictionaryEntry";
+      lDNe_DataTable@1003 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable";
+      lCoU_Table@1011 : Codeunit 5618;
+      lCoU_Table2@1008 : Codeunit 5618;
+      lTxt_ColumnName@1006 : Text;
+      lVar_Value@1013 : Variant;
+      i@1007 : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE View_Count@31() Integer : Integer;
+    BEGIN
+    END;
+
+    PROCEDURE View_FindFirst@33() Boolean : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE View_FindLast@21() Boolean : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE View_Next@36() Boolean : Boolean;
+    BEGIN
+    END;
+
+    PROCEDURE View_Previous@53() Boolean : Boolean;
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::ColumnChanging@96(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumnChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::ColumnChanged@97(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataColumnChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::Initialized@98(sender@1001 : Variant;e@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.EventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::RowChanged@99(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRowChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::RowChanging@100(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRowChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::RowDeleting@101(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRowChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::RowDeleted@102(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataRowChangeEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::TableClearing@103(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTableClearEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::TableCleared@104(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTableClearEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::TableNewRow@105(sender@1001 : Variant;e@1000 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTableNewRowEventArgs");
+    BEGIN
+    END;
+
+    EVENT gDNe_DataTable@1028::Disposed@106(sender@1001 : Variant;e@1000 : DotNet "'mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.EventArgs");
+    BEGIN
+    END;
+
+    BEGIN
+    {
+      Code  | Version | Author      | Description
+      -----------------------------------------------------------------------------------------------------------------------------------
+      S-000   130101    4BzSoftware   Common Functions. Please do not modify this object!
+                                      To modify, please contact Seller or email to Author 4BzSoftware@gmail.com
+      S-002   140628    4BzSoftware   Query and Excel Report.
+      S-003   140412    4BzSoftware   Universal Data Import Export.
+      S-004   130916    4BzSoftware   Payroll Module.
+    }
+    END.
+  }
+}
+

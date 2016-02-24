@@ -1,0 +1,155 @@
+OBJECT Report 28166 BAS - Import/Export
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS - Import/Export;
+               ENA=BAS - Import/Export];
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+                  CASE BASDirection OF
+                    BASDirection::Import:
+                      BASMngmt.ImportBAS(BASCalcSheet,BASFileName);
+                    BASDirection::Export:
+                      BASMngmt.ExportBAS(BASCalcSheet,BASFileName);
+                    BASDirection::"Update BAS XML Field ID":
+                      BASMngmt.UpdateXMLFieldIDs(BASFileName);
+                    ELSE
+                      CurrReport.QUIT;
+                  END;
+                END;
+
+    OnPostReport=VAR
+                   BASCalcSheet1@1500000 : Record 11601;
+                 BEGIN
+                   CLEAR(BASMngmt);
+                   IF BASDirection = BASDirection::Export THEN
+                     IF Print THEN BEGIN
+                       BASCalcSheet1.SETRANGE(A1,BASCalcSheet.A1);
+                       BASCalcSheet1.SETRANGE("BAS Version",BASCalcSheet."BAS Version");
+                       REPORT.RUN(REPORT::"Print BAS Export File",FALSE,TRUE,BASCalcSheet1);
+                     END;
+                 END;
+
+  }
+  DATASET
+  {
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      OnInit=BEGIN
+               PrintBtnVisible := TRUE;
+               PrintlabelVisible := TRUE;
+             END;
+
+      OnOpenPage=BEGIN
+                   IF BASDirection = BASDirection::Export THEN
+                     BEGIN
+                     PrintlabelVisible := TRUE;
+                     PrintBtnVisible := TRUE;
+                   END
+                   ELSE
+                     BEGIN
+                     PrintBtnVisible := FALSE;
+                     PrintlabelVisible := FALSE;
+                   END;
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 1500000;2;Field     ;
+                  Name=BASFileName;
+                  AssistEdit=Yes;
+                  CaptionML=[ENU=BAS File Name;
+                             ENA=BAS File Name];
+                  SourceExpr=BASFileName;
+                  OnAssistEdit=VAR
+                                 FileMgt@1450000 : Codeunit 419;
+                               BEGIN
+                                 IF BASDirection = BASDirection::Export THEN BEGIN
+                                   IF BASFileName = '' THEN
+                                     BASFileName := '.xml';
+                                   BASFileName := FileMgt.SaveFileDialog(Text011,BASFileName,'');
+                                 END ELSE
+                                   IF (BASDirection = BASDirection::Import) OR (BASDirection = BASDirection::"Update BAS XML Field ID") THEN
+                                     ReadFromFile(BASFileName);
+                               END;
+                                }
+
+      { 1500003;2;Field     ;
+                  Name=PrintBtn;
+                  CaptionML=[ENU=Print;
+                             ENA=Print];
+                  SourceExpr=Print;
+                  Visible=PrintBtnVisible }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      BASCalcSheet@1005 : Record 11601;
+      BASMngmt@1004 : Codeunit 11601;
+      BASDirection@1003 : 'Import,Export,Update BAS XML Field ID';
+      BASFileName@1002 : Text[250];
+      Print@1001 : Boolean;
+      Text034@1500000 : TextConst 'ENU=Import from XML File;ENA=Import from XML File';
+      Text011@1500006 : TextConst 'ENU=Export to XML File;ENA=Export to XML File';
+      PrintlabelVisible@19023911 : Boolean INDATASET;
+      PrintBtnVisible@19070540 : Boolean INDATASET;
+
+    PROCEDURE SetBASCalcSheetRecord@1450000(NewBASCalcSheet@1500000 : Record 11601);
+    BEGIN
+      BASCalcSheet := NewBASCalcSheet;
+      BASFileName := NewBASCalcSheet."File Name";
+    END;
+
+    PROCEDURE SetDirection@1450001(NewBASDirection@1500000 : 'Import,Export,Update BAS XML Field ID');
+    BEGIN
+      BASDirection := NewBASDirection;
+    END;
+
+    PROCEDURE ReturnRecord@1450002(VAR NewBASCalcSheet@1500000 : Record 11601);
+    BEGIN
+      NewBASCalcSheet := BASCalcSheet;
+    END;
+
+    PROCEDURE ReadFromFile@1500000(VAR FileName2@1102601000 : Text[1024]);
+    VAR
+      FileMgt@1500001 : Codeunit 419;
+      NewFileName@1500003 : Text[1024];
+    BEGIN
+      IF FileName2 = '' THEN
+        FileName2 := '.xml';
+
+      NewFileName := FileMgt.OpenFileDialog(Text034,FileName2,'');
+      IF NewFileName <> '' THEN
+        FileName2 := NewFileName;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

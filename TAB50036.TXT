@@ -1,0 +1,31 @@
+OBJECT Table 50036 EPROC_WH_MAPPING
+{
+  OBJECT-PROPERTIES
+  {
+    Date=07/02/09;
+    Time=13:54:09;
+    Version List=EPROC1.0;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;WHCODE              ;Code10         }
+    { 2   ;   ;ShopCode            ;Integer        }
+  }
+  KEYS
+  {
+    {    ;WHCODE                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

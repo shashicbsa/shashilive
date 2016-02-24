@@ -1,0 +1,517 @@
+OBJECT Page 25 Customer Ledger Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/11/15;
+    Time=[ 9:48:44];
+    Modified=Yes;
+    Version List=NAVW17.10.00.35701,UPG13,UPG13R2,SMDEV1.0,YIMMDEVIP1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Entity Ledger Entries;
+               ENA=Customer Ledger Entries];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table21;
+    DataCaptionFields=Customer No.;
+    PageType=List;
+    OnAfterGetRecord=BEGIN
+                       StyleTxt := SetStyle;
+                       //CheckAppliedBy;       //YIMMDEVIP1.0
+                     END;
+
+    OnModifyRecord=BEGIN
+                     CODEUNIT.RUN(CODEUNIT::"Cust. Entry-Edit",Rec);
+                     EXIT(FALSE);
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 24      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Ent&ry;
+                                 ENA=Ent&ry];
+                      Image=Entry }
+      { 25      ;2   ;Action    ;
+                      CaptionML=[ENU=Reminder/Fin. Charge Entries;
+                                 ENA=Reminder/Fin. Charge Entries];
+                      RunObject=Page 444;
+                      RunPageView=SORTING(Customer Entry No.);
+                      RunPageLink=Customer Entry No.=FIELD(Entry No.);
+                      Image=Reminder }
+      { 69      ;2   ;Action    ;
+                      CaptionML=[ENU=Applied E&ntries;
+                                 ENA=Applied E&ntries];
+                      RunObject=Page 61;
+                      RunPageOnRec=Yes;
+                      Image=Approve }
+      { 51      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 52      ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=[ENU=Detailed &Ledger Entries;
+                                 ENA=Detailed &Ledger Entries];
+                      RunObject=Page 573;
+                      RunPageView=SORTING(Cust. Ledger Entry No.,Posting Date);
+                      RunPageLink=Cust. Ledger Entry No.=FIELD(Entry No.),
+                                  Customer No.=FIELD(Customer No.);
+                      Image=View }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 34      ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 36      ;2   ;Action    ;
+                      Name=Apply Entries;
+                      ShortCutKey=Shift+F11;
+                      CaptionML=[ENU=Apply Entries;
+                                 ENA=Apply Entries];
+                      Image=ApplyEntries;
+                      OnAction=VAR
+                                 CustLedgEntry@1000 : Record 21;
+                                 CustEntryApplyPostEntries@1001 : Codeunit 226;
+                               BEGIN
+                                 CustLedgEntry.COPY(Rec);
+                                 CustEntryApplyPostEntries.ApplyCustEntryFormEntry(CustLedgEntry);
+                                 Rec := CustLedgEntry;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 63      ;2   ;Separator  }
+      { 64      ;2   ;Action    ;
+                      Name=UnapplyEntries;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Unapply Entries;
+                                 ENA=Unapply Entries];
+                      Image=UnApply;
+                      OnAction=VAR
+                                 CustEntryApplyPostedEntries@1000 : Codeunit 226;
+                               BEGIN
+                                 CustEntryApplyPostedEntries.UnApplyCustLedgEntry("Entry No.");
+                               END;
+                                }
+      { 65      ;2   ;Separator  }
+      { 66      ;2   ;Action    ;
+                      Name=ReverseTransaction;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Reverse Transaction;
+                                 ENA=Reverse Transaction];
+                      Image=ReverseRegister;
+                      OnAction=VAR
+                                 ReversalEntry@1000 : Record 179;
+                               BEGIN
+                                 CLEAR(ReversalEntry);
+                                 IF Reversed THEN
+                                   ReversalEntry.AlreadyReversedEntry(TABLECAPTION,"Entry No.");
+                                 IF "Journal Batch Name" = '' THEN
+                                   ReversalEntry.TestFieldError;
+                                 TESTFIELD("Transaction No.");
+                                 ReversalEntry.ReverseTransaction("Transaction No.");
+                               END;
+                                }
+      { 37      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate.SetDoc("Posting Date","Document No.");
+                                 Navigate.RUN;
+                               END;
+                                }
+      { 7       ;1   ;Action    ;
+                      CaptionML=[ENU=Incoming Document;
+                                 ENA=Incoming Document];
+                      Promoted=Yes;
+                      Image=Document;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 IncomingDocument@1000 : Record 130;
+                               BEGIN
+                                 IncomingDocument.HyperlinkToDocument("Document No.","Posting Date");
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 1000000010;2;Field  ;
+                SourceExpr="Entry No.";
+                Visible=FALSE }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Editable=FALSE }
+
+    { 1000000012;2;Field  ;
+                SourceExpr=DocType }
+
+    { 1000000018;2;Field  ;
+                SourceExpr="Tax Invoice No." }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Document Type";
+                Editable=FALSE;
+                StyleExpr=StyleTxt }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Document No.";
+                Editable=FALSE;
+                StyleExpr=StyleTxt }
+
+    { 1000000016;2;Field  ;
+                SourceExpr="External Document No." }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Total Applied Amount" }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Incentive Month" }
+
+    { 1000000004;2;Field  ;
+                SourceExpr="Type Of Transaction" }
+
+    { 1000000008;2;Field  ;
+                CaptionML=[ENU=Entity Posting Group;
+                           ENA=Customer Posting Group];
+                SourceExpr="Customer Posting Group";
+                Visible=true }
+
+    { 1000000006;2;Field  ;
+                SourceExpr=Narration }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Ship-to Code" }
+
+    { 8   ;2   ;Field     ;
+                CaptionML=[ENU=Entity No.;
+                           ENA=Customer No.];
+                SourceExpr="Customer No.";
+                Editable=FALSE }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Message to Recipient" }
+
+    { 10  ;2   ;Field     ;
+                Width=50;
+                SourceExpr=Description;
+                Editable=FALSE }
+
+    { 39  ;2   ;Field     ;
+                SourceExpr="Global Dimension 1 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 41  ;2   ;Field     ;
+                SourceExpr="Global Dimension 2 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 67  ;2   ;Field     ;
+                SourceExpr="IC Partner Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 43  ;2   ;Field     ;
+                SourceExpr="Salesperson Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 45  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                Editable=FALSE }
+
+    { 55  ;2   ;Field     ;
+                SourceExpr="Original Amount";
+                Editable=FALSE }
+
+    { 53  ;2   ;Field     ;
+                SourceExpr="Original Amt. (LCY)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr=Amount;
+                Editable=FALSE }
+
+    { 47  ;2   ;Field     ;
+                SourceExpr="Amount (LCY)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Remaining Amount";
+                Editable=FALSE }
+
+    { 49  ;2   ;Field     ;
+                SourceExpr="Remaining Amt. (LCY)";
+                Visible=TRUE;
+                Editable=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Bal. Account Type";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 73  ;2   ;Field     ;
+                SourceExpr="Bal. Account No.";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Due Date";
+                StyleExpr=StyleTxt }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Pmt. Discount Date" }
+
+    { 59  ;2   ;Field     ;
+                SourceExpr="Pmt. Disc. Tolerance Date" }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Original Pmt. Disc. Possible" }
+
+    { 57  ;2   ;Field     ;
+                SourceExpr="Remaining Pmt. Disc. Possible" }
+
+    { 61  ;2   ;Field     ;
+                SourceExpr="Max. Payment Tolerance" }
+
+    { 3   ;2   ;Field     ;
+                SourceExpr="Payment Method Code" }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr=Open;
+                Editable=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="On Hold" }
+
+    { 83  ;2   ;Field     ;
+                SourceExpr="User ID";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 85  ;2   ;Field     ;
+                SourceExpr="Source Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 87  ;2   ;Field     ;
+                SourceExpr="Reason Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr=Reversed;
+                Visible=FALSE }
+
+    { 71  ;2   ;Field     ;
+                SourceExpr="Reversed by Entry No.";
+                Visible=FALSE }
+
+    { 75  ;2   ;Field     ;
+                SourceExpr="Reversed Entry No.";
+                Visible=FALSE }
+
+    { 290 ;2   ;Field     ;
+                SourceExpr="Exported to Payment File" }
+
+    { 291 ;2   ;Field     ;
+                SourceExpr="Direct Debit Mandate ID";
+                Visible=FALSE }
+
+    { 1102159002;2;Field  ;
+                SourceExpr="Slip No." }
+
+    { 1102159003;2;Field  ;
+                SourceExpr="Slip Date" }
+
+    { 1102159005;2;Field  ;
+                SourceExpr="Bank Code" }
+
+    { 1102159004;2;Field  ;
+                CaptionML=ENU=Settlement Slip No.;
+                SourceExpr=AppliedBy;
+                Visible=FALSE }
+
+    { 1102159001;2;Field  ;
+                Name=AppliedDate;
+                CaptionML=ENU=Settlement Slip Date;
+                SourceExpr=AppliedDate;
+                Visible=FALSE }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1903096107;1;Part   ;
+                CaptionML=ENU=Entity Ledger Entry FactBox;
+                SubPageLink=Entry No.=FIELD(Entry No.);
+                PagePartID=Page9106;
+                Visible=TRUE;
+                PartType=Page }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      Navigate@1000 : Page 344;
+      StyleTxt@1001 : Text;
+      cle@1102159004 : Record 21;
+      CreateCustLedgEntry@1102159003 : Record 21;
+      AppliedBy@1102159030 : Text[1024];
+      AppliedDate@1102159001 : Text;
+
+    PROCEDURE FindApplnEntriesDtldtLedgEntry@1();
+    VAR
+      DtldCustLedgEntry1@1001 : Record 379;
+      DtldCustLedgEntry2@1000 : Record 379;
+    BEGIN
+
+      //YIMMDEVIP1.0 start
+
+      DtldCustLedgEntry1.SETCURRENTKEY("Cust. Ledger Entry No.");
+      DtldCustLedgEntry1.SETRANGE("Cust. Ledger Entry No.",CreateCustLedgEntry."Entry No.");
+      DtldCustLedgEntry1.SETRANGE(Unapplied,FALSE);
+      IF DtldCustLedgEntry1.FIND('-') THEN
+        REPEAT
+          IF DtldCustLedgEntry1."Cust. Ledger Entry No." =
+             DtldCustLedgEntry1."Applied Cust. Ledger Entry No."
+          THEN BEGIN
+            DtldCustLedgEntry2.INIT;
+            DtldCustLedgEntry2.SETCURRENTKEY("Applied Cust. Ledger Entry No.","Entry Type");
+            DtldCustLedgEntry2.SETRANGE(
+              "Applied Cust. Ledger Entry No.",DtldCustLedgEntry1."Applied Cust. Ledger Entry No.");
+            DtldCustLedgEntry2.SETRANGE("Entry Type",DtldCustLedgEntry2."Entry Type"::Application);
+            DtldCustLedgEntry2.SETRANGE(Unapplied,FALSE);
+            IF DtldCustLedgEntry2.FIND('-') THEN
+              REPEAT
+                IF DtldCustLedgEntry2."Cust. Ledger Entry No." <>
+                   DtldCustLedgEntry2."Applied Cust. Ledger Entry No."
+                THEN BEGIN
+                  cle.SETCURRENTKEY("Entry No.");
+                  cle.SETRANGE("Entry No.",DtldCustLedgEntry2."Cust. Ledger Entry No.");
+                  IF cle.FIND('-') THEN
+                    cle.MARK(TRUE);
+                END;
+              UNTIL DtldCustLedgEntry2.NEXT = 0;
+          END ELSE BEGIN
+            cle.SETCURRENTKEY("Entry No.");
+            cle.SETRANGE("Entry No.",DtldCustLedgEntry1."Applied Cust. Ledger Entry No.");
+            IF cle.FIND('-') THEN
+              cle.MARK(TRUE);
+          END;
+        UNTIL DtldCustLedgEntry1.NEXT = 0;
+      //YIMMDEVIP1.0  end
+    END;
+
+    PROCEDURE CheckAppliedBy@1102159001();
+    BEGIN
+      //YIMMDEVIP1.0 start
+
+      cle.RESET;
+      AppliedBy := '';
+      AppliedDate := '';
+      cle := Rec;
+      IF cle."Entry No." <> 0 THEN BEGIN
+        CreateCustLedgEntry := cle;
+        FindApplnEntriesDtldtLedgEntry;
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Entry No.");
+
+        IF CreateCustLedgEntry."Closed by Entry No." <> 0 THEN BEGIN
+          cle."Entry No." := CreateCustLedgEntry."Closed by Entry No.";
+          cle.MARK(TRUE);
+        END;
+
+        cle.SETCURRENTKEY("Closed by Entry No.");
+        cle.SETRANGE("Closed by Entry No.",CreateCustLedgEntry."Entry No.");
+        IF cle.FIND('-') THEN
+          REPEAT
+            cle.MARK(TRUE);
+          UNTIL NEXT = 0;
+
+        cle.SETCURRENTKEY("Entry No.");
+        cle.SETRANGE("Closed by Entry No.");
+      END;
+
+      cle.MARKEDONLY(TRUE);
+      IF cle.FINDFIRST THEN
+      BEGIN
+        IF (cle."Document Type" = cle."Document Type"::Invoice) OR (cle."Document Type" = cle."Document Type"::"Credit Memo")
+        THEN
+          BEGIN
+            AppliedBy := cle."Document No.";
+            AppliedDate := FORMAT(cle."Document Date");
+          END
+        ELSE
+          BEGIN
+            AppliedBy :=cle."Slip No.";
+            AppliedDate := FORMAT(cle."Slip Date");
+          END
+      END;
+      IF cle.NEXT <> 0 THEN
+      REPEAT
+        IF (cle."Document Type" = cle."Document Type"::Invoice) OR (cle."Document Type" = cle."Document Type"::"Credit Memo")
+        THEN
+          BEGIN
+            AppliedBy := AppliedBy+'|'+cle."Document No.";
+            AppliedDate := AppliedDate + '|' + FORMAT(cle."Document Date");
+          END
+        ELSE
+          BEGIN
+            AppliedBy := AppliedBy+'|'+cle."Slip No.";
+            AppliedDate := AppliedDate + '|' + FORMAT(cle."Slip Date");
+          END
+      UNTIL cle.NEXT = 0;
+
+      //YIMMDEVIP1.0 end
+    END;
+
+    BEGIN
+    {
+      //YIMMNNPWP
+       FIELD SHOW FOR THE MULTIPLE NPWP NO. (SHIP TO CODE)
+
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+      //SMDEV1.0
+        Changed Caption on all over this Page So that We can replace Customer with Entity Caption.
+      //YIMMDEVIP1.0
+      Point No. 12 - Created two new functions - FindApplnEntriesDtldtLedgEntry,CheckAppliedby
+      Issue No. 9
+      slip no. flow from gen journal   shown in this page
+    }
+    END.
+  }
+}
+

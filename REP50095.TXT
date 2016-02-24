@@ -1,0 +1,152 @@
+OBJECT Report 50095 Move from Buffer2 Budget Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/26/15;
+    Time=10:18:41;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table50023;
+               DataItemTableView=SORTING(Entry No.)
+                                 ORDER(Ascending);
+               OnPreDataItem=BEGIN
+
+                               GLSetup.GET;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  Dim1code :=' ';
+                                  Dim2code :=' ';
+
+                                  DimValRec.RESET;
+                                  DimValRec.SETRANGE(DimValRec."Dimension Code",GLSetup."Global Dimension 1 Code");
+                                  DimValRec.SETRANGE(DimValRec.Name,"G/L Budget Entry Buffer"."Global Dimension 1 Name");
+                                  IF DimValRec.FINDFIRST THEN
+                                   Dim1code := DimValRec.Code;
+
+                                  IF "Global Dimension 2 Name"<>'' THEN
+                                  BEGIN
+                                    DimValRec.SETRANGE(DimValRec."Dimension Code",GLSetup."Global Dimension 2 Code");
+                                    DimValRec.SETRANGE(DimValRec.Name,"G/L Budget Entry Buffer"."Global Dimension 2 Name");
+                                    IF DimValRec.FINDFIRST THEN
+                                     Dim2code := DimValRec.Code;
+                                  END;
+
+                                  IF "Budget Dimension 1 Name"<>'' THEN
+                                  BEGIN
+                                    DimValRec.RESET;
+                                    DimValRec.SETRANGE(DimValRec."Dimension Code",GLSetup."Shortcut Dimension 3 Code");
+                                    DimValRec.SETRANGE(DimValRec.Name,"G/L Budget Entry Buffer"."Budget Dimension 1 Name");
+                                    IF DimValRec.FINDFIRST THEN
+                                      Dim3code := DimValRec.Code;
+                                  END;
+
+                                  GlBudgetEntry3.RESET;
+                                  GlBudgetEntry3.SETRANGE("Budget Name","G/L Budget Entry Buffer"."Budget Name");
+                                  GlBudgetEntry3.SETRANGE("G/L Account No.","G/L Budget Entry Buffer"."G/L Account No.");
+                                  GlBudgetEntry3.SETRANGE(Date,"G/L Budget Entry Buffer".Date);
+                                  GlBudgetEntry3.SETRANGE("Global Dimension 1 Code",Dim1code);
+                                  GlBudgetEntry3.SETRANGE("Global Dimension 2 Code",Dim2code);
+                                  GlBudgetEntry3.SETRANGE("Budget Dimension 1 Code",Dim3code);
+                                  GlBudgetEntry3.SETRANGE(Amount,"G/L Budget Entry Buffer".Amount);
+                                  //YIMM/SM-09-08-10<<
+                                  GlBudgetEntry3.SETRANGE("Source Type","G/L Budget Entry Buffer"."Source Type");
+                                  GlBudgetEntry3.SETRANGE("Source No.","G/L Budget Entry Buffer"."Source No.");
+                                  //YIMM/SM-09-08-10>>
+
+                                  //-Rajesh IF GlBudgetEntry3.FINDFIRST THEN
+                                  ////-Rajesh  ERROR(Text005,GlBudgetEntry3."Entry No.")
+                                  ////-RajeshELSE BEGIN
+
+                                    GlBudgetEntry.INIT;
+                                    GlBudgetEntry2.RESET;
+                                    IF GlBudgetEntry2.FIND('+') THEN
+                                      GlBudgetEntry."Entry No." := GlBudgetEntry2."Entry No."+1
+                                    ELSE
+                                      GlBudgetEntry."Entry No." := 1;
+                                    GlBudgetEntry.INSERT;
+
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."Budget Name","G/L Budget Entry Buffer"."Budget Name");
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."G/L Account No.","G/L Budget Entry Buffer"."G/L Account No.");
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry.Date,"G/L Budget Entry Buffer".Date);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry.Amount,"G/L Budget Entry Buffer".Amount);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry.Description,"G/L Budget Entry Buffer".Description);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."User ID",USERID);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."Global Dimension 1 Code",Dim1code);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."Global Dimension 2 Code",Dim2code);
+                                    GlBudgetEntry.VALIDATE(GlBudgetEntry."Budget Dimension 1 Code",Dim3code);
+
+                                    //YIMM/SM-09-08-10<<
+                                    GlBudgetEntry.VALIDATE("Source Type","G/L Budget Entry Buffer"."Source Type");
+                                    GlBudgetEntry.VALIDATE("Source No.","G/L Budget Entry Buffer"."Source No.");
+                                    //YIMM/SM-09-08-10>>
+
+                                    GlBudgetEntry.MODIFY;
+
+
+                                  ////-Rajesh END;
+                                END;
+
+               OnPostDataItem=BEGIN
+
+                                "G/L Budget Entry Buffer".DELETEALL;
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text001@1102159021 : TextConst 'ENU=The Budget %1 is current year Actual Budget so actual data cannot be inserted';
+      Text002@1102159020 : TextConst 'ENU=Posting Date Cannot be less than %1 defined in Budget %2';
+      Text003@1102159019 : TextConst 'ENU=Posting Date Cannot be Greater than %1 defined in Budget %2';
+      Text004@1102159018 : TextConst 'ENU=Select the Budget to move the Actual Data';
+      Text005@1102159017 : TextConst 'ENU=GL Budget Entry %1 Record Already Exist with same values in all the fields';
+      Text006@1102159016 : TextConst 'ENU=The Budget has been Successfully transfered from Buffer to Budget Ledger Entries';
+      GlBudgetEntry@1102159015 : Record 96;
+      DimValRec@1102159014 : Record 349;
+      GLSetup@1102159013 : Record 98;
+      GlBudgetEntry2@1102159012 : Record 96;
+      StartDt@1102159011 : Date;
+      EndDt@1102159010 : Date;
+      Filter@1102159009 : Text[250];
+      BudgetName@1102159008 : Code[10];
+      MasterSetupRec@1102159007 : Record 50008;
+      GLBudgetName@1102159006 : Record 95;
+      GlBudgetEntry3@1102159004 : Record 96;
+      Dim1code@1102159003 : Code[10];
+      Dim2code@1102159002 : Code[10];
+      Dim3code@1102159001 : Code[10];
+
+    BEGIN
+    {
+      //UPG13R2DEV
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

@@ -1,0 +1,38 @@
+OBJECT Table 5944 Troubleshooting Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=NAVW16.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Troubleshooting Line;
+               ENA=Troubleshooting Line];
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;TableRelation="Troubleshooting Header";
+                                                   CaptionML=[ENU=No.;
+                                                              ENA=No.] }
+    { 2   ;   ;Line No.            ;Integer       ;CaptionML=[ENU=Line No.;
+                                                              ENA=Line No.] }
+    { 3   ;   ;Comment             ;Text80        ;CaptionML=[ENU=Comment;
+                                                              ENA=Comment] }
+  }
+  KEYS
+  {
+    {    ;No.,Line No.                            ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

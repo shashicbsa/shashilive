@@ -1,0 +1,1366 @@
+OBJECT Table 23 Vendor
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/21/14;
+    Time=12:00:00;
+    Version List=NAVW17.10.00.36035,NAVAPAC7.10.00.36035,Mel1.0,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    DataPerCompany=No;
+    Permissions=TableData 25=r;
+    DataCaptionFields=No.,Name;
+    OnInsert=BEGIN
+               IF "No." = '' THEN BEGIN
+                 PurchSetup.GET;
+                 PurchSetup.TESTFIELD("Vendor Nos.");
+                 NoSeriesMgt.InitSeries(PurchSetup."Vendor Nos.",xRec."No. Series",0D,"No.","No. Series");
+               END;
+               IF "Invoice Disc. Code" = '' THEN
+                 "Invoice Disc. Code" := "No.";
+
+               IF NOT InsertFromContact THEN
+                 UpdateContFromVend.OnInsert(Rec);
+
+               DimMgt.UpdateDefaultDim(
+                 DATABASE::Vendor,"No.",
+                 "Global Dimension 1 Code","Global Dimension 2 Code");
+             END;
+
+    OnModify=BEGIN
+               "Last Date Modified" := TODAY;
+
+               IF (Name <> xRec.Name) OR
+                  ("Search Name" <> xRec."Search Name") OR
+                  ("Name 2" <> xRec."Name 2") OR
+                  (Address <> xRec.Address) OR
+                  ("Address 2" <> xRec."Address 2") OR
+                  (City <> xRec.City) OR
+                  ("Phone No." <> xRec."Phone No.") OR
+                  ("Telex No." <> xRec."Telex No.") OR
+                  ("Territory Code" <> xRec."Territory Code") OR
+                  ("Currency Code" <> xRec."Currency Code") OR
+                  ("Language Code" <> xRec."Language Code") OR
+                  ("Purchaser Code" <> xRec."Purchaser Code") OR
+                  ("Country/Region Code" <> xRec."Country/Region Code") OR
+                  ("Fax No." <> xRec."Fax No.") OR
+                  ("Telex Answer Back" <> xRec."Telex Answer Back") OR
+                  ("VAT Registration No." <> xRec."VAT Registration No.") OR
+                  ("Post Code" <> xRec."Post Code") OR
+                  (County <> xRec.County) OR
+                  ("E-Mail" <> xRec."E-Mail") OR
+                  ("Home Page" <> xRec."Home Page")
+               THEN BEGIN
+                 MODIFY;
+                 UpdateContFromVend.OnModify(Rec);
+               END;
+             END;
+
+    OnDelete=VAR
+               ItemVendor@1000 : Record 99;
+               PurchPrice@1001 : Record 7012;
+               PurchLineDiscount@1002 : Record 7014;
+               PurchPrepmtPct@1003 : Record 460;
+             BEGIN
+               MoveEntries.MoveVendorEntries(Rec);
+
+               CommentLine.SETRANGE("Table Name",CommentLine."Table Name"::Vendor);
+               CommentLine.SETRANGE("No.","No.");
+               CommentLine.DELETEALL;
+
+               VendBankAcc.SETRANGE("Vendor No.","No.");
+               VendBankAcc.DELETEALL;
+
+               OrderAddr.SETRANGE("Vendor No.","No.");
+               OrderAddr.DELETEALL;
+
+               ItemCrossReference.SETCURRENTKEY("Cross-Reference Type","Cross-Reference Type No.");
+               ItemCrossReference.SETRANGE("Cross-Reference Type",ItemCrossReference."Cross-Reference Type"::Vendor);
+               ItemCrossReference.SETRANGE("Cross-Reference Type No.","No.");
+               ItemCrossReference.DELETEALL;
+
+               PurchOrderLine.SETCURRENTKEY("Document Type","Pay-to Vendor No.");
+               PurchOrderLine.SETFILTER(
+                 "Document Type",'%1|%2',
+                 PurchOrderLine."Document Type"::Order,
+                 PurchOrderLine."Document Type"::"Return Order");
+               PurchOrderLine.SETRANGE("Pay-to Vendor No.","No.");
+               IF PurchOrderLine.FINDFIRST THEN
+                 ERROR(
+                   Text000,
+                   TABLECAPTION,"No.",
+                   PurchOrderLine."Document Type");
+
+               PurchOrderLine.SETRANGE("Pay-to Vendor No.");
+               PurchOrderLine.SETRANGE("Buy-from Vendor No.","No.");
+               IF PurchOrderLine.FINDFIRST THEN
+                 ERROR(
+                   Text000,
+                   TABLECAPTION,"No.");
+
+               UpdateContFromVend.OnDelete(Rec);
+
+               DimMgt.DeleteDefaultDim(DATABASE::Vendor,"No.");
+
+               ServiceItem.SETRANGE("Vendor No.","No.");
+               ServiceItem.MODIFYALL("Vendor No.",'');
+
+               ItemVendor.SETRANGE("Vendor No.","No.");
+               ItemVendor.DELETEALL(TRUE);
+
+               PurchPrice.SETCURRENTKEY("Vendor No.");
+               PurchPrice.SETRANGE("Vendor No.","No.");
+               PurchPrice.DELETEALL(TRUE);
+
+               PurchLineDiscount.SETCURRENTKEY("Vendor No.");
+               PurchLineDiscount.SETRANGE("Vendor No.","No.");
+               PurchLineDiscount.DELETEALL(TRUE);
+
+               PurchPrepmtPct.SETCURRENTKEY("Vendor No.");
+               PurchPrepmtPct.SETRANGE("Vendor No.","No.");
+               PurchPrepmtPct.DELETEALL(TRUE);
+             END;
+
+    OnRename=BEGIN
+               "Last Date Modified" := TODAY;
+             END;
+
+    CaptionML=[ENU=Vendor;
+               ENA=Vendor];
+    LookupPageID=Page27;
+    DrillDownPageID=Page27;
+  }
+  FIELDS
+  {
+    { 1   ;   ;No.                 ;Code20        ;AltSearchField=Search Name;
+                                                   OnValidate=BEGIN
+                                                                IF "No." <> xRec."No." THEN BEGIN
+                                                                  PurchSetup.GET;
+                                                                  NoSeriesMgt.TestManual(PurchSetup."Vendor Nos.");
+                                                                  "No. Series" := '';
+                                                                END;
+                                                                IF "Invoice Disc. Code" = '' THEN
+                                                                  "Invoice Disc. Code" := "No.";
+                                                              END;
+
+                                                   CaptionML=[ENU=No.;
+                                                              ENA=No.] }
+    { 2   ;   ;Name                ;Text50        ;OnValidate=BEGIN
+                                                                IF ("Search Name" = UPPERCASE(xRec.Name)) OR ("Search Name" = '') THEN
+                                                                  "Search Name" := Name;
+                                                              END;
+
+                                                   CaptionML=[ENU=Name;
+                                                              ENA=Name] }
+    { 3   ;   ;Search Name         ;Code50        ;CaptionML=[ENU=Search Name;
+                                                              ENA=Search Name] }
+    { 4   ;   ;Name 2              ;Text50        ;CaptionML=[ENU=Name 2;
+                                                              ENA=Name 2] }
+    { 5   ;   ;Address             ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::Vendor,GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Address;
+                                                              ENA=Address] }
+    { 6   ;   ;Address 2           ;Text50        ;OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateAddress(
+                                                                  CurrFieldNo,DATABASE::Vendor,GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Address 2;
+                                                              ENA=Address 2] }
+    { 7   ;   ;City                ;Text30        ;TableRelation=IF (Country/Region Code=CONST()) "Post Code".City
+                                                                 ELSE IF (Country/Region Code=FILTER(<>'')) "Post Code".City WHERE (Country/Region Code=FIELD(Country/Region Code));
+                                                   OnValidate=BEGIN
+                                                                PostCodeCheck.ValidateCity(
+                                                                  CurrFieldNo,DATABASE::Vendor,GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=City;
+                                                              ENA=City] }
+    { 8   ;   ;Contact             ;Text50        ;OnValidate=BEGIN
+                                                                IF RMSetup.GET THEN
+                                                                  IF RMSetup."Bus. Rel. Code for Vendors" <> '' THEN
+                                                                    IF (xRec.Contact = '') AND (xRec."Primary Contact No." = '') THEN BEGIN
+                                                                      MODIFY;
+                                                                      UpdateContFromVend.OnModify(Rec);
+                                                                      UpdateContFromVend.InsertNewContactPerson(Rec,FALSE);
+                                                                      MODIFY(TRUE);
+                                                                    END
+                                                              END;
+
+                                                   CaptionML=[ENU=Contact;
+                                                              ENA=Contact] }
+    { 9   ;   ;Phone No.           ;Text30        ;ExtendedDatatype=Phone No.;
+                                                   CaptionML=[ENU=Phone No.;
+                                                              ENA=Phone No.] }
+    { 10  ;   ;Telex No.           ;Text20        ;CaptionML=[ENU=Telex No.;
+                                                              ENA=Telex No.] }
+    { 14  ;   ;Our Account No.     ;Text20        ;CaptionML=[ENU=Our Account No.;
+                                                              ENA=Our Account No.] }
+    { 15  ;   ;Territory Code      ;Code10        ;TableRelation=Territory;
+                                                   CaptionML=[ENU=Territory Code;
+                                                              ENA=Territory Code] }
+    { 16  ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   OnValidate=BEGIN
+                                                                ValidateShortcutDimCode(1,"Global Dimension 1 Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Global Dimension 1 Code;
+                                                              ENA=Global Dimension 1 Code];
+                                                   CaptionClass='1,1,1' }
+    { 17  ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   OnValidate=BEGIN
+                                                                ValidateShortcutDimCode(2,"Global Dimension 2 Code");
+                                                              END;
+
+                                                   CaptionML=[ENU=Global Dimension 2 Code;
+                                                              ENA=Global Dimension 2 Code];
+                                                   CaptionClass='1,1,2' }
+    { 19  ;   ;Budgeted Amount     ;Decimal       ;CaptionML=[ENU=Budgeted Amount;
+                                                              ENA=Budgeted Amount];
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 21  ;   ;Vendor Posting Group;Code10        ;TableRelation="Vendor Posting Group";
+                                                   CaptionML=[ENU=Vendor Posting Group;
+                                                              ENA=Vendor Posting Group] }
+    { 22  ;   ;Currency Code       ;Code10        ;TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Code;
+                                                              ENA=Currency Code] }
+    { 24  ;   ;Language Code       ;Code10        ;TableRelation=Language;
+                                                   CaptionML=[ENU=Language Code;
+                                                              ENA=Language Code] }
+    { 26  ;   ;Statistics Group    ;Integer       ;CaptionML=[ENU=Statistics Group;
+                                                              ENA=Statistics Group] }
+    { 27  ;   ;Payment Terms Code  ;Code10        ;TableRelation="Payment Terms";
+                                                   CaptionML=[ENU=Payment Terms Code;
+                                                              ENA=Payment Terms Code] }
+    { 28  ;   ;Fin. Charge Terms Code;Code10      ;TableRelation="Finance Charge Terms";
+                                                   CaptionML=[ENU=Fin. Charge Terms Code;
+                                                              ENA=Fin. Charge Terms Code] }
+    { 29  ;   ;Purchaser Code      ;Code10        ;TableRelation=Salesperson/Purchaser;
+                                                   CaptionML=[ENU=Purchaser Code;
+                                                              ENA=Purchaser Code] }
+    { 30  ;   ;Shipment Method Code;Code10        ;TableRelation="Shipment Method";
+                                                   CaptionML=[ENU=Shipment Method Code;
+                                                              ENA=Shipment Method Code] }
+    { 31  ;   ;Shipping Agent Code ;Code10        ;TableRelation="Shipping Agent";
+                                                   CaptionML=[ENU=Shipping Agent Code;
+                                                              ENA=Shipping Agent Code] }
+    { 33  ;   ;Invoice Disc. Code  ;Code20        ;TableRelation=Vendor;
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Invoice Disc. Code;
+                                                              ENA=Invoice Disc. Code] }
+    { 35  ;   ;Country/Region Code ;Code10        ;TableRelation=Country/Region;
+                                                   CaptionML=[ENU=Country/Region Code;
+                                                              ENA=Country/Region Code] }
+    { 38  ;   ;Comment             ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("Comment Line" WHERE (Table Name=CONST(Vendor),
+                                                                                           No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Comment;
+                                                              ENA=Comment];
+                                                   Editable=No }
+    { 39  ;   ;Blocked             ;Option        ;CaptionML=[ENU=Blocked;
+                                                              ENA=Blocked];
+                                                   OptionCaptionML=[ENU=" ,Payment,All";
+                                                                    ENA=" ,Payment,All"];
+                                                   OptionString=[ ,Payment,All] }
+    { 45  ;   ;Pay-to Vendor No.   ;Code20        ;TableRelation=Vendor;
+                                                   CaptionML=[ENU=Pay-to Vendor No.;
+                                                              ENA=Pay-to Vendor No.] }
+    { 46  ;   ;Priority            ;Integer       ;CaptionML=[ENU=Priority;
+                                                              ENA=Priority] }
+    { 47  ;   ;Payment Method Code ;Code10        ;TableRelation="Payment Method";
+                                                   CaptionML=[ENU=Payment Method Code;
+                                                              ENA=Payment Method Code] }
+    { 54  ;   ;Last Date Modified  ;Date          ;CaptionML=[ENU=Last Date Modified;
+                                                              ENA=Last Date Modified];
+                                                   Editable=No }
+    { 55  ;   ;Date Filter         ;Date          ;FieldClass=FlowFilter;
+                                                   CaptionML=[ENU=Date Filter;
+                                                              ENA=Date Filter] }
+    { 56  ;   ;Global Dimension 1 Filter;Code20   ;FieldClass=FlowFilter;
+                                                   TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Global Dimension 1 Filter;
+                                                              ENA=Global Dimension 1 Filter];
+                                                   CaptionClass='1,3,1' }
+    { 57  ;   ;Global Dimension 2 Filter;Code20   ;FieldClass=FlowFilter;
+                                                   TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Global Dimension 2 Filter;
+                                                              ENA=Global Dimension 2 Filter];
+                                                   CaptionClass='1,3,2' }
+    { 58  ;   ;Balance             ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Balance;
+                                                              ENA=Balance];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 59  ;   ;Balance (LCY)       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Balance (LCY);
+                                                              ENA=Balance (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 60  ;   ;Net Change          ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Net Change;
+                                                              ENA=Net Change];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 61  ;   ;Net Change (LCY)    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Net Change (LCY);
+                                                              ENA=Net Change (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 62  ;   ;Purchases (LCY)     ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Vendor Ledger Entry"."Purchase (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                  Global Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                  Global Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                  Posting Date=FIELD(Date Filter),
+                                                                                                                  Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Purchases (LCY);
+                                                              ENA=Purchases (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 64  ;   ;Inv. Discounts (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Vendor Ledger Entry"."Inv. Discount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                       Global Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Global Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Inv. Discounts (LCY);
+                                                              ENA=Inv. Discounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 65  ;   ;Pmt. Discounts (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Discount..'Payment Discount (VAT Adjustment)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Pmt. Discounts (LCY);
+                                                              ENA=Pmt. Discounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 66  ;   ;Balance Due         ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Vendor No.=FIELD(No.),
+                                                                                                                Posting Date=FIELD(UPPERLIMIT(Date Filter)),
+                                                                                                                Initial Entry Due Date=FIELD(Date Filter),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Balance Due;
+                                                              ENA=Balance Due];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 67  ;   ;Balance Due (LCY)   ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                        Posting Date=FIELD(UPPERLIMIT(Date Filter)),
+                                                                                                                        Initial Entry Due Date=FIELD(Date Filter),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Balance Due (LCY);
+                                                              ENA=Balance Due (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 69  ;   ;Payments            ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Payment),
+                                                                                                               Entry Type=CONST(Initial Entry),
+                                                                                                               Vendor No.=FIELD(No.),
+                                                                                                               Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                               Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                               Posting Date=FIELD(Date Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Payments;
+                                                              ENA=Payments];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 70  ;   ;Invoice Amounts     ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Invoice),
+                                                                                                                Entry Type=CONST(Initial Entry),
+                                                                                                                Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Invoice Amounts;
+                                                              ENA=Invoice Amounts];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 71  ;   ;Cr. Memo Amounts    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Credit Memo),
+                                                                                                               Entry Type=CONST(Initial Entry),
+                                                                                                               Vendor No.=FIELD(No.),
+                                                                                                               Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                               Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                               Posting Date=FIELD(Date Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Cr. Memo Amounts;
+                                                              ENA=CR/Adj Note Amounts];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 72  ;   ;Finance Charge Memo Amounts;Decimal;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Finance Charge Memo),
+                                                                                                                Entry Type=CONST(Initial Entry),
+                                                                                                                Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Finance Charge Memo Amounts;
+                                                              ENA=Finance Charge Memo Amounts];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 74  ;   ;Payments (LCY)      ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Payment),
+                                                                                                                       Entry Type=CONST(Initial Entry),
+                                                                                                                       Vendor No.=FIELD(No.),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Payments (LCY);
+                                                              ENA=Payments (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 75  ;   ;Inv. Amounts (LCY)  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Invoice),
+                                                                                                                        Entry Type=CONST(Initial Entry),
+                                                                                                                        Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Inv. Amounts (LCY);
+                                                              ENA=Inv. Amounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 76  ;   ;Cr. Memo Amounts (LCY);Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Credit Memo),
+                                                                                                                       Entry Type=CONST(Initial Entry),
+                                                                                                                       Vendor No.=FIELD(No.),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Cr. Memo Amounts (LCY);
+                                                              ENA=CR/Adj Note Amounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 77  ;   ;Fin. Charge Memo Amounts (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Finance Charge Memo),
+                                                                                                                        Entry Type=CONST(Initial Entry),
+                                                                                                                        Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Fin. Charge Memo Amounts (LCY);
+                                                              ENA=Fin. Charge Memo Amounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 78  ;   ;Outstanding Orders  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Outstanding Amount" WHERE (Document Type=CONST(Order),
+                                                                                                               Pay-to Vendor No.=FIELD(No.),
+                                                                                                               Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                               Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Outstanding Orders;
+                                                              ENA=Outstanding Orders];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 79  ;   ;Amt. Rcd. Not Invoiced;Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Amt. Rcd. Not Invoiced" WHERE (Document Type=CONST(Order),
+                                                                                                                   Pay-to Vendor No.=FIELD(No.),
+                                                                                                                   Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                   Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                   Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Amt. Rcd. Not Invoiced;
+                                                              ENA=Amt. Rcd. Not Invoiced];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 80  ;   ;Application Method  ;Option        ;CaptionML=[ENU=Application Method;
+                                                              ENA=Application Method];
+                                                   OptionCaptionML=[ENU=Manual,Apply to Oldest;
+                                                                    ENA=Manual,Apply to Oldest];
+                                                   OptionString=Manual,Apply to Oldest }
+    { 82  ;   ;Prices Including VAT;Boolean       ;OnValidate=VAR
+                                                                PurchPrice@1000 : Record 7012;
+                                                                Item@1001 : Record 27;
+                                                                VATPostingSetup@1002 : Record 325;
+                                                                Currency@1003 : Record 4;
+                                                              BEGIN
+                                                                PurchPrice.SETCURRENTKEY("Vendor No.");
+                                                                PurchPrice.SETRANGE("Vendor No.","No.");
+                                                                IF PurchPrice.FIND('-') THEN BEGIN
+                                                                  IF VATPostingSetup.GET('','') THEN;
+                                                                  IF CONFIRM(
+                                                                       STRSUBSTNO(
+                                                                         Text002,
+                                                                         FIELDCAPTION("Prices Including VAT"),"Prices Including VAT",PurchPrice.TABLECAPTION),TRUE)
+                                                                  THEN
+                                                                    REPEAT
+                                                                      IF PurchPrice."Item No." <> Item."No." THEN
+                                                                        Item.GET(PurchPrice."Item No.");
+                                                                      IF ("VAT Bus. Posting Group" <> VATPostingSetup."VAT Bus. Posting Group") OR
+                                                                         (Item."VAT Prod. Posting Group" <> VATPostingSetup."VAT Prod. Posting Group")
+                                                                      THEN
+                                                                        VATPostingSetup.GET("VAT Bus. Posting Group",Item."VAT Prod. Posting Group");
+                                                                      IF PurchPrice."Currency Code" = '' THEN
+                                                                        Currency.InitRoundingPrecision
+                                                                      ELSE
+                                                                        IF PurchPrice."Currency Code" <> Currency.Code THEN
+                                                                          Currency.GET(PurchPrice."Currency Code");
+                                                                      IF VATPostingSetup."VAT %" <> 0 THEN BEGIN
+                                                                        IF "Prices Including VAT" THEN
+                                                                          PurchPrice."Direct Unit Cost" :=
+                                                                            ROUND(
+                                                                              PurchPrice."Direct Unit Cost" * (1 + VATPostingSetup."VAT %" / 100),
+                                                                              Currency."Unit-Amount Rounding Precision")
+                                                                        ELSE
+                                                                          PurchPrice."Direct Unit Cost" :=
+                                                                            ROUND(
+                                                                              PurchPrice."Direct Unit Cost" / (1 + VATPostingSetup."VAT %" / 100),
+                                                                              Currency."Unit-Amount Rounding Precision");
+                                                                        PurchPrice.MODIFY;
+                                                                      END;
+                                                                    UNTIL PurchPrice.NEXT = 0;
+                                                                END;
+                                                              END;
+
+                                                   CaptionML=[ENU=Prices Including VAT;
+                                                              ENA=Prices Including GST] }
+    { 84  ;   ;Fax No.             ;Text30        ;CaptionML=[ENU=Fax No.;
+                                                              ENA=Fax No.] }
+    { 85  ;   ;Telex Answer Back   ;Text20        ;CaptionML=[ENU=Telex Answer Back;
+                                                              ENA=Telex Answer Back] }
+    { 86  ;   ;VAT Registration No.;Text20        ;OnValidate=VAR
+                                                                VATRegNoFormat@1000 : Record 381;
+                                                              BEGIN
+                                                                VATRegNoFormat.Test("VAT Registration No.","Country/Region Code","No.",DATABASE::Vendor);
+                                                              END;
+
+                                                   CaptionML=[ENU=VAT Registration No.;
+                                                              ENA=Exemption Certificate No.] }
+    { 88  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   OnValidate=BEGIN
+                                                                IF xRec."Gen. Bus. Posting Group" <> "Gen. Bus. Posting Group" THEN
+                                                                  IF GenBusPostingGrp.ValidateVatBusPostingGroup(GenBusPostingGrp,"Gen. Bus. Posting Group") THEN
+                                                                    VALIDATE("VAT Bus. Posting Group",GenBusPostingGrp."Def. VAT Bus. Posting Group");
+                                                              END;
+
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              ENA=Gen. Bus. Posting Group] }
+    { 89  ;   ;Picture             ;BLOB          ;CaptionML=[ENU=Picture;
+                                                              ENA=Picture];
+                                                   SubType=Bitmap }
+    { 91  ;   ;Post Code           ;Code20        ;TableRelation=IF (Country/Region Code=CONST()) "Post Code"
+                                                                 ELSE IF (Country/Region Code=FILTER(<>'')) "Post Code" WHERE (Country/Region Code=FIELD(Country/Region Code));
+                                                   OnValidate=BEGIN
+                                                                PostCodeCheck.ValidatePostCode(
+                                                                  CurrFieldNo,DATABASE::Vendor,GETPOSITION,0,
+                                                                  Name,"Name 2",Contact,Address,"Address 2",City,"Post Code",County,"Country/Region Code");
+                                                              END;
+
+                                                   ValidateTableRelation=No;
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=Post Code;
+                                                              ENA=Post Code] }
+    { 92  ;   ;County              ;Text30        ;CaptionML=[ENU=County;
+                                                              ENA=State] }
+    { 97  ;   ;Debit Amount        ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Debit Amount" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(<>Application),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Debit Amount;
+                                                              ENA=Debit Amount];
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 98  ;   ;Credit Amount       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Credit Amount" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                        Entry Type=FILTER(<>Application),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Credit Amount;
+                                                              ENA=Credit Amount];
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 99  ;   ;Debit Amount (LCY)  ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Debit Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                             Entry Type=FILTER(<>Application),
+                                                                                                                             Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                             Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                             Posting Date=FIELD(Date Filter),
+                                                                                                                             Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Debit Amount (LCY);
+                                                              ENA=Debit Amount (LCY)];
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 100 ;   ;Credit Amount (LCY) ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Credit Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                              Entry Type=FILTER(<>Application),
+                                                                                                                              Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                              Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                              Posting Date=FIELD(Date Filter),
+                                                                                                                              Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Credit Amount (LCY);
+                                                              ENA=Credit Amount (LCY)];
+                                                   BlankZero=Yes;
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 102 ;   ;E-Mail              ;Text80        ;ExtendedDatatype=E-Mail;
+                                                   CaptionML=[ENU=E-Mail;
+                                                              ENA=E-Mail] }
+    { 103 ;   ;Home Page           ;Text80        ;ExtendedDatatype=URL;
+                                                   CaptionML=[ENU=Home Page;
+                                                              ENA=Home Page] }
+    { 104 ;   ;Reminder Amounts    ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Reminder),
+                                                                                                                Entry Type=CONST(Initial Entry),
+                                                                                                                Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Reminder Amounts;
+                                                              ENA=Reminder Amounts];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 105 ;   ;Reminder Amounts (LCY);Decimal     ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Reminder),
+                                                                                                                        Entry Type=CONST(Initial Entry),
+                                                                                                                        Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Reminder Amounts (LCY);
+                                                              ENA=Reminder Amounts (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 107 ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=No. Series;
+                                                              ENA=No. Series];
+                                                   Editable=No }
+    { 108 ;   ;Tax Area Code       ;Code20        ;TableRelation="Tax Area";
+                                                   CaptionML=[ENU=Tax Area Code;
+                                                              ENA=US Tax Area Code] }
+    { 109 ;   ;Tax Liable          ;Boolean       ;CaptionML=[ENU=Tax Liable;
+                                                              ENA=US Tax Liable] }
+    { 110 ;   ;VAT Bus. Posting Group;Code10      ;TableRelation="VAT Business Posting Group";
+                                                   CaptionML=[ENU=VAT Bus. Posting Group;
+                                                              ENA=GST Bus. Posting Group] }
+    { 111 ;   ;Currency Filter     ;Code10        ;FieldClass=FlowFilter;
+                                                   TableRelation=Currency;
+                                                   CaptionML=[ENU=Currency Filter;
+                                                              ENA=Currency Filter] }
+    { 113 ;   ;Outstanding Orders (LCY);Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Outstanding Amount (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                     Pay-to Vendor No.=FIELD(No.),
+                                                                                                                     Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                     Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                     Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Outstanding Orders (LCY);
+                                                              ENA=Outstanding Orders (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 114 ;   ;Amt. Rcd. Not Invoiced (LCY);Decimal;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Amt. Rcd. Not Invoiced (LCY)" WHERE (Document Type=CONST(Order),
+                                                                                                                         Pay-to Vendor No.=FIELD(No.),
+                                                                                                                         Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                         Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                         Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Amt. Rcd. Not Invoiced (LCY);
+                                                              ENA=Amt. Rcd. Not Invoiced (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 116 ;   ;Block Payment Tolerance;Boolean    ;CaptionML=[ENU=Block Payment Tolerance;
+                                                              ENA=Block Payment Tolerance] }
+    { 117 ;   ;Pmt. Disc. Tolerance (LCY);Decimal ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Discount Tolerance|'Payment Discount Tolerance (VAT Adjustment)'|'Payment Discount Tolerance (VAT Excl.)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Pmt. Disc. Tolerance (LCY);
+                                                              ENA=Pmt. Disc. Tolerance (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 118 ;   ;Pmt. Tolerance (LCY);Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Vendor No.=FIELD(No.),
+                                                                                                                       Entry Type=FILTER(Payment Tolerance|'Payment Tolerance (VAT Adjustment)'|'Payment Tolerance (VAT Excl.)'),
+                                                                                                                       Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                       Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                       Posting Date=FIELD(Date Filter),
+                                                                                                                       Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Pmt. Tolerance (LCY);
+                                                              ENA=Pmt. Tolerance (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 119 ;   ;IC Partner Code     ;Code20        ;TableRelation="IC Partner";
+                                                   OnValidate=VAR
+                                                                VendLedgEntry@1001 : Record 25;
+                                                                AccountingPeriod@1000 : Record 50;
+                                                                ICPartner@1002 : Record 413;
+                                                              BEGIN
+                                                                IF xRec."IC Partner Code" <> "IC Partner Code" THEN BEGIN
+                                                                  VendLedgEntry.SETCURRENTKEY("Vendor No.","Posting Date");
+                                                                  VendLedgEntry.SETRANGE("Vendor No.","No.");
+                                                                  AccountingPeriod.SETRANGE(Closed,FALSE);
+                                                                  IF AccountingPeriod.FINDFIRST THEN
+                                                                    VendLedgEntry.SETFILTER("Posting Date",'>=%1',AccountingPeriod."Starting Date");
+                                                                  IF VendLedgEntry.FINDFIRST THEN
+                                                                    IF NOT CONFIRM(Text009,FALSE,TABLECAPTION) THEN
+                                                                      "IC Partner Code" := xRec."IC Partner Code";
+
+                                                                  VendLedgEntry.RESET;
+                                                                  IF NOT VendLedgEntry.SETCURRENTKEY("Vendor No.",Open) THEN
+                                                                    VendLedgEntry.SETCURRENTKEY("Vendor No.");
+                                                                  VendLedgEntry.SETRANGE("Vendor No.","No.");
+                                                                  VendLedgEntry.SETRANGE(Open,TRUE);
+                                                                  IF VendLedgEntry.FINDLAST THEN
+                                                                    ERROR(Text010,FIELDCAPTION("IC Partner Code"),TABLECAPTION);
+                                                                END;
+
+                                                                IF "IC Partner Code" <> '' THEN BEGIN
+                                                                  ICPartner.GET("IC Partner Code");
+                                                                  IF (ICPartner."Vendor No." <> '') AND (ICPartner."Vendor No." <> "No.") THEN
+                                                                    ERROR(Text008,FIELDCAPTION("IC Partner Code"),"IC Partner Code",TABLECAPTION,ICPartner."Vendor No.");
+                                                                  ICPartner."Vendor No." := "No.";
+                                                                  ICPartner.MODIFY;
+                                                                END;
+
+                                                                IF (xRec."IC Partner Code" <> "IC Partner Code") AND ICPartner.GET(xRec."IC Partner Code") THEN BEGIN
+                                                                  ICPartner."Vendor No." := '';
+                                                                  ICPartner.MODIFY;
+                                                                END;
+                                                              END;
+
+                                                   CaptionML=[ENU=IC Partner Code;
+                                                              ENA=IC Partner Code] }
+    { 120 ;   ;Refunds             ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(Refund),
+                                                                                                                Entry Type=CONST(Initial Entry),
+                                                                                                                Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Refunds;
+                                                              ENA=Refunds] }
+    { 121 ;   ;Refunds (LCY)       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(Refund),
+                                                                                                                        Entry Type=CONST(Initial Entry),
+                                                                                                                        Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Refunds (LCY);
+                                                              ENA=Refunds (LCY)] }
+    { 122 ;   ;Other Amounts       ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry".Amount WHERE (Initial Document Type=CONST(" "),
+                                                                                                                Entry Type=CONST(Initial Entry),
+                                                                                                                Vendor No.=FIELD(No.),
+                                                                                                                Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                Posting Date=FIELD(Date Filter),
+                                                                                                                Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Other Amounts;
+                                                              ENA=Other Amounts] }
+    { 123 ;   ;Other Amounts (LCY) ;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Detailed Vendor Ledg. Entry"."Amount (LCY)" WHERE (Initial Document Type=CONST(" "),
+                                                                                                                        Entry Type=CONST(Initial Entry),
+                                                                                                                        Vendor No.=FIELD(No.),
+                                                                                                                        Initial Entry Global Dim. 1=FIELD(Global Dimension 1 Filter),
+                                                                                                                        Initial Entry Global Dim. 2=FIELD(Global Dimension 2 Filter),
+                                                                                                                        Posting Date=FIELD(Date Filter),
+                                                                                                                        Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Other Amounts (LCY);
+                                                              ENA=Other Amounts (LCY)] }
+    { 124 ;   ;Prepayment %        ;Decimal       ;CaptionML=[ENU=Prepayment %;
+                                                              ENA=Prepayment %];
+                                                   DecimalPlaces=0:5;
+                                                   MinValue=0;
+                                                   MaxValue=100 }
+    { 125 ;   ;Outstanding Invoices;Decimal       ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Outstanding Amount" WHERE (Document Type=CONST(Invoice),
+                                                                                                               Pay-to Vendor No.=FIELD(No.),
+                                                                                                               Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                               Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                               Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Outstanding Invoices;
+                                                              ENA=Outstanding Invoices];
+                                                   Editable=No;
+                                                   AutoFormatType=1;
+                                                   AutoFormatExpr="Currency Code" }
+    { 126 ;   ;Outstanding Invoices (LCY);Decimal ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("Purchase Line"."Outstanding Amount (LCY)" WHERE (Document Type=CONST(Invoice),
+                                                                                                                     Pay-to Vendor No.=FIELD(No.),
+                                                                                                                     Shortcut Dimension 1 Code=FIELD(Global Dimension 1 Filter),
+                                                                                                                     Shortcut Dimension 2 Code=FIELD(Global Dimension 2 Filter),
+                                                                                                                     Currency Code=FIELD(Currency Filter)));
+                                                   CaptionML=[ENU=Outstanding Invoices (LCY);
+                                                              ENA=Outstanding Invoices (LCY)];
+                                                   Editable=No;
+                                                   AutoFormatType=1 }
+    { 130 ;   ;Pay-to No. Of Archived Doc.;Integer;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header Archive" WHERE (Document Type=CONST(Order),
+                                                                                                      Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. Of Archived Doc.;
+                                                              ENA=Pay-to No. Of Archived Doc.] }
+    { 131 ;   ;Buy-from No. Of Archived Doc.;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header Archive" WHERE (Document Type=CONST(Order),
+                                                                                                      Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Buy-from No. Of Archived Doc.;
+                                                              ENA=Buy-from No. Of Archived Doc.] }
+    { 132 ;   ;Partner Type        ;Option        ;CaptionML=[ENU=Partner Type;
+                                                              ENA=Partner Type];
+                                                   OptionCaptionML=[ENU=" ,Company,Person";
+                                                                    ENA=" ,Company,Person"];
+                                                   OptionString=[ ,Company,Person] }
+    { 170 ;   ;Creditor No.        ;Code20        ;CaptionML=[ENU=Creditor No.;
+                                                              ENA=Creditor No.];
+                                                   Numeric=Yes }
+    { 288 ;   ;Preferred Bank Account;Code10      ;TableRelation="Vendor Bank Account".Code WHERE (Vendor No.=FIELD(No.));
+                                                   CaptionML=[ENU=Preferred Bank Account;
+                                                              ENA=Preferred Bank Account] }
+    { 840 ;   ;Cash Flow Payment Terms Code;Code10;TableRelation="Payment Terms";
+                                                   CaptionML=[ENU=Cash Flow Payment Terms Code;
+                                                              ENA=Cash Flow Payment Terms Code] }
+    { 5049;   ;Primary Contact No. ;Code20        ;TableRelation=Contact;
+                                                   OnValidate=VAR
+                                                                Cont@1001 : Record 5050;
+                                                                ContBusRel@1000 : Record 5054;
+                                                              BEGIN
+                                                                Contact := '';
+                                                                IF "Primary Contact No." <> '' THEN BEGIN
+                                                                  Cont.GET("Primary Contact No.");
+
+                                                                  ContBusRel.SETCURRENTKEY("Link to Table","No.");
+                                                                  ContBusRel.SETRANGE("Link to Table",ContBusRel."Link to Table"::Vendor);
+                                                                  ContBusRel.SETRANGE("No.","No.");
+                                                                  ContBusRel.FINDFIRST;
+
+                                                                  IF Cont."Company No." <> ContBusRel."Contact No." THEN
+                                                                    ERROR(Text004,Cont."No.",Cont.Name,"No.",Name);
+
+                                                                  IF Cont.Type = Cont.Type::Person THEN
+                                                                    Contact := Cont.Name
+                                                                END;
+                                                              END;
+
+                                                   OnLookup=VAR
+                                                              Cont@1001 : Record 5050;
+                                                              ContBusRel@1000 : Record 5054;
+                                                            BEGIN
+                                                              ContBusRel.SETCURRENTKEY("Link to Table","No.");
+                                                              ContBusRel.SETRANGE("Link to Table",ContBusRel."Link to Table"::Vendor);
+                                                              ContBusRel.SETRANGE("No.","No.");
+                                                              IF ContBusRel.FINDFIRST THEN
+                                                                Cont.SETRANGE("Company No.",ContBusRel."Contact No.")
+                                                              ELSE
+                                                                Cont.SETRANGE("No.",'');
+
+                                                              IF "Primary Contact No." <> '' THEN
+                                                                IF Cont.GET("Primary Contact No.") THEN ;
+                                                              IF PAGE.RUNMODAL(0,Cont) = ACTION::LookupOK THEN
+                                                                VALIDATE("Primary Contact No.",Cont."No.");
+                                                            END;
+
+                                                   CaptionML=[ENU=Primary Contact No.;
+                                                              ENA=Primary Contact No.] }
+    { 5700;   ;Responsibility Center;Code10       ;TableRelation="Responsibility Center";
+                                                   CaptionML=[ENU=Responsibility Center;
+                                                              ENA=Responsibility Centre] }
+    { 5701;   ;Location Code       ;Code10        ;TableRelation=Location WHERE (Use As In-Transit=CONST(No));
+                                                   CaptionML=[ENU=Location Code;
+                                                              ENA=Location Code] }
+    { 5790;   ;Lead Time Calculation;DateFormula  ;CaptionML=[ENU=Lead Time Calculation;
+                                                              ENA=Lead Time Calculation] }
+    { 7177;   ;No. of Pstd. Receipts;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Rcpt. Header" WHERE (Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Pstd. Receipts;
+                                                              ENA=No. of Pstd. Receipts];
+                                                   Editable=No }
+    { 7178;   ;No. of Pstd. Invoices;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Inv. Header" WHERE (Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Pstd. Invoices;
+                                                              ENA=No. of Pstd. Invoices];
+                                                   Editable=No }
+    { 7179;   ;No. of Pstd. Return Shipments;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Return Shipment Header" WHERE (Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Pstd. Return Shipments;
+                                                              ENA=No. of Pstd. Return Shipments];
+                                                   Editable=No }
+    { 7180;   ;No. of Pstd. Credit Memos;Integer  ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Cr. Memo Hdr." WHERE (Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Pstd. Credit Memos;
+                                                              ENA=No. of Pstd. CR/Adj Notes];
+                                                   Editable=No }
+    { 7181;   ;Pay-to No. of Orders;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Order),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Orders;
+                                                              ENA=Pay-to No. of Orders];
+                                                   Editable=No }
+    { 7182;   ;Pay-to No. of Invoices;Integer     ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Invoice),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Invoices;
+                                                              ENA=Pay-to No. of Invoices];
+                                                   Editable=No }
+    { 7183;   ;Pay-to No. of Return Orders;Integer;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Return Order),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Return Orders;
+                                                              ENA=Pay-to No. of Return Orders];
+                                                   Editable=No }
+    { 7184;   ;Pay-to No. of Credit Memos;Integer ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Credit Memo),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Credit Memos;
+                                                              ENA=Pay-to No. of CR/Adj Notes];
+                                                   Editable=No }
+    { 7185;   ;Pay-to No. of Pstd. Receipts;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Rcpt. Header" WHERE (Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Pstd. Receipts;
+                                                              ENA=Pay-to No. of Pstd. Receipts];
+                                                   Editable=No }
+    { 7186;   ;Pay-to No. of Pstd. Invoices;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Inv. Header" WHERE (Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Pstd. Invoices;
+                                                              ENA=Pay-to No. of Pstd. Invoices];
+                                                   Editable=No }
+    { 7187;   ;Pay-to No. of Pstd. Return S.;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Return Shipment Header" WHERE (Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Pstd. Return S.;
+                                                              ENA=Pay-to No. of Pstd. Return S.];
+                                                   Editable=No }
+    { 7188;   ;Pay-to No. of Pstd. Cr. Memos;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Purch. Cr. Memo Hdr." WHERE (Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Pstd. Cr. Memos;
+                                                              ENA=Pay-to No. of Pstd. CR/Adj Notes];
+                                                   Editable=No }
+    { 7189;   ;No. of Quotes       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Quote),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Quotes;
+                                                              ENA=No. of Quotes];
+                                                   Editable=No }
+    { 7190;   ;No. of Blanket Orders;Integer      ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Blanket Order),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Blanket Orders;
+                                                              ENA=No. of Blanket Orders];
+                                                   Editable=No }
+    { 7191;   ;No. of Orders       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Order),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Orders;
+                                                              ENA=No. of Orders] }
+    { 7192;   ;No. of Invoices     ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Invoice),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Invoices;
+                                                              ENA=No. of Invoices];
+                                                   Editable=No }
+    { 7193;   ;No. of Return Orders;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Return Order),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Return Orders;
+                                                              ENA=No. of Return Orders];
+                                                   Editable=No }
+    { 7194;   ;No. of Credit Memos ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Credit Memo),
+                                                                                              Buy-from Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Credit Memos;
+                                                              ENA=No. of CR/Adj Notes];
+                                                   Editable=No }
+    { 7195;   ;No. of Order Addresses;Integer     ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Order Address" WHERE (Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=No. of Order Addresses;
+                                                              ENA=No. of Order Addresses];
+                                                   Editable=No }
+    { 7196;   ;Pay-to No. of Quotes;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Quote),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Quotes;
+                                                              ENA=Pay-to No. of Quotes];
+                                                   Editable=No }
+    { 7197;   ;Pay-to No. of Blanket Orders;Integer;
+                                                   FieldClass=FlowField;
+                                                   CalcFormula=Count("Purchase Header" WHERE (Document Type=CONST(Blanket Order),
+                                                                                              Pay-to Vendor No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Pay-to No. of Blanket Orders;
+                                                              ENA=Pay-to No. of Blanket Orders] }
+    { 7600;   ;Base Calendar Code  ;Code10        ;TableRelation="Base Calendar";
+                                                   CaptionML=[ENU=Base Calendar Code;
+                                                              ENA=Base Calendar Code] }
+    { 11620;  ;ABN                 ;Text11        ;OnValidate=BEGIN
+                                                                IF "WHT Business Posting Group" <> '' THEN
+                                                                  ERROR(Text15000,FIELDCAPTION("WHT Business Posting Group"));
+
+                                                                ABNManagement.CheckABN(ABN,1);
+                                                                IF ABN = '' THEN
+                                                                  Registered := FALSE;
+                                                              END;
+
+                                                   CaptionML=[ENU=ABN;
+                                                              ENA=ABN];
+                                                   Numeric=Yes }
+    { 11621;  ;Registered          ;Boolean       ;OnValidate=BEGIN
+                                                                IF Registered THEN
+                                                                  TESTFIELD(ABN);
+                                                              END;
+
+                                                   CaptionML=[ENU=Registered;
+                                                              ENA=Registered] }
+    { 11622;  ;ABN Division Part No.;Text3        ;OnValidate=BEGIN
+                                                                IF "WHT Business Posting Group" <> '' THEN
+                                                                  ERROR(Text15000,FIELDCAPTION("WHT Business Posting Group"));
+                                                              END;
+
+                                                   CaptionML=[ENU=ABN Division Part No.;
+                                                              ENA=ABN Division Part No.];
+                                                   Numeric=Yes }
+    { 11623;  ;Foreign Vend        ;Boolean       ;OnValidate=BEGIN
+                                                                IF "Foreign Vend" THEN BEGIN
+                                                                  ABN := '';
+                                                                  "ABN Division Part No." := '';
+                                                                END;
+                                                              END;
+
+                                                   CaptionML=[ENU=Foreign Vend;
+                                                              ENA=Foreign Vend] }
+    { 11624;  ;EFT Payment         ;Boolean       ;CaptionML=[ENU=EFT Payment;
+                                                              ENA=EFT Payment] }
+    { 11625;  ;EFT Bank Account No.;Code10        ;TableRelation="Vendor Bank Account".Code WHERE (Vendor No.=FIELD(No.));
+                                                   CaptionML=[ENU=EFT Bank Account No.;
+                                                              ENA=EFT Bank Account No.] }
+    { 17100;  ;IRD No.             ;Text30        ;CaptionML=[ENU=IRD No.;
+                                                              ENA=ACN (Australian Company Number)] }
+    { 28040;  ;WHT Business Posting Group;Code10  ;TableRelation="WHT Business Posting Group";
+                                                   OnValidate=BEGIN
+                                                                IF (ABN <> '') OR ("ABN Division Part No." <> '') THEN
+                                                                  ERROR(Text15000,FIELDCAPTION(ABN));
+                                                              END;
+
+                                                   CaptionML=[ENU=WHT Business Posting Group;
+                                                              ENA=WHT Business Posting Group] }
+    { 28041;  ;WHT Payable Amount (LCY);Decimal   ;FieldClass=FlowField;
+                                                   CalcFormula=Sum("WHT Entry"."Rem Unrealized Amount (LCY)" WHERE (Bill-to/Pay-to No.=FIELD(No.),
+                                                                                                                    Transaction Type=CONST(Purchase)));
+                                                   CaptionML=[ENU=WHT Payable Amount (LCY);
+                                                              ENA=WHT Payable Amount (LCY)] }
+    { 28042;  ;WHT Registration ID ;Text20        ;CaptionML=[ENU=WHT Registration ID;
+                                                              ENA=WHT Registration ID] }
+    { 28043;  ;ID No.              ;Text20        ;CaptionML=[ENU=ID No.;
+                                                              ENA=ID No.] }
+    { 28090;  ;Post Dated Checks (LCY);Decimal    ;FieldClass=FlowField;
+                                                   CalcFormula=-Sum("Post Dated Check Line"."Amount (LCY)" WHERE (Account Type=CONST(Vendor),
+                                                                                                                  Account No.=FIELD(No.)));
+                                                   CaptionML=[ENU=Post Dated Checks (LCY);
+                                                              ENA=Post Dated Cheques (LCY)];
+                                                   Editable=No }
+    { 50000;  ;Vendor Type         ;Option        ;OptionCaptionML=ENU=" ,Third Party,Related Party,Others";
+                                                   OptionString=[ ,Third Party,Related Party,Others];
+                                                   Description=Field for Capture Third Party and Related PArty }
+    { 50001;  ;Special Vendor      ;Boolean       ;Description=Field Added Special Vendor for ESPT Format }
+    { 50002;  ;YIMM                ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50003;  ;YMKI                ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50004;  ;YMMWJ               ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50005;  ;TBI                 ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50006;  ;YEID                ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50007;  ;Melco               ;Boolean       ;Description=For The Concept of Merge DB }
+    { 50008;  ;DepositBank         ;Code20        ;TableRelation="Bank Account".No.;
+                                                   Description=For the Bank Deposit of Different }
+    { 50009;  ;YMNI                ;Boolean       ;Description=Field Created for YMNI }
+  }
+  KEYS
+  {
+    {    ;No.                                     ;Clustered=Yes }
+    {    ;Search Name                              }
+    {    ;Vendor Posting Group                     }
+    {    ;Currency Code                            }
+    {    ;Priority                                 }
+    {    ;Country/Region Code                      }
+    {    ;Gen. Bus. Posting Group                  }
+    {    ;VAT Registration No.                     }
+    {    ;Name                                    ;KeyGroups=SearchCol }
+    {    ;City                                    ;KeyGroups=SearchCol }
+    {    ;Post Code                               ;KeyGroups=SearchCol }
+    {    ;Phone No.                               ;KeyGroups=SearchCol }
+    {    ;Contact                                 ;KeyGroups=SearchCol }
+    {    ;ABN,ABN Division Part No.                }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;No.,Name,City,Post Code,Phone No.,Contact }
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=You cannot delete %1 %2 because there is at least one outstanding Purchase %3 for this vendor.;ENA=You cannot delete %1 %2 because there is at least one outstanding Purchase %3 for this vendor.';
+      Text002@1001 : TextConst 'ENU=You have set %1 to %2. Do you want to update the %3 price list accordingly?;ENA=You have set %1 to %2. Do you want to update the %3 price list accordingly?';
+      Text003@1002 : TextConst 'ENU=Do you wish to create a contact for %1 %2?;ENA=Do you wish to create a contact for %1 %2?';
+      PurchSetup@1003 : Record 312;
+      CommentLine@1005 : Record 97;
+      PurchOrderLine@1006 : Record 39;
+      PostCode@1007 : Record 225;
+      VendBankAcc@1008 : Record 288;
+      OrderAddr@1009 : Record 224;
+      GenBusPostingGrp@1010 : Record 250;
+      ItemCrossReference@1016 : Record 5717;
+      RMSetup@1020 : Record 5079;
+      ServiceItem@1024 : Record 5940;
+      NoSeriesMgt@1011 : Codeunit 396;
+      MoveEntries@1012 : Codeunit 361;
+      UpdateContFromVend@1013 : Codeunit 5057;
+      DimMgt@1014 : Codeunit 408;
+      PostCodeCheck@1500000 : Codeunit 28000;
+      ABNManagement@1500001 : Codeunit 11600;
+      InsertFromContact@1015 : Boolean;
+      Text004@1019 : TextConst 'ENU=Contact %1 %2 is not related to vendor %3 %4.;ENA=Contact %1 %2 is not related to vendor %3 %4.';
+      Text005@1021 : TextConst 'ENU=post;ENA=post';
+      Text006@1022 : TextConst 'ENU=create;ENA=create';
+      Text007@1023 : TextConst 'ENU=You cannot %1 this type of document when Vendor %2 is blocked with type %3;ENA=You cannot %1 this type of document when Vendor %2 is blocked with type %3';
+      Text008@1025 : TextConst 'ENU=The %1 %2 has been assigned to %3 %4.\The same %1 cannot be entered on more than one %3.;ENA=The %1 %2 has been assigned to %3 %4.\The same %1 cannot be entered on more than one %3.';
+      Text009@1027 : TextConst 'ENU=Reconciling IC transactions may be difficult if you change IC Partner Code because this %1 has ledger entries in a fiscal year that has not yet been closed.\ Do you still want to change the IC Partner Code?;ENA=Reconciling IC transactions may be difficult if you change IC Partner Code because this %1 has ledger entries in a fiscal year that has not yet been closed.\ Do you still want to change the IC Partner Code?';
+      Text010@1026 : TextConst 'ENU=You cannot change the contents of the %1 field because this %2 has one or more open ledger entries.;ENA=You cannot change the contents of the %1 field because this %2 has one or more open ledger entries.';
+      Text011@1004 : TextConst 'ENU=Before you can use Online Map, you must fill in the Online Map Setup window.\See Setting Up Online Map in Help.;ENA=Before you can use Online Map, you must fill in the Online Map Setup window.\See Setting Up Online Map in Help.';
+      Text15000@1500002 : TextConst 'ENU=The field %1 must be blank.;ENA=The field %1 must be blank.';
+
+    PROCEDURE AssistEdit@2(OldVend@1000 : Record 23) : Boolean;
+    VAR
+      Vend@1001 : Record 23;
+    BEGIN
+      WITH Vend DO BEGIN
+        Vend := Rec;
+        PurchSetup.GET;
+        PurchSetup.TESTFIELD("Vendor Nos.");
+        IF NoSeriesMgt.SelectSeries(PurchSetup."Vendor Nos.",OldVend."No. Series","No. Series") THEN BEGIN
+          PurchSetup.GET;
+          PurchSetup.TESTFIELD("Vendor Nos.");
+          NoSeriesMgt.SetSeries("No.");
+          Rec := Vend;
+          EXIT(TRUE);
+        END;
+      END;
+    END;
+
+    PROCEDURE ValidateShortcutDimCode@29(FieldNumber@1000 : Integer;VAR ShortcutDimCode@1001 : Code[20]);
+    BEGIN
+      DimMgt.ValidateDimValueCode(FieldNumber,ShortcutDimCode);
+      DimMgt.SaveDefaultDim(DATABASE::Vendor,"No.",FieldNumber,ShortcutDimCode);
+      MODIFY;
+    END;
+
+    PROCEDURE LookupShortcutDimCode@28(FieldNumber@1000 : Integer;VAR ShortcutDimCode@1001 : Code[20]);
+    BEGIN
+      DimMgt.LookupDimValueCode(FieldNumber,ShortcutDimCode);
+      DimMgt.SaveDefaultDim(DATABASE::Vendor,"No.",FieldNumber,ShortcutDimCode);
+    END;
+
+    PROCEDURE ShowContact@1();
+    VAR
+      ContBusRel@1000 : Record 5054;
+      Cont@1001 : Record 5050;
+    BEGIN
+      IF "No." = '' THEN
+        EXIT;
+
+      ContBusRel.SETCURRENTKEY("Link to Table","No.");
+      ContBusRel.SETRANGE("Link to Table",ContBusRel."Link to Table"::Vendor);
+      ContBusRel.SETRANGE("No.","No.");
+      IF NOT ContBusRel.FINDFIRST THEN BEGIN
+        IF NOT CONFIRM(Text003,FALSE,TABLECAPTION,"No.") THEN
+          EXIT;
+        UpdateContFromVend.InsertNewContact(Rec,FALSE);
+        ContBusRel.FINDFIRST;
+      END;
+      COMMIT;
+
+      Cont.SETCURRENTKEY("Company Name","Company No.",Type,Name);
+      Cont.SETRANGE("Company No.",ContBusRel."Contact No.");
+      PAGE.RUN(PAGE::"Contact List",Cont);
+    END;
+
+    PROCEDURE SetInsertFromContact@3(FromContact@1000 : Boolean);
+    BEGIN
+      InsertFromContact := FromContact;
+    END;
+
+    PROCEDURE CheckBlockedVendOnDocs@4(Vend2@1003 : Record 23;Transaction@1000 : Boolean);
+    BEGIN
+      IF Vend2.Blocked = Vend2.Blocked::All THEN
+        VendBlockedErrorMessage(Vend2,Transaction);
+    END;
+
+    PROCEDURE CheckBlockedVendOnJnls@5(Vend2@1005 : Record 23;DocType@1004 : ' ,Payment,Invoice,Credit Memo,Finance Charge Memo,Reminder,Refund';Transaction@1003 : Boolean);
+    BEGIN
+      WITH Vend2 DO BEGIN
+        IF (Blocked = Blocked::All) OR
+           (Blocked = Blocked::Payment) AND (DocType = DocType::Payment)
+        THEN
+          VendBlockedErrorMessage(Vend2,Transaction);
+      END;
+    END;
+
+    PROCEDURE CreateAndShowNewInvoice@21();
+    VAR
+      PurchaseHeader@1000 : Record 38;
+    BEGIN
+      PurchaseHeader."Document Type" := PurchaseHeader."Document Type"::Invoice;
+      PurchaseHeader.SETRANGE("Buy-from Vendor No.","No.");
+      PurchaseHeader.INSERT(TRUE);
+      COMMIT;
+      PAGE.RUNMODAL(PAGE::"Mini Purchase Invoice",PurchaseHeader)
+    END;
+
+    PROCEDURE CreateAndShowNewCreditMemo@22();
+    VAR
+      PurchaseHeader@1000 : Record 38;
+    BEGIN
+      PurchaseHeader."Document Type" := PurchaseHeader."Document Type"::"Credit Memo";
+      PurchaseHeader.SETRANGE("Buy-from Vendor No.","No.");
+      PurchaseHeader.INSERT(TRUE);
+      COMMIT;
+      PAGE.RUNMODAL(PAGE::"Mini Purchase Credit Memo",PurchaseHeader)
+    END;
+
+    PROCEDURE VendBlockedErrorMessage@6(Vend2@1001 : Record 23;Transaction@1002 : Boolean);
+    VAR
+      Action@1000 : Text[30];
+    BEGIN
+      IF Transaction THEN
+        Action := Text005
+      ELSE
+        Action := Text006;
+      ERROR(Text007,Action,Vend2."No.",Vend2.Blocked);
+    END;
+
+    PROCEDURE DisplayMap@7();
+    VAR
+      MapPoint@1001 : Record 800;
+      MapMgt@1000 : Codeunit 802;
+    BEGIN
+      IF MapPoint.FINDFIRST THEN
+        MapMgt.MakeSelection(DATABASE::Vendor,GETPOSITION)
+      ELSE
+        MESSAGE(Text011);
+    END;
+
+    PROCEDURE GetDefaultBankAcc@25(VAR VendorBankAccount@1002 : Record 288);
+    BEGIN
+      IF "Preferred Bank Account" <> '' THEN
+        VendorBankAccount.GET("No.","Preferred Bank Account")
+      ELSE BEGIN
+        VendorBankAccount.SETRANGE("Vendor No.","No.");
+        IF NOT VendorBankAccount.FINDFIRST THEN
+          CLEAR(VendorBankAccount);
+      END;
+    END;
+
+    PROCEDURE CalcOverDueBalance@8() OverDueBalance : Decimal;
+    VAR
+      VendLedgEntryRemainAmtQuery@1001 : Query 25 SECURITYFILTERING(Filtered);
+    BEGIN
+      VendLedgEntryRemainAmtQuery.SETRANGE(Vendor_No,"No.");
+      VendLedgEntryRemainAmtQuery.SETRANGE(IsOpen,TRUE);
+      VendLedgEntryRemainAmtQuery.SETFILTER(Due_Date,'<%1',WORKDATE);
+      VendLedgEntryRemainAmtQuery.OPEN;
+
+      IF VendLedgEntryRemainAmtQuery.READ THEN
+        OverDueBalance := VendLedgEntryRemainAmtQuery.Sum_Remaining_Amt_LCY;
+    END;
+
+    PROCEDURE GetInvoicedPrepmtAmountLCY@18() : Decimal;
+    VAR
+      PurchLine@1000 : Record 39;
+    BEGIN
+      PurchLine.SETCURRENTKEY("Document Type","Pay-to Vendor No.");
+      PurchLine.SETRANGE("Document Type",PurchLine."Document Type"::Order);
+      PurchLine.SETRANGE("Pay-to Vendor No.","No.");
+      PurchLine.CALCSUMS("Prepmt. Amount Inv. (LCY)","Prepmt. VAT Amount Inv. (LCY)");
+      EXIT(PurchLine."Prepmt. Amount Inv. (LCY)" + PurchLine."Prepmt. VAT Amount Inv. (LCY)");
+    END;
+
+    PROCEDURE GetTotalAmountLCY@10() : Decimal;
+    BEGIN
+      CALCFIELDS(
+        "Balance (LCY)","Outstanding Orders (LCY)","Amt. Rcd. Not Invoiced (LCY)","Outstanding Invoices (LCY)");
+
+      EXIT(
+        "Balance (LCY)" + "Outstanding Orders (LCY)" +
+        "Amt. Rcd. Not Invoiced (LCY)" + "Outstanding Invoices (LCY)" - GetInvoicedPrepmtAmountLCY);
+    END;
+
+    BEGIN
+    {
+      //field added for melco id 50007
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

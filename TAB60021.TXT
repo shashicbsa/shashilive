@@ -1,0 +1,31 @@
+OBJECT Table 60021 DateRange
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/26/10;
+    Time=[ 9:18:10];
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;StartD              ;Date           }
+    { 2   ;   ;EndD                ;Date           }
+  }
+  KEYS
+  {
+    {    ;StartD                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

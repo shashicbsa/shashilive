@@ -1,0 +1,215 @@
+OBJECT Report 50045 Batch Post Sales Cr. Me. MKT
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/17/16;
+    Time=17:42:00;
+    Modified=Yes;
+    Version List=CR001,ZZ;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Batch Post Sales Credit Memos;
+               ENA=Batch Post Sales CR/Adj Notes];
+    ProcessingOnly=Yes;
+    OnPreReport=BEGIN
+
+                  //UPG13R2DEV.begin
+                  Dimcode := "Sales Header".GETFILTER("Sales Header"."Shortcut Dimension 1 Code");
+                  Tot :="Sales Header".GETFILTER("Sales Header"."Type Of Transaction");
+                  EVALUATE(V_DateFilter,"Sales Header".GETFILTER("Sales Header"."Posting Date")); //VK
+                  IF (Dimcode = '') OR (Tot = '') THEN
+                    ERROR(Text004);
+                  //UPG13R2DEV.end
+                END;
+
+  }
+  DATASET
+  {
+    { 6640;    ;DataItem;                    ;
+               DataItemTable=Table36;
+               DataItemTableView=SORTING(Document Type,No.)
+                                 WHERE(Document Type=CONST(Credit Memo),
+                                       Interfaced=CONST(Yes),
+                                       MKT=CONST(Yes));
+               ReqFilterHeadingML=[ENU=Sales Credit Memo;
+                                   ENA=Sales CR/Adj Note];
+               OnPreDataItem=BEGIN
+
+                               //UPG13R2DEV 2013R2 Code
+                               {IF ReplacePostingDate AND (PostingDateReq = 0D) THEN
+                                 ERROR(Text000);
+
+                               Approvaltemplate.SETCURRENTKEY("Table ID","Document Type",Enabled);
+                               Approvaltemplate.SETRANGE("Table ID",DATABASE::"Sales Header");
+                               Approvaltemplate.SETRANGE("Document Type","Document Type"::"Credit Memo");
+                               Approvaltemplate.SETRANGE(Enabled,TRUE);
+                               IF Approvaltemplate.FINDFIRST THEN
+                                 SETRANGE(Status,Status::Released);
+
+                               CounterTotal := COUNT;
+                               Window.OPEN(Text001);
+                               }
+
+
+                               //UPG13R2DEV 5.0 Code
+
+                               IF ReplacePostingDate AND (PostingDateReq = 0D) THEN
+                                 ERROR(Text000);
+                               //YIMMA
+                               IF V_DateFilter <> 0D THEN
+                               BEGIN
+                               "Sales Header".SETFILTER("Posting Date",'=%1',V_DateFilter);
+                               IF FINDSET THEN;
+                               END;
+
+
+
+
+                               IF NOT Interfaced THEN BEGIN
+                                 Approvaltemplate.SETCURRENTKEY(Approvaltemplate."Table ID",Approvaltemplate."Document Type",Approvaltemplate.Enabled);
+                                 Approvaltemplate.SETRANGE("Table ID",DATABASE::"Sales Header");
+                                 Approvaltemplate.SETRANGE("Document Type","Sales Header"."Document Type");
+                                 Approvaltemplate.SETRANGE(Enabled,TRUE);
+                                 IF Approvaltemplate.FINDFIRST THEN
+                                   "Sales Header".SETRANGE(Status,"Sales Header".Status::Released);
+                               END;
+                               //YIMMA
+                               CounterTotal := COUNT;
+                               Window.OPEN(Text001);
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  IF CalcInvDisc THEN
+                                    CalculateInvoiceDiscount;
+
+                                  Counter := Counter + 1;
+                                  Window.UPDATE(1,"No.");
+                                  Window.UPDATE(2,ROUND(Counter / CounterTotal * 10000,1));
+                                  CLEAR(SalesPost);
+                                  SalesPost.SetPostingDate(ReplacePostingDate,ReplaceDocumentDate,PostingDateReq);
+                                  IF SalesPost.RUN("Sales Header") THEN BEGIN
+                                    CounterOK := CounterOK + 1;
+                                    IF MARKEDONLY THEN
+                                      MARK(FALSE);
+                                  END;
+                                END;
+
+               OnPostDataItem=BEGIN
+
+                                Window.CLOSE;
+                                MESSAGE(Text002,CounterOK,CounterTotal);
+                              END;
+
+               ReqFilterFields=Type Of Transaction,Shortcut Dimension 1 Code }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+      SaveValues=Yes;
+      OnOpenPage=BEGIN
+                   SalesSetup.GET;
+                   CalcInvDisc := SalesSetup."Calc. Inv. Discount";
+                   ReplacePostingDate := FALSE;
+                   ReplaceDocumentDate := FALSE;
+                 END;
+
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 1   ;2   ;Field     ;
+                  Name=PostingDate;
+                  CaptionML=[ENU=Posting Date;
+                             ENA=Posting Date];
+                  SourceExpr=PostingDateReq }
+
+      { 2   ;2   ;Field     ;
+                  Name=ReplacePostingDate;
+                  CaptionML=[ENU=Replace Posting Date;
+                             ENA=Replace Posting Date];
+                  SourceExpr=ReplacePostingDate;
+                  OnValidate=BEGIN
+                               IF ReplacePostingDate THEN
+                                 MESSAGE(Text003);
+                             END;
+                              }
+
+      { 3   ;2   ;Field     ;
+                  CaptionML=[ENU=Replace Document Date;
+                             ENA=Replace Document Date];
+                  SourceExpr=ReplaceDocumentDate }
+
+      { 5   ;2   ;Field     ;
+                  CaptionML=[ENU=Calc. Inv. Discount;
+                             ENA=Calc. Inv. Discount];
+                  SourceExpr=CalcInvDisc;
+                  OnValidate=BEGIN
+                               SalesSetup.GET;
+                               SalesSetup.TESTFIELD("Calc. Inv. Discount",FALSE);
+                             END;
+                              }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      Text000@1000 : TextConst 'ENU=Please enter the posting date.;ENA=Please enter the posting date.';
+      Text001@1001 : TextConst 'ENU=Posting credit memos  #1########## @2@@@@@@@@@@@@@;ENA=Posting CR/Adj Notes  #1########## @2@@@@@@@@@@@@@';
+      Text002@1002 : TextConst 'ENU=%1 credit memos out of a total of %2 have now been posted.;ENA=%1 CR/Adj Notes out of a total of %2 have now been posted.';
+      Text003@1003 : TextConst 'ENU=The exchange rate associated with the new posting date on the sales header will not apply to the sales lines.;ENA=The exchange rate associated with the new posting date on the sales header will not apply to the sales lines.';
+      SalesLine@1005 : Record 37;
+      SalesSetup@1006 : Record 311;
+      Approvaltemplate@1004 : Record 464;
+      SalesCalcDisc@1007 : Codeunit 60;
+      SalesPost@1008 : Codeunit 80;
+      Window@1009 : Dialog;
+      PostingDateReq@1010 : Date;
+      CounterTotal@1011 : Integer;
+      Counter@1012 : Integer;
+      CounterOK@1013 : Integer;
+      ReplacePostingDate@1016 : Boolean;
+      ReplaceDocumentDate@1017 : Boolean;
+      CalcInvDisc@1018 : Boolean;
+      Dimcode@1102159001 : Code[10];
+      Tot@1102159002 : Text[30];
+      Text004@1102159003 : TextConst 'ENU=Plz Specify The Shop Code and Transaction Type';
+      V_DateFilter@1000000000 : Date;
+
+    PROCEDURE CalculateInvoiceDiscount@1();
+    BEGIN
+      SalesLine.RESET;
+      SalesLine.SETRANGE("Document Type","Sales Header"."Document Type");
+      SalesLine.SETRANGE("Document No.","Sales Header"."No.");
+      IF SalesLine.FINDFIRST THEN
+        IF SalesCalcDisc.RUN(SalesLine) THEN BEGIN
+          "Sales Header".GET("Sales Header"."Document Type","Sales Header"."No.");
+          COMMIT;
+        END;
+    END;
+
+    BEGIN
+    {
+      [REF] : CR001
+      [SIGN]: SV
+      [DESC]: Report created for batch slip posting of MKT Activities interfaced invoices.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

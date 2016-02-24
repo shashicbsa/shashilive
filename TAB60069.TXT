@@ -1,0 +1,35 @@
+OBJECT Table 60069 Profile Menu Details
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/22/15;
+    Time=18:25:52;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;S.No                ;Integer        }
+    { 2   ;   ;Code                ;Text30         }
+    { 3   ;   ;Description         ;Text100        }
+    { 4   ;   ;Row No              ;Integer        }
+    { 5   ;   ;Column No           ;Integer        }
+  }
+  KEYS
+  {
+    {    ;S.No                                    ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

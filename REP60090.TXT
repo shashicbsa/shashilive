@@ -1,0 +1,77 @@
+OBJECT Report 60090 USID
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/14/15;
+    Time=20:09:53;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 1000000000;;DataItem;                  ;
+               DataItemTable=Table83600;
+               OnAfterGetRecord=BEGIN
+                                  {
+                                  "Access Control Copy 1".RESET;
+                                  User.RESET;
+                                  User.SETRANGE("User Name","Access Control Copy 1"."User Name");
+                                  IF User.FINDSET THEN BEGIN
+                                    REPEAT
+                                     "Access Control Copy 1"."User Security ID" := User."User Security ID";
+                                     "Access Control Copy 1".MODIFY;
+                                    UNTIL User.NEXT=0;
+                                  END;
+                                  }
+
+                                  "Access Control Copy 1".RESET;
+                                  Acopy.RESET;
+                                  IF "Access Control Copy 1".FINDSET THEN BEGIN
+                                    REPEAT
+                                     Acopy.INIT;
+                                     Acopy."User Security ID" :="Access Control Copy 1"."User Security ID";
+                                     Acopy."Role ID":="Access Control Copy 1"."Role ID";
+                                     Acopy."Company Name":="Access Control Copy 1"."Company Name";
+                                     Acopy."User Name":="Access Control Copy 1"."User Name";
+                                     Acopy."Role Name":="Access Control Copy 1"."Role Name";
+                                     Acopy.INSERT;
+                                    UNTIL "Access Control Copy 1".NEXT=0;
+                                  END;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                MESSAGE('Done');
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      User@1000000000 : Record 2000000120;
+      Acopy@1000000001 : Record 2000000053;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

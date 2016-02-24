@@ -1,0 +1,378 @@
+OBJECT Page 29 Vendor Ledger Entries
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/21/14;
+    Time=12:03:20;
+    Modified=Yes;
+    Version List=NAVW17.10,NAVAPAC7.10,YIMMNVPG,UPG13,UPG13R2,YIMMDEVIP1.0;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Vendor Ledger Entries;
+               ENA=Vendor Ledger Entries];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table25;
+    DataCaptionFields=Vendor No.;
+    PageType=List;
+    OnAfterGetRecord=BEGIN
+                       StyleTxt := SetStyle;
+                     END;
+
+    OnModifyRecord=BEGIN
+                     CODEUNIT.RUN(CODEUNIT::"Vend. Entry-Edit",Rec);
+                     EXIT(FALSE);
+                   END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000003;0 ;ActionContainer;
+                      ActionContainerType=RelatedInformation }
+      { 53      ;1   ;ActionGroup;
+                      CaptionML=[ENU=Ent&ry;
+                                 ENA=Ent&ry];
+                      Image=Entry }
+      { 72      ;2   ;Action    ;
+                      CaptionML=[ENU=Applied E&ntries;
+                                 ENA=Applied E&ntries];
+                      RunObject=Page 62;
+                      RunPageOnRec=Yes;
+                      Image=Approve }
+      { 55      ;2   ;Action    ;
+                      ShortCutKey=Shift+Ctrl+D;
+                      CaptionML=[ENU=Dimensions;
+                                 ENA=Dimensions];
+                      Image=Dimensions;
+                      OnAction=BEGIN
+                                 ShowDimensions;
+                               END;
+                                }
+      { 54      ;2   ;Action    ;
+                      ShortCutKey=Ctrl+F7;
+                      CaptionML=[ENU=Detailed &Ledger Entries;
+                                 ENA=Detailed &Ledger Entries];
+                      RunObject=Page 574;
+                      RunPageView=SORTING(Vendor Ledger Entry No.,Posting Date);
+                      RunPageLink=Vendor Ledger Entry No.=FIELD(Entry No.),
+                                  Vendor No.=FIELD(Vendor No.);
+                      Image=View }
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 34      ;1   ;ActionGroup;
+                      CaptionML=[ENU=F&unctions;
+                                 ENA=F&unctions];
+                      Image=Action }
+      { 36      ;2   ;Action    ;
+                      Name=ActionApplyEntries;
+                      ShortCutKey=Shift+F11;
+                      CaptionML=[ENU=Apply Entries;
+                                 ENA=Apply Entries];
+                      Image=ApplyEntries;
+                      OnAction=VAR
+                                 VendLedgEntry@1001 : Record 25;
+                                 VendEntryApplyPostEntries@1000 : Codeunit 227;
+                               BEGIN
+                                 VendLedgEntry.COPY(Rec);
+                                 VendEntryApplyPostEntries.ApplyVendEntryFormEntry(VendLedgEntry);
+                                 Rec := VendLedgEntry;
+                                 CurrPage.UPDATE;
+                               END;
+                                }
+      { 66      ;2   ;Separator  }
+      { 67      ;2   ;Action    ;
+                      Name=UnapplyEntries;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Unapply Entries;
+                                 ENA=Unapply Entries];
+                      Image=UnApply;
+                      OnAction=VAR
+                                 VendEntryApplyPostedEntries@1000 : Codeunit 227;
+                               BEGIN
+                                 VendEntryApplyPostedEntries.UnApplyVendLedgEntry("Entry No.");
+                               END;
+                                }
+      { 68      ;2   ;Separator  }
+      { 69      ;2   ;Action    ;
+                      Name=ReverseTransaction;
+                      Ellipsis=Yes;
+                      CaptionML=[ENU=Reverse Transaction;
+                                 ENA=Reverse Transaction];
+                      Image=ReverseRegister;
+                      OnAction=VAR
+                                 ReversalEntry@1000 : Record 179;
+                               BEGIN
+                                 CLEAR(ReversalEntry);
+                                 IF Reversed THEN
+                                   ReversalEntry.AlreadyReversedEntry(TABLECAPTION,"Entry No.");
+                                 IF "Journal Batch Name" = '' THEN
+                                   ReversalEntry.TestFieldError;
+                                 TESTFIELD("Transaction No.");
+                                 ReversalEntry.ReverseTransaction("Transaction No.");
+                               END;
+                                }
+      { 37      ;1   ;Action    ;
+                      CaptionML=[ENU=&Navigate;
+                                 ENA=&Navigate];
+                      Promoted=Yes;
+                      Image=Navigate;
+                      PromotedCategory=Process;
+                      OnAction=BEGIN
+                                 Navigate.SetDoc("Posting Date","Document No.");
+                                 Navigate.RUN;
+                               END;
+                                }
+      { 7       ;1   ;Action    ;
+                      CaptionML=[ENU=Incoming Document;
+                                 ENA=Incoming Document];
+                      Promoted=Yes;
+                      Image=Document;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 IncomingDocument@1000 : Record 130;
+                               BEGIN
+                                 IncomingDocument.HyperlinkToDocument("Document No.","Posting Date");
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                GroupType=Repeater }
+
+    { 1000000006;2;Field  ;
+                SourceExpr="Entry No.";
+                Visible=FALSE }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr="Posting Date";
+                Editable=FALSE }
+
+    { 1000000016;2;Field  ;
+                SourceExpr=BeniName }
+
+    { 1000000010;2;Field  ;
+                SourceExpr=DocType }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr="Document Type";
+                Editable=FALSE;
+                StyleExpr=StyleTxt }
+
+    { 6   ;2   ;Field     ;
+                SourceExpr="Document No.";
+                Editable=FALSE;
+                StyleExpr=StyleTxt }
+
+    { 1000000002;2;Field  ;
+                SourceExpr="Order Address Code" }
+
+    { 1000000014;2;Field  ;
+                SourceExpr="Closed by Entry No." }
+
+    { 1000000012;2;Field  ;
+                SourceExpr="Total Applied Amount" }
+
+    { 51  ;2   ;Field     ;
+                SourceExpr="External Document No.";
+                Editable=TRUE }
+
+    { 1000000004;2;Field  ;
+                SourceExpr=Narration }
+
+    { 1000000008;2;Field  ;
+                SourceExpr="Original Currency Factor";
+                Visible=FALSE }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Vendor No.";
+                Editable=FALSE }
+
+    { 1000000000;2;Field  ;
+                SourceExpr="Vendor Posting Group" }
+
+    { 5   ;2   ;Field     ;
+                SourceExpr="Message to Recipient" }
+
+    { 10  ;2   ;Field     ;
+                SourceExpr=Description;
+                Editable=FALSE }
+
+    { 39  ;2   ;Field     ;
+                SourceExpr="Global Dimension 1 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 41  ;2   ;Field     ;
+                SourceExpr="Global Dimension 2 Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 70  ;2   ;Field     ;
+                SourceExpr="IC Partner Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 43  ;2   ;Field     ;
+                SourceExpr="Purchaser Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 45  ;2   ;Field     ;
+                SourceExpr="Currency Code";
+                Editable=FALSE }
+
+    { 100 ;2   ;Field     ;
+                SourceExpr="Payment Method Code" }
+
+    { 110 ;2   ;Field     ;
+                SourceExpr="Payment Reference" }
+
+    { 115 ;2   ;Field     ;
+                SourceExpr="Creditor No." }
+
+    { 58  ;2   ;Field     ;
+                SourceExpr="Original Amount";
+                Editable=FALSE }
+
+    { 56  ;2   ;Field     ;
+                SourceExpr="Original Amt. (LCY)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 12  ;2   ;Field     ;
+                SourceExpr=Amount;
+                Editable=FALSE }
+
+    { 47  ;2   ;Field     ;
+                SourceExpr="Amount (LCY)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 1500000;2;Field     ;
+                SourceExpr="WHT Amount" }
+
+    { 1500002;2;Field     ;
+                SourceExpr="WHT Amount (LCY)" }
+
+    { 14  ;2   ;Field     ;
+                SourceExpr="Remaining Amount";
+                Editable=FALSE }
+
+    { 49  ;2   ;Field     ;
+                SourceExpr="Remaining Amt. (LCY)";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 24  ;2   ;Field     ;
+                SourceExpr="Bal. Account Type";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 26  ;2   ;Field     ;
+                SourceExpr="Bal. Account No.";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 16  ;2   ;Field     ;
+                SourceExpr="Due Date";
+                StyleExpr=StyleTxt }
+
+    { 18  ;2   ;Field     ;
+                SourceExpr="Pmt. Discount Date" }
+
+    { 62  ;2   ;Field     ;
+                SourceExpr="Pmt. Disc. Tolerance Date" }
+
+    { 20  ;2   ;Field     ;
+                SourceExpr="Original Pmt. Disc. Possible" }
+
+    { 60  ;2   ;Field     ;
+                SourceExpr="Remaining Pmt. Disc. Possible" }
+
+    { 64  ;2   ;Field     ;
+                SourceExpr="Max. Payment Tolerance" }
+
+    { 28  ;2   ;Field     ;
+                SourceExpr=Open;
+                Editable=FALSE }
+
+    { 22  ;2   ;Field     ;
+                SourceExpr="On Hold" }
+
+    { 77  ;2   ;Field     ;
+                SourceExpr="User ID";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 79  ;2   ;Field     ;
+                SourceExpr="Source Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 81  ;2   ;Field     ;
+                SourceExpr="Reason Code";
+                Visible=FALSE;
+                Editable=FALSE }
+
+    { 35  ;2   ;Field     ;
+                SourceExpr=Reversed;
+                Visible=FALSE }
+
+    { 74  ;2   ;Field     ;
+                SourceExpr="Reversed by Entry No.";
+                Visible=FALSE }
+
+    { 76  ;2   ;Field     ;
+                SourceExpr="Reversed Entry No.";
+                Visible=FALSE }
+
+    { 290 ;2   ;Field     ;
+                SourceExpr="Exported to Payment File" }
+
+    { 1102159001;2;Field  ;
+                SourceExpr="Slip No." }
+
+    { 1900000007;0;Container;
+                ContainerType=FactBoxArea }
+
+    { 1900383207;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=RecordLinks }
+
+    { 1905767507;1;Part   ;
+                Visible=FALSE;
+                PartType=System;
+                SystemPartID=Notes }
+
+  }
+  CODE
+  {
+    VAR
+      Navigate@1000 : Page 344;
+      StyleTxt@1001 : Text;
+
+    BEGIN
+    {
+      //YIMMNVPG
+       1) FIELD SHOW IN THE FORM (VENDOR POSTING GROUP).
+      //YIMMNNPWP
+       1) FIELD SHOW IN THE FORM  (ORDER ADDRESS CODE)
+      // UPG13
+      5.0 Customized Code to 2013 Merged Code.
+      // UPG13R2
+      2013 to 2013R2 Merged Code.
+
+      //YIMMDEVIP1.0
+
+      Issue No. 9 slip no. flow from Gen journal    Show slip no. on page
+    }
+    END.
+  }
+}
+

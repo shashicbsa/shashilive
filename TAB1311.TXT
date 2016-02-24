@@ -1,0 +1,37 @@
+OBJECT Table 1311 Mini Last Used Chart
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Mini Last Used Chart;
+               ENA=Mini Last Used Chart];
+  }
+  FIELDS
+  {
+    { 1   ;   ;UID                 ;Code50        ;CaptionML=[ENU=UID;
+                                                              ENA=UID] }
+    { 2   ;   ;CodeUnitID          ;Integer       ;CaptionML=[ENU=CodeUnitID;
+                                                              ENA=CodeUnitID] }
+    { 3   ;   ;ChartName           ;Text60        ;CaptionML=[ENU=ChartName;
+                                                              ENA=ChartName] }
+  }
+  KEYS
+  {
+    {    ;UID                                     ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

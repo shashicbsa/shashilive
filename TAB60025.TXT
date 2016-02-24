@@ -1,0 +1,38 @@
+OBJECT Table 60025 EliSetupYMKI
+{
+  OBJECT-PROPERTIES
+  {
+    Date=10/06/10;
+    Time=10:41:14;
+    Version List=YIMM-CONSOL;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;PrimaryKey          ;Code10         }
+    { 2   ;   ;ARTradeMC           ;Code20         }
+    { 3   ;   ;RentalExp           ;Code20         }
+    { 4   ;   ;Sales               ;Code20         }
+    { 5   ;   ;AROth               ;Code20         }
+    { 6   ;   ;ARTradeMC_bal       ;Code20         }
+    { 7   ;   ;RentalExp_bal       ;Code20         }
+    { 8   ;   ;Sales_bal           ;Code20         }
+    { 9   ;   ;AROth_bal           ;Code20         }
+  }
+  KEYS
+  {
+    {    ;PrimaryKey                              ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

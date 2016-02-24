@@ -1,0 +1,676 @@
+OBJECT Table 11601 BAS Calculation Sheet
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10,YMINASC001.00,UPG09R2,UPG13,UPG13R2;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS Calculation Sheet;
+               ENA=BAS Calculation Sheet];
+    LookupPageID=Page11603;
+  }
+  FIELDS
+  {
+    { 1   ;   ;A1                  ;Code11        ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A1;
+                                                              ENA=Document No. (A1)];
+                                                   NotBlank=Yes;
+                                                   Editable=No }
+    { 2   ;   ;A2                  ;Text11        ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A2;
+                                                              ENA=ABN (A2)];
+                                                   Editable=No }
+    { 3   ;   ;A3                  ;Date          ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A3;
+                                                              ENA=Period Covered From (A3)];
+                                                   Editable=No }
+    { 4   ;   ;A4                  ;Date          ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A4;
+                                                              ENA=Period Covered To (A4)];
+                                                   Editable=No }
+    { 5   ;   ;A5                  ;Date          ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A5;
+                                                              ENA=Statement Due Date (A5)];
+                                                   Editable=No }
+    { 6   ;   ;A6                  ;Date          ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A6;
+                                                              ENA=Statement Payable Date (A6)];
+                                                   Editable=No }
+    { 7   ;   ;1A                  ;Decimal       ;FieldClass=Normal;
+                                                   OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1A;
+                                                              ENA=Goods And Services Tax Payable (1A)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 8   ;   ;1C                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1C;
+                                                              ENA=Wine Equalisation Tax Payable (1C)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 9   ;   ;1E                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1E;
+                                                              ENA=Luxury Car Tax Payable (1E)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 10  ;   ;2A                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=2A;
+                                                              ENA=Add 1A+1C+1E];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 11  ;   ;3                   ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=3;
+                                                              ENA=2A-2B GST Net Amt. (3)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 12  ;   ;4                   ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=4;
+                                                              ENA=Total Amounts Withheld From All Payments (4)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 13  ;   ;5A                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=5A;
+                                                              ENA=Income Tax Instalment (5A)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 14  ;   ;6A                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=6A;
+                                                              ENA=Fringe Benefit Tax Instalment (6A)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 15  ;   ;7                   ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=7;
+                                                              ENA=Deferred Company Fund Instalment (7)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 16  ;   ;8A                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=8A;
+                                                              ENA=Add 2A+4+5A+6A+7+7A];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 17  ;   ;9                   ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=9;
+                                                              ENA=8A-8B Net Amt. of Your Obligations (9)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 18  ;   ;1B                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1B;
+                                                              ENA=Credit for Goods And Services Tax Paid (1B)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 19  ;   ;1D                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1D;
+                                                              ENA=Wine Equalisation Tax Refundable (1D)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 20  ;   ;1F                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1F;
+                                                              ENA=Luxury Car Tax Refundable (1F)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 21  ;   ;1G                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1G;
+                                                              ENA=Credit for Wholesale Sales Tax (1G)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 22  ;   ;2B                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=2B;
+                                                              ENA=Add 1B+1D+1F+1G];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 23  ;   ;5B                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=5B;
+                                                              ENA=Credit Adj. for Previous Income Tax Instalment (5B)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 24  ;   ;6B                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=6B;
+                                                              ENA=Variation Credit From Prior Fringe Benefit Tax Instalments (6B)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 25  ;   ;8B                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=8B;
+                                                              ENA=Add 2B+5B+6B];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 26  ;   ;G1                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G1;
+                                                              ENA=Total Sales And Income And Other Supplies (G1)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 27  ;   ;G2                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G2;
+                                                              ENA=Exports (G2)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 28  ;   ;G3                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G3;
+                                                              ENA=Other GST-Free Supplies (G3)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 29  ;   ;G4                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G4;
+                                                              ENA=Input Taxed Sales And Other Supplies (G4)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 30  ;   ;G5                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G5;
+                                                              ENA=Add G2+G3+G4];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 31  ;   ;G6                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G6;
+                                                              ENA=G1-G5];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 32  ;   ;G7                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G7;
+                                                              ENA=Adjustments (G7)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 33  ;   ;G8                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G8;
+                                                              ENA=Add G6+G7];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 34  ;   ;G9                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G9;
+                                                              ENA=Divide G8 by 11 (G9)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 35  ;   ;W1                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=W1;
+                                                              ENA=Total of Salary, Wages And Other Payments (W1)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 36  ;   ;W2                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=W2;
+                                                              ENA=Amts. Withheld From Salary, Wages And Other Payments (W2)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 37  ;   ;T1                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T1;
+                                                              ENA=Instalment Income (T1)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 38  ;   ;T3                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T3;
+                                                              ENA=Varied Instalment Rate (T3)] }
+    { 39  ;   ;F1                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=F1;
+                                                              ENA=Fringe Benefit Tax Instalment (F1)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 40  ;   ;F2                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   OnLookup=BEGIN
+                                                              //YMINASC001.00ST
+
+                                                              //YMINASC001.00EN
+                                                            END;
+
+                                                   CaptionML=[ENU=F2;
+                                                              ENA=Est. Total Fringe Benefit Tax Payable (F2)];
+                                                   DecimalPlaces=0:0 }
+    { 41  ;   ;G10                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G10;
+                                                              ENA=Capital Acquisitions (G10)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 42  ;   ;G11                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G11;
+                                                              ENA=Other Acquisitions (G11)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 43  ;   ;G12                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G12;
+                                                              ENA=Add G10+G11];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 44  ;   ;G13                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G13;
+                                                              ENA=Acquisitions for Making Input Taxed Sales And Income And Other Supplies (G13)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 45  ;   ;G14                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G14;
+                                                              ENA=Acquisitions With No GST in Price (G14)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 46  ;   ;G15                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G15;
+                                                              ENA=Tot. Est. Private Use Acquisitions + Non-income Tax Deduct. Acquisitions (G15)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 47  ;   ;G16                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G16;
+                                                              ENA=Add G13+G14+G15];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 48  ;   ;G17                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G17;
+                                                              ENA=G12-G16];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 49  ;   ;G18                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G18;
+                                                              ENA=Adjustments (G18)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 50  ;   ;G19                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G19;
+                                                              ENA=Add G17+G18];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 51  ;   ;G20                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G20;
+                                                              ENA=Divide G19 by 11 (G20)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 52  ;   ;W3                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=W3;
+                                                              ENA=Amts. Withheld From Investment Distributions Where no TFN is Quoted (W3)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 53  ;   ;W4                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=W4;
+                                                              ENA=Amts. Withheld From Payment on Invoices Where no ABN is Quoted (W4)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 54  ;   ;T2                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T2;
+                                                              ENA=Commissioner Chosen Instalment Rate (T2)];
+                                                   Editable=No }
+    { 55  ;   ;T4                  ;Code2         ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T4;
+                                                              ENA=Reason For Variation (T4)];
+                                                   Numeric=Yes }
+    { 56  ;   ;F3                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=F3;
+                                                              ENA=Varied Fringe Benefit Tax Instalment Amounts (F3)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 57  ;   ;F4                  ;Code2         ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=F4;
+                                                              ENA=Reason for Variation (F4)];
+                                                   Numeric=Yes }
+    { 58  ;   ;7A                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=7A;
+                                                              ENA=Value of Goods Imported Where GST is Deferred (7A)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 59  ;   ;A2a                 ;Text3         ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=A2a;
+                                                              ENA=ABN Division Part No. (A2a)];
+                                                   Editable=No }
+    { 60  ;   ;G21                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G21;
+                                                              ENA=ATO/Varied Instalment Amount (G21)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 61  ;   ;G22                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G22;
+                                                              ENA=Estimated Net GST For The Year (G22)];
+                                                   DecimalPlaces=0:0 }
+    { 62  ;   ;G23                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G23;
+                                                              ENA=Varied Amount For The Quarter (G23)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 63  ;   ;G24                 ;Code2         ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=G24;
+                                                              ENA=Reason For Variation (G24)];
+                                                   Numeric=Yes }
+    { 64  ;   ;1H                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=1H;
+                                                              ENA=GST Instalments (1H - amts. reported at 1A in your Quart. 3 and/or Quart. 4 BAS)];
+                                                   DecimalPlaces=0:0 }
+    { 65  ;   ;W5                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=W5;
+                                                              ENA=Total Amounts Withheld (W2 + W3 + W4)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 66  ;   ;T7                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T7;
+                                                              ENA=ATO Instalment Amount (T7)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 67  ;   ;T8                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T8;
+                                                              ENA=Estimated Tax For The Year (T8)];
+                                                   DecimalPlaces=0:0 }
+    { 68  ;   ;T9                  ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T9;
+                                                              ENA=Varied Amount For The Quarter (T9)];
+                                                   DecimalPlaces=0:0 }
+    { 69  ;   ;T11                 ;Decimal       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=T11;
+                                                              ENA=T1 x T2 (or x T3)];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 70  ;   ;PAYG Option 1       ;Boolean       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=PAYG Option 1;
+                                                              ENA=PAYG Option 1];
+                                                   Editable=No }
+    { 71  ;   ;PAYG Option 2       ;Boolean       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=PAYG Option 2;
+                                                              ENA=PAYG Option 2];
+                                                   Editable=No }
+    { 72  ;   ;7C                  ;Decimal       ;CaptionML=[ENU=7C;
+                                                              ENA=7C];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 73  ;   ;7D                  ;Decimal       ;CaptionML=[ENU=7D;
+                                                              ENA=7D];
+                                                   DecimalPlaces=0:0;
+                                                   Editable=No }
+    { 100 ;   ;User Id             ;Code50        ;CaptionML=[ENU=User Id;
+                                                              ENA=User Id];
+                                                   Editable=No }
+    { 101 ;   ;Date of Export      ;Date          ;CaptionML=[ENU=Date of Export;
+                                                              ENA=Date of Export];
+                                                   Editable=No }
+    { 102 ;   ;Time of Export      ;Time          ;CaptionML=[ENU=Time of Export;
+                                                              ENA=Time of Export];
+                                                   Editable=No }
+    { 103 ;   ;File Name           ;Text250       ;CaptionML=[ENU=File Name;
+                                                              ENA=File Name];
+                                                   Editable=No }
+    { 104 ;   ;Exported            ;Boolean       ;CaptionML=[ENU=Exported;
+                                                              ENA=Exported];
+                                                   Editable=No }
+    { 105 ;   ;Consolidated        ;Boolean       ;CaptionML=[ENU=Consolidated;
+                                                              ENA=Consolidated];
+                                                   Editable=No }
+    { 107 ;   ;BAS Version         ;Integer       ;CaptionML=[ENU=BAS Version;
+                                                              ENA=BAS Version];
+                                                   Editable=No }
+    { 108 ;   ;Updated             ;Boolean       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=Updated;
+                                                              ENA=Updated];
+                                                   Editable=No }
+    { 109 ;   ;ATO Receipt No.     ;Text50        ;CaptionML=[ENU=ATO Receipt No.;
+                                                              ENA=ATO Receipt No.] }
+    { 110 ;   ;Group Consolidated  ;Boolean       ;CaptionML=[ENU=Group Consolidated;
+                                                              ENA=Group Consolidated];
+                                                   Editable=No }
+    { 111 ;   ;BAS GST Division Factor;Decimal    ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=BAS GST Division Factor;
+                                                              ENA=BAS GST Division Factor];
+                                                   Editable=No }
+    { 112 ;   ;Comment             ;Boolean       ;FieldClass=FlowField;
+                                                   CalcFormula=Exist("BAS Comment Line" WHERE (No.=FIELD(A1),
+                                                                                               Version No.=FIELD(BAS Version)));
+                                                   CaptionML=[ENU=Comment;
+                                                              ENA=Comment];
+                                                   Editable=No }
+    { 113 ;   ;BAS Setup Name      ;Code20        ;TableRelation="BAS Setup Name";
+                                                   OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=BAS Setup Name;
+                                                              ENA=BAS Setup Name];
+                                                   Editable=No }
+    { 114 ;   ;Settled             ;Boolean       ;OnValidate=BEGIN
+                                                                CheckModificationAllowed;
+                                                              END;
+
+                                                   CaptionML=[ENU=Settled;
+                                                              ENA=Settled];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;A1,BAS Version                          ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;A1,BAS Version,A3,A4,A5,A6,Exported,Updated,ATO Receipt No.,Settled }
+  }
+  CODE
+  {
+
+    PROCEDURE CheckModificationAllowed@1500000();
+    BEGIN
+      TESTFIELD(A1);
+      TESTFIELD("BAS Version");
+      TESTFIELD(Exported,FALSE);
+      TESTFIELD(Consolidated,FALSE);
+    END;
+
+    BEGIN
+    {
+      //YIMMASC
+      1. Change in caption ML for feild N0. 39 - F1 - to mentain view in SQL Standard Bug
+      //UPG09R2
+      5.0 to 2009 R2 Merged Code in objects identification.
+      //UPG13
+      2009R2 to 2013 Merged Code.
+      //UPG13R2
+      2013 to 2013R2 Merged Code.
+    }
+    END.
+  }
+}
+

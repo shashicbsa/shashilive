@@ -1,0 +1,31 @@
+OBJECT Table 50056 FAACQDATE
+{
+  OBJECT-PROPERTIES
+  {
+    Date=02/12/10;
+    Time=[ 8:11:29];
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;FACODE              ;Code20         }
+    { 2   ;   ;ACQDATE             ;Date           }
+  }
+  KEYS
+  {
+    {    ;FACODE                                  ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,71 @@
+OBJECT Table 50043 YNSPIRE Interface
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/11/11;
+    Time=16:15:45;
+    Version List=YNSPIRE1.1;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer        }
+    { 2   ;   ;No.                 ;Code20         }
+    { 3   ;   ;Sales Type          ;Option        ;OptionCaptionML=ENU=" ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,prtn,Propac Ex.,Intrst_Deposit";
+                                                   OptionString=[ ,Selling In,Selling Out,Direct,Indirect,Warranty,Free Service,Claim,Intrest,Sharing,Import,FA,Others,Imacs,Propac,Gport,TMS,Prtn,Propac Ex.,Intrst_Deposit] }
+    { 4   ;   ;Dealer Code         ;Code20         }
+    { 5   ;   ;Transaction Date    ;Date           }
+    { 6   ;   ;Invoice Date        ;Date           }
+    { 7   ;   ;Ext.Doc.No.         ;Code20         }
+    { 8   ;   ;Npwp no.            ;Code20         }
+    { 9   ;   ;Due Date            ;Date           }
+    { 10  ;   ;Shortcut Dimension 1 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=ENU=Shortcut Dimension 1 Code;
+                                                   CaptionClass='1,2,1' }
+    { 11  ;   ;Shortcut Dimension 2 Code;Code20   ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=ENU=Shortcut Dimension 2 Code;
+                                                   CaptionClass='1,2,2' }
+    { 12  ;   ;Currency            ;Code10         }
+    { 13  ;   ;Tax Invoice Date    ;Date           }
+    { 14  ;   ;Account No.         ;Code20        ;TableRelation="G/L Account".No. }
+    { 15  ;   ;Amount              ;Decimal        }
+    { 16  ;   ;VAT Required        ;Boolean        }
+    { 17  ;   ;B/L Date            ;Date           }
+    { 18  ;   ;Interface Date      ;Date           }
+    { 19  ;   ;Shortcut Dimension 3 Code;Code20    }
+    { 20  ;   ;Shortcut Dimension 4 Code;Code20    }
+    { 21  ;   ;Shortcut Dimension 5 Code;Code20    }
+    { 22  ;   ;Shortcut Dimension 6 Code;Code20    }
+    { 23  ;   ;Shortcut Dimension 7 Code;Code20    }
+    { 24  ;   ;Shortcut Dimension 8 Code;Code20    }
+    { 25  ;   ;Shortcut Dimension 9 Code;Code20    }
+    { 26  ;   ;Shortcut Dimension 10 Code;Code20   }
+    { 27  ;   ;WHT Area Code       ;Code10         }
+    { 28  ;   ;Narration           ;Text250        }
+    { 29  ;   ;Kwitansi No.        ;Code20         }
+    { 30  ;   ;Commercial Invoice No.;Code20       }
+    { 31  ;   ;Commercial Invoice Date;Date        }
+    { 32  ;   ;Tax Invoice No.     ;Code30         }
+    { 33  ;   ;WHT Required        ;Boolean       ;Description=YNSPIRE1.1 }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;No.,Dealer Code                          }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      //YNSPIRE New Table Created for YNSPIRE interface Dated 04-May-2011.
+    }
+    END.
+  }
+}
+

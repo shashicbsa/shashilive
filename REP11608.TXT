@@ -1,0 +1,194 @@
+OBJECT Report 11608 Create EFT File
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVAPAC7.10;
+  }
+  PROPERTIES
+  {
+    Permissions=TableData 25=rim;
+    CaptionML=[ENU=Create EFT File;
+               ENA=Create EFT File];
+    ProcessingOnly=Yes;
+  }
+  DATASET
+  {
+    { 7024;    ;DataItem;                    ;
+               DataItemTable=Table81;
+               DataItemTableView=SORTING(Journal Template Name,Journal Batch Name,Line No.);
+               OnPreDataItem=BEGIN
+                               IF FileName = '' THEN
+                                 ERROR(Text11006);
+
+                               IF EFTFileDescription = '' THEN
+                                 ERROR(Text11007);
+
+                               SETRANGE("Journal Template Name",GenJnlLine."Journal Template Name");
+                               SETRANGE("Journal Batch Name",GenJnlLine."Journal Batch Name");
+
+                               EFTRegister.RESET;
+                               EFTRegister.LOCKTABLE;
+                               IF NOT EFTRegister.FINDLAST THEN
+                                 CLEAR(EFTRegister."No.");
+                               EFTRegister."No." += 1;
+
+                               EFTRegister.INIT;
+                               EFTRegister."EFT Payment" := TRUE;
+                               SETFILTER("Account No.",'<>%1','');
+
+                               GenJnlLine1.COPYFILTERS(GenJnlLine);
+
+                               ProcessWindow.OPEN('@1@@@@@@@@@@@@@@@@@@@@@@@@@');
+                               NoOfRec := GenJnlLine1.COUNT;
+                             END;
+
+               OnAfterGetRecord=BEGIN
+                                  I += 1;
+                                  ProcessWindow.UPDATE(1,ROUND(I / NoOfRec * 10000,1.0));
+                                  IF "Applies-to Doc. No." = '' THEN
+                                    ERROR(Text11002,"Line No.");
+                                  IF Vendor.GET("Account No.") THEN BEGIN
+                                    IF Vendor."EFT Payment" THEN BEGIN
+                                      Vendor.TESTFIELD("EFT Bank Account No.");
+                                      IF "Applies-to Doc. Type" = "Applies-to Doc. Type"::Invoice THEN BEGIN
+                                        VendLedgEntry.RESET;
+                                        VendLedgEntry.SETRANGE("Document No.","Applies-to Doc. No.");
+                                        IF VendLedgEntry.FINDFIRST THEN BEGIN
+                                          "EFT Ledger Entry No." := VendLedgEntry."Entry No.";
+                                          "EFT Payment" := TRUE;
+                                          MODIFY;
+                                        END;
+                                      END;
+                                    END ELSE
+                                      ERROR(Text11003,"Account No.");
+                                  END;
+                                  TESTFIELD("EFT Payment");
+                                  TESTFIELD("EFT Ledger Entry No.");
+
+                                  IF BalAcctNo = '' THEN
+                                    BalAcctNo := "Bal. Account No."
+                                  ELSE
+                                    IF BalAcctNo <> "Bal. Account No." THEN
+                                      ERROR(Text11005,FIELDCAPTION("Bal. Account No."),"Bal. Account No.",FIELDCAPTION("Journal Template Name"),
+                                        "Journal Template Name",FIELDCAPTION("Journal Batch Name"),"Journal Batch Name",
+                                        FIELDCAPTION("Line No."),"Line No." );
+
+                                  VendLedgEntry.GET("EFT Ledger Entry No.");
+                                  IF "EFT Payment" THEN BEGIN
+                                    Vendor.GET(VendLedgEntry."Vendor No.");
+                                    VendBankAcc.GET(Vendor."No.","EFT Bank Account No.");
+                                    VendBankAcc.TESTFIELD("Bank Account No.");
+                                    VendBankAcc.TESTFIELD("EFT BSB No.");
+                                  END;
+
+                                  IF VendLedgEntry."EFT Register No." <> 0 THEN
+                                    ERROR(Text11001,FORMAT("Applies-to Doc. Type"),"Applies-to Doc. No.",
+                                      VendLedgEntry.FIELDCAPTION("EFT Register No."),VendLedgEntry."EFT Register No.");
+
+                                  CODEUNIT.RUN(CODEUNIT::"Vend. Entry-Edit",VendLedgEntry);
+                                  VendLedgEntry."EFT Register No." := EFTRegister."No.";
+                                  VendLedgEntry."EFT Amount Transferred" := Amount;
+                                  VendLedgEntry."EFT Bank Account No." := "EFT Bank Account No.";
+                                  VendLedgEntry.MODIFY;
+                                END;
+
+               OnPostDataItem=BEGIN
+                                ProcessWindow.CLOSE;
+
+                                BankAcc.GET("Bal. Account No.");
+                                BankAcc.TESTFIELD("Bank Account No.");
+                                BankAcc.TESTFIELD("EFT Bank Code");
+                                BankAcc.TESTFIELD("EFT BSB No.");
+                                BankAcc.TESTFIELD("EFT Security No.");
+
+                                VendLedgEntry.RESET;
+                                VendLedgEntry.SETCURRENTKEY("EFT Register No.");
+                                VendLedgEntry.SETRANGE("EFT Register No.",EFTRegister."No.");
+                                IF VendLedgEntry.FINDFIRST THEN
+                                  EFTRegister.INSERT;
+                                EFTManagement.CleanUpEFTRegister;
+                                EFTManagement.CreateFileFromEFTRegister(EFTRegister,FileName,EFTFileDescription,BankAcc);
+                                "Gen. Journal Line".DELETEALL(TRUE);
+                              END;
+                               }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+      { 1900000001;0;Container;
+                  ContainerType=ContentArea }
+
+      { 1900000002;1;Group  ;
+                  CaptionML=[ENU=Options;
+                             ENA=Options] }
+
+      { 150000;2 ;Field     ;
+                  Name=FileName;
+                  CaptionML=[ENU=File Name;
+                             ENA=File Name];
+                  SourceExpr=FileName;
+                  OnLookup=VAR
+                             FileMgt@1450001 : Codeunit 419;
+                           BEGIN
+                             IF FileName = '' THEN
+                               FileName := '.txt';
+                             FileName := FileMgt.SaveFileDialog(Text11004,FileName,'')
+                           END;
+                            }
+
+      { 150002;2 ;Field     ;
+                  Name=EFTFileDescription;
+                  CaptionML=[ENU=EFT File Description;
+                             ENA=EFT File Description];
+                  SourceExpr=EFTFileDescription }
+
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      EFTRegister@150013 : Record 11609;
+      Vendor@150011 : Record 23;
+      VendLedgEntry@150009 : Record 25;
+      GenJnlLine@150001 : Record 81;
+      VendBankAcc@150006 : Record 288;
+      BankAcc@150005 : Record 270;
+      GenJnlLine1@150000 : Record 81;
+      EFTManagement@150010 : Codeunit 11603;
+      ProcessWindow@150012 : Dialog;
+      I@150022 : Integer;
+      NoOfRec@150008 : Integer;
+      EFTFileDescription@150007 : Text[12];
+      FileName@150004 : Text[250];
+      BalAcctNo@150002 : Code[20];
+      Text11001@150033 : TextConst 'ENU=%1 %2 already exist in %3 %4.;ENA=%1 %2 already exist in %3 %4.';
+      Text11002@150026 : TextConst 'ENU=Applies - to Doc. No. can not be balnk for line no. %1.;ENA=Applies - to Doc. No. can not be balnk for line no. %1.';
+      Text11003@150025 : TextConst 'ENU=EFT Type must not be blank for Vendor No. %1.;ENA=EFT Type must not be blank for Vendor No. %1.';
+      Text11004@150024 : TextConst 'ENU=EFT File.;ENA=EFT File.';
+      Text11005@150003 : TextConst 'ENU=%1 must not be %2 in %3 %4 \  %5 %6  and %7 %8.;ENA=%1 must not be %2 in %3 %4 \  %5 %6  and %7 %8.';
+      Text11006@150015 : TextConst 'ENU=Please enter the File Name.;ENA=Please enter the File Name.';
+      Text11007@150016 : TextConst '@@@=Input for description of EFT File.;ENU=Please enter the EFT File Description.;ENA=Please enter the EFT File Description.';
+
+    PROCEDURE SetGenJnlLine@1500000(NewGLJnlLine@1500000 : Record 81);
+    BEGIN
+      GenJnlLine := NewGLJnlLine;
+    END;
+
+    BEGIN
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

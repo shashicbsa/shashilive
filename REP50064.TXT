@@ -1,0 +1,172 @@
+OBJECT Report 50064 Propac Collection Domestic
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/30/15;
+    Time=19:01:53;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+    ProcessingOnly=Yes;
+    OnPostReport=BEGIN
+                   MESSAGE ('Post Dated Check Lines are successfully generated');
+                 END;
+
+  }
+  DATASET
+  {
+    { 1102159001;;DataItem;                  ;
+               DataItemTable=Table21;
+               DataItemTableView=SORTING(Customer No.,Open,Positive,Due Date,Currency Code)
+                                 ORDER(Ascending)
+                                 WHERE(Type Of Transaction=CONST(Propac),
+                                       Document Type=CONST(Invoice),
+                                       Remaining Amt. (LCY)=FILTER(>0),
+                                       Open=FILTER(Yes));
+               OnPreDataItem=BEGIN
+                               //FirstAccNo := '';
+                               AccNo := ''
+                             END;
+
+               OnAfterGetRecord=BEGIN
+
+                                  //IF FirstAccNo THEN BEGIN
+                                  //AccNo := "Cust. Ledger Entry"."Customer No.";
+                                  //FirstAccNo := FALSE;
+                                  //END;
+                                  //AccNo := '';
+                                  "Cust. Ledger Entry".CALCFIELDS("Cust. Ledger Entry"."Remaining Amount");
+
+                                  "Cust. Ledger Entry".CALCFIELDS("Cust. Ledger Entry"."Total Applied Amount");
+
+                                  RemAmount:=ABS("Cust. Ledger Entry"."Remaining Amount")-ABS("Cust. Ledger Entry"."Total Applied Amount");
+
+
+                                  SalesHeader.RESET;
+                                  SalesHeader.SETCURRENTKEY("Document Type","Sell-to Customer No.","Type Of Transaction","Applies-to Doc. Type","Posting Date");
+                                  SalesHeader.SETRANGE(SalesHeader."Document Type",SalesHeader."Document Type"::"Credit Memo");
+                                  SalesHeader.SETRANGE(SalesHeader."Sell-to Customer No.","Cust. Ledger Entry"."Customer No.");
+                                  SalesHeader.SETRANGE(SalesHeader."Type Of Transaction",SalesHeader."Type Of Transaction"::Propac);
+                                  SalesHeader.SETRANGE(SalesHeader."Applies-to Doc. Type",SalesHeader."Applies-to Doc. Type"::Invoice);
+                                  SalesHeader.SETRANGE(SalesHeader."Applies-to Doc. No.","Cust. Ledger Entry"."Document No.");
+
+
+                                  IF (SalesHeader.FINDSET)  THEN
+                                   REPEAT
+                                     SalesHeader.CALCFIELDS(SalesHeader."Amount Propac");
+
+                                     RemAmount:=RemAmount-ABS(SalesHeader."Amount Propac");
+
+                                   UNTIL(SalesHeader.NEXT=0);
+
+
+                                  PostDatedCheckLine.RESET;
+                                  PostDatedCheckLine.SETCURRENTKEY("Account Type","Account No.","Line Number");
+                                  PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Account Type",PostDatedCheckLine."Account Type"::Customer);
+                                  PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Account No.","Cust. Ledger Entry"."Customer No.");
+                                  PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Applies-to Doc. Type",PostDatedCheckLine."Applies-to Doc. Type"::Invoice);
+                                  //PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Applies-to Doc. No.",PostDatedCheckLine."Account No."); //VK
+                                  PostDatedCheckLine.SETRANGE(PostDatedCheckLine."Applies-to Doc. No.","Cust. Ledger Entry"."Document No.");   //VK
+
+
+                                  IF PostDatedCheckLine.FINDSET THEN
+                                    REPEAT
+
+                                      RemAmount:=RemAmount-ABS(PostDatedCheckLine."Amount (LCY)");
+
+                                    UNTIL (PostDatedCheckLine.NEXT=0);
+
+
+
+                                  IF (RemAmount>0) THEN
+                                  InsertInPostDatedCheckLine("Cust. Ledger Entry"."Document No.","Cust. Ledger Entry"."Currency Code");
+                                END;
+
+               ReqFilterFields=Due Date,Customer No. }
+
+  }
+  REQUESTPAGE
+  {
+    PROPERTIES
+    {
+    }
+    CONTROLS
+    {
+    }
+  }
+  LABELS
+  {
+  }
+  CODE
+  {
+    VAR
+      NetAmount@1102159005 : Decimal;
+      SalesReceivablesSetup@1102159004 : Record 311;
+      RemAmount@1102159003 : Decimal;
+      SalesHeader@1102159002 : Record 36;
+      PostDatedCheckLine@1102159001 : Record 28090;
+      AccNo@1000000000 : Code[20];
+      FirstAccNo@1000000001 : Boolean;
+      LineNo@1000000002 : Integer;
+
+    PROCEDURE CheckExistance@1000000000(DocNo@1000000001 : Code[20]) : Boolean;
+    VAR
+      GenJournalLine@1000000000 : Record 81;
+    BEGIN
+    END;
+
+    PROCEDURE InsertInPostDatedCheckLine@1000000001(DocNo@1000000001 : Code[20];CurrCode@1000000003 : Code[10]);
+    BEGIN
+      SalesReceivablesSetup.GET;
+
+      IF AccNo <> "Cust. Ledger Entry"."Customer No." THEN BEGIN
+        AccNo := "Cust. Ledger Entry"."Customer No.";
+
+        PostDatedCheckLine.RESET;
+        PostDatedCheckLine.SETRANGE("Template Name",'COLLECTION');
+        PostDatedCheckLine.SETRANGE("Batch Name",SalesReceivablesSetup."Post Dated Check Propac Batch");
+        PostDatedCheckLine.SETRANGE("Account Type",PostDatedCheckLine."Account Type"::Customer);
+        PostDatedCheckLine.SETRANGE("Account No.","Cust. Ledger Entry"."Customer No.");
+        IF PostDatedCheckLine.FINDLAST THEN
+          LineNo:=PostDatedCheckLine."Line Number"+10000
+        ELSE
+          LineNo := 10000;
+
+        //AccNo := "Cust. Ledger Entry"."Customer No.";
+      END ELSE
+        LineNo := LineNo + 10000;
+
+      PostDatedCheckLine.RESET;
+      PostDatedCheckLine.INIT;
+      PostDatedCheckLine."Template Name" := SalesReceivablesSetup."Post Dated Check Template";  //UPG13R2DEV
+      PostDatedCheckLine."Batch Name" := SalesReceivablesSetup."Post Dated Check Propac Batch"; //UPG13R2DEV
+      PostDatedCheckLine."Account Type":=PostDatedCheckLine."Account Type"::Customer;
+      PostDatedCheckLine."Propac Manual" := TRUE;  //UPG13R2DEV
+      PostDatedCheckLine.VALIDATE("Account No.","Cust. Ledger Entry"."Customer No.");
+      PostDatedCheckLine."Line Number":=LineNo;
+      PostDatedCheckLine.INSERT;
+      PostDatedCheckLine."Document No.":=DocNo;
+      PostDatedCheckLine.VALIDATE("Currency Code",CurrCode);
+      PostDatedCheckLine.VALIDATE(Amount,-RemAmount);
+      PostDatedCheckLine."Applies-to Doc. Type":=PostDatedCheckLine."Applies-to Doc. Type"::Invoice;
+      PostDatedCheckLine."Applies-to Doc. No.":="Cust. Ledger Entry"."Document No.";
+      PostDatedCheckLine."Posting Group":="Cust. Ledger Entry"."Customer Posting Group";
+
+      PostDatedCheckLine."Batch Name":=SalesReceivablesSetup."Post Dated Check Propac Batch";
+      PostDatedCheckLine.MODIFY;
+    END;
+
+    BEGIN
+    {
+      //UPG13R2DEV
+      This report is to generate Propac PDC Collection on the basis of Posted Propac Sales Invoices.
+    }
+    END.
+  }
+  RDLDATA
+  {
+  }
+}
+

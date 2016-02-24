@@ -1,0 +1,45 @@
+OBJECT Table 60065 Interface Dimension Mapping
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/14/15;
+    Time=20:28:10;
+    Modified=Yes;
+    Version List=UPG13R2DEV;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;Dimension Name      ;Option        ;OptionString=SHOP CODE,SELLING EXPENSES,MODEL CODE }
+    { 2   ;   ;Old NAV Code        ;Code20         }
+    { 3   ;   ;Old YIMM Code       ;Text50         }
+    { 4   ;   ;New NAV Code        ;Code20         }
+    { 5   ;   ;New YIMM Code       ;Text50         }
+  }
+  KEYS
+  {
+    {    ;Dimension Name,Old NAV Code             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    {
+      [Version] : UPG13R2DEV
+      [Date]  : 31/07/2015
+      [Description] : Newly created table with 5 field(1..5).
+                      Dimension values is about to change in the new navision.
+                      This mapping table will be used to mapp the dimesnion values until all Interface system is updated.
+                      After all the Interface system updated this mapping will be obsolate using the setup(IF Dimension Mapping Setup(63152)).
+
+      [Signature] : SV
+    }
+    END.
+  }
+}
+

@@ -1,0 +1,99 @@
+OBJECT Page 9815 Std. Password Dialog
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/23/13;
+    Time=12:00:00;
+    Version List=NAVW17.10;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Set Password;
+               ENA=Set Password];
+    PageType=StandardDialog;
+    OnInit=BEGIN
+             EnableBlankPassword := FALSE;
+           END;
+
+    OnOpenPage=BEGIN
+                 ValidPassword := FALSE;
+               END;
+
+    OnQueryClosePage=BEGIN
+                       ValidPassword := FALSE;
+                       IF CloseAction = ACTION::OK THEN BEGIN
+                         IF SetPassword <> ConfirmPassword THEN
+                           ERROR(PasswordMismatchErr);
+                         IF EnableBlankPasswordState AND (SetPassword = '') THEN BEGIN
+                           IF NOT CONFIRM(ConfirmBlankPasswordQst) THEN
+                             ERROR(PasswordTooSimpleErr);
+                         END ELSE BEGIN
+                           IF NOT IdentityManagement.ValidatePasswordStrength(SetPassword) THEN
+                             ERROR(PasswordTooSimpleErr);
+                         END;
+                         ValidPassword := TRUE;
+                       END
+                     END;
+
+  }
+  CONTROLS
+  {
+    { 1   ;0   ;Container ;
+                ContainerType=ContentArea }
+
+    { 2   ;1   ;Field     ;
+                Name=<SetPassword>;
+                ExtendedDatatype=Masked;
+                CaptionML=[ENU=Password;
+                           ENA=Password];
+                SourceExpr=SetPassword;
+                OnValidate=BEGIN
+                             IF NOT IdentityManagement.ValidatePasswordStrength(SetPassword) THEN
+                               ERROR(PasswordTooSimpleErr);
+                           END;
+                            }
+
+    { 3   ;1   ;Field     ;
+                Name=<ConfirmPassword>;
+                ExtendedDatatype=Masked;
+                CaptionML=[ENU=Confirm Password;
+                           ENA=Confirm Password];
+                SourceExpr=ConfirmPassword;
+                OnValidate=BEGIN
+                             IF SetPassword <> ConfirmPassword THEN
+                               ERROR(PasswordMismatchErr);
+                           END;
+                            }
+
+  }
+  CODE
+  {
+    VAR
+      PasswordMismatchErr@1003 : TextConst 'ENU=The specified passwords are not the same.;ENA=The specified passwords are not the same.';
+      PasswordTooSimpleErr@1004 : TextConst 'ENU=The specified password does not meet the requirements. It must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.;ENA=The specified password does not meet the requirements. It must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.';
+      PasswordNotValidatedErr@1007 : TextConst 'ENU=The password did not validate correctly, or it was not accepted.;ENA=The password did not validate correctly, or it was not accepted.';
+      ConfirmBlankPasswordQst@1008 : TextConst 'ENU=Exit dialog with empty password?;ENA=Exit dialogue with empty password?';
+      IdentityManagement@1002 : Codeunit 9801;
+      SetPassword@1000 : Text[250] INDATASET;
+      ConfirmPassword@1001 : Text[250] INDATASET;
+      ValidPassword@1005 : Boolean;
+      EnableBlankPasswordState@1006 : Boolean;
+
+    PROCEDURE GetPasswordValue@1() : Text;
+    BEGIN
+      IF ValidPassword = TRUE THEN
+        EXIT(SetPassword);
+
+      ERROR(PasswordNotValidatedErr);
+    END;
+
+    PROCEDURE EnableBlankPassword@2(enable@1000 : Boolean);
+    BEGIN
+      EnableBlankPasswordState := enable;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

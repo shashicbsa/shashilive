@@ -1,0 +1,136 @@
+OBJECT Table 5848 Cost Share Buffer
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Cost Share Buffer;
+               ENA=Cost Share Buffer];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Item Ledger Entry No.;Integer      ;CaptionML=[ENU=Item Ledger Entry No.;
+                                                              ENA=Item Ledger Entry No.] }
+    { 2   ;   ;Capacity Ledger Entry No.;Integer  ;CaptionML=[ENU=Capacity Ledger Entry No.;
+                                                              ENA=Capacity Ledger Entry No.] }
+    { 3   ;   ;Item No.            ;Code20        ;CaptionML=[ENU=Item No.;
+                                                              ENA=Item No.] }
+    { 4   ;   ;Location Code       ;Code10        ;CaptionML=[ENU=Location Code;
+                                                              ENA=Location Code] }
+    { 5   ;   ;Variant Code        ;Code10        ;CaptionML=[ENU=Variant Code;
+                                                              ENA=Variant Code] }
+    { 6   ;   ;Entry Type          ;Option        ;CaptionML=[ENU=Entry Type;
+                                                              ENA=Entry Type];
+                                                   OptionCaptionML=[ENU=Purchase,Sale,Positive Adjmt.,Negative Adjmt.,Transfer,Consumption,Output, ,Assembly Consumption,Assembly Output;
+                                                                    ENA=Purchase,Sale,Positive Adjmt.,Negative Adjmt.,Transfer,Consumption,Output, ,Assembly Consumption,Assembly Output];
+                                                   OptionString=Purchase,Sale,Positive Adjmt.,Negative Adjmt.,Transfer,Consumption,Output, ,Assembly Consumption,Assembly Output }
+    { 7   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+    { 10  ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 20  ;   ;Quantity            ;Decimal       ;CaptionML=[ENU=Quantity;
+                                                              ENA=Quantity] }
+    { 21  ;   ;Direct Cost         ;Decimal       ;CaptionML=[ENU=Direct Cost;
+                                                              ENA=Direct Cost] }
+    { 22  ;   ;Indirect Cost       ;Decimal       ;CaptionML=[ENU=Indirect Cost;
+                                                              ENA=Indirect Cost] }
+    { 23  ;   ;Revaluation         ;Decimal       ;CaptionML=[ENU=Revaluation;
+                                                              ENA=Revaluation] }
+    { 24  ;   ;Rounding            ;Decimal       ;CaptionML=[ENU=Rounding;
+                                                              ENA=Rounding] }
+    { 25  ;   ;Variance            ;Decimal       ;CaptionML=[ENU=Variance;
+                                                              ENA=Variance] }
+    { 26  ;   ;Purchase Variance   ;Decimal       ;CaptionML=[ENU=Purchase Variance;
+                                                              ENA=Purchase Variance] }
+    { 27  ;   ;Material Variance   ;Decimal       ;CaptionML=[ENU=Material Variance;
+                                                              ENA=Material Variance] }
+    { 28  ;   ;Capacity Variance   ;Decimal       ;CaptionML=[ENU=Capacity Variance;
+                                                              ENA=Capacity Variance] }
+    { 29  ;   ;Capacity Overhead Variance;Decimal ;CaptionML=[ENU=Capacity Overhead Variance;
+                                                              ENA=Capacity Overhead Variance] }
+    { 30  ;   ;Mfg. Overhead Variance;Decimal     ;CaptionML=[ENU=Mfg. Overhead Variance;
+                                                              ENA=Mfg. Overhead Variance] }
+    { 31  ;   ;Subcontracted Variance;Decimal     ;CaptionML=[ENU=Subcontracted Variance;
+                                                              ENA=Subcontracted Variance] }
+    { 32  ;   ;Material            ;Decimal       ;CaptionML=[ENU=Material;
+                                                              ENA=Material] }
+    { 34  ;   ;Capacity            ;Decimal       ;CaptionML=[ENU=Capacity;
+                                                              ENA=Capacity] }
+    { 35  ;   ;Capacity Overhead   ;Decimal       ;CaptionML=[ENU=Capacity Overhead;
+                                                              ENA=Capacity Overhead] }
+    { 36  ;   ;Material Overhead   ;Decimal       ;CaptionML=[ENU=Material Overhead;
+                                                              ENA=Material Overhead] }
+    { 37  ;   ;Subcontracted       ;Decimal       ;CaptionML=[ENU=Subcontracted;
+                                                              ENA=Subcontracted] }
+    { 40  ;   ;New Quantity        ;Decimal       ;CaptionML=[ENU=New Quantity;
+                                                              ENA=New Quantity] }
+    { 41  ;   ;New Direct Cost     ;Decimal       ;CaptionML=[ENU=New Direct Cost;
+                                                              ENA=New Direct Cost];
+                                                   AutoFormatType=2 }
+    { 42  ;   ;New Indirect Cost   ;Decimal       ;CaptionML=[ENU=New Indirect Cost;
+                                                              ENA=New Indirect Cost] }
+    { 43  ;   ;New Revaluation     ;Decimal       ;CaptionML=[ENU=New Revaluation;
+                                                              ENA=New Revaluation] }
+    { 44  ;   ;New Rounding        ;Decimal       ;CaptionML=[ENU=New Rounding;
+                                                              ENA=New Rounding] }
+    { 45  ;   ;New Variance        ;Decimal       ;CaptionML=[ENU=New Variance;
+                                                              ENA=New Variance] }
+    { 46  ;   ;New Purchase Variance;Decimal      ;CaptionML=[ENU=New Purchase Variance;
+                                                              ENA=New Purchase Variance] }
+    { 47  ;   ;New Material Variance;Decimal      ;CaptionML=[ENU=New Material Variance;
+                                                              ENA=New Material Variance] }
+    { 48  ;   ;New Capacity Variance;Decimal      ;CaptionML=[ENU=New Capacity Variance;
+                                                              ENA=New Capacity Variance] }
+    { 49  ;   ;New Capacity Overhead Variance;Decimal;
+                                                   CaptionML=[ENU=New Capacity Overhead Variance;
+                                                              ENA=New Capacity Overhead Variance] }
+    { 50  ;   ;New Mfg. Overhead Variance;Decimal ;CaptionML=[ENU=New Mfg. Overhead Variance;
+                                                              ENA=New Mfg. Overhead Variance] }
+    { 51  ;   ;New Subcontracted Variance;Decimal ;CaptionML=[ENU=New Subcontracted Variance;
+                                                              ENA=New Subcontracted Variance] }
+    { 52  ;   ;Share of Cost in Period;Decimal    ;CaptionML=[ENU=Share of Cost in Period;
+                                                              ENA=Share of Cost in Period] }
+    { 54  ;   ;New Material        ;Decimal       ;CaptionML=[ENU=New Material;
+                                                              ENA=New Material] }
+    { 56  ;   ;New Capacity        ;Decimal       ;CaptionML=[ENU=New Capacity;
+                                                              ENA=New Capacity] }
+    { 57  ;   ;New Capacity Overhead;Decimal      ;CaptionML=[ENU=New Capacity Overhead;
+                                                              ENA=New Capacity Overhead] }
+    { 58  ;   ;New Material Overhead;Decimal      ;CaptionML=[ENU=New Material Overhead;
+                                                              ENA=New Material Overhead] }
+    { 59  ;   ;New Subcontracted   ;Decimal       ;CaptionML=[ENU=New Subcontracted;
+                                                              ENA=New Subcontracted] }
+    { 60  ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 90  ;   ;Order Type          ;Option        ;CaptionML=[ENU=Order Type;
+                                                              ENA=Order Type];
+                                                   OptionCaptionML=[ENU=" ,Production,Transfer,Service,Assembly";
+                                                                    ENA=" ,Production,Transfer,Service,Assembly"];
+                                                   OptionString=[ ,Production,Transfer,Service,Assembly] }
+    { 91  ;   ;Order No.           ;Code20        ;CaptionML=[ENU=Order No.;
+                                                              ENA=Order No.] }
+    { 92  ;   ;Order Line No.      ;Integer       ;CaptionML=[ENU=Order Line No.;
+                                                              ENA=Order Line No.] }
+  }
+  KEYS
+  {
+    {    ;Item Ledger Entry No.,Capacity Ledger Entry No.;
+                                                   Clustered=Yes }
+    {    ;Item No.,Location Code,Variant Code,Entry Type }
+    {    ;Order Type,Order No.,Order Line No.,Entry Type }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

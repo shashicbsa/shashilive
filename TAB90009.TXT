@@ -1,0 +1,35 @@
+OBJECT Table 90009 Memberofdata
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/08/15;
+    Time=16:10:25;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+  }
+  FIELDS
+  {
+    { 1   ;   ;User ID             ;Code20         }
+    { 2   ;   ;User Name           ;Text30         }
+    { 3   ;   ;Role ID             ;Code50         }
+    { 4   ;   ;Role Name           ;Text30         }
+    { 5   ;   ;Company             ;Text30         }
+  }
+  KEYS
+  {
+    {    ;User ID,Role ID,Company                 ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

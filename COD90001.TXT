@@ -1,0 +1,195 @@
+OBJECT Codeunit 90001 Test
+{
+  OBJECT-PROPERTIES
+  {
+    Date=01/16/15;
+    Time=21:14:28;
+    Modified=Yes;
+    Version List=;
+  }
+  PROPERTIES
+  {
+    OnRun=VAR
+            perm@1102159001 : Record 2000000005;
+            check@1102159002 : Integer;
+            permcopy@1102159003 : Record 90006;
+            ROLID@1102159004 : Record 90008;
+            Memb@1102159005 : Record 90009;
+            Memb1@1102159006 : Record 90009;
+            Memb2@1102159007 : Record 90009;
+            accescontol@1102159008 : Record 2000000053;
+            SecurityKeyCopy@1102159009 : GUID;
+            accescontolCopy@1102159010 : TEMPORARY Record 2000000053;
+            EditName@1102159011 : Text;
+            Usertab@1102159012 : Record 2000000120;
+            permcopy23@1102159013 : Record 90010;
+          BEGIN
+            {
+            permcopy.RESET;
+            IF permcopy.FINDSET THEN
+             REPEAT
+              {
+              perm.INIT;
+              perm."Role ID" := permcopy.ROLEID;
+              perm.ActualROLEID := permcopy."Actual Name";
+              perm.Name := permcopy.Description;
+              perm.INSERT;
+              }
+              perm.INIT;
+              perm."Role ID" := permcopy."Role ID";
+              perm."Object Type" := permcopy."Object Type";
+              perm."Object ID" := permcopy."Object ID";
+              perm."Read Permission" := permcopy."Read Permission";
+              perm."Insert Permission" := permcopy."Insert Permission";
+              perm."Modify Permission" := permcopy."Modify Permission";
+              perm."Delete Permission" := permcopy."Delete Permission";
+              perm."Execute Permission" := permcopy."Execute Permission";
+              perm."Security Filter" := permcopy."Security Filter";
+              perm.INSERT;
+             UNTIL permcopy.NEXT=0;
+            {
+            IF perm.FINDSET THEN
+             REPEAT
+              check := check + 1;
+              perm.Inty := check;
+              perm.MODIFY;
+              perm.ROL := perm."Role ID";
+              perm.MODIFY;
+             UNTIL perm.NEXT=0;
+             }
+             {
+             permcopy.RESET;
+             permcopy.SETFILTER(permcopy."Actual ROLE ID",'%1|%2|%3','140727','166100','431381');
+             IF permcopy.FINDSET THEN
+                REPEAT
+                 IF permcopy."Actual ROLE ID" = '140727' THEN BEGIN
+                  permcopy.RENAME('0140727',permcopy."Object Type",permcopy."Object ID");
+                 END;
+                 IF permcopy."Actual ROLE ID" = '166100' THEN BEGIN
+                  permcopy.RENAME('0166100',permcopy."Object Type",permcopy."Object ID");
+                 END;
+                 IF permcopy."Actual ROLE ID" = '431381' THEN BEGIN
+                  permcopy.RENAME('0431381',permcopy."Object Type",permcopy."Object ID");
+                 END;
+                UNTIL permcopy.NEXT=0;
+              }
+             }
+            {
+            perm.RESET;
+            IF perm.FINDSET THEN
+             REPEAT
+              ROLID.RESET;
+              ROLID.SETRANGE(ROLID."Actual Role ID",perm.ActualROLEID);
+              IF ROLID.FINDFIRST THEN
+               perm.ID := ROLID.ID;
+               perm.MODIFY;
+             UNTIL perm.NEXT=0;
+             }
+            {
+            Memb.RESET;
+            Memb.SETRANGE(Memb."User ID",'XJ04530');
+            IF Memb.FINDSET THEN
+             REPEAT
+             {
+             Memb1.INIT;
+             Memb1."User ID" := 'YMI\VE0011327';
+             Memb1."Role ID" := Memb."Role ID";
+             Memb1.Company := Memb.Company;
+             Memb1."User Name" := 'Vineet';
+             Memb1."Role Name" := Memb."Role Name";
+             Memb1.INSERT;
+             }
+             Memb2.INIT;
+             Memb2."User ID" := 'VE0011327';
+             Memb2."Role ID" := Memb."Role ID";
+             Memb2.Company := Memb.Company;
+             Memb2."User Name" := 'Vineet';
+             Memb2."Role Name" := Memb."Role Name";
+             Memb2.INSERT;
+             UNTIL Memb.NEXT=0;
+             }
+             {
+             IF accescontol.FINDSET THEN
+              REPEAT
+               accescontolCopy.COPY(accescontol,FALSE);
+               accescontolCopy.INSERT;
+              UNTIL accescontol.NEXT=0;
+             IF accescontolCopy.FINDSET THEN
+              REPEAT
+               Usertab.RESET;
+               Usertab.SETRANGE(Usertab."User Security ID",accescontolCopy."User Security ID");
+               IF Usertab.FINDFIRST THEN BEGIN
+                EditName := '';
+                IF STRPOS(Usertab."User Name",'\') <> 0 THEN
+                 EditName := COPYSTR(Usertab."User Name",STRPOS(Usertab."User Name",'\')+1,STRLEN(Usertab."User Name"))
+                ELSE
+                 EditName :=  Usertab."User Name";
+                Memb.RESET;
+                Memb.SETRANGE(Memb."User ID",EditName);
+                IF Memb.FINDSET THEN
+                 REPEAT
+                  perm.RESET;
+                  perm.SETRANGE(perm.ActualRoleID,Memb."Role ID");
+                  IF perm.FINDSET THEN BEGIN
+                   accescontol.INIT;
+                   accescontol."User Security ID" := accescontolCopy."User Security ID";
+                   accescontol."Role ID" := perm."Role ID";
+                   accescontol."Company Name" := accescontolCopy."Company Name";
+                   accescontol.INSERT;
+                  END;
+                 UNTIL Memb.NEXT=0;
+               END;
+              UNTIL accescontolCopy.NEXT=0;
+            }
+            {
+            perm.RESET;
+            IF perm.FINDSET THEN
+             REPEAT
+                permcopy23.RESET;
+                permcopy23.SETRANGE("Actual ROLE ID",perm.ActualRoleID);
+                IF permcopy23.FINDSET THEN
+                 REPEAT
+                   permcopy23."Role ID" := perm."Role ID";
+                   permcopy23.MODIFY;
+                 UNTIL permcopy23.NEXT=0;
+             UNTIL perm.NEXT=0;
+            }
+            {
+            IF permcopy23.FINDSET THEN
+             REPEAT
+              permcopy23."Actual ROLE ID" := '';
+              permcopy23.MODIFY;
+             UNTIL permcopy23.NEXT=0;
+            }
+            {
+            permcopy23.RESET;
+            IF permcopy23.FINDSET THEN
+             REPEAT
+              perm.INIT;
+              perm."Role ID" := permcopy23."Role ID";
+              perm."Object Type" := permcopy23."Object Type";
+              perm."Object ID" := permcopy23."Object ID";
+              perm."Read Permission" := permcopy23."Read Permission";
+              perm."Insert Permission" := permcopy23."Insert Permission";
+              perm."Modify Permission" := permcopy23."Modify Permission";
+              perm."Delete Permission" := permcopy23."Delete Permission";
+              perm."Execute Permission" := permcopy23."Execute Permission";
+              perm."Security Filter" := permcopy23."Security Filter";
+              perm.INSERT;
+             UNTIL permcopy23.NEXT=0;
+            }
+            IF perm.FINDSET THEN BEGIN
+             IF perm."Role ID" <> '' THEN
+             perm.VALIDATE(perm."Role ID",perm."Role ID");
+            END;
+          END;
+
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

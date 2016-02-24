@@ -1,0 +1,38 @@
+OBJECT Table 743 VAT Report Setup
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=VAT Report Setup;
+               ENA=GST Report Setup];
+  }
+  FIELDS
+  {
+    { 1   ;   ;Primary key         ;Code10        ;CaptionML=[ENU=Primary key;
+                                                              ENA=Primary key] }
+    { 2   ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=No. Series;
+                                                              ENA=No. Series] }
+    { 3   ;   ;Modify Submitted Reports;Boolean   ;CaptionML=[ENU=Modify Submitted Reports;
+                                                              ENA=Modify Submitted Reports] }
+  }
+  KEYS
+  {
+    {    ;Primary key                             ;Clustered=Yes }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+

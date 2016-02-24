@@ -1,0 +1,170 @@
+OBJECT Table 203 Res. Ledger Entry
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=Res. Ledger Entry;
+               ENA=Res. Ledger Entry];
+    LookupPageID=Page202;
+    DrillDownPageID=Page202;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Entry No.           ;Integer       ;CaptionML=[ENU=Entry No.;
+                                                              ENA=Entry No.] }
+    { 2   ;   ;Entry Type          ;Option        ;CaptionML=[ENU=Entry Type;
+                                                              ENA=Entry Type];
+                                                   OptionCaptionML=[ENU=Usage,Sale;
+                                                                    ENA=Usage,Sale];
+                                                   OptionString=Usage,Sale }
+    { 3   ;   ;Document No.        ;Code20        ;CaptionML=[ENU=Document No.;
+                                                              ENA=Document No.] }
+    { 4   ;   ;Posting Date        ;Date          ;CaptionML=[ENU=Posting Date;
+                                                              ENA=Posting Date] }
+    { 5   ;   ;Resource No.        ;Code20        ;TableRelation=Resource;
+                                                   CaptionML=[ENU=Resource No.;
+                                                              ENA=Resource No.] }
+    { 6   ;   ;Resource Group No.  ;Code20        ;TableRelation="Resource Group";
+                                                   CaptionML=[ENU=Resource Group No.;
+                                                              ENA=Resource Group No.] }
+    { 7   ;   ;Description         ;Text50        ;CaptionML=[ENU=Description;
+                                                              ENA=Description] }
+    { 8   ;   ;Work Type Code      ;Code10        ;TableRelation="Work Type";
+                                                   CaptionML=[ENU=Work Type Code;
+                                                              ENA=Work Type Code] }
+    { 9   ;   ;Job No.             ;Code20        ;TableRelation=Job;
+                                                   CaptionML=[ENU=Job No.;
+                                                              ENA=Job No.] }
+    { 10  ;   ;Unit of Measure Code;Code10        ;TableRelation="Unit of Measure";
+                                                   CaptionML=[ENU=Unit of Measure Code;
+                                                              ENA=Unit of Measure Code] }
+    { 11  ;   ;Quantity            ;Decimal       ;CaptionML=[ENU=Quantity;
+                                                              ENA=Quantity];
+                                                   DecimalPlaces=0:5 }
+    { 12  ;   ;Direct Unit Cost    ;Decimal       ;CaptionML=[ENU=Direct Unit Cost;
+                                                              ENA=Direct Unit Cost];
+                                                   AutoFormatType=2 }
+    { 13  ;   ;Unit Cost           ;Decimal       ;CaptionML=[ENU=Unit Cost;
+                                                              ENA=Unit Cost];
+                                                   AutoFormatType=2 }
+    { 14  ;   ;Total Cost          ;Decimal       ;CaptionML=[ENU=Total Cost;
+                                                              ENA=Total Cost];
+                                                   AutoFormatType=1 }
+    { 15  ;   ;Unit Price          ;Decimal       ;CaptionML=[ENU=Unit Price;
+                                                              ENA=Unit Price];
+                                                   AutoFormatType=2 }
+    { 16  ;   ;Total Price         ;Decimal       ;CaptionML=[ENU=Total Price;
+                                                              ENA=Total Price];
+                                                   AutoFormatType=1 }
+    { 17  ;   ;Global Dimension 1 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(1));
+                                                   CaptionML=[ENU=Global Dimension 1 Code;
+                                                              ENA=Global Dimension 1 Code];
+                                                   CaptionClass='1,1,1' }
+    { 18  ;   ;Global Dimension 2 Code;Code20     ;TableRelation="Dimension Value".Code WHERE (Global Dimension No.=CONST(2));
+                                                   CaptionML=[ENU=Global Dimension 2 Code;
+                                                              ENA=Global Dimension 2 Code];
+                                                   CaptionClass='1,1,2' }
+    { 20  ;   ;User ID             ;Code50        ;TableRelation=User."User Name";
+                                                   OnLookup=VAR
+                                                              UserMgt@1000 : Codeunit 418;
+                                                            BEGIN
+                                                              UserMgt.LookupUserID("User ID");
+                                                            END;
+
+                                                   TestTableRelation=No;
+                                                   CaptionML=[ENU=User ID;
+                                                              ENA=User ID] }
+    { 21  ;   ;Source Code         ;Code10        ;TableRelation="Source Code";
+                                                   CaptionML=[ENU=Source Code;
+                                                              ENA=Source Code] }
+    { 22  ;   ;Chargeable          ;Boolean       ;InitValue=Yes;
+                                                   CaptionML=[ENU=Chargeable;
+                                                              ENA=Chargeable] }
+    { 23  ;   ;Journal Batch Name  ;Code10        ;CaptionML=[ENU=Journal Batch Name;
+                                                              ENA=Journal Batch Name] }
+    { 24  ;   ;Reason Code         ;Code10        ;TableRelation="Reason Code";
+                                                   CaptionML=[ENU=Reason Code;
+                                                              ENA=Reason Code] }
+    { 25  ;   ;Gen. Bus. Posting Group;Code10     ;TableRelation="Gen. Business Posting Group";
+                                                   CaptionML=[ENU=Gen. Bus. Posting Group;
+                                                              ENA=Gen. Bus. Posting Group] }
+    { 26  ;   ;Gen. Prod. Posting Group;Code10    ;TableRelation="Gen. Product Posting Group";
+                                                   CaptionML=[ENU=Gen. Prod. Posting Group;
+                                                              ENA=Gen. Prod. Posting Group] }
+    { 27  ;   ;Document Date       ;Date          ;CaptionML=[ENU=Document Date;
+                                                              ENA=Document Date] }
+    { 28  ;   ;External Document No.;Code35       ;CaptionML=[ENU=External Document No.;
+                                                              ENA=External Document No.] }
+    { 29  ;   ;No. Series          ;Code10        ;TableRelation="No. Series";
+                                                   CaptionML=[ENU=No. Series;
+                                                              ENA=No. Series] }
+    { 30  ;   ;Source Type         ;Option        ;CaptionML=[ENU=Source Type;
+                                                              ENA=Source Type];
+                                                   OptionCaptionML=[ENU=" ,Customer";
+                                                                    ENA=" ,Customer"];
+                                                   OptionString=[ ,Customer] }
+    { 31  ;   ;Source No.          ;Code20        ;TableRelation=IF (Source Type=CONST(Customer)) Customer.No.;
+                                                   CaptionML=[ENU=Source No.;
+                                                              ENA=Source No.] }
+    { 32  ;   ;Qty. per Unit of Measure;Decimal   ;CaptionML=[ENU=Qty. per Unit of Measure;
+                                                              ENA=Qty. per Unit of Measure] }
+    { 33  ;   ;Quantity (Base)     ;Decimal       ;CaptionML=[ENU=Quantity (Base);
+                                                              ENA=Quantity (Base)] }
+    { 90  ;   ;Order Type          ;Option        ;CaptionML=[ENU=Order Type;
+                                                              ENA=Order Type];
+                                                   OptionCaptionML=[ENU=" ,Production,Transfer,Service,Assembly";
+                                                                    ENA=" ,Production,Transfer,Service,Assembly"];
+                                                   OptionString=[ ,Production,Transfer,Service,Assembly] }
+    { 91  ;   ;Order No.           ;Code20        ;CaptionML=[ENU=Order No.;
+                                                              ENA=Order No.] }
+    { 92  ;   ;Order Line No.      ;Integer       ;CaptionML=[ENU=Order Line No.;
+                                                              ENA=Order Line No.] }
+    { 480 ;   ;Dimension Set ID    ;Integer       ;TableRelation="Dimension Set Entry";
+                                                   OnLookup=BEGIN
+                                                              ShowDimensions;
+                                                            END;
+
+                                                   CaptionML=[ENU=Dimension Set ID;
+                                                              ENA=Dimension Set ID];
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;Entry No.                               ;Clustered=Yes }
+    {    ;Resource No.,Posting Date                }
+    {    ;Entry Type,Chargeable,Unit of Measure Code,Resource No.,Posting Date;
+                                                   SumIndexFields=Quantity,Total Cost,Total Price,Quantity (Base) }
+    {    ;Entry Type,Chargeable,Unit of Measure Code,Resource Group No.,Posting Date;
+                                                   SumIndexFields=Quantity,Total Cost,Total Price,Quantity (Base);
+                                                   SIFTLevelsToMaintain=[{Entry Type,Chargeable,Unit of Measure Code,Resource Group No.},
+                                                                         {Entry Type,Chargeable,Unit of Measure Code,Resource Group No.,Posting Date:Year},
+                                                                         {Entry Type,Chargeable,Unit of Measure Code,Resource Group No.,Posting Date:Month},
+                                                                         {Entry Type,Chargeable,Unit of Measure Code,Resource Group No.,Posting Date:Day}] }
+    {    ;Document No.,Posting Date                }
+    {    ;Order Type,Order No.,Order Line No.,Entry Type;
+                                                   SumIndexFields=Quantity }
+  }
+  FIELDGROUPS
+  {
+    { 1   ;DropDown            ;Entry No.,Description,Entry Type,Document No.,Posting Date }
+  }
+  CODE
+  {
+    VAR
+      DimMgt@1000 : Codeunit 408;
+
+    PROCEDURE ShowDimensions@1();
+    BEGIN
+      DimMgt.ShowDimensionSet("Dimension Set ID",STRSUBSTNO('%1 %2',TABLECAPTION,"Entry No."));
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

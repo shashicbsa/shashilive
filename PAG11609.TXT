@@ -1,0 +1,155 @@
+OBJECT Page 11609 BAS Setup Preview
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    CaptionML=[ENU=BAS Setup Preview;
+               ENA=BAS Setup Preview];
+    InsertAllowed=No;
+    DeleteAllowed=No;
+    SourceTable=Table11606;
+    PageType=Worksheet;
+    OnInit=BEGIN
+             ExcludeClosingEntriesEnable := TRUE;
+           END;
+
+    OnOpenPage=BEGIN
+                 UpdateSubForm;
+               END;
+
+    ActionList=ACTIONS
+    {
+      { 1900000004;0 ;ActionContainer;
+                      ActionContainerType=ActionItems }
+      { 1500000 ;1   ;Action    ;
+                      CaptionML=[ENU=Export to Excel;
+                                 ENA=Export to Excel];
+                      Promoted=Yes;
+                      Image=ExportToExcel;
+                      PromotedCategory=Process;
+                      OnAction=VAR
+                                 BASSetup@1450001 : Record 11600;
+                               BEGIN
+                                 BASSetup.SETFILTER("Setup Name",Name);
+                                 ExportBASSetupReport.SetValues(BASCalcSheet,Selection,PeriodSelection,ExcludeClosingEntries,BASCalcSheet.A1,
+                                   BASCalcSheet."BAS Version");
+                                 ExportBASSetupReport.SETTABLEVIEW(BASSetup);
+                                 ExportBASSetupReport.RUN;
+                               END;
+                                }
+    }
+  }
+  CONTROLS
+  {
+    { 1900000001;0;Container;
+                ContainerType=ContentArea }
+
+    { 1   ;1   ;Group     ;
+                CaptionML=[ENU=General;
+                           ENA=General] }
+
+    { 2   ;2   ;Field     ;
+                SourceExpr=Name;
+                Editable=FALSE }
+
+    { 4   ;2   ;Field     ;
+                SourceExpr=Description }
+
+    { 8   ;2   ;Field     ;
+                SourceExpr="Date Filter";
+                Editable=FALSE;
+                OnValidate=BEGIN
+                             UpdateSubForm;
+                           END;
+                            }
+
+    { 1500001;2;Field     ;
+                CaptionML=[ENU=Include GST entries;
+                           ENA=Include GST entries];
+                SourceExpr=Selection;
+                OnValidate=BEGIN
+                             SelectionOnAfterValidate;
+                           END;
+                            }
+
+    { 1500003;2;Field     ;
+                CaptionML=[ENU=Include GST entries;
+                           ENA=Include GST entries];
+                SourceExpr=PeriodSelection;
+                OnValidate=BEGIN
+                             PeriodSelectionOnAfterValidate;
+                           END;
+                            }
+
+    { 1450000;2;Field     ;
+                Name=ExcludeClosingEntries;
+                CaptionML=[ENU=Exclude Closing Entries;
+                           ENA=Exclude Closing Entries];
+                SourceExpr=ExcludeClosingEntries;
+                Enabled=ExcludeClosingEntriesEnable;
+                OnValidate=BEGIN
+                             ExcludeClosingEntriesOnAfterVa;
+                           END;
+                            }
+
+    { 7   ;1   ;Part      ;
+                Name=BASSetupPreviewSubform;
+                SubPageLink=Setup Name=FIELD(Name);
+                PagePartID=Page11610 }
+
+  }
+  CODE
+  {
+    VAR
+      BASCalcSheet@1450000 : Record 11601;
+      ExportBASSetupReport@1500000 : Report 11605;
+      Selection@1450001 : 'Open,Closed,Open and Closed';
+      PeriodSelection@1450002 : 'Before and Within Period,Within Period';
+      ExcludeClosingEntries@1450003 : Boolean;
+      ExcludeClosingEntriesEnable@19051650 : Boolean INDATASET;
+
+    PROCEDURE UpdateSubForm@1450000();
+    BEGIN
+      ExcludeClosingEntriesEnable := PeriodSelection = PeriodSelection::"Before and Within Period";
+      IF ExcludeClosingEntriesEnable = FALSE THEN
+        ExcludeClosingEntries := FALSE;
+      CurrPage.BASSetupPreviewSubform.PAGE.SetValues(BASCalcSheet,Selection,PeriodSelection,ExcludeClosingEntries,BASCalcSheet.A1,
+        BASCalcSheet."BAS Version");
+    END;
+
+    PROCEDURE SetBASCalcSheet@1450001(VAR NewBASCalcSheet@1450000 : Record 11601;VAR NewBASSetupName@1450001 : Record 11606);
+    VAR
+      Text1450000@1450002 : TextConst 'ENU=You cannot preview a %1 %2.;ENA=You cannot preview a %1 %2.';
+    BEGIN
+      IF NewBASCalcSheet.Consolidated THEN
+        ERROR(Text1450000,NewBASCalcSheet.FIELDCAPTION(Consolidated),NewBASCalcSheet.TABLECAPTION);
+      BASCalcSheet.COPY(NewBASCalcSheet);
+      SETRANGE(Name,NewBASSetupName.Name);
+      SETRANGE("Date Filter",NewBASCalcSheet.A3,NewBASCalcSheet.A4);
+    END;
+
+    LOCAL PROCEDURE ExcludeClosingEntriesOnAfterVa@19072453();
+    BEGIN
+      UpdateSubForm;
+    END;
+
+    LOCAL PROCEDURE SelectionOnAfterValidate@19003137();
+    BEGIN
+      UpdateSubForm;
+    END;
+
+    LOCAL PROCEDURE PeriodSelectionOnAfterValidate@19046732();
+    BEGIN
+      UpdateSubForm;
+    END;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,297 @@
+OBJECT Table 8623 Config. Package
+{
+  OBJECT-PROPERTIES
+  {
+    Date=08/16/14;
+    Time=[ 6:00:00];
+    Modified=Yes;
+    Version List=NAVW17.00,S-003;
+  }
+  PROPERTIES
+  {
+    OnDelete=VAR
+               ConfigPackageTable@1000 : Record 8613;
+               ConfigLine@1001 : Record 8622;
+             BEGIN
+               ConfigPackageTable.SETRANGE("Package Code",Code);
+               ConfigPackageTable.DELETEALL(TRUE);
+
+               ConfigLine.SETRANGE("Package Code",Code);
+               ConfigLine.MODIFYALL("Package Code",'');
+             END;
+
+    CaptionML=ENU=Config. Package;
+    LookupPageID=Page8615;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Code                ;Code20        ;CaptionML=ENU=Code;
+                                                   NotBlank=Yes }
+    { 2   ;   ;Package Name        ;Text50        ;CaptionML=ENU=Package Name }
+    { 4   ;   ;Language ID         ;Integer       ;TableRelation="Windows Language";
+                                                   CaptionML=ENU=Language ID }
+    { 5   ;   ;No. of Tables       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Config. Package Table" WHERE (Package Code=FIELD(Code)));
+                                                   CaptionML=ENU=No. of Tables;
+                                                   Editable=No }
+    { 6   ;   ;Product Version     ;Text80        ;CaptionML=ENU=Product Version }
+    { 11  ;   ;Exclude Config. Tables;Boolean     ;CaptionML=ENU=Exclude Config. Tables }
+    { 12  ;   ;Processing Order    ;Integer       ;OnValidate=VAR
+                                                                ConfigPackageTable@1000 : Record 8613;
+                                                              BEGIN
+                                                                ConfigPackageTable.SETRANGE("Package Code",Code);
+                                                                ConfigPackageTable.MODIFYALL("Package Processing Order","Processing Order");
+                                                              END;
+
+                                                   CaptionML=ENU=Processing Order }
+    { 13  ;   ;No. of Records      ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Config. Package Record" WHERE (Package Code=FIELD(Code)));
+                                                   CaptionML=ENU=No. of Records;
+                                                   Editable=No }
+    { 16  ;   ;No. of Errors       ;Integer       ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Config. Package Error" WHERE (Package Code=FIELD(Code)));
+                                                   CaptionML=ENU=No. of Errors;
+                                                   Editable=No }
+    { 56301;  ;Exclude XML Schema  ;Boolean       ;Description=S-003 }
+  }
+  KEYS
+  {
+    {    ;Code                                    ;Clustered=Yes }
+    {    ;Processing Order                         }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+    VAR
+      gCoU_NAVMgmt@1000 : Codeunit 44;
+
+    PROCEDURE PackagesToDataSet@2(VAR vRec_CP@1000 : Record 8623;VAR vDNe_DataSet@1011 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataSet");
+    VAR
+      lRec_CPTable@1008 : Record 8613;
+      lRec_CPField@1009 : Record 8616;
+      lRec_CPFilter@1010 : Record 8626;
+      lCoU_BufferCP@1001 : Codeunit 5618;
+      lCoU_BufferCPTable@1005 : Codeunit 5618;
+      lCoU_BufferCPField@1006 : Codeunit 5618;
+      lCoU_BufferCPFilter@1007 : Codeunit 5618;
+      lDNe_DataTable@1003 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable";
+      lReR_RecordCPTable@1015 : RecordRef;
+      lReR_RecordCPField@1014 : RecordRef;
+      lReR_RecordCPFilter@1013 : RecordRef;
+    BEGIN
+      //S-003{
+      vDNe_DataSet := vDNe_DataSet.DataSet('Navision Config Packages');
+      IF vRec_CP.FINDSET THEN BEGIN
+        //Init Buffer Tables
+        lCoU_BufferCP.Table_InitAsNav(vRec_CP.TABLENAME, DATABASE::"Config. Package");
+        lCoU_BufferCPTable.Table_InitAsNav(lRec_CPTable.TABLENAME, DATABASE::"Config. Package Table");
+        lCoU_BufferCPField.Table_InitAsNav(lRec_CPField.TABLENAME, DATABASE::"Config. Package Field");
+        lCoU_BufferCPFilter.Table_InitAsNav(lRec_CPFilter.TABLENAME, DATABASE::"Config. Package Filter");
+
+        //Open Record References
+        lReR_RecordCPTable.OPEN(DATABASE::"Config. Package Table");
+        lReR_RecordCPField.OPEN(DATABASE::"Config. Package Field");
+        lReR_RecordCPFilter.OPEN(DATABASE::"Config. Package Filter");
+
+        //Update Status
+        gCoU_NAVMgmt.Status_Open('[4Bz] Exporting Configuration Packages to XML File . . .\'
+          + 'Package Code:  #1#####################\'
+          + 'Package Name:  #2#####################\'
+          + 'Current/Total: #3#####################\'
+          + '% Completed:   @4@@@@@@@@@@@@@@@@@@@@@', 4);
+        gCoU_NAVMgmt.Status_SetTotalToProcess(vRec_CP.COUNT);
+
+        //Loop Config. Package
+        REPEAT
+          //Update Status
+          gCoU_NAVMgmt.Status_IncreaseProcessed(1);
+          gCoU_NAVMgmt.Status_Update(1, vRec_CP.Code);
+          gCoU_NAVMgmt.Status_Update(2, vRec_CP."Package Name");
+          gCoU_NAVMgmt.Status_Update(3, STRSUBSTNO('%1/%2', gCoU_NAVMgmt.Status_TotalProcessed_Int, gCoU_NAVMgmt.Status_TotalToProcess_Int));
+
+          //Config. Package
+          lCoU_BufferCP.Row_Init;
+          lCoU_BufferCP.Row_TransferInByPosition(DATABASE::"Config. Package", vRec_CP.GETPOSITION);
+          lCoU_BufferCP.Row_Insert;
+
+          //Config. Package Table
+          lRec_CPTable.SETRANGE("Package Code", vRec_CP.Code);
+          lReR_RecordCPTable.GETTABLE(lRec_CPTable);
+          lCoU_BufferCPTable.Table_TransferIn(lReR_RecordCPTable);
+
+          //Config. Package Field
+          lRec_CPField.SETRANGE("Package Code", vRec_CP.Code);
+          lReR_RecordCPField.GETTABLE(lRec_CPField);
+          lCoU_BufferCPField.Table_TransferIn(lReR_RecordCPField);
+
+          //Config. Package Filter
+          lRec_CPFilter.SETRANGE("Package Code", vRec_CP.Code);
+          lReR_RecordCPFilter.GETTABLE(lRec_CPFilter);
+          lCoU_BufferCPFilter.Table_TransferIn(lReR_RecordCPFilter);
+        UNTIL (vRec_CP.NEXT = 0);
+        gCoU_NAVMgmt.Status_Close;
+
+        //Close Record References
+        lReR_RecordCPTable.CLOSE;
+        lReR_RecordCPField.CLOSE;
+        lReR_RecordCPFilter.CLOSE;
+
+        //Add DataTables to DataSet
+        lCoU_BufferCP.Table_SetOrGet(FALSE, FALSE, lDNe_DataTable);
+        vDNe_DataSet.Tables.Add(lDNe_DataTable);
+
+        lCoU_BufferCPTable.Table_SetOrGet(FALSE, FALSE, lDNe_DataTable);
+        vDNe_DataSet.Tables.Add(lDNe_DataTable);
+
+        lCoU_BufferCPField.Table_SetOrGet(FALSE, FALSE, lDNe_DataTable);
+        vDNe_DataSet.Tables.Add(lDNe_DataTable);
+
+        lCoU_BufferCPFilter.Table_SetOrGet(FALSE, FALSE, lDNe_DataTable);
+        vDNe_DataSet.Tables.Add(lDNe_DataTable);
+
+        //Release memory
+        lCoU_BufferCP.Table_Dispose;
+        lCoU_BufferCPTable.Table_Dispose;
+        lCoU_BufferCPField.Table_Dispose;
+        lCoU_BufferCPFilter.Table_Dispose;
+        CLEAR(lDNe_DataTable);
+      END;
+      //S-003}
+    END;
+
+    PROCEDURE PackagesFromDataSet@1(VAR vDNe_DataSet@1011 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataSet");
+    VAR
+      lRec_CP@1000 : Record 8623;
+      lRec_CPTable@1008 : Record 8613;
+      lRec_CPField@1009 : Record 8616;
+      lRec_CPFilter@1010 : Record 8626;
+      lCoU_BufferCP@1001 : Codeunit 5618;
+      lCoU_BufferCPTable@1005 : Codeunit 5618;
+      lCoU_BufferCPField@1006 : Codeunit 5618;
+      lCoU_BufferCPFilter@1007 : Codeunit 5618;
+      lDNe_DataTable@1003 : DotNet "'System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'.System.Data.DataTable";
+      lReR_RecordCP@1014 : RecordRef;
+      lReR_RecordCPTable@1015 : RecordRef;
+      lReR_RecordCPField@1016 : RecordRef;
+      lReR_RecordCPFilter@1017 : RecordRef;
+      lTxt_CPCode@1013 : Text;
+    BEGIN
+      //S-003{
+      //Nothing to import
+      lDNe_DataTable := vDNe_DataSet.Tables.Item(lRec_CP.TABLENAME);
+      IF ISNULL(lDNe_DataTable) THEN
+        EXIT;
+      IF (lDNe_DataTable.Rows.Count <= 0) THEN BEGIN
+        lDNe_DataTable.Dispose;
+        CLEAR(lDNe_DataTable);
+        EXIT;
+      END;
+
+      //Buffer Config. Packages
+      lCoU_BufferCP.Table_SetOrGet(TRUE, TRUE, lDNe_DataTable);
+      CLEAR(lDNe_DataTable);
+
+      //Create Config. Packages
+      IF lCoU_BufferCP.View_FindFirst THEN BEGIN
+        //Buffer Tables
+        lDNe_DataTable := vDNe_DataSet.Tables.Item(lRec_CPTable.TABLENAME);
+        lCoU_BufferCPTable.Table_SetOrGet(TRUE, TRUE, lDNe_DataTable);
+        lDNe_DataTable := vDNe_DataSet.Tables.Item(lRec_CPField.TABLENAME);
+        lCoU_BufferCPField.Table_SetOrGet(TRUE, TRUE, lDNe_DataTable);
+        lDNe_DataTable := vDNe_DataSet.Tables.Item(lRec_CPFilter.TABLENAME);
+        lCoU_BufferCPFilter.Table_SetOrGet(TRUE, TRUE, lDNe_DataTable);
+
+        //Open Record References
+        lReR_RecordCP.OPEN(DATABASE::"Config. Package");
+        lReR_RecordCPTable.OPEN(DATABASE::"Config. Package Table");
+        lReR_RecordCPField.OPEN(DATABASE::"Config. Package Field");
+        lReR_RecordCPFilter.OPEN(DATABASE::"Config. Package Filter");
+
+        //Update Status
+        gCoU_NAVMgmt.Status_Open('[4Bz] Importing Configuration Packages from XML File . . .\'
+          + 'Package Code:  #1#####################\'
+          + 'Package Name:  #2#####################\'
+          + 'Current/Total: #3#####################\'
+          + '% Completed:   @4@@@@@@@@@@@@@@@@@@@@@', 4);
+        gCoU_NAVMgmt.Status_SetTotalToProcess(lCoU_BufferCP.View_Count);
+
+        //Loop Config. Package
+        REPEAT
+          lTxt_CPCode := lCoU_BufferCP.Row_GetText(lRec_CP.FIELDNAME(Code), MAXSTRLEN(lRec_CP.Code));
+
+          //Update Status
+          gCoU_NAVMgmt.Status_IncreaseProcessed(1);
+          gCoU_NAVMgmt.Status_Update(1, lTxt_CPCode);
+          gCoU_NAVMgmt.Status_Update(2, lCoU_BufferCP.Row_GetText(lRec_CP.FIELDNAME("Package Name"), MAXSTRLEN(lRec_CP."Package Name")));
+          gCoU_NAVMgmt.Status_Update(3, STRSUBSTNO('%1/%2', gCoU_NAVMgmt.Status_TotalProcessed_Int, gCoU_NAVMgmt.Status_TotalToProcess_Int));
+
+          //Config. Package
+          IF lRec_CP.GET(lTxt_CPCode) THEN
+            lRec_CP.DELETE(TRUE);
+          lReR_RecordCP.INIT;
+          lCoU_BufferCP.Row_TransferOut(lReR_RecordCP);
+          lReR_RecordCP.INSERT;
+
+          //Config. Package Table
+          WITH lCoU_BufferCPTable DO BEGIN
+            View_SetFilter(lRec_CPTable.FIELDNAME("Package Code"), '=', lTxt_CPCode);
+            IF View_FindFirst THEN
+              REPEAT
+                lReR_RecordCPTable.INIT;
+                Row_TransferOut(lReR_RecordCPTable);
+                lReR_RecordCPTable.INSERT;
+              UNTIL (View_Next = FALSE);
+          END;
+
+          //Config. Package Field
+          WITH lCoU_BufferCPField DO BEGIN
+            View_SetFilter(lRec_CPField.FIELDNAME("Package Code"), '=', lTxt_CPCode);
+            IF View_FindFirst THEN
+              REPEAT
+                lReR_RecordCPField.INIT;
+                Row_TransferOut(lReR_RecordCPField);
+                lReR_RecordCPField.INSERT;
+              UNTIL (View_Next = FALSE);
+          END;
+
+          //Config. Package Filter
+          WITH lCoU_BufferCPFilter DO BEGIN
+            View_SetFilter(lRec_CPFilter.FIELDNAME("Package Code"), '=', lTxt_CPCode);
+            IF View_FindFirst THEN
+              REPEAT
+                lReR_RecordCPFilter.INIT;
+                Row_TransferOut(lReR_RecordCPFilter);
+                lReR_RecordCPFilter.INSERT;
+              UNTIL (View_Next = FALSE);
+          END;
+        UNTIL (lCoU_BufferCP.View_Next = FALSE);
+        gCoU_NAVMgmt.Status_Close;
+
+        //Close Record References
+        lReR_RecordCP.CLOSE;
+        lReR_RecordCPTable.CLOSE;
+        lReR_RecordCPField.CLOSE;
+        lReR_RecordCPFilter.CLOSE;
+
+        //Release memory
+        lCoU_BufferCP.Table_Dispose;
+        lCoU_BufferCPTable.Table_Dispose;
+        lCoU_BufferCPField.Table_Dispose;
+        lCoU_BufferCPFilter.Table_Dispose;
+        CLEAR(lDNe_DataTable);
+      END;
+      //S-003}
+    END;
+
+    BEGIN
+    {
+      Code  | Version | Author      | Description
+      -----------------------------------------------------------------------------------------------------------------------------------
+      S-003   140412    4BzSoftware   Universal Data Import Export.
+    }
+    END.
+  }
+}
+

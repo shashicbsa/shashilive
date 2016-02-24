@@ -1,0 +1,31 @@
+OBJECT Codeunit 235 G/L Reg.-Gen. Ledger
+{
+  OBJECT-PROPERTIES
+  {
+    Date=09/07/12;
+    Time=12:00:00;
+    Version List=NAVW17.00,NAVAPAC7.00;
+  }
+  PROPERTIES
+  {
+    TableNo=45;
+    OnRun=BEGIN
+            // GLEntry.SETRANGE("Entry No.","From Entry No.","To Entry No.");
+            IF "From Entry No." > 0 THEN
+              GLEntry.SETRANGE("Entry No.","From Entry No.","To Entry No.")
+            ELSE
+              GLEntry.SETRANGE("Entry No.","To Entry No.","From Entry No.");
+            PAGE.RUN(PAGE::"General Ledger Entries",GLEntry);
+          END;
+
+  }
+  CODE
+  {
+    VAR
+      GLEntry@1000 : Record 17;
+
+    BEGIN
+    END.
+  }
+}
+

@@ -1,0 +1,43 @@
+OBJECT Table 346 Application Area Line
+{
+  OBJECT-PROPERTIES
+  {
+    Date=11/05/08;
+    Time=12:00:00;
+    Version List=Upgrade Toolkit Table - marked for deletion.;
+  }
+  PROPERTIES
+  {
+    CaptionML=ENU=Application Area Line;
+  }
+  FIELDS
+  {
+    { 1   ;   ;Line No.            ;Integer       ;CaptionML=ENU=Line No.;
+                                                   Editable=No }
+    { 2   ;   ;ID                  ;Integer       ;TableRelation=AllObj."Object ID" WHERE (Object Type=CONST(Table));
+                                                   CaptionML=ENU=ID;
+                                                   Editable=No }
+    { 3   ;   ;Name                ;Text80        ;CaptionML=ENU=Name;
+                                                   Editable=No }
+    { 4   ;   ;No. of Licensed Tables;Integer     ;FieldClass=FlowField;
+                                                   CalcFormula=Count("Setup Checklist Line" WHERE (Application Area ID=FIELD(ID),
+                                                                                                   Licensed Table=CONST(Yes)));
+                                                   CaptionML=ENU=No. of Licensed Tables;
+                                                   Editable=No }
+  }
+  KEYS
+  {
+    {    ;ID                                      ;Clustered=Yes }
+    {    ;Line No.                                 }
+  }
+  FIELDGROUPS
+  {
+  }
+  CODE
+  {
+
+    BEGIN
+    END.
+  }
+}
+
