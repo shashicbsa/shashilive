@@ -2,10 +2,10 @@ OBJECT Report 50034 Sales_Batch_Invoice
 {
   OBJECT-PROPERTIES
   {
-    Date=12/29/15;
-    Time=15:46:43;
+    Date=02/29/16;
+    Time=[ 5:03:15 PM];
     Modified=Yes;
-    Version List=UPG13R2DEV;
+    Version List=UPG13R2DEV,DAMSV;
   }
   PROPERTIES
   {
@@ -159,7 +159,9 @@ OBJECT Report 50034 Sales_Batch_Invoice
                                   V_Count:=0;
                              END;
 
-               OnAfterGetRecord=BEGIN
+               OnAfterGetRecord=VAR
+                                  LR_DimAccMapp@1000000000 : Record 60071;
+                                BEGIN
 
                                   //MESSAGE('SL OnAfter...');
                                   //V_SHFooter8:=false;
@@ -261,6 +263,8 @@ OBJECT Report 50034 Sales_Batch_Invoice
                                   /////////////////////////////
 
                                   //>>04122013/VK/CR#022
+                                  ///29/02/2016/SV/DAMSV .begin
+                                  { 29/02/2016/SV/DAMSV. previous code blocked
                                   MasterSetup2.GET;
                                   IF (("Sales Line"."No." = MasterSetup2."YIMM Sales Discount") OR
                                       ("Sales Line"."No." = MasterSetup2."YIMM Instancy Discount") OR
@@ -278,6 +282,23 @@ OBJECT Report 50034 Sales_Batch_Invoice
                                         PDiscount := GLAccount.Name;
                                       SalesDiscount += "Sales Line"."Line Amount";
                                   END;
+                                  }
+                                  MasterSetup2.GET;
+                                  LR_DimAccMapp.RESET;
+                                  LR_DimAccMapp.SETRANGE(COA,"Sales Line"."No.");
+                                  IF NOT LR_DimAccMapp.ISEMPTY AND
+                                     ("Sales Header"."Type Of Transaction" IN
+                                      ["Sales Header"."Type Of Transaction"::Imacs,
+                                       "Sales Header"."Type Of Transaction"::"Imacs-ATV",
+                                       "Sales Header"."Type Of Transaction"::"Imacs-Generator",
+                                       "Sales Header"."Type Of Transaction"::"Imacs-CBU"])
+                                  THEN BEGIN
+                                    IF GLAccount.GET("Sales Line"."No.") THEN;
+                                    PDiscountAc := GLAccount."No.";
+                                    PDiscount := GLAccount.Name;
+                                    SalesDiscount += "Sales Line"."Line Amount";
+                                  END;
+                                  ///29/02/2016/SV/DAMSV .end
                                   //<<04122013/VK/CR#022
 
 
