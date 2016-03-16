@@ -2,10 +2,10 @@ OBJECT Codeunit 50020 G-Port Import(Purch) Interface
 {
   OBJECT-PROPERTIES
   {
-    Date=09/15/15;
-    Time=[ 9:55:01];
+    Date=03/16/16;
+    Time=12:02:34 PM;
     Modified=Yes;
-    Version List=Gimp10,CR#005,UPG13R2DEV;
+    Version List=Gimp10,CR#005,UPG13R2DEV,INTCR16MAR16;
   }
   PROPERTIES
   {
@@ -551,7 +551,8 @@ OBJECT Codeunit 50020 G-Port Import(Purch) Interface
             ErrorInRow := FALSE;
 
               IF ErrorInRow THEN ErrorInFile := TRUE;
-
+                                                                           //SV/INTCR16MAR16.begin
+            {                                                              previous code commented,can be removed while deploying to production
             IF (PaymentTerm <> 'FC000X') THEN
             BEGIN
               IF NOT ErrorInRow THEN BEGIN
@@ -561,8 +562,16 @@ OBJECT Codeunit 50020 G-Port Import(Purch) Interface
             END
             ELSE
             Outstreamobj.WRITETEXT('Processed Successfully Because of FOC');
+            }
+            IF (PaymentTerm <> 'FC000X') THEN BEGIN
+              IF NOT ErrorInRow THEN BEGIN
+                InsertInTempTable();
+                Outstreamobj.WRITETEXT('Processed Successfully');
+              END;
+            END ELSE
+              Outstreamobj.WRITETEXT('Processed Successfully Because of FOC');
 
-
+                                                                           //SV/INTCR16MAR16.end
               Instreamobj.READTEXT(Readed,1);
               Outstreamobj.WRITETEXT();
 
@@ -749,6 +758,14 @@ OBJECT Codeunit 50020 G-Port Import(Purch) Interface
       [REF]   : Dimension value new concept
       [DESC]  : Dimension value new concept.New mapping table introduced and will be used(based on setup) untill all other systems are updated to use new dimension values.
                 After all other system updated mapping will be obsolate
+
+      [SIGN]  : SV
+      [REF]   : INTCR16MAR16
+      [DESC]  : ErrorInRow Variable was setting ErrorInFile variable value for each line error,and based on
+                the value of ErrorInFile variable row was inserted in the temprory table,but because
+                of error in first line(which set the variable ErrorInFile to true), no any further rows
+                were inserted in temprory table and lines with flag as "N" could not find its cancel
+                lines with flag "C" in the temprory table and hence produces the error in log file that "Duplicity in invoice no."
     }
     END.
   }
